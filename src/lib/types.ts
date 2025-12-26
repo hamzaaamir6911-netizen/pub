@@ -6,6 +6,8 @@ export type Item = {
   unit: 'Kg' | 'Feet' | 'Piece';
   purchasePrice: number;
   salePrice: number;
+  color: string;
+  weight?: number;
 };
 
 export type Customer = {
@@ -15,18 +17,25 @@ export type Customer = {
   address: string;
 };
 
+export type SaleItem = {
+  itemId: string;
+  itemName: string;
+  quantity: number;
+  price: number;
+  length?: number;
+  width?: number;
+  color?: string;
+  weight?: number;
+}
+
 export type Sale = {
   id: string;
   customerId: string;
   customerName: string;
-  items: {
-    itemId: string;
-    itemName: string;
-    quantity: number;
-    price: number;
-  }[];
+  items: SaleItem[];
   total: number;
   date: Date;
+  discount: number;
 };
 
 export type Expense = {

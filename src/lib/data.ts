@@ -1,18 +1,34 @@
 import type { Item, Customer, Sale, Expense } from '@/lib/types';
 
 export const mockItems: Item[] = [
-  { id: 'ITM001', name: 'Aluminium Section A', category: 'Aluminium', quantity: 150.5, unit: 'Kg', purchasePrice: 200, salePrice: 250 },
-  { id: 'ITM002', name: 'Toughened Glass 5mm', category: 'Glass', quantity: 50, unit: 'Piece', purchasePrice: 1200, salePrice: 1500 },
-  { id: 'ITM003', name: 'Door Handle Chrome', category: 'Accessories', quantity: 200, unit: 'Piece', purchasePrice: 300, salePrice: 400 },
-  { id: 'ITM004', name: 'Aluminium Pipe 2"', category: 'Aluminium', quantity: 300, unit: 'Feet', purchasePrice: 80, salePrice: 110 },
-  { id: 'ITM005', name: 'Reflective Glass', category: 'Glass', quantity: 25, unit: 'Piece', purchasePrice: 2000, salePrice: 2400 },
-  { id: 'ITM006', name: 'Stainless Steel Screws', category: 'Accessories', quantity: 5000, unit: 'Piece', purchasePrice: 2, salePrice: 3 },
+  { id: 'ITM001', name: 'D 40', category: 'Aluminium', quantity: 100, unit: 'Feet', purchasePrice: 200, salePrice: 250, color: 'Silver', weight: 0.124 },
+  { id: 'ITM002', name: 'D 45', category: 'Aluminium', quantity: 100, unit: 'Feet', purchasePrice: 200, salePrice: 250, color: 'Silver', weight: 0.180 },
+  { id: 'ITM003', name: 'D 60', category: 'Aluminium', quantity: 100, unit: 'Feet', purchasePrice: 200, salePrice: 250, color: 'Silver', weight: 0.231 },
+  { id: 'ITM004', name: 'DF 25', category: 'Aluminium', quantity: 100, unit: 'Feet', purchasePrice: 200, salePrice: 250, color: 'Silver', weight: 0.150 },
+  { id: 'ITM005', name: 'DF 38', category: 'Aluminium', quantity: 100, unit: 'Feet', purchasePrice: 200, salePrice: 250, color: 'Silver', weight: 0.200 },
+  { id: 'ITM006', name: 'DF 51', category: 'Aluminium', quantity: 100, unit: 'Feet', purchasePrice: 200, salePrice: 250, color: 'Silver', weight: 0.225 },
+  { id: 'ITM007', name: 'DR 25', category: 'Aluminium', quantity: 100, unit: 'Feet', purchasePrice: 200, salePrice: 250, color: 'Silver', weight: 0.145 },
+  { id: 'ITM008', name: 'DR 32', category: 'Aluminium', quantity: 100, unit: 'Feet', purchasePrice: 200, salePrice: 250, color: 'Silver', weight: 0.180 },
+  { id: 'ITM009', name: 'DR 38', category: 'Aluminium', quantity: 100, unit: 'Feet', purchasePrice: 200, salePrice: 250, color: 'Silver', weight: 0.245 },
+  { id: 'ITM010', name: 'DR 51', category: 'Aluminium', quantity: 100, unit: 'Feet', purchasePrice: 200, salePrice: 250, color: 'Silver', weight: 0.265 },
+  { id: 'ITM011', name: 'P 25 Plain', category: 'Aluminium', quantity: 100, unit: 'Feet', purchasePrice: 200, salePrice: 250, color: 'Silver', weight: 0.120 },
+  { id: 'ITM012', name: 'P 25 Design', category: 'Aluminium', quantity: 100, unit: 'Feet', purchasePrice: 200, salePrice: 250, color: 'Silver', weight: 0.125 },
+  { id: 'ITM013', name: 'P 38 Plain', category: 'Aluminium', quantity: 100, unit: 'Feet', purchasePrice: 200, salePrice: 250, color: 'Silver', weight: 0.200 },
+  { id: 'ITM014', name: 'P 38 Design', category: 'Aluminium', quantity: 100, unit: 'Feet', purchasePrice: 200, salePrice: 250, color: 'Silver', weight: 0.220 },
+  { id: 'ITM015', name: 'P 42', category: 'Aluminium', quantity: 100, unit: 'Feet', purchasePrice: 200, salePrice: 250, color: 'Silver', weight: 0.240 },
+  { id: 'ITM016', name: 'P 51', category: 'Aluminium', quantity: 100, unit: 'Feet', purchasePrice: 200, salePrice: 250, color: 'Silver', weight: 0.320 },
+  { id: 'ITM017', name: 'P 63', category: 'Aluminium', quantity: 100, unit: 'Feet', purchasePrice: 200, salePrice: 250, color: 'Silver', weight: 0.450 },
+  { id: 'ITM018', name: 'SW 2 Track', category: 'Aluminium', quantity: 100, unit: 'Feet', purchasePrice: 200, salePrice: 250, color: 'Silver', weight: 0.230 },
+  { id: 'ITM019', name: 'SW 3 Track', category: 'Aluminium', quantity: 100, unit: 'Feet', purchasePrice: 200, salePrice: 250, color: 'Silver', weight: 0.360 },
+  { id: 'ITM020', name: 'SW Handle', category: 'Aluminium', quantity: 100, unit: 'Feet', purchasePrice: 200, salePrice: 250, color: 'Silver', weight: 0.190 },
+  { id: 'ITM021', name: 'SW Inter Lock', category: 'Aluminium', quantity: 100, unit: 'Feet', purchasePrice: 200, salePrice: 250, color: 'Silver', weight: 0.140 },
+  { id: 'ITM022', name: 'SW Bearing', category: 'Aluminium', quantity: 100, unit: 'Feet', purchasePrice: 200, salePrice: 250, color: 'Silver', weight: 0.230 },
+  { id: 'ITM023', name: '25x25 Angle', category: 'Aluminium', quantity: 100, unit: 'Feet', purchasePrice: 200, salePrice: 250, color: 'Silver', weight: 0.110 },
+  { id: 'ITM024', name: '25x25 Pipe', category: 'Aluminium', quantity: 100, unit: 'Feet', purchasePrice: 200, salePrice: 250, color: 'Silver', weight: 0.180 },
 ];
 
 export const mockCustomers: Customer[] = [
-  { id: 'CUS001', name: 'BuildWell Constructions', phone: '9876543210', address: '123 Construction Lane, Pune' },
-  { id: 'CUS002', name: 'Modern Homes Inc.', phone: '8765432109', address: '456 Architect Ave, Mumbai' },
-  { id: 'CUS003', name: 'Glass & Doors Co.', phone: '7654321098', address: '789 Decor St, Delhi' },
+ 
 ];
 
 export const mockSales: Sale[] = [];
@@ -25,11 +41,16 @@ export const getDashboardStats = () => {
   
   const totalStockValue = mockItems.reduce((sum, item) => sum + (item.purchasePrice * item.quantity), 0);
   
-  // Simplified profit calculation
   const totalCostOfGoodsSold = mockSales.reduce((sum, sale) => {
     const saleCost = sale.items.reduce((itemSum, saleItem) => {
       const item = mockItems.find(i => i.id === saleItem.itemId);
-      return itemSum + (item ? item.purchasePrice * saleItem.quantity : 0);
+      if (!item) return itemSum;
+
+      if (item.unit === 'Feet' && saleItem.length && saleItem.width) {
+        const totalFeet = (saleItem.length * saleItem.width / 144) * saleItem.quantity;
+        return itemSum + (item.purchasePrice * totalFeet);
+      }
+      return itemSum + (item.purchasePrice * saleItem.quantity);
     }, 0);
     return sum + saleCost;
   }, 0);
@@ -66,3 +87,23 @@ export const getMonthlySalesData = () => {
     sales: salesByMonth[month],
   })).reverse();
 };
+
+export const getTransactions = () => {
+  const salesAsTransactions = mockSales.map(sale => ({
+    id: sale.id,
+    date: sale.date,
+    description: `Sale to ${sale.customerName}`,
+    amount: sale.total,
+    type: 'credit' as 'credit' | 'debit'
+  }));
+
+  const expensesAsTransactions = mockExpenses.map(expense => ({
+    id: expense.id,
+    date: expense.date,
+    description: expense.title,
+    amount: expense.amount,
+    type: 'debit' as 'credit' | 'debit'
+  }));
+
+  return [...salesAsTransactions, ...expensesAsTransactions].sort((a,b) => b.date.getTime() - a.date.getTime());
+}
