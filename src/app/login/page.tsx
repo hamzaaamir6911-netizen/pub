@@ -17,7 +17,8 @@ import { FirebaseClientProvider } from "@/firebase/client-provider";
 function LoginComponent() {
   const router = useRouter();
   const { toast } = useToast();
-  const { auth } = useFirebase();
+  // Correctly get auth from the provider context
+  const { auth } = useFirebase(); 
   const [email, setEmail] = useState("admin@arco.com");
   const [password, setPassword] = useState("password");
   const [isLoading, setIsLoading] = useState(false);
@@ -46,10 +47,11 @@ function LoginComponent() {
     } catch (error: any) {
        if (error.code === 'auth/user-not-found' || error.code === 'auth/invalid-credential') {
         try {
+          // If the user doesn't exist, create an account with the default credentials
           await createUserWithEmailAndPassword(auth, email, password);
           toast({
             title: "Account Created",
-            description: "Welcome to ARCO Factory Manager!",
+            description: "Welcome to ARCO Factory Manager! Your default account has been set up.",
           });
           router.push("/app/dashboard");
         } catch (creationError: any) {
@@ -121,6 +123,7 @@ function LoginComponent() {
 
 
 export default function LoginPage() {
+  // The FirebaseClientProvider correctly wraps the entire page content.
   return (
     <FirebaseClientProvider>
       <LoginComponent />

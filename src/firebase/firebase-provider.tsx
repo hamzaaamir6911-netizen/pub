@@ -9,7 +9,7 @@ import type { Firestore } from 'firebase/firestore';
 interface FirebaseContextType {
   app: FirebaseApp;
   auth: Auth;
-  db: Firestore;
+  firestore: Firestore;
 }
 
 const FirebaseContext = createContext<FirebaseContextType | undefined>(undefined);

@@ -9,5 +9,7 @@ import { FirebaseProvider } from './firebase-provider';
 const firebaseInstance = initializeFirebase();
 
 export function FirebaseClientProvider({ children }: { children: ReactNode }) {
+  // The 'value' prop of FirebaseProvider expects { app, auth, firestore }
+  // which is exactly what initializeFirebase now returns.
   return <FirebaseProvider value={firebaseInstance}>{children}</FirebaseProvider>;
 }
