@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useState } from "react";
@@ -54,6 +55,9 @@ function SaleInvoice({ sale }: { sale: Sale }) {
         if (itemDetails.unit === 'Feet' && item.length && item.width) {
             const totalFeet = (item.length * item.width / 144) * item.quantity;
             return acc + (itemDetails.salePrice * totalFeet);
+        } else if (itemDetails.unit === 'Kg' && item.weight) {
+            const totalWeight = item.weight * item.quantity;
+            return acc + (itemDetails.salePrice * totalWeight);
         }
         return acc + (item.price * item.quantity);
     }, 0);
@@ -504,3 +508,5 @@ export default function SalesPage() {
     </>
   );
 }
+
+    
