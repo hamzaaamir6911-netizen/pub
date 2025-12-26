@@ -13,15 +13,18 @@ function useUserIsAdmin() {
     const firestore = useFirestore();
 
     const adminRoleRef = useMemoFirebase(
+        // Only create the doc reference if we have a user
         () => (user ? doc(firestore, 'roles_admin', user.uid) : null),
         [firestore, user]
     );
 
     const { data: adminDoc, isLoading: isAdminDocLoading } = useDoc(adminRoleRef);
     
-    // The !!adminDoc ensures we get a clean boolean. true if doc exists, false if it's null.
+    // An admin is someone for whom the admin document exists.
     const isAdmin = !!adminDoc;
-    // The loading state is true if we are still checking for a user, or if we have a user but are still fetching their admin doc.
+    
+    // The overall loading state is true if we are still checking for a user, 
+    // OR if we have a user but are still fetching their admin role document.
     const isAdminLoading = isUserLoading || (!!user && isAdminDocLoading);
 
     return { isAdmin, isAdminLoading };
@@ -365,3 +368,5 @@ export const useData = () => {
   }
   return context;
 };
+
+    
