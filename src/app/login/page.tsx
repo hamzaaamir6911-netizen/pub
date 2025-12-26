@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { Factory } from "lucide-react";
 
@@ -15,6 +16,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
+import { PlaceHolderImages } from "@/lib/placeholder-images";
 
 export default function LoginPage() {
   const router = useRouter();
@@ -22,6 +24,7 @@ export default function LoginPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+  const loginImage = PlaceHolderImages.find(p => p.id === 'login-background');
 
   const handleLogin = (e: React.FormEvent) => {
     e.preventDefault();
@@ -47,18 +50,20 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-background p-4">
-      <Card className="w-full max-w-sm">
-        <CardHeader className="text-center">
-          <div className="mb-4 flex justify-center">
-            <Factory className="h-10 w-10 text-primary" />
+    <div className="w-full lg:grid lg:min-h-screen lg:grid-cols-2">
+      <div className="flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
+        <div className="mx-auto grid w-[350px] gap-6">
+           <div className="grid gap-2 text-center">
+            <div className="mb-4 flex justify-center">
+              <Factory className="h-10 w-10 text-primary" />
+            </div>
+            <h1 className="text-3xl font-bold font-headline">ARCO Factory Manager</h1>
+            <p className="text-balance text-muted-foreground">
+              Enter your credentials to access the admin panel
+            </p>
           </div>
-          <CardTitle className="text-2xl font-headline">ARCO Factory Manager</CardTitle>
-          <CardDescription>Admin Login</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <form onSubmit={handleLogin} className="space-y-4">
-            <div className="space-y-2">
+          <form onSubmit={handleLogin} className="grid gap-4">
+            <div className="grid gap-2">
               <Label htmlFor="email">Email</Label>
               <Input
                 id="email"
@@ -70,8 +75,10 @@ export default function LoginPage() {
                 disabled={isLoading}
               />
             </div>
-            <div className="space-y-2">
-              <Label htmlFor="password">Password</Label>
+            <div className="grid gap-2">
+              <div className="flex items-center">
+                <Label htmlFor="password">Password</Label>
+              </div>
               <Input
                 id="password"
                 type="password"
@@ -83,11 +90,23 @@ export default function LoginPage() {
               />
             </div>
             <Button type="submit" className="w-full" disabled={isLoading}>
-              {isLoading ? "Logging in..." : "Log In"}
+              {isLoading ? "Logging in..." : "Login"}
             </Button>
           </form>
-        </CardContent>
-      </Card>
+        </div>
+      </div>
+       <div className="hidden bg-muted lg:block">
+        {loginImage && (
+          <Image
+            src={loginImage.imageUrl}
+            alt={loginImage.description}
+            data-ai-hint={loginImage.imageHint}
+            width="800"
+            height="1200"
+            className="h-full w-full object-cover"
+          />
+        )}
+      </div>
     </div>
   );
 }
