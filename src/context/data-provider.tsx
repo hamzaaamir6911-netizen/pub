@@ -1,8 +1,47 @@
+
 "use client";
 
-import React, { createContext, useContext, useState, ReactNode } from 'react';
+import React, { createContext, useContext, useState, ReactNode, useEffect } from 'react';
 import type { Item, Customer, Sale, Expense, SaleItem, Transaction } from '@/lib/types';
-import { mockItems, mockCustomers, mockSales, mockExpenses } from '@/lib/data';
+import { mockItems, mockCustomers as initialMockCustomers, mockSales as initialMockSales, mockExpenses as initialMockExpenses } from '@/lib/data';
+
+// --- LocalStorage Hook ---
+function useLocalStorageState<T>(key: string, defaultValue: T): [T, React.Dispatch<React.SetStateAction<T>>] {
+    const [state, setState] = useState<T>(() => {
+        if (typeof window === 'undefined') {
+            return defaultValue;
+        }
+        try {
+            const storedValue = window.localStorage.getItem(key);
+            if (storedValue) {
+                // The reviver function is crucial for converting date strings back to Date objects
+                return JSON.parse(storedValue, (key, value) => {
+                    if (key === 'date' && typeof value === 'string') {
+                        const d = new Date(value);
+                        if (!isNaN(d.getTime())) {
+                            return d;
+                        }
+                    }
+                    return value;
+                });
+            }
+        } catch (error) {
+            console.error(`Error reading localStorage key “${key}”:`, error);
+        }
+        return defaultValue;
+    });
+
+    useEffect(() => {
+        try {
+            window.localStorage.setItem(key, JSON.stringify(state));
+        } catch (error) {
+            console.error(`Error setting localStorage key “${key}”:`, error);
+        }
+    }, [key, state]);
+
+    return [state, setState];
+}
+
 
 interface DataContextProps {
   items: Item[];
@@ -35,11 +74,11 @@ interface DataContextProps {
 const DataContext = createContext<DataContextProps | undefined>(undefined);
 
 export const DataProvider = ({ children }: { children: ReactNode }) => {
-  const [items, setItems] = useState<Item[]>(mockItems);
-  const [customers, setCustomers] = useState<Customer[]>(mockCustomers);
-  const [sales, setSales] = useState<Sale[]>(mockSales);
-  const [expenses, setExpenses] = useState<Expense[]>(mockExpenses);
-  const [transactions, setTransactions] = useState<Transaction[]>([]);
+  const [items, setItems] = useLocalStorageState<Item[]>('items', mockItems);
+  const [customers, setCustomers] = useLocalStorageState<Customer[]>('customers', initialMockCustomers);
+  const [sales, setSales] = useLocalStorageState<Sale[]>('sales', initialMockSales);
+  const [expenses, setExpenses] = useLocalStorageState<Expense[]>('expenses', initialMockExpenses);
+  const [transactions, setTransactions] = useLocalStorageState<Transaction[]>('transactions', []);
 
   // --- Item Management ---
   const addItem = (item: Omit<Item, 'id'>): Item => {
@@ -96,10 +135,10 @@ export const DataProvider = ({ children }: { children: ReactNode }) => {
                 let quantityToDeduct = saleItem.quantity;
                  if (stockItem.unit === 'Feet' && saleItem.length && saleItem.width) {
                     const totalFeet = (saleItem.length * saleItem.width / 144) * saleItem.quantity;
-                    // Assuming inventory quantity is also in feet for these items
                     quantityToDeduct = totalFeet; 
                 }
-                return { ...stockItem, quantity: stockItem.quantity - quantityToDeduct };
+                // No quantity to deduct from as it was removed
+                return stockItem;
             }
             return stockItem;
         }));
@@ -108,8 +147,12 @@ export const DataProvider = ({ children }: { children: ReactNode }) => {
   };
 
   const deleteSale = (id: string) => {
+    const saleToDelete = sales.find(s => s.id === id);
+    if (!saleToDelete) return;
+
     setSales(prev => prev.filter(sale => sale.id !== id));
-     setTransactions(prev => prev.filter(t => t.id !== id));
+    // Also remove the associated transaction
+    setTransactions(prev => prev.filter(t => !(t.category === 'Sale' && t.description === `Sale to ${saleToDelete.customerName}` && t.amount === saleToDelete.total)));
   };
   
   // --- Expense Management ---
@@ -128,14 +171,18 @@ export const DataProvider = ({ children }: { children: ReactNode }) => {
   };
 
   const deleteExpense = (id: string) => {
+     const expenseToDelete = expenses.find(e => e.id === id);
+    if (!expenseToDelete) return;
+
     setExpenses(prev => prev.filter(expense => expense.id !== id));
-    setTransactions(prev => prev.filter(t => t.id !== id));
+     // Also remove the associated transaction
+    setTransactions(prev => prev.filter(t => !(t.description === expenseToDelete.title && t.amount === expenseToDelete.amount && t.type === 'debit' && t.category === expenseToDelete.category)));
   };
 
   // --- Transaction Management ---
   const addTransaction = (transaction: Omit<Transaction, 'id'| 'date'>): Transaction => {
     const newTransaction = { ...transaction, id: `TRN${Date.now().toString().slice(-4)}`, date: new Date() };
-    setTransactions(prev => [newTransaction, ...prev].sort((a,b) => b.date.getTime() - a.date.getTime()));
+    setTransactions(prev => [newTransaction, ...prev].sort((a,b) => new Date(b.date).getTime() - new Date(a.date).getTime()));
     return newTransaction;
   }
   
@@ -144,7 +191,7 @@ export const DataProvider = ({ children }: { children: ReactNode }) => {
     const totalSales = sales.reduce((sum, sale) => sum + sale.total, 0);
     const totalExpenses = expenses.reduce((sum, expense) => sum + expense.amount, 0);
     
-    const totalStockValue = items.reduce((sum, item) => sum + (item.purchasePrice * item.quantity), 0);
+    const totalStockValue = 0; // Removed as per user request
     
     const totalCostOfGoodsSold = sales.reduce((sum, sale) => {
       const saleCost = sale.items.reduce((itemSum, saleItem) => {
@@ -164,8 +211,8 @@ export const DataProvider = ({ children }: { children: ReactNode }) => {
   
     const today = new Date();
     const todaySummary = {
-      sales: sales.filter(s => s.date.toDateString() === today.toDateString()),
-      expenses: expenses.filter(e => e.date.toDateString() === today.toDateString()),
+      sales: sales.filter(s => new Date(s.date).toDateString() === today.toDateString()),
+      expenses: expenses.filter(e => new Date(e.date).toDateString() === today.toDateString()),
     };
     
     return {
@@ -180,14 +227,14 @@ export const DataProvider = ({ children }: { children: ReactNode }) => {
   const getMonthlySalesData = () => {
     const salesByMonth: { [key: string]: number } = {};
     sales.forEach(sale => {
-      const month = sale.date.toLocaleString('default', { month: 'short' });
+      const saleDate = new Date(sale.date);
+      const month = saleDate.toLocaleString('default', { month: 'short' });
       if (!salesByMonth[month]) {
         salesByMonth[month] = 0;
       }
       salesByMonth[month] += sale.total;
     });
 
-    // Ensure all recent months are present, even if with 0 sales
     const lastSixMonths = [];
     for (let i = 5; i >= 0; i--) {
         const d = new Date();
