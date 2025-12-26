@@ -65,7 +65,7 @@ service cloud.firestore {
      * @principle Prevents client-side privilege escalation by making the roles collection immutable from clients.
      */
     match /roles_admin/{userId} {
-      allow get: if isAdmin();
+      allow get: if isSignedIn();
       allow list: if false;
       allow create: if false;
       allow update: if false;
@@ -84,11 +84,7 @@ service cloud.firestore {
      * @principle Enforces Role-Based Access Control (RBAC), restricting all data access to administrators.
      */
     match /items/{itemId} {
-      allow get: if isAdmin();
-      allow list: if isAdmin();
-      allow create: if isAdmin();
-      allow update: if isAdmin() && resource != null;
-      allow delete: if isAdmin() && resource != null;
+      allow read, write: if isAdmin();
     }
 
     /**
@@ -99,11 +95,7 @@ service cloud.firestore {
      * @principle Enforces Role-Based Access Control (RBAC), restricting all data access to administrators.
      */
     match /customers/{customerId} {
-      allow get: if isAdmin();
-      allow list: if isAdmin();
-      allow create: if isAdmin();
-      allow update: if isAdmin() && resource != null;
-      allow delete: if isAdmin() && resource != null;
+      allow read, write: if isAdmin();
     }
 
     /**
@@ -114,11 +106,7 @@ service cloud.firestore {
      * @principle Enforces Role-Based Access Control (RBAC), restricting all data access to administrators.
      */
     match /sales/{saleId} {
-      allow get: if isAdmin();
-      allow list: if isAdmin();
-      allow create: if isAdmin();
-      allow update: if isAdmin() && resource != null;
-      allow delete: if isAdmin() && resource != null;
+      allow read, write: if isAdmin();
     }
 
     /**
@@ -129,11 +117,15 @@ service cloud.firestore {
      * @principle Enforces Role-Based Access Control (RBAC), restricting all data access to administrators.
      */
     match /expenses/{expenseId} {
-      allow get: if isAdmin();
-      allow list: if isAdmin();
-      allow create: if isAdmin();
-      allow update: if isAdmin() && resource != null;
-      allow delete: if isAdmin() && resource != null;
+      allow read, write: if isAdmin();
+    }
+    
+    match /transactions/{transactionId} {
+      allow read, write: if isAdmin();
+    }
+
+    match /vendors/{vendorId} {
+      allow read, write: if isAdmin();
     }
 
   }
