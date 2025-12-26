@@ -2,7 +2,14 @@
 
 import { useState } from "react";
 import { MoreHorizontal, PlusCircle } from "lucide-react";
-
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+  DialogFooter,
+} from "@/components/ui/dialog";
 import {
   Table,
   TableBody,
@@ -22,13 +29,73 @@ import { Button } from "@/components/ui/button";
 import { PageHeader } from "@/components/page-header";
 import { mockCustomers } from "@/lib/data";
 import type { Customer } from "@/lib/types";
+import { useToast } from "@/hooks/use-toast";
+import { Label } from "@/components/ui/label";
+import { Input } from "@/components/ui/input";
+
+function AddCustomerForm({ onCustomerAdded }: { onCustomerAdded: (newCustomer: Customer) => void }) {
+  const [name, setName] = useState('');
+  const [phone, setPhone] = useState('');
+  const [address, setAddress] = useState('');
+  const { toast } = useToast();
+
+  const handleSubmit = () => {
+    if (!name || !phone || !address) {
+      toast({ variant: 'destructive', title: 'Please fill all fields.' });
+      return;
+    }
+    const newCustomer: Customer = {
+      id: `CUST${(mockCustomers.length + 1).toString().padStart(3, '0')}`,
+      name,
+      phone,
+      address,
+    };
+    onCustomerAdded(newCustomer);
+    toast({ title: 'Customer Added!', description: `${name} has been added.` });
+    setName('');
+    setPhone('');
+    setAddress('');
+  };
+
+  return (
+    <DialogContent>
+      <DialogHeader>
+        <DialogTitle>Add New Customer</DialogTitle>
+      </DialogHeader>
+      <div className="space-y-4 py-4">
+        <div className="space-y-2">
+          <Label htmlFor="name">Customer Name</Label>
+          <Input id="name" value={name} onChange={(e) => setName(e.target.value)} placeholder="John Doe" />
+        </div>
+        <div className="space-y-2">
+          <Label htmlFor="phone">Phone Number</Label>
+          <Input id="phone" value={phone} onChange={(e) => setPhone(e.target.value)} placeholder="0300-1234567" />
+        </div>
+        <div className="space-y-2">
+          <Label htmlFor="address">Address</Label>
+          <Input id="address" value={address} onChange={(e) => setAddress(e.target.value)} placeholder="123, Main Street, City" />
+        </div>
+      </div>
+      <DialogFooter>
+        <Button onClick={handleSubmit}>Add Customer</Button>
+      </DialogFooter>
+    </DialogContent>
+  );
+}
+
 
 export default function CustomersPage() {
   const [customers, setCustomers] = useState<Customer[]>(mockCustomers);
+  const [isCustomerModalOpen, setCustomerModalOpen] = useState(false);
 
   const handleDelete = (id: string) => {
     setCustomers(customers.filter((customer) => customer.id !== id));
   };
+
+  const handleCustomerAdded = (newCustomer: Customer) => {
+    setCustomers(prev => [newCustomer, ...prev]);
+    setCustomerModalOpen(false);
+  }
 
   return (
     <>
@@ -36,10 +103,15 @@ export default function CustomersPage() {
         title="Customers"
         description="Manage your client information."
       >
-        <Button>
-          <PlusCircle className="mr-2 h-4 w-4" />
-          Add Customer
-        </Button>
+        <Dialog open={isCustomerModalOpen} onOpenChange={setCustomerModalOpen}>
+            <DialogTrigger asChild>
+                <Button>
+                    <PlusCircle className="mr-2 h-4 w-4" />
+                    Add Customer
+                </Button>
+            </DialogTrigger>
+            <AddCustomerForm onCustomerAdded={handleCustomerAdded} />
+        </Dialog>
       </PageHeader>
       <div className="rounded-lg border shadow-sm">
         <Table>
@@ -72,7 +144,7 @@ export default function CustomersPage() {
                       <DropdownMenuItem>Edit</DropdownMenuItem>
                       <DropdownMenuItem
                         onSelect={() => handleDelete(customer.id)}
-                        className="text-red-600"
+                        className="text-red-600 focus:text-red-600"
                       >
                         Delete
                       </DropdownMenuItem>

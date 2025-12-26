@@ -325,7 +325,7 @@ function AddExpenseForm({ onExpenseAdded }: { onExpenseAdded: (newExpense: Expen
 }
 
 
-function NewSaleForm({ onSaleAdded }: { onSaleAdded: (newSale: Sale) => void }) {
+function NewSaleForm({ onSaleAdded, customers }: { onSaleAdded: (newSale: Sale) => void, customers: Customer[] }) {
     const { toast } = useToast();
     const [selectedCustomer, setSelectedCustomer] = useState("");
     const [saleItems, setSaleItems] = useState<Partial<SaleItem>[]>([{itemId: "", quantity: 1, length: 0, width: 0}]);
@@ -378,7 +378,7 @@ function NewSaleForm({ onSaleAdded }: { onSaleAdded: (newSale: Sale) => void }) 
             return;
         }
 
-        const customer = mockCustomers.find(c => c.id === selectedCustomer);
+        const customer = customers.find(c => c.id === selectedCustomer);
         if (!customer) return;
 
         const finalSaleItems = saleItems.map(si => {
@@ -439,7 +439,7 @@ function NewSaleForm({ onSaleAdded }: { onSaleAdded: (newSale: Sale) => void }) 
                                 <SelectValue placeholder="Select a customer" />
                             </SelectTrigger>
                             <SelectContent>
-                                {mockCustomers.map(c => <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>)}
+                                {customers.map(c => <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>)}
                             </SelectContent>
                         </Select>
                     </div>
@@ -642,7 +642,7 @@ export default function SalesPage() {
         </TabsContent>
         <TabsContent value="new">
             <div className="mt-4">
-                <NewSaleForm onSaleAdded={handleSaleAdded} />
+                <NewSaleForm onSaleAdded={handleSaleAdded} customers={customers} />
             </div>
         </TabsContent>
       </Tabs>
