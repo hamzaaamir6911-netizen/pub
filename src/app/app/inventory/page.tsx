@@ -32,7 +32,6 @@ import { useToast } from "@/hooks/use-toast";
 function AddItemForm({ onItemAdded }: { onItemAdded: (newItem: Omit<Item, 'id'>) => void }) {
     const [name, setName] = useState('');
     const [category, setCategory] = useState<'Aluminium' | 'Glass' | 'Accessories'>('Aluminium');
-    const [quantity, setQuantity] = useState(0);
     const [unit, setUnit] = useState<'Kg' | 'Feet' | 'Piece'>('Feet');
     const [purchasePrice, setPurchasePrice] = useState(0);
     const [salePrice, setSalePrice] = useState(0);
@@ -46,12 +45,12 @@ function AddItemForm({ onItemAdded }: { onItemAdded: (newItem: Omit<Item, 'id'>)
             return;
         }
         const newItem: Omit<Item, 'id'> = {
-            name, category, quantity, unit, purchasePrice, salePrice, color, weight,
+            name, category, quantity: 0, unit, purchasePrice, salePrice, color, weight,
         };
         onItemAdded(newItem);
         toast({ title: "Item Added!", description: `${name} has been added to inventory.` });
         // Reset form
-        setName(''); setCategory('Aluminium'); setQuantity(0); setUnit('Feet'); setPurchasePrice(0); setSalePrice(0); setColor(''); setWeight(0);
+        setName(''); setCategory('Aluminium'); setUnit('Feet'); setPurchasePrice(0); setSalePrice(0); setColor(''); setWeight(0);
     };
 
     return (
@@ -72,10 +71,6 @@ function AddItemForm({ onItemAdded }: { onItemAdded: (newItem: Omit<Item, 'id'>)
                             <SelectItem value="Accessories">Accessories</SelectItem>
                         </SelectContent>
                     </Select>
-                </div>
-                <div className="space-y-2">
-                    <Label>Quantity</Label>
-                    <Input type="number" value={quantity} onChange={(e) => setQuantity(parseFloat(e.target.value))} />
                 </div>
                 <div className="space-y-2">
                     <Label>Unit</Label>
@@ -153,7 +148,7 @@ export default function InventoryPage() {
             <TableRow>
               <TableHead>Item Name</TableHead>
               <TableHead>Category</TableHead>
-              <TableHead className="text-right">Quantity</TableHead>
+              <TableHead>Color</TableHead>
               <TableHead className="text-right">Purchase Price</TableHead>
               <TableHead className="text-right">Sale Price</TableHead>
               <TableHead>
@@ -170,8 +165,8 @@ export default function InventoryPage() {
                     {item.category}
                   </Badge>
                 </TableCell>
-                <TableCell className="text-right">
-                  {item.quantity} {item.unit}
+                <TableCell>
+                  {item.color}
                 </TableCell>
                 <TableCell className="text-right">
                   {formatCurrency(item.purchasePrice)}
