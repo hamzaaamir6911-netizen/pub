@@ -134,9 +134,6 @@ export const DataProvider = ({ children }: { children: ReactNode }) => {
   // --- Sale Management ---
   const addSale = (sale: Omit<Sale, 'id' | 'date' | 'total'>): Sale => {
     const subtotal = sale.items.reduce((total, currentItem) => {
-        const itemDetails = items.find(i => i.id === currentItem.itemId);
-        if (!itemDetails) return total;
-        
         const itemTotal = (currentItem.feet || 1) * currentItem.price * currentItem.quantity;
         const discountAmount = itemTotal * ((currentItem.discount || 0) / 100);
         

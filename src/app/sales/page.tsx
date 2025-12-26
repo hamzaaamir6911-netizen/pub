@@ -318,8 +318,8 @@ function NewSaleForm({ onSaleAdded }: { onSaleAdded: (newSale: Omit<Sale, 'id' |
                     {saleItems.map((saleItem, index) => {
                          const itemDetails = allItems.find(i => i.id === saleItem.itemId);
                          return (
-                         <div key={index} className="grid grid-cols-1 md:grid-cols-6 gap-2 items-end p-3 border rounded-md">
-                            <div className="md:col-span-3 space-y-2">
+                         <div key={index} className="grid grid-cols-1 md:grid-cols-5 gap-2 items-end p-3 border rounded-md">
+                            <div className="md:col-span-2 space-y-2">
                                 <Label>Item</Label>
                                 <Select onValueChange={(value) => handleItemChange(index, "itemId", value)} value={saleItem.itemId}>
                                     <SelectTrigger>
@@ -485,3 +485,5 @@ export default function SalesPage() {
     </>
   );
 }
+
+    

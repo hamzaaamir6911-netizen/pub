@@ -31,8 +31,6 @@ export type SaleItem = {
   itemName: string;
   quantity: number;
   price: number; // This will now be Rate
-  length?: number;
-  width?: number;
   color?: string;
   weight?: number;
   thickness?: string;
