@@ -3,10 +3,27 @@
 
 import React, { createContext, useContext, ReactNode } from 'react';
 import type { Item, Customer, Sale, Expense, Transaction, Vendor } from '@/lib/types';
-import { useCollection, useFirestore, useMemoFirebase, useUser } from '@/firebase';
+import { useCollection, useFirestore, useMemoFirebase, useUser, useDoc } from '@/firebase';
 import { collection, doc, writeBatch, serverTimestamp, Timestamp, orderBy, query, where, getDocs, runTransaction } from 'firebase/firestore';
 import { addDocumentNonBlocking, deleteDocumentNonBlocking, updateDocumentNonBlocking } from '../non-blocking-updates';
 import { date } from 'zod';
+
+function useUserIsAdmin() {
+    const { user, isUserLoading } = useUser();
+    const firestore = useFirestore();
+
+    const adminRoleRef = useMemoFirebase(
+        () => (user ? doc(firestore, 'roles_admin', user.uid) : null),
+        [firestore, user]
+    );
+
+    const { data: adminDoc, isLoading: isAdminLoading } = useDoc(adminRoleRef);
+    
+    const isAdmin = adminDoc !== null;
+
+    return { isAdmin, isAdminLoading: isUserLoading || isAdminLoading };
+}
+
 
 interface DataContextProps {
   items: Item[];
@@ -16,6 +33,8 @@ interface DataContextProps {
   expenses: Expense[];
   transactions: Transaction[];
   loading: boolean;
+  isAdmin: boolean;
+  isAdminLoading: boolean;
   addItem: (item: Omit<Item, 'id' | 'createdAt'>) => Promise<any>;
   deleteItem: (id: string) => Promise<void>;
   addCustomer: (customer: Omit<Customer, 'id' | 'createdAt'>) => Promise<any>;
@@ -62,14 +81,17 @@ const toDate = (timestamp: any) => {
 export const DataProvider = ({ children }: { children: ReactNode }) => {
     const firestore = useFirestore();
     const { user } = useUser();
+    const { isAdmin, isAdminLoading } = useUserIsAdmin();
+
+    const shouldFetch = isAdmin && !isAdminLoading;
 
     // Memoize collection references
-    const itemsCol = useMemoFirebase(() => user ? collection(firestore, 'items') : null, [firestore, user]);
-    const customersCol = useMemoFirebase(() => user ? collection(firestore, 'customers') : null, [firestore, user]);
-    const vendorsCol = useMemoFirebase(() => user ? collection(firestore, 'vendors') : null, [firestore, user]);
-    const salesCol = useMemoFirebase(() => user ? query(collection(firestore, 'sales'), orderBy('date', 'desc')) : null, [firestore, user]);
-    const expensesCol = useMemoFirebase(() => user ? query(collection(firestore, 'expenses'), orderBy('date', 'desc')) : null, [firestore, user]);
-    const transactionsCol = useMemoFirebase(() => user ? query(collection(firestore, 'transactions'), orderBy('date', 'desc')) : null, [firestore, user]);
+    const itemsCol = useMemoFirebase(() => shouldFetch ? collection(firestore, 'items') : null, [firestore, shouldFetch]);
+    const customersCol = useMemoFirebase(() => shouldFetch ? collection(firestore, 'customers') : null, [firestore, shouldFetch]);
+    const vendorsCol = useMemoFirebase(() => shouldFetch ? collection(firestore, 'vendors') : null, [firestore, shouldFetch]);
+    const salesCol = useMemoFirebase(() => shouldFetch ? query(collection(firestore, 'sales'), orderBy('date', 'desc')) : null, [firestore, shouldFetch]);
+    const expensesCol = useMemoFirebase(() => shouldFetch ? query(collection(firestore, 'expenses'), orderBy('date', 'desc')) : null, [firestore, shouldFetch]);
+    const transactionsCol = useMemoFirebase(() => shouldFetch ? query(collection(firestore, 'transactions'), orderBy('date', 'desc')) : null, [firestore, shouldFetch]);
 
     // Fetch data
     const { data: itemsData, isLoading: itemsLoading } = useCollection<Item>(itemsCol);
@@ -316,6 +338,7 @@ export const DataProvider = ({ children }: { children: ReactNode }) => {
     
     const value = {
         items, customers, vendors, sales, expenses, transactions, loading,
+        isAdmin, isAdminLoading,
         addItem, deleteItem,
         addCustomer, deleteCustomer,
         addVendor, deleteVendor,
@@ -327,7 +350,7 @@ export const DataProvider = ({ children }: { children: ReactNode }) => {
 
     return (
         <DataContext.Provider value={value}>
-            {!loading && children}
+            {children}
         </DataContext.Provider>
     );
 };

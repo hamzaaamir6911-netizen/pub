@@ -3,9 +3,59 @@
 
 import { AppHeader } from "@/components/app-header";
 import { useUser } from "@/firebase";
-import { DataProvider } from "@/firebase/data/data-provider";
+import { DataProvider, useData } from "@/firebase/data/data-provider";
 import { useRouter } from "next/navigation";
 import { useEffect } from "react";
+
+function AdminCheck({ children }: { children: React.ReactNode }) {
+  const { user, isUserLoading } = useUser();
+  const { isAdmin, isAdminLoading } = useData();
+  const router = useRouter();
+
+  useEffect(() => {
+    if (!isUserLoading && !user) {
+      router.push("/login");
+    }
+  }, [user, isUserLoading, router]);
+
+  // Combined loading state
+  if (isUserLoading || isAdminLoading || !user) {
+    return (
+      <div className="flex h-screen items-center justify-center">
+        <div className="text-center">
+          <p className="text-lg font-semibold">Loading Application...</p>
+          <p className="text-muted-foreground">Verifying permissions, please wait.</p>
+        </div>
+      </div>
+    );
+  }
+
+  // If user is loaded but not an admin, deny access
+  if (!isAdmin) {
+     return (
+      <div className="flex h-screen items-center justify-center">
+        <div className="text-center">
+          <h1 className="text-2xl font-bold text-destructive">Access Denied</h1>
+          <p className="text-muted-foreground">You do not have administrative privileges.</p>
+           <Button onClick={() => router.push('/login')} className="mt-4">Go to Login</Button>
+        </div>
+      </div>
+    );
+  }
+
+  // If all checks pass, render the main content
+  return (
+    <div className="relative flex min-h-screen flex-col">
+      <AppHeader />
+      <main className="flex-1">
+        <div className="container relative p-4 sm:p-6 md:p-8 print:p-0">
+          {children}
+        </div>
+      </main>
+    </div>
+  );
+}
+
 
 function AppContent({ children }: { children: React.ReactNode }) {
   const { user, isUserLoading } = useUser();
@@ -30,14 +80,7 @@ function AppContent({ children }: { children: React.ReactNode }) {
   
   return (
      <DataProvider>
-        <div className="relative flex min-h-screen flex-col">
-          <AppHeader />
-          <main className="flex-1">
-            <div className="container relative p-4 sm:p-6 md:p-8 print:p-0">
-              {children}
-            </div>
-          </main>
-        </div>
+        <AdminCheck>{children}</AdminCheck>
     </DataProvider>
   )
 }
