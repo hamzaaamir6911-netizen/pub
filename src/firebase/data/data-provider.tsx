@@ -4,7 +4,7 @@
 import React, { createContext, useContext, ReactNode } from 'react';
 import type { Item, Customer, Sale, Expense, Transaction, Vendor } from '@/lib/types';
 import { useCollection, useFirestore, useMemoFirebase, useUser } from '@/firebase';
-import { collection, doc, writeBatch, serverTimestamp, Timestamp, orderBy, query, where, getDocs, runTransaction } from 'firebase/firestore';
+import { collection, doc, writeBatch, serverTimestamp, Timestamp, orderBy, query, where, getDocs, runTransaction, increment } from 'firebase/firestore';
 import { addDocumentNonBlocking, deleteDocumentNonBlocking, updateDocumentNonBlocking } from '../non-blocking-updates';
 import { date } from 'zod';
 
@@ -174,11 +174,14 @@ export const DataProvider = ({ children }: { children: ReactNode }) => {
         if (!user) throw new Error("User not authenticated");
         const saleRef = doc(firestore, 'sales', saleId);
         const sale = sales.find(s => s.id === saleId);
-        if (!sale) return;
+        if (!sale || sale.status === 'posted') return;
 
         const batch = writeBatch(firestore);
+        
+        // 1. Update sale status
         batch.update(saleRef, { status: 'posted' });
 
+        // 2. Add transaction to ledger
         const transactionData = {
             description: `Sale to ${sale.customerName} (Invoice: ${sale.id})`,
             amount: sale.total,
@@ -190,6 +193,19 @@ export const DataProvider = ({ children }: { children: ReactNode }) => {
         };
         const transactionRef = doc(collection(firestore, 'transactions'));
         batch.set(transactionRef, transactionData);
+
+        // 3. Update inventory stock
+        for (const saleItem of sale.items) {
+            const itemRef = doc(firestore, 'items', saleItem.itemId);
+            const itemDetails = items.find(i => i.id === saleItem.itemId);
+            if(itemDetails) {
+                 const quantityToDecrement = (itemDetails.category === 'Aluminium' && saleItem.feet) 
+                    ? saleItem.feet * saleItem.quantity
+                    : saleItem.quantity;
+                batch.update(itemRef, { quantity: increment(-quantityToDecrement) });
+            }
+        }
+
         await batch.commit();
     };
 
@@ -203,20 +219,28 @@ export const DataProvider = ({ children }: { children: ReactNode }) => {
         batch.delete(saleRef);
     
         if (saleToDelete.status === 'posted') {
+            // 1. Delete associated transaction
             const q = query(
                 collection(firestore, 'transactions'), 
                 where("category", "==", "Sale"), 
-                where("customerId", "==", saleToDelete.customerId),
-                where("amount", "==", saleToDelete.total)
-                // Note: This is not foolproof if multiple sales have the same amount for the same customer
+                where("description", "==", `Sale to ${saleToDelete.customerName} (Invoice: ${saleToDelete.id})`)
             );
             const querySnapshot = await getDocs(q);
             querySnapshot.forEach((doc) => {
-                // Heuristic to find the right transaction to delete
-                if(doc.data().description.includes(saleToDelete.id)) {
-                    batch.delete(doc.ref);
-                }
+                batch.delete(doc.ref);
             });
+
+            // 2. Replenish inventory stock
+            for (const saleItem of saleToDelete.items) {
+                const itemRef = doc(firestore, 'items', saleItem.itemId);
+                const itemDetails = items.find(i => i.id === saleItem.itemId);
+                 if(itemDetails) {
+                    const quantityToIncrement = (itemDetails.category === 'Aluminium' && saleItem.feet) 
+                        ? saleItem.feet * saleItem.quantity
+                        : saleItem.quantity;
+                    batch.update(itemRef, { quantity: increment(quantityToIncrement) });
+                }
+            }
         }
         await batch.commit();
     };
@@ -273,7 +297,7 @@ export const DataProvider = ({ children }: { children: ReactNode }) => {
     const getDashboardStats = () => {
         const totalSales = sales.filter(s => s.status === 'posted').reduce((sum, sale) => sum + sale.total, 0);
         const totalExpenses = expenses.reduce((sum, expense) => sum + expense.amount, 0);
-        const totalStockValue = 0; // Simplified
+        const totalStockValue = items.reduce((sum, item) => sum + (item.purchasePrice * item.quantity), 0);
         const totalCostOfGoodsSold = sales.filter(s => s.status === 'posted').reduce((sum, sale) => {
             return sum + sale.items.reduce((itemSum, saleItem) => {
                 const item = items.find(i => i.id === saleItem.itemId);

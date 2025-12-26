@@ -35,6 +35,7 @@ function AddItemForm({ onItemAdded }: { onItemAdded: (newItem: Omit<Item, 'id' |
     const [name, setName] = useState('');
     const [category, setCategory] = useState<'Aluminium' | 'Glass' | 'Accessories'>('Aluminium');
     const [unit, setUnit] = useState<'Kg' | 'Feet' | 'Piece'>('Feet');
+    const [quantity, setQuantity] = useState(0);
     const [purchasePrice, setPurchasePrice] = useState(0);
     const [salePrice, setSalePrice] = useState(0);
     const [color, setColor] = useState('');
@@ -47,18 +48,18 @@ function AddItemForm({ onItemAdded }: { onItemAdded: (newItem: Omit<Item, 'id' |
             return;
         }
         const newItem: Omit<Item, 'id' | 'createdAt'> = {
-            name, category, unit, purchasePrice, salePrice, color, weight,
+            name, category, unit, quantity, purchasePrice, salePrice, color, weight,
         };
         onItemAdded(newItem as Omit<Item, 'id' | 'createdAt'>);
         toast({ title: "Item Added!", description: `${name} has been added to inventory.` });
         // Reset form
-        setName(''); setCategory('Aluminium'); setUnit('Feet'); setPurchasePrice(0); setSalePrice(0); setColor(''); setWeight(0);
+        setName(''); setCategory('Aluminium'); setUnit('Feet'); setQuantity(0); setPurchasePrice(0); setSalePrice(0); setColor(''); setWeight(0);
     };
 
     return (
-        <DialogContent className="max-w-2xl">
+        <DialogContent className="max-w-3xl">
             <DialogHeader><DialogTitle>Add New Item</DialogTitle></DialogHeader>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 py-4">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 py-4">
                 <div className="space-y-2">
                     <Label>Item Name</Label>
                     <Input value={name} onChange={(e) => setName(e.target.value)} placeholder="e.g. D 40" />
@@ -86,12 +87,16 @@ function AddItemForm({ onItemAdded }: { onItemAdded: (newItem: Omit<Item, 'id' |
                     </Select>
                 </div>
                 <div className="space-y-2">
+                    <Label>Quantity in Stock</Label>
+                    <Input type="number" value={quantity} onChange={(e) => setQuantity(parseInt(e.target.value) || 0)} />
+                </div>
+                <div className="space-y-2">
                     <Label>Purchase Price</Label>
-                    <Input type="number" value={purchasePrice} onChange={(e) => setPurchasePrice(parseFloat(e.target.value))} />
+                    <Input type="number" value={purchasePrice} onChange={(e) => setPurchasePrice(parseFloat(e.target.value) || 0)} />
                 </div>
                 <div className="space-y-2">
                     <Label>Sale Price</Label>
-                    <Input type="number" value={salePrice} onChange={(e) => setSalePrice(parseFloat(e.target.value))} />
+                    <Input type="number" value={salePrice} onChange={(e) => setSalePrice(parseFloat(e.target.value) || 0)} />
                 </div>
                  <div className="space-y-2">
                     <Label>Color</Label>
@@ -99,7 +104,7 @@ function AddItemForm({ onItemAdded }: { onItemAdded: (newItem: Omit<Item, 'id' |
                 </div>
                  <div className="space-y-2">
                     <Label>Weight (kg/ft)</Label>
-                    <Input type="number" value={weight} onChange={(e) => setWeight(parseFloat(e.target.value))} />
+                    <Input type="number" value={weight} onChange={(e) => setWeight(parseFloat(e.target.value) || 0)} />
                 </div>
             </div>
             <DialogFooter>
@@ -151,6 +156,7 @@ export default function InventoryPage() {
               <TableHead>Item Name</TableHead>
               <TableHead>Category</TableHead>
               <TableHead>Color</TableHead>
+              <TableHead className="text-right">Stock</TableHead>
               <TableHead className="text-right">Purchase Price</TableHead>
               <TableHead className="text-right">Sale Price</TableHead>
               <TableHead>
@@ -169,6 +175,9 @@ export default function InventoryPage() {
                 </TableCell>
                 <TableCell>
                   {item.color}
+                </TableCell>
+                <TableCell className="text-right font-medium">
+                  {item.quantity} {item.unit}
                 </TableCell>
                 <TableCell className="text-right">
                   {formatCurrency(item.purchasePrice)}

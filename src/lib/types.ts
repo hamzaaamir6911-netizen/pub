@@ -8,7 +8,7 @@ export type Item = {
   salePrice: number;
   color: string;
   weight?: number;
-  quantity?: number;
+  quantity: number;
   createdAt: Date;
 };
 
