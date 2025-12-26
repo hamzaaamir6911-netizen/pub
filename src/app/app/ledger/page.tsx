@@ -3,7 +3,7 @@
 "use client";
 
 import { useState, useEffect, useMemo } from "react";
-import { PlusCircle, X, MoreHorizontal } from "lucide-react";
+import { PlusCircle, X, MoreHorizontal, Printer } from "lucide-react";
 import {
   Table,
   TableBody,
@@ -199,14 +199,20 @@ export default function LedgerPage() {
 
   let runningBalance = 0;
   const transactionsWithBalance = filteredTransactions.map(t => {
+      // For debits in customer ledger, balance increases. For credits, it decreases.
+      // For debits in vendor ledger, our liability decreases. For credits (purchases), it increases.
+      // This seems complex. Let's simplify the view logic.
+      // General Ledger: Credit increases balance, Debit decreases.
+      // Customer Ledger: Debit is a Sale (increases what they owe you). Credit is a Payment (decreases what they owe you).
+      // Vendor Ledger: Credit is a Purchase from them (increases what you owe them). Debit is a Payment to them (decreases what you owe them).
       if (selectedCustomerId) {
-        // Customer Ledger: debit is a sale (increases what they owe), credit is a payment (decreases what they owe)
+        // Customer perspective: debit increases their due, credit decreases it.
         runningBalance += (t.type === 'debit' ? t.amount : -t.amount);
       } else if (selectedVendorId) {
-        // Vendor Ledger: credit is a purchase from them (increases what we owe), debit is a payment to them (decreases what we owe)
-        runningBalance += (t.type === 'credit' ? t.amount : -t.amount);
+        // Vendor perspective: credit increases what we owe them, debit decreases it.
+         runningBalance += (t.type === 'credit' ? t.amount : -t.amount);
       } else {
-        // General Ledger: credit is income, debit is expense
+        // General cash ledger: credit is cash in, debit is cash out.
         runningBalance += (t.type === 'credit' ? t.amount : -t.amount);
       }
       return { ...t, balance: runningBalance };
@@ -225,18 +231,24 @@ export default function LedgerPage() {
         title="Ledger"
         description="A record of all financial transactions."
       >
-        <Dialog open={isModalOpen} onOpenChange={setModalOpen}>
-            <DialogTrigger asChild>
-                <Button>
-                    <PlusCircle className="mr-2 h-4 w-4" />
-                    Add Voucher
-                </Button>
-            </DialogTrigger>
-            <AddTransactionForm onTransactionAdded={handleTransactionAdded} />
-        </Dialog>
+        <div className="flex items-center gap-2">
+            <Button variant="outline" onClick={() => window.print()} className="print:hidden">
+                <Printer className="mr-2 h-4 w-4" />
+                Print
+            </Button>
+            <Dialog open={isModalOpen} onOpenChange={setModalOpen}>
+                <DialogTrigger asChild>
+                    <Button className="print:hidden">
+                        <PlusCircle className="mr-2 h-4 w-4" />
+                        Add Voucher
+                    </Button>
+                </DialogTrigger>
+                <AddTransactionForm onTransactionAdded={handleTransactionAdded} />
+            </Dialog>
+        </div>
       </PageHeader>
 
-      <div className="flex flex-wrap items-center gap-4 mb-4 p-4 bg-muted/50 rounded-lg">
+      <div className="flex flex-wrap items-center gap-4 mb-4 p-4 bg-muted/50 rounded-lg print:hidden">
         <h3 className="text-sm font-medium">Filters</h3>
         <div className="flex items-center gap-2">
             <Label htmlFor="customer-filter" className="text-sm">Customer</Label>
@@ -263,7 +275,7 @@ export default function LedgerPage() {
         )}
       </div>
 
-      <div className="rounded-lg border shadow-sm">
+      <div className="rounded-lg border shadow-sm print:border-none print:shadow-none">
         <Table>
           <TableHeader>
             <TableRow>
@@ -273,7 +285,7 @@ export default function LedgerPage() {
               <TableHead className="text-right">Debit</TableHead>
               <TableHead className="text-right">Credit</TableHead>
               {hasFilter && <TableHead className="text-right">Balance</TableHead>}
-              <TableHead><span className="sr-only">Actions</span></TableHead>
+              <TableHead className="print:hidden"><span className="sr-only">Actions</span></TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -298,7 +310,7 @@ export default function LedgerPage() {
                         {transaction.type === 'credit' ? formatCurrency(transaction.amount) : '-'}
                     </TableCell>
                     {hasFilter && <TableCell className="text-right font-mono">{formatCurrency(transaction.balance)}</TableCell>}
-                    <TableCell>
+                    <TableCell className="print:hidden">
                       <DropdownMenu>
                         <DropdownMenuTrigger asChild>
                           <Button aria-haspopup="true" size="icon" variant="ghost">
@@ -329,7 +341,7 @@ export default function LedgerPage() {
                         <TableCell className={cn("text-right font-bold font-mono", runningBalance >= 0 ? "text-green-600" : "text-red-600")}>
                             {formatCurrency(runningBalance)}
                         </TableCell>
-                         <TableCell></TableCell>
+                         <TableCell className="print:hidden"></TableCell>
                     </TableRow>
                 </TableFooter>
            )}
@@ -338,5 +350,3 @@ export default function LedgerPage() {
     </>
   );
 }
-
-    

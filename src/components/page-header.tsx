@@ -7,7 +7,7 @@ type PageHeaderProps = {
 
 export function PageHeader({ title, description, children }: PageHeaderProps) {
   return (
-    <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4 mb-8">
+    <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4 mb-8 print:hidden">
       <div className="flex items-center gap-2">
         <div>
             <h1 className="text-2xl md:text-3xl font-bold font-headline tracking-tight text-primary">

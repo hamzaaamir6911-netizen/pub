@@ -9,10 +9,10 @@ export default function AppLayout({
 }) {
   return (
     <DataProvider>
-      <div className="relative flex min-h-screen flex-col">
+      <div className="relative flex min-h-screen flex-col print:block">
         <AppHeader />
-        <main className="flex-1">
-          <div className="container relative p-4 sm:p-6 md:p-8">
+        <main className="flex-1 print:flex-none">
+          <div className="container relative p-4 sm:p-6 md:p-8 print:p-0">
             {children}
           </div>
         </main>
