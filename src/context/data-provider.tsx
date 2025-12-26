@@ -1,4 +1,5 @@
 
+
 "use client";
 
 import React, { createContext, useContext, useState, ReactNode, useEffect } from 'react';
@@ -227,7 +228,7 @@ export const DataProvider = ({ children }: { children: ReactNode }) => {
         return sum;
     }, 0);
     
-    const totalRevenue = totalSales + cashReceived;
+    const totalRevenue = totalSales; // Total revenue from sales
 
     const totalExpenses = expenses.reduce((sum, expense) => sum + expense.amount, 0);
     
@@ -267,6 +268,7 @@ export const DataProvider = ({ children }: { children: ReactNode }) => {
 
   const getMonthlySalesData = () => {
     const revenueByMonth: { [key: string]: number } = {};
+    const expensesByMonth: { [key: string]: number } = {};
     
     sales.forEach(sale => {
       const saleDate = new Date(sale.date);
@@ -277,15 +279,13 @@ export const DataProvider = ({ children }: { children: ReactNode }) => {
       revenueByMonth[month] += sale.total;
     });
 
-    transactions.forEach(transaction => {
-      if (transaction.type === 'credit' && transaction.category !== 'Sale') {
-        const transDate = new Date(transaction.date);
-        const month = transDate.toLocaleString('default', { month: 'short' });
-        if (!revenueByMonth[month]) {
-          revenueByMonth[month] = 0;
-        }
-        revenueByMonth[month] += transaction.amount;
+    expenses.forEach(expense => {
+      const expenseDate = new Date(expense.date);
+      const month = expenseDate.toLocaleString('default', { month: 'short' });
+      if (!expensesByMonth[month]) {
+        expensesByMonth[month] = 0;
       }
+      expensesByMonth[month] += expense.amount;
     });
 
     const lastSixMonths = [];
@@ -298,6 +298,7 @@ export const DataProvider = ({ children }: { children: ReactNode }) => {
     return lastSixMonths.map(month => ({
       name: month,
       sales: revenueByMonth[month] || 0,
+      expenses: expensesByMonth[month] || 0,
     }));
   };
 
@@ -338,3 +339,5 @@ export const useDataContext = () => {
   }
   return context;
 };
+
+    

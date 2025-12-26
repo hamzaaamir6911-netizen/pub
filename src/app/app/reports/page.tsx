@@ -1,4 +1,5 @@
 
+
 "use client"
 
 import React, { useState } from "react"
@@ -67,14 +68,14 @@ function LedgerReport() {
     });
 
     let balance = 0;
-    const reportData = filteredTransactions.reverse().map(t => {
+    const reportData = filteredTransactions.sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime()).map(t => {
         if(t.type === 'credit') {
             balance += t.amount;
         } else {
             balance -= t.amount;
         }
         return {...t, balance};
-    }).reverse();
+    });
 
     return (
         <Card className="mt-4">
@@ -146,10 +147,10 @@ function LedgerReport() {
                                         <TableCell>
                                             <Badge variant="outline">{transaction.category}</Badge>
                                         </TableCell>
-                                        <TableCell className={cn("text-right font-mono", transaction.type === 'debit' && "text-red-500")}>
+                                        <TableCell className={cn("text-right font-mono", transaction.type === 'debit' && "font-semibold")}>
                                             {transaction.type === 'debit' ? formatCurrency(transaction.amount) : '-'}
                                         </TableCell>
-                                        <TableCell className={cn("text-right font-mono", transaction.type === 'credit' && "text-green-500")}>
+                                        <TableCell className={cn("text-right font-mono", transaction.type === 'credit' && "font-semibold")}>
                                             {transaction.type === 'credit' ? formatCurrency(transaction.amount) : '-'}
                                         </TableCell>
                                          <TableCell className="text-right font-mono">{formatCurrency(transaction.balance)}</TableCell>
@@ -167,7 +168,7 @@ function LedgerReport() {
 export default function ReportsPage() {
     const { getDashboardStats, getMonthlySalesData } = useDataContext();
     const stats = getDashboardStats();
-    const monthlyRevenue = getMonthlySalesData();
+    const monthlyData = getMonthlySalesData();
     
     const dailyReportData = [
         { date: "Today", sales: stats.todaySummary.sales.reduce((acc, s) => acc + s.total, 0), expenses: stats.todaySummary.expenses.reduce((acc, e) => acc + e.amount, 0)},
@@ -225,7 +226,7 @@ export default function ReportsPage() {
                 </CardHeader>
                 <CardContent>
                     <ChartContainer config={chartConfig} className="min-h-[300px] w-full">
-                        <BarChart accessibilityLayer data={monthlyRevenue}>
+                        <BarChart accessibilityLayer data={monthlyData}>
                             <CartesianGrid vertical={false} />
                             <XAxis
                                 dataKey="month"
@@ -280,3 +281,5 @@ export default function ReportsPage() {
 }
 
       
+
+    

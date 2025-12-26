@@ -1,4 +1,5 @@
 
+
 "use client";
 
 import { useState, useEffect, useMemo } from "react";
@@ -197,15 +198,12 @@ export default function LedgerPage() {
   }, [transactions, selectedCustomerId, selectedVendorId]);
 
   let runningBalance = 0;
-  // For a customer ledger: Debit increases balance, Credit decreases.
-  // For a vendor ledger: Debit (payment to them) decreases our liability, Credit (purchase from them) increases.
-  // The current transaction model is simplified, so we'll adjust based on context.
   const transactionsWithBalance = filteredTransactions.map(t => {
       if (selectedCustomerId) {
-        // Customer Ledger: debit is sale (increases what they owe), credit is payment (decreases)
+        // Customer Ledger: debit is a sale (increases what they owe), credit is a payment (decreases what they owe)
         runningBalance += (t.type === 'debit' ? t.amount : -t.amount);
       } else if (selectedVendorId) {
-        // Vendor Ledger: debit is payment (decreases what we owe), credit would be purchase (increases what we owe)
+        // Vendor Ledger: credit is a purchase from them (increases what we owe), debit is a payment to them (decreases what we owe)
         runningBalance += (t.type === 'credit' ? t.amount : -t.amount);
       } else {
         // General Ledger: credit is income, debit is expense
@@ -327,7 +325,7 @@ export default function LedgerPage() {
            {hasFilter && transactionsWithBalance.length > 0 && (
                 <TableFooter>
                     <TableRow>
-                        <TableCell colSpan={hasFilter ? 6 : 5} className="text-right font-bold">Final Balance</TableCell>
+                        <TableCell colSpan={5} className="text-right font-bold">Final Balance</TableCell>
                         <TableCell className={cn("text-right font-bold font-mono", runningBalance >= 0 ? "text-green-600" : "text-red-600")}>
                             {formatCurrency(runningBalance)}
                         </TableCell>
@@ -340,3 +338,5 @@ export default function LedgerPage() {
     </>
   );
 }
+
+    

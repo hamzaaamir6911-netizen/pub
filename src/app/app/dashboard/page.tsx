@@ -1,4 +1,5 @@
 
+
 "use client"
 
 import { DollarSign, Warehouse, TrendingUp, TrendingDown, ArrowUpRight, ArrowDownRight } from "lucide-react"
@@ -21,20 +22,24 @@ import {
 } from "@/components/ui/table"
 import { PageHeader } from "@/components/page-header"
 import { formatCurrency, formatDate } from "@/lib/utils"
-import { ChartContainer, ChartTooltip, ChartTooltipContent, type ChartConfig } from "@/components/ui/chart"
+import { ChartContainer, ChartTooltip, ChartTooltipContent, ChartConfig, ChartLegend, ChartLegendContent } from "@/components/ui/chart"
 import { useDataContext } from "@/context/data-provider"
 
 const chartConfig = {
   sales: {
     label: "Sales",
-    color: "hsl(var(--primary))",
+    color: "hsl(var(--chart-1))",
+  },
+  expenses: {
+    label: "Expenses",
+    color: "hsl(var(--chart-2))",
   },
 } satisfies ChartConfig
 
 export default function DashboardPage() {
   const { getDashboardStats, getMonthlySalesData, sales } = useDataContext();
   const stats = getDashboardStats();
-  const monthlySales = getMonthlySalesData();
+  const monthlyData = getMonthlySalesData();
 
   return (
     <>
@@ -94,12 +99,12 @@ export default function DashboardPage() {
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-7 mt-8">
         <Card className="col-span-12 lg:col-span-4">
           <CardHeader>
-            <CardTitle>Revenue Overview</CardTitle>
-            <CardDescription>Monthly revenue performance.</CardDescription>
+            <CardTitle>Revenue & Expense Overview</CardTitle>
+            <CardDescription>Monthly performance.</CardDescription>
           </CardHeader>
           <CardContent className="pl-2">
              <ChartContainer config={chartConfig} className="min-h-[350px] w-full">
-              <BarChart accessibilityLayer data={monthlySales}>
+              <BarChart accessibilityLayer data={monthlyData}>
                 <XAxis
                   dataKey="name"
                   stroke="#888888"
@@ -116,9 +121,11 @@ export default function DashboardPage() {
                 />
                  <ChartTooltip
                   cursor={{ fill: 'hsl(var(--accent))' }}
-                  content={<ChartTooltipContent formatter={(value) => formatCurrency(value as number)} />}
+                  content={<ChartTooltipContent formatter={(value, name) => `${formatCurrency(value as number)}`} />}
                 />
+                <ChartLegend content={<ChartLegendContent />} />
                 <Bar dataKey="sales" fill="var(--color-sales)" radius={[4, 4, 0, 0]} />
+                <Bar dataKey="expenses" fill="var(--color-expenses)" radius={[4, 4, 0, 0]} />
               </BarChart>
             </ChartContainer>
           </CardContent>
@@ -184,3 +191,5 @@ export default function DashboardPage() {
 }
 
       
+
+    
