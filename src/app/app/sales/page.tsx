@@ -180,12 +180,12 @@ function NewSaleForm({ onSaleAdded }: { onSaleAdded: (newSale: Omit<Sale, 'id' |
     const { toast } = useToast();
     const { customers, items: allItems, addCustomer } = useDataContext();
     const [selectedCustomer, setSelectedCustomer] = useState("");
-    const [saleItems, setSaleItems] = useState<Partial<SaleItem>[]>([{itemId: "", quantity: 1, length: 0, width: 0, discount: 0 }]);
+    const [saleItems, setSaleItems] = useState<Partial<SaleItem>[]>([{itemId: "", quantity: 1, feet: 1, discount: 0 }]);
     const [overallDiscount, setOverallDiscount] = useState(0);
     const [isCustomerModalOpen, setCustomerModalOpen] = useState(false);
 
     const handleAddItem = () => {
-        setSaleItems([...saleItems, {itemId: "", quantity: 1, length: 0, width: 0, discount: 0 }]);
+        setSaleItems([...saleItems, {itemId: "", quantity: 1, feet: 1, discount: 0 }]);
     }
 
     const handleRemoveItem = (index: number) => {
@@ -204,10 +204,7 @@ function NewSaleForm({ onSaleAdded }: { onSaleAdded: (newSale: Omit<Sale, 'id' |
             const itemDetails = allItems.find(i => i.id === currentItem.itemId);
             if (!itemDetails) return total;
 
-            let feet = 1;
-            if (itemDetails.category === 'Aluminium' && currentItem.length && currentItem.width) {
-                 feet = (currentItem.length * currentItem.width / 144);
-            }
+            const feet = currentItem.feet || 1;
             const itemTotal = feet * itemDetails.salePrice * (currentItem.quantity || 1);
             const discountAmount = itemTotal * ((currentItem.discount || 0) / 100);
             
@@ -220,7 +217,7 @@ function NewSaleForm({ onSaleAdded }: { onSaleAdded: (newSale: Omit<Sale, 'id' |
 
     const clearForm = () => {
         setSelectedCustomer("");
-        setSaleItems([{itemId: "", quantity: 1, length: 0, width: 0, discount: 0}]);
+        setSaleItems([{itemId: "", quantity: 1, feet: 1, discount: 0}]);
         setOverallDiscount(0);
     }
     
@@ -241,9 +238,9 @@ function NewSaleForm({ onSaleAdded }: { onSaleAdded: (newSale: Omit<Sale, 'id' |
             const item = allItems.find(i => i.id === si.itemId)!;
             const thicknessMatch = item.name.match(/\((.*?)\)/);
 
-            let feet = 1;
-            if (item.category === 'Aluminium' && si.length && si.width) {
-                feet = (si.length * si.width / 144);
+            let feet = si.feet || 1;
+            if (item.category !== 'Aluminium') {
+                feet = 1;
             }
 
             return {
@@ -326,7 +323,7 @@ function NewSaleForm({ onSaleAdded }: { onSaleAdded: (newSale: Omit<Sale, 'id' |
                     {saleItems.map((saleItem, index) => {
                          const itemDetails = allItems.find(i => i.id === saleItem.itemId);
                          return (
-                         <div key={index} className="grid grid-cols-1 md:grid-cols-6 gap-2 items-end p-3 border rounded-md">
+                         <div key={index} className="grid grid-cols-1 md:grid-cols-5 gap-2 items-end p-3 border rounded-md">
                             <div className="md:col-span-2 space-y-2">
                                 <Label>Item</Label>
                                 <Select onValueChange={(value) => handleItemChange(index, "itemId", value)} value={saleItem.itemId}>
@@ -340,27 +337,16 @@ function NewSaleForm({ onSaleAdded }: { onSaleAdded: (newSale: Omit<Sale, 'id' |
                             </div>
                             
                             {itemDetails?.category === "Aluminium" ? (
-                                <>
-                                    <div className="space-y-2">
-                                        <Label>Length (in)</Label>
-                                        <Input 
-                                            type="number" 
-                                            placeholder="L" 
-                                            value={saleItem.length}
-                                            onChange={(e) => handleItemChange(index, "length", parseFloat(e.target.value))}
-                                        />
-                                    </div>
-                                    <div className="space-y-2">
-                                        <Label>Width (in)</Label>
-                                        <Input 
-                                            type="number" 
-                                            placeholder="W" 
-                                            value={saleItem.width}
-                                            onChange={(e) => handleItemChange(index, "width", parseFloat(e.target.value))}
-                                        />
-                                    </div>
-                                </>
-                            ) : <div className="md:col-span-2" /> }
+                                <div className="space-y-2">
+                                    <Label>Feet</Label>
+                                    <Input 
+                                        type="number" 
+                                        placeholder="e.g. 12.5" 
+                                        value={saleItem.feet}
+                                        onChange={(e) => handleItemChange(index, "feet", parseFloat(e.target.value))}
+                                    />
+                                </div>
+                            ) : <div /> }
                            
                             <div className="space-y-2">
                                 <Label>Discount (%)</Label>
@@ -504,5 +490,3 @@ export default function SalesPage() {
     </>
   );
 }
-
-    
