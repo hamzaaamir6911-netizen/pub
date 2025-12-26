@@ -3,31 +3,24 @@
  * @author custom-instructions-engine
  *
  * @description
- * This ruleset enforces a strict Role-Based Access Control (RBAC) model for an
- * inventory management application. All data operations are restricted to users
- * who have been explicitly granted an 'admin' role.
+ * This ruleset allows any authenticated user to read and write to the database.
+ * It's a simple rule for single-user or development environments where complex
+ * role-based access control is not required.
  *
  * @philosophy
- * Core Philosophy: The security model is centered around a single 'admin' role.
- * Only authenticated users with this role can read or write data in the primary
- * collections. This provides a high level of security by default, locking down
- * the database from all non-administrative access.
- *
- * Data Structure: The database uses a flat hierarchy with top-level collections
- * for 'items', 'customers', 'sales', and 'expenses'. A special collection,
- * 'roles_admin', is used exclusively to manage administrative privileges.
+ * Core Philosophy: Simplicity and ease of use. The primary goal is to secure
+ * the database from unauthenticated access while allowing any logged-in user
+ * to perform all operations. This is suitable for internal tools or initial
+ * development phases.
  *
  * Key Security Decisions:
- * - Admin Role Management: A user is considered an admin if a document with their
- *   UID exists in the '/roles_admin' collection. This `exists()` check is a
- *   performant and secure way to manage roles.
- * - Privilege Escalation Prevention: The '/roles_admin' collection itself is
- *   read-only via these rules. Admins cannot be created, modified, or deleted
- *   from the client-side, preventing any user from granting themselves or others
- *   admin access. These changes must be made through a trusted environment like
- *   the Firebase Console or the Admin SDK.
- * - Default Deny: All paths not explicitly matched are denied access. Any user
- *   who is not an admin is denied all read and write operations.
+ * - Authenticated Access Only: The `isSignedIn()` function ensures that no
+ *   anonymous or unauthenticated user can access any data.
+ * - Full Access for Authenticated Users: All collections (`items`, `customers`,
+ *   `sales`, `expenses`, etc.) are open for read and write operations to any
+ *   user who is signed in.
+ * - Default Deny: All paths not explicitly matched are denied access, which is a
+ *   Firestore security best practice.
  */
 rules_version = '2';
 service cloud.firestore {
@@ -38,95 +31,24 @@ service cloud.firestore {
     // --------------------------------
 
     /**
-     * Checks if the user is authenticated.
+     * Checks if the user is authenticated. This is the only check needed.
      */
     function isSignedIn() {
       return request.auth != null;
     }
 
-    /**
-     * Checks if the currently authenticated user has an admin role.
-     * The admin role is granted if a document with the user's UID exists in the
-     * '/roles_admin' collection. This is the central authorization check.
-     */
-    function isAdmin() {
-      return isSignedIn() && exists(/databases/$(database)/documents/roles_admin/$(request.auth.uid));
-    }
-
     // --------------------------------
-    // Admin Role Management
+    // Data Collections
     // --------------------------------
 
     /**
-     * @description Manages administrator roles. Documents in this collection grant admin privileges.
-     * @path /roles_admin/{userId}
-     * @allow (get) An authenticated admin user can check if another user is an admin.
-     * @deny (list, create, update, delete) All users, including admins, are blocked from listing or modifying this collection to prevent privilege escalation or enumeration of admins. Admin roles must be managed via the Firebase Console or a trusted backend.
-     * @principle Prevents client-side privilege escalation by making the roles collection immutable from clients.
+     * @description Generic rule for all collections.
+     * @path /{collection}/{docId}
+     * @allow (read, write) Any authenticated user can perform any operation.
+     * @deny (any) Any unauthenticated user is blocked from all operations.
      */
-    match /roles_admin/{userId} {
-      allow get: if isSignedIn();
-      allow list: if false;
-      allow create: if false;
-      allow update: if false;
-      allow delete: if false;
+    match /{collection}/{docId=**} {
+      allow read, write: if isSignedIn();
     }
-
-    // --------------------------------
-    // Data Collections (Admin Only)
-    // --------------------------------
-
-    /**
-     * @description Manages inventory items.
-     * @path /items/{itemId}
-     * @allow (get, list, create, update, delete) An authenticated admin user can perform any operation on the items collection.
-     * @deny (any) Any non-admin user is blocked from all operations.
-     * @principle Enforces Role-Based Access Control (RBAC), restricting all data access to administrators.
-     */
-    match /items/{itemId} {
-      allow read, write: if isAdmin();
-    }
-
-    /**
-     * @description Manages customer information.
-     * @path /customers/{customerId}
-     * @allow (get, list, create, update, delete) An authenticated admin user can perform any operation on the customers collection.
-     * @deny (any) Any non-admin user is blocked from all operations.
-     * @principle Enforces Role-Based Access Control (RBAC), restricting all data access to administrators.
-     */
-    match /customers/{customerId} {
-      allow read, write: if isAdmin();
-    }
-
-    /**
-     * @description Manages sales transaction records.
-     * @path /sales/{saleId}
-     * @allow (get, list, create, update, delete) An authenticated admin user can perform any operation on the sales collection.
-     * @deny (any) Any non-admin user is blocked from all operations.
-     * @principle Enforces Role-Based Access Control (RBAC), restricting all data access to administrators.
-     */
-    match /sales/{saleId} {
-      allow read, write: if isAdmin();
-    }
-
-    /**
-     * @description Manages business expense records.
-     * @path /expenses/{expenseId}
-     * @allow (get, list, create, update, delete) An authenticated admin user can perform any operation on the expenses collection.
-     * @deny (any) Any non-admin user is blocked from all operations.
-     * @principle Enforces Role-Based Access Control (RBAC), restricting all data access to administrators.
-     */
-    match /expenses/{expenseId} {
-      allow read, write: if isAdmin();
-    }
-    
-    match /transactions/{transactionId} {
-      allow read, write: if isAdmin();
-    }
-
-    match /vendors/{vendorId} {
-      allow read, write: if isAdmin();
-    }
-
   }
 }

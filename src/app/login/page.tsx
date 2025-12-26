@@ -8,16 +8,14 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
-import { useAuth, useFirestore } from "@/firebase";
+import { useAuth } from "@/firebase";
 import { signInWithEmailAndPassword, createUserWithEmailAndPassword } from "firebase/auth";
-import { doc, setDoc } from "firebase/firestore";
 
 
 export default function LoginPage() {
   const router = useRouter();
   const { toast } = useToast();
   const auth = useAuth();
-  const firestore = useFirestore();
   const [email, setEmail] = useState("admin@arco.com");
   const [password, setPassword] = useState("password");
   const [isLoading, setIsLoading] = useState(false);
@@ -41,18 +39,11 @@ export default function LoginPage() {
                 const userCredential = await createUserWithEmailAndPassword(auth, email, password);
                 const user = userCredential.user;
 
-                // Grant admin role to the new user by creating a document in roles_admin
-                if (user && firestore) {
-                  const adminRoleRef = doc(firestore, 'roles_admin', user.uid);
-                  // Ensure you set some data in the document for the 'exists' check to work reliably
-                  await setDoc(adminRoleRef, { role: 'admin' });
-                }
-
                 toast({
                     title: "Admin Account Created",
-                    description: "Logged in successfully and granted admin privileges. Redirecting...",
+                    description: "Logged in successfully. Redirecting...",
                 });
-                // Perform a hard reload to ensure Firebase auth state and custom claims are refreshed
+                // Perform a hard reload to ensure Firebase auth state is refreshed
                 window.location.href = "/app/dashboard";
             } catch (creationError: any) {
                  toast({
