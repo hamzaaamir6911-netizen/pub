@@ -79,7 +79,7 @@ interface DataContextProps {
 
 const DataContext = createContext<DataContextProps | undefined>(undefined);
 
-const DATA_VERSION = '1.4'; // Increment this to force a refresh
+const DATA_VERSION = '1.5'; // Increment this to force a refresh
 
 export const DataProvider = ({ children }: { children: ReactNode }) => {
     
