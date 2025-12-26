@@ -54,6 +54,7 @@ export type Expense = {
   amount: number;
   category: 'Labour' | 'Transport' | 'Electricity' | 'Vendor Payment' | 'Other';
   date: Date;
+  vendorId?: string;
 };
 
 export type Transaction = {
@@ -65,6 +66,8 @@ export type Transaction = {
   category: string;
   customerId?: string;
   customerName?: string;
+  vendorId?: string;
+  vendorName?: string;
 }
 
     

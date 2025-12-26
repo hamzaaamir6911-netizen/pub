@@ -30,9 +30,11 @@ import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 function AddExpenseForm({ onExpenseAdded }: { onExpenseAdded: (newExpense: Omit<Expense, 'id' | 'date'>) => void }) {
+    const { vendors } = useDataContext();
     const [title, setTitle] = useState('');
     const [amount, setAmount] = useState(0);
     const [category, setCategory] = useState<'Labour' | 'Transport' | 'Electricity' | 'Vendor Payment' | 'Other'>('Other');
+    const [vendorId, setVendorId] = useState<string | undefined>(undefined);
     const { toast } = useToast();
 
     const handleSubmit = () => {
@@ -40,14 +42,19 @@ function AddExpenseForm({ onExpenseAdded }: { onExpenseAdded: (newExpense: Omit<
             toast({ variant: "destructive", title: "Please enter a valid title and amount." });
             return;
         }
+         if (category === 'Vendor Payment' && !vendorId) {
+            toast({ variant: "destructive", title: "Please select a vendor for this payment." });
+            return;
+        }
         const newExpense: Omit<Expense, 'id' | 'date'> = {
             title,
             amount,
             category,
+            vendorId: category === 'Vendor Payment' ? vendorId : undefined,
         };
         onExpenseAdded(newExpense);
         toast({ title: "Expense Added!", description: `${title} has been recorded.` });
-        setTitle(''); setAmount(0); setCategory('Other');
+        setTitle(''); setAmount(0); setCategory('Other'); setVendorId(undefined);
     };
     
     return (
@@ -75,6 +82,17 @@ function AddExpenseForm({ onExpenseAdded }: { onExpenseAdded: (newExpense: Omit<
                         </SelectContent>
                     </Select>
                 </div>
+                {category === 'Vendor Payment' && (
+                     <div className="space-y-2">
+                        <Label>Vendor</Label>
+                        <Select onValueChange={setVendorId} value={vendorId}>
+                            <SelectTrigger><SelectValue placeholder="Select a vendor" /></SelectTrigger>
+                            <SelectContent>
+                                {vendors.map(v => <SelectItem key={v.id} value={v.id}>{v.name}</SelectItem>)}
+                            </SelectContent>
+                        </Select>
+                    </div>
+                )}
             </div>
             <DialogFooter>
                 <Button onClick={handleSubmit}>Add Expense</Button>

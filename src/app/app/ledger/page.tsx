@@ -1,8 +1,8 @@
 
 "use client";
 
-import { useState, useEffect } from "react";
-import { PlusCircle } from "lucide-react";
+import { useState, useEffect, useMemo } from "react";
+import { PlusCircle, X } from "lucide-react";
 import {
   Table,
   TableBody,
@@ -10,6 +10,7 @@ import {
   TableHead,
   TableHeader,
   TableRow,
+  TableFooter
 } from "@/components/ui/table";
 import {
   Dialog,
@@ -144,12 +145,40 @@ function AddTransactionForm({ onTransactionAdded }: { onTransactionAdded: (newTr
 
 
 export default function LedgerPage() {
-  const { transactions, addTransaction } = useDataContext();
+  const { transactions, addTransaction, customers, vendors } = useDataContext();
   const [isModalOpen, setModalOpen] = useState(false);
+  const [selectedCustomerId, setSelectedCustomerId] = useState<string | null>(null);
+  const [selectedVendorId, setSelectedVendorId] = useState<string | null>(null);
 
   const handleTransactionAdded = (newTransaction: Omit<Transaction, 'id' | 'date'>) => {
     addTransaction(newTransaction);
     setModalOpen(false);
+  }
+
+  const filteredTransactions = useMemo(() => {
+    let filtered = transactions;
+    if (selectedCustomerId) {
+        filtered = transactions.filter(t => t.customerId === selectedCustomerId);
+    }
+    if (selectedVendorId) {
+        filtered = transactions.filter(t => t.vendorId === selectedVendorId);
+    }
+    return filtered.sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
+  }, [transactions, selectedCustomerId, selectedVendorId]);
+
+  let runningBalance = 0;
+  const transactionsWithBalance = filteredTransactions.map(t => {
+      if (t.type === 'credit') {
+          runningBalance += t.amount;
+      } else {
+          runningBalance -= t.amount;
+      }
+      return { ...t, balance: runningBalance };
+  });
+
+  const clearFilters = () => {
+    setSelectedCustomerId(null);
+    setSelectedVendorId(null);
   }
 
   return (
@@ -168,6 +197,34 @@ export default function LedgerPage() {
             <AddTransactionForm onTransactionAdded={handleTransactionAdded} />
         </Dialog>
       </PageHeader>
+
+      <div className="flex flex-wrap items-center gap-4 mb-4 p-4 bg-muted/50 rounded-lg">
+        <h3 className="text-sm font-medium">Filters</h3>
+        <div className="flex items-center gap-2">
+            <Label htmlFor="customer-filter" className="text-sm">Customer</Label>
+            <Select onValueChange={(value) => { setSelectedCustomerId(value); setSelectedVendorId(null); }} value={selectedCustomerId || ''}>
+                <SelectTrigger id="customer-filter" className="w-[200px]"><SelectValue placeholder="Select Customer" /></SelectTrigger>
+                <SelectContent>
+                    {customers.map(c => <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>)}
+                </SelectContent>
+            </Select>
+        </div>
+        <div className="flex items-center gap-2">
+            <Label htmlFor="vendor-filter" className="text-sm">Vendor</Label>
+            <Select onValueChange={(value) => { setSelectedVendorId(value); setSelectedCustomerId(null); }} value={selectedVendorId || ''}>
+                <SelectTrigger id="vendor-filter" className="w-[200px]"><SelectValue placeholder="Select Vendor" /></SelectTrigger>
+                <SelectContent>
+                    {vendors.map(v => <SelectItem key={v.id} value={v.id}>{v.name}</SelectItem>)}
+                </SelectContent>
+            </Select>
+        </div>
+        {(selectedCustomerId || selectedVendorId) && (
+            <Button variant="ghost" size="sm" onClick={clearFilters}>
+                <X className="mr-2 h-4 w-4" /> Clear Filter
+            </Button>
+        )}
+      </div>
+
       <div className="rounded-lg border shadow-sm">
         <Table>
           <TableHeader>
@@ -177,15 +234,18 @@ export default function LedgerPage() {
               <TableHead>Category</TableHead>
               <TableHead className="text-right">Debit</TableHead>
               <TableHead className="text-right">Credit</TableHead>
+              {(selectedCustomerId || selectedVendorId) && <TableHead className="text-right">Balance</TableHead>}
             </TableRow>
           </TableHeader>
           <TableBody>
-            {transactions.length === 0 ? (
+            {transactionsWithBalance.length === 0 ? (
                 <TableRow>
-                    <TableCell colSpan={5} className="h-24 text-center">No transactions yet.</TableCell>
+                    <TableCell colSpan={(selectedCustomerId || selectedVendorId) ? 6 : 5} className="h-24 text-center">
+                        {transactions.length === 0 ? "No transactions yet." : "No transactions for selected filter."}
+                    </TableCell>
                 </TableRow>
             ) : (
-                transactions.map((transaction) => (
+                transactionsWithBalance.map((transaction) => (
                 <TableRow key={transaction.id}>
                     <TableCell>{formatDate(transaction.date)}</TableCell>
                     <TableCell className="font-medium">{transaction.description}</TableCell>
@@ -198,14 +258,24 @@ export default function LedgerPage() {
                     <TableCell className={cn("text-right font-mono", transaction.type === 'credit' && "text-green-500")}>
                         {transaction.type === 'credit' ? formatCurrency(transaction.amount) : '-'}
                     </TableCell>
+                    {(selectedCustomerId || selectedVendorId) && <TableCell className="text-right font-mono">{formatCurrency(transaction.balance)}</TableCell>}
                 </TableRow>
                 ))
             )}
           </TableBody>
+           {(selectedCustomerId || selectedVendorId) && transactionsWithBalance.length > 0 && (
+                <TableFooter>
+                    <TableRow>
+                        <TableCell colSpan={5} className="text-right font-bold">Final Balance</TableCell>
+                        <TableCell className={cn("text-right font-bold font-mono", runningBalance >= 0 ? "text-green-600" : "text-red-600")}>
+                            {formatCurrency(runningBalance)}
+                        </TableCell>
+                    </TableRow>
+                </TableFooter>
+           )}
         </Table>
       </div>
     </>
   );
 }
-
     

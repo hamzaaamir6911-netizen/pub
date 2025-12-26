@@ -76,7 +76,7 @@ interface DataContextProps {
 
 const DataContext = createContext<DataContextProps | undefined>(undefined);
 
-const DATA_VERSION = '1.1'; // Increment this to force a refresh
+const DATA_VERSION = '1.2'; // Increment this to force a refresh
 
 export const DataProvider = ({ children }: { children: ReactNode }) => {
     
@@ -150,7 +150,9 @@ export const DataProvider = ({ children }: { children: ReactNode }) => {
         description: `Sale to ${newSale.customerName}`,
         amount: newSale.total,
         type: 'credit',
-        category: 'Sale'
+        category: 'Sale',
+        customerId: newSale.customerId,
+        customerName: newSale.customerName,
     });
     
     return newSale;
@@ -170,11 +172,15 @@ export const DataProvider = ({ children }: { children: ReactNode }) => {
     const newExpense = { ...expense, id: `EXP${Date.now().toString().slice(-4)}`, date: new Date() };
     setExpenses(prev => [newExpense, ...prev]);
     
+    const vendor = vendors.find(v => v.id === expense.vendorId);
+    
     addTransaction({
         description: newExpense.title,
         amount: newExpense.amount,
         type: 'debit',
-        category: newExpense.category
+        category: newExpense.category,
+        vendorId: newExpense.vendorId,
+        vendorName: vendor?.name
     });
 
     return newExpense;
@@ -229,6 +235,7 @@ export const DataProvider = ({ children }: { children: ReactNode }) => {
       return sum + saleCost;
     }, 0);
   
+    // Profit loss calculation should consider COGS for sales and other expenses
     const profitLoss = totalSales - totalCostOfGoodsSold - totalExpenses;
   
     const today = new Date();
@@ -308,5 +315,3 @@ export const useDataContext = () => {
   }
   return context;
 };
-
-  
