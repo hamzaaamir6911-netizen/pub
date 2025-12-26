@@ -2,7 +2,7 @@
 "use client";
 
 import { useState, useEffect, useMemo } from "react";
-import { PlusCircle, X } from "lucide-react";
+import { PlusCircle, X, MoreHorizontal } from "lucide-react";
 import {
   Table,
   TableBody,
@@ -20,6 +20,13 @@ import {
   DialogTrigger,
   DialogFooter,
 } from "@/components/ui/dialog";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { Button } from "@/components/ui/button";
 import { PageHeader } from "@/components/page-header";
 import type { Transaction } from "@/lib/types";
@@ -162,14 +169,20 @@ function AddTransactionForm({ onTransactionAdded }: { onTransactionAdded: (newTr
 
 
 export default function LedgerPage() {
-  const { transactions, addTransaction, customers, vendors } = useDataContext();
+  const { transactions, addTransaction, deleteTransaction, customers, vendors } = useDataContext();
   const [isModalOpen, setModalOpen] = useState(false);
   const [selectedCustomerId, setSelectedCustomerId] = useState<string | null>(null);
   const [selectedVendorId, setSelectedVendorId] = useState<string | null>(null);
+  const { toast } = useToast();
 
   const handleTransactionAdded = (newTransaction: Omit<Transaction, 'id' | 'date'>) => {
     addTransaction(newTransaction);
     setModalOpen(false);
+  }
+
+  const handleDelete = (id: string) => {
+    deleteTransaction(id);
+    toast({ title: "Transaction Deleted" });
   }
 
   const filteredTransactions = useMemo(() => {
@@ -205,6 +218,8 @@ export default function LedgerPage() {
     setSelectedCustomerId(null);
     setSelectedVendorId(null);
   }
+
+  const hasFilter = selectedCustomerId || selectedVendorId;
 
   return (
     <>
@@ -243,7 +258,7 @@ export default function LedgerPage() {
                 </SelectContent>
             </Select>
         </div>
-        {(selectedCustomerId || selectedVendorId) && (
+        {hasFilter && (
             <Button variant="ghost" size="sm" onClick={clearFilters}>
                 <X className="mr-2 h-4 w-4" /> Clear Filter
             </Button>
@@ -259,13 +274,14 @@ export default function LedgerPage() {
               <TableHead>Category</TableHead>
               <TableHead className="text-right">Debit</TableHead>
               <TableHead className="text-right">Credit</TableHead>
-              {(selectedCustomerId || selectedVendorId) && <TableHead className="text-right">Balance</TableHead>}
+              {hasFilter && <TableHead className="text-right">Balance</TableHead>}
+              <TableHead><span className="sr-only">Actions</span></TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
             {transactionsWithBalance.length === 0 ? (
                 <TableRow>
-                    <TableCell colSpan={(selectedCustomerId || selectedVendorId) ? 6 : 5} className="h-24 text-center">
+                    <TableCell colSpan={hasFilter ? 7 : 6} className="h-24 text-center">
                         {transactions.length === 0 ? "No transactions yet." : "No transactions for selected filter."}
                     </TableCell>
                 </TableRow>
@@ -283,18 +299,39 @@ export default function LedgerPage() {
                     <TableCell className={cn("text-right font-mono", transaction.type === 'credit' && "font-semibold")}>
                         {transaction.type === 'credit' ? formatCurrency(transaction.amount) : '-'}
                     </TableCell>
-                    {(selectedCustomerId || selectedVendorId) && <TableCell className="text-right font-mono">{formatCurrency(transaction.balance)}</TableCell>}
+                    {hasFilter && <TableCell className="text-right font-mono">{formatCurrency(transaction.balance)}</TableCell>}
+                    <TableCell>
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button aria-haspopup="true" size="icon" variant="ghost">
+                            <MoreHorizontal className="h-4 w-4" />
+                            <span className="sr-only">Toggle menu</span>
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end">
+                          <DropdownMenuLabel>Actions</DropdownMenuLabel>
+                          <DropdownMenuItem
+                            onSelect={() => handleDelete(transaction.id)}
+                            className="text-red-500 focus:bg-red-500/10 focus:text-red-500"
+                            disabled={transaction.category === 'Sale'} // Prevent deleting sale-linked transactions from here
+                          >
+                            Delete
+                          </DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
+                    </TableCell>
                 </TableRow>
                 ))
             )}
           </TableBody>
-           {(selectedCustomerId || selectedVendorId) && transactionsWithBalance.length > 0 && (
+           {hasFilter && transactionsWithBalance.length > 0 && (
                 <TableFooter>
                     <TableRow>
-                        <TableCell colSpan={5} className="text-right font-bold">Final Balance</TableCell>
+                        <TableCell colSpan={hasFilter ? 6 : 5} className="text-right font-bold">Final Balance</TableCell>
                         <TableCell className={cn("text-right font-bold font-mono", runningBalance >= 0 ? "text-green-600" : "text-red-600")}>
                             {formatCurrency(runningBalance)}
                         </TableCell>
+                         <TableCell></TableCell>
                     </TableRow>
                 </TableFooter>
            )}

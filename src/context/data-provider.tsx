@@ -61,6 +61,7 @@ interface DataContextProps {
   addExpense: (expense: Omit<Expense, 'id' | 'date'>) => Expense;
   deleteExpense: (id:string) => void;
   addTransaction: (transaction: Omit<Transaction, 'id' | 'date'>) => Transaction;
+  deleteTransaction: (id: string) => void;
   getDashboardStats: () => {
     totalSales: number;
     totalExpenses: number;
@@ -210,6 +211,10 @@ export const DataProvider = ({ children }: { children: ReactNode }) => {
     setTransactions(prev => [newTransaction, ...prev].sort((a,b) => new Date(b.date).getTime() - new Date(a.date).getTime()));
     return newTransaction;
   }
+
+  const deleteTransaction = (id: string) => {
+    setTransactions(prev => prev.filter(t => t.id !== id));
+  }
   
   // --- Dashboard & Report Calculations ---
   const getDashboardStats = () => {
@@ -314,6 +319,7 @@ export const DataProvider = ({ children }: { children: ReactNode }) => {
     addExpense,
     deleteExpense,
     addTransaction,
+    deleteTransaction,
     getDashboardStats,
     getMonthlySalesData,
   };
