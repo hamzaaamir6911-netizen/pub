@@ -1,7 +1,8 @@
+
 "use client";
 
-import { useState } from "react";
-import { PlusCircle, ArrowDownCircle, ArrowUpCircle } from "lucide-react";
+import { useState, useEffect } from "react";
+import { PlusCircle } from "lucide-react";
 import {
   Table,
   TableBody,
@@ -32,28 +33,48 @@ import { cn } from "@/lib/utils";
 
 
 function AddTransactionForm({ onTransactionAdded }: { onTransactionAdded: (newTransaction: Omit<Transaction, 'id' | 'date'>) => void }) {
+  const { customers } = useDataContext();
   const [description, setDescription] = useState('');
   const [amount, setAmount] = useState(0);
   const [type, setType] = useState<'credit' | 'debit'>('debit');
   const [category, setCategory] = useState('');
+  const [customerId, setCustomerId] = useState<string | undefined>(undefined);
   const { toast } = useToast();
+
+  useEffect(() => {
+    if (type === 'credit' && customerId) {
+        const customer = customers.find(c => c.id === customerId);
+        if (customer) {
+            setDescription(`Cash received from ${customer.name}`);
+            setCategory('Customer Payment');
+        }
+    } else if (type === 'debit') {
+        setDescription('');
+        setCategory('');
+        setCustomerId(undefined);
+    }
+  }, [type, customerId, customers]);
 
   const handleSubmit = () => {
     if (!description || amount <= 0 || !category) {
       toast({ variant: 'destructive', title: 'Please fill all fields.' });
       return;
     }
+    const customer = customers.find(c => c.id === customerId);
     const newTransaction: Omit<Transaction, 'id' | 'date'> = {
       description,
       amount,
       type,
-      category
+      category,
+      customerId: customerId,
+      customerName: customer?.name
     };
     onTransactionAdded(newTransaction);
     toast({ title: 'Transaction Added!', description: `A ${type} of ${formatCurrency(amount)} has been recorded.` });
     setDescription('');
     setAmount(0);
     setCategory('');
+    setCustomerId(undefined);
   };
 
   return (
@@ -69,14 +90,35 @@ function AddTransactionForm({ onTransactionAdded }: { onTransactionAdded: (newTr
                     <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                    <SelectItem value="debit">Vendor Payment (Debit)</SelectItem>
                     <SelectItem value="credit">Cash Received (Credit)</SelectItem>
+                    <SelectItem value="debit">Vendor Payment (Debit)</SelectItem>
                 </SelectContent>
             </Select>
         </div>
+
+        {type === 'credit' && (
+            <div className="space-y-2">
+                <Label htmlFor="customer">Customer</Label>
+                <Select onValueChange={setCustomerId} value={customerId}>
+                    <SelectTrigger id="customer">
+                        <SelectValue placeholder="Select a customer" />
+                    </SelectTrigger>
+                    <SelectContent>
+                        {customers.map(c => <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>)}
+                    </SelectContent>
+                </Select>
+            </div>
+        )}
+
         <div className="space-y-2">
           <Label htmlFor="description">Description</Label>
-          <Input id="description" value={description} onChange={(e) => setDescription(e.target.value)} placeholder={type === 'debit' ? "Payment to supplier" : "Cash from customer"} />
+          <Input 
+            id="description" 
+            value={description} 
+            onChange={(e) => setDescription(e.target.value)} 
+            placeholder={type === 'debit' ? "Payment to supplier" : "Cash from customer"}
+            disabled={type === 'credit' && !!customerId}
+          />
         </div>
         <div className="space-y-2">
           <Label htmlFor="amount">Amount</Label>
@@ -84,7 +126,13 @@ function AddTransactionForm({ onTransactionAdded }: { onTransactionAdded: (newTr
         </div>
          <div className="space-y-2">
           <Label htmlFor="category">Category</Label>
-          <Input id="category" value={category} onChange={(e) => setCategory(e.target.value)} placeholder={type === 'debit' ? "Vendor Payment" : "Cash Receipt"} />
+          <Input 
+            id="category" 
+            value={category} 
+            onChange={(e) => setCategory(e.target.value)} 
+            placeholder={type === 'debit' ? "Vendor Payment" : "Customer Payment"}
+            disabled={type === 'credit' && !!customerId}
+          />
         </div>
       </div>
       <DialogFooter>
@@ -159,3 +207,5 @@ export default function LedgerPage() {
     </>
   );
 }
+
+    

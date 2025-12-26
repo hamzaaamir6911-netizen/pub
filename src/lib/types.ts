@@ -1,4 +1,5 @@
 
+
 export type Item = {
   id: string;
   name: string;
@@ -64,4 +65,8 @@ export type Transaction = {
   amount: number;
   type: 'credit' | 'debit';
   category: string;
+  customerId?: string;
+  customerName?: string;
 }
+
+    
