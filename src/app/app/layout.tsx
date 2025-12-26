@@ -2,7 +2,7 @@
 "use client";
 
 import { AppHeader } from "@/components/app-header";
-import { AuthProvider } from "@/firebase/auth/auth-provider";
+import { AuthProvider, useAuth } from "@/firebase/auth/auth-provider";
 import { DataProvider } from "@/firebase/data/data-provider";
 import { useRouter } from "next/navigation";
 import { useEffect } from "react";
