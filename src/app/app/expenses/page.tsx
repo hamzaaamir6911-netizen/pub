@@ -32,7 +32,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 function AddExpenseForm({ onExpenseAdded }: { onExpenseAdded: (newExpense: Omit<Expense, 'id' | 'date'>) => void }) {
     const [title, setTitle] = useState('');
     const [amount, setAmount] = useState(0);
-    const [category, setCategory] = useState<'Labour' | 'Transport' | 'Electricity' | 'Other'>('Other');
+    const [category, setCategory] = useState<'Labour' | 'Transport' | 'Electricity' | 'Vendor Payment' | 'Other'>('Other');
     const { toast } = useToast();
 
     const handleSubmit = () => {
@@ -70,6 +70,7 @@ function AddExpenseForm({ onExpenseAdded }: { onExpenseAdded: (newExpense: Omit<
                             <SelectItem value="Labour">Labour</SelectItem>
                             <SelectItem value="Transport">Transport</SelectItem>
                             <SelectItem value="Electricity">Electricity</SelectItem>
+                            <SelectItem value="Vendor Payment">Vendor Payment</SelectItem>
                             <SelectItem value="Other">Other</SelectItem>
                         </SelectContent>
                     </Select>

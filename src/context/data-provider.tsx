@@ -1,7 +1,7 @@
 "use client";
 
 import React, { createContext, useContext, useState, ReactNode } from 'react';
-import type { Item, Customer, Sale, Expense, SaleItem } from '@/lib/types';
+import type { Item, Customer, Sale, Expense, SaleItem, Transaction } from '@/lib/types';
 import { mockItems, mockCustomers, mockSales, mockExpenses } from '@/lib/data';
 
 interface DataContextProps {
@@ -9,6 +9,7 @@ interface DataContextProps {
   customers: Customer[];
   sales: Sale[];
   expenses: Expense[];
+  transactions: Transaction[];
   addItem: (item: Omit<Item, 'id'>) => Item;
   deleteItem: (id: string) => void;
   addCustomer: (customer: Omit<Customer, 'id'>) => Customer;
@@ -16,7 +17,8 @@ interface DataContextProps {
   addSale: (sale: Omit<Sale, 'id' | 'date' | 'total'>) => Sale;
   deleteSale: (id: string) => void;
   addExpense: (expense: Omit<Expense, 'id' | 'date'>) => Expense;
-  deleteExpense: (id: string) => void;
+  deleteExpense: (id:string) => void;
+  addTransaction: (transaction: Omit<Transaction, 'id' | 'date'>) => Transaction;
   getDashboardStats: () => {
     totalSales: number;
     totalExpenses: number;
@@ -37,6 +39,7 @@ export const DataProvider = ({ children }: { children: ReactNode }) => {
   const [customers, setCustomers] = useState<Customer[]>(mockCustomers);
   const [sales, setSales] = useState<Sale[]>(mockSales);
   const [expenses, setExpenses] = useState<Expense[]>(mockExpenses);
+  const [transactions, setTransactions] = useState<Transaction[]>([]);
 
   // --- Item Management ---
   const addItem = (item: Omit<Item, 'id'>): Item => {
@@ -79,6 +82,13 @@ export const DataProvider = ({ children }: { children: ReactNode }) => {
     const newSale: Sale = { ...sale, id: `SALE${Date.now().toString().slice(-4)}`, date: new Date(), total };
     setSales(prev => [newSale, ...prev]);
     
+    addTransaction({
+        description: `Sale to ${newSale.customerName}`,
+        amount: newSale.total,
+        type: 'credit',
+        category: 'Sale'
+    });
+    
     // Deduct stock
     newSale.items.forEach(saleItem => {
         setItems(prevItems => prevItems.map(stockItem => {
@@ -99,18 +109,35 @@ export const DataProvider = ({ children }: { children: ReactNode }) => {
 
   const deleteSale = (id: string) => {
     setSales(prev => prev.filter(sale => sale.id !== id));
+     setTransactions(prev => prev.filter(t => t.id !== id));
   };
   
   // --- Expense Management ---
   const addExpense = (expense: Omit<Expense, 'id'| 'date'>): Expense => {
     const newExpense = { ...expense, id: `EXP${Date.now().toString().slice(-4)}`, date: new Date() };
     setExpenses(prev => [newExpense, ...prev]);
+    
+    addTransaction({
+        description: newExpense.title,
+        amount: newExpense.amount,
+        type: 'debit',
+        category: newExpense.category
+    });
+
     return newExpense;
   };
 
   const deleteExpense = (id: string) => {
     setExpenses(prev => prev.filter(expense => expense.id !== id));
+    setTransactions(prev => prev.filter(t => t.id !== id));
   };
+
+  // --- Transaction Management ---
+  const addTransaction = (transaction: Omit<Transaction, 'id'| 'date'>): Transaction => {
+    const newTransaction = { ...transaction, id: `TRN${Date.now().toString().slice(-4)}`, date: new Date() };
+    setTransactions(prev => [newTransaction, ...prev].sort((a,b) => b.date.getTime() - a.date.getTime()));
+    return newTransaction;
+  }
   
   // --- Dashboard & Report Calculations ---
   const getDashboardStats = () => {
@@ -179,6 +206,7 @@ export const DataProvider = ({ children }: { children: ReactNode }) => {
     customers,
     sales,
     expenses,
+    transactions,
     addItem,
     deleteItem,
     addCustomer,
@@ -187,6 +215,7 @@ export const DataProvider = ({ children }: { children: ReactNode }) => {
     deleteSale,
     addExpense,
     deleteExpense,
+    addTransaction,
     getDashboardStats,
     getMonthlySalesData,
   };

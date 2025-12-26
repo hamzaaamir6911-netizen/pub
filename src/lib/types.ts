@@ -42,6 +42,15 @@ export type Expense = {
   id: string;
   title: string;
   amount: number;
-  category: 'Labour' | 'Transport' | 'Electricity' | 'Other';
+  category: 'Labour' | 'Transport' | 'Electricity' | 'Vendor Payment' | 'Other';
   date: Date;
 };
+
+export type Transaction = {
+  id: string;
+  date: Date;
+  description: string;
+  amount: number;
+  type: 'credit' | 'debit';
+  category: string;
+}

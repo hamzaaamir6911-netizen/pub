@@ -3,7 +3,7 @@
 import * as React from "react"
 import Link from "next/link"
 import { usePathname } from "next/navigation"
-import { Factory, LayoutDashboard, Warehouse, ShoppingCart, Users, CreditCard, BarChart3, LogOut } from "lucide-react"
+import { Factory, LayoutDashboard, Warehouse, ShoppingCart, Users, CreditCard, BarChart3, LogOut, BookUser } from "lucide-react"
 
 import { cn } from "@/lib/utils"
 import {
@@ -22,6 +22,7 @@ const navItems = [
   { href: "/app/sales", icon: ShoppingCart, label: "Sales" },
   { href: "/app/customers", icon: Users, label: "Customers" },
   { href: "/app/expenses", icon: CreditCard, label: "Expenses" },
+  { href: "/app/ledger", icon: BookUser, label: "Ledger" },
   { href: "/app/reports", icon: BarChart3, label: "Reports" },
 ]
 
