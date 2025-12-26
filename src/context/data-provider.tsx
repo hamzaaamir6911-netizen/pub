@@ -187,8 +187,19 @@ export const DataProvider = ({ children }: { children: ReactNode }) => {
   
   // --- Dashboard & Report Calculations ---
   const getDashboardStats = () => {
-    const totalSales = sales.reduce((sum, sale) => sum + sale.total, 0);
-    const totalExpenses = expenses.reduce((sum, expense) => sum + expense.amount, 0);
+    const totalSales = transactions.reduce((sum, transaction) => {
+      if (transaction.type === 'credit') {
+        return sum + transaction.amount;
+      }
+      return sum;
+    }, 0);
+
+    const totalExpenses = transactions.reduce((sum, transaction) => {
+        if (transaction.type === 'debit') {
+            return sum + transaction.amount;
+        }
+        return sum;
+    }, 0);
     
     const totalStockValue = 0; 
     
@@ -226,13 +237,15 @@ export const DataProvider = ({ children }: { children: ReactNode }) => {
 
   const getMonthlySalesData = () => {
     const salesByMonth: { [key: string]: number } = {};
-    sales.forEach(sale => {
-      const saleDate = new Date(sale.date);
-      const month = saleDate.toLocaleString('default', { month: 'short' });
-      if (!salesByMonth[month]) {
-        salesByMonth[month] = 0;
+    transactions.forEach(transaction => {
+      if (transaction.type === 'credit') {
+        const saleDate = new Date(transaction.date);
+        const month = saleDate.toLocaleString('default', { month: 'short' });
+        if (!salesByMonth[month]) {
+          salesByMonth[month] = 0;
+        }
+        salesByMonth[month] += transaction.amount;
       }
-      salesByMonth[month] += sale.total;
     });
 
     const lastSixMonths = [];
@@ -284,3 +297,5 @@ export const useDataContext = () => {
   }
   return context;
 };
+
+      

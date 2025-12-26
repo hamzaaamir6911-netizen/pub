@@ -45,7 +45,7 @@ const monthlyData = [
 
 const chartConfig = {
   sales: {
-    label: "Sales",
+    label: "Revenue",
     color: "hsl(var(--chart-1))",
   },
   expenses: {
@@ -165,8 +165,9 @@ function LedgerReport() {
 }
 
 export default function ReportsPage() {
-    const { getDashboardStats } = useDataContext();
+    const { getDashboardStats, getMonthlySalesData } = useDataContext();
     const stats = getDashboardStats();
+    const monthlyRevenue = getMonthlySalesData();
     
     const dailyReportData = [
         { date: "Today", sales: stats.todaySummary.sales.reduce((acc, s) => acc + s.total, 0), expenses: stats.todaySummary.expenses.reduce((acc, e) => acc + e.amount, 0)},
@@ -220,11 +221,11 @@ export default function ReportsPage() {
              <Card className="mt-4">
                 <CardHeader>
                     <CardTitle>Monthly Performance</CardTitle>
-                    <CardDescription>Comparison of sales and expenses over the months.</CardDescription>
+                    <CardDescription>Comparison of revenue and expenses over the months.</CardDescription>
                 </CardHeader>
                 <CardContent>
                     <ChartContainer config={chartConfig} className="min-h-[300px] w-full">
-                        <BarChart accessibilityLayer data={monthlyData}>
+                        <BarChart accessibilityLayer data={monthlyRevenue}>
                             <CartesianGrid vertical={false} />
                             <XAxis
                                 dataKey="month"
@@ -255,7 +256,7 @@ export default function ReportsPage() {
                 <CardContent className="space-y-4">
                     <div className="rounded-lg border p-4 grid gap-4">
                         <div className="flex justify-between">
-                            <span className="text-muted-foreground">Total Sales (Revenue)</span>
+                            <span className="text-muted-foreground">Total Revenue</span>
                             <span className="font-medium text-green-600">{formatCurrency(stats.totalSales)}</span>
                         </div>
                         <div className="flex justify-between">
@@ -277,3 +278,5 @@ export default function ReportsPage() {
     </>
   );
 }
+
+      
