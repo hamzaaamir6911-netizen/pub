@@ -55,7 +55,13 @@ function SaleInvoice({ sale, onPost }: { sale: Sale, onPost: (saleId: string) =>
     const printRef = useRef(null);
     
     const handlePrint = useReactToPrint({
-        content: () => printRef.current,
+      content: () => printRef.current,
+      onBeforeGetContent: async () => {
+          document.body.classList.add('print-body');
+      },
+      onAfterPrint: () => {
+          document.body.classList.remove('print-body');
+      }
     });
 
     let runningTotal = 0;
@@ -286,7 +292,7 @@ function NewSaleForm({ onSaleAdded }: { onSaleAdded: (newSale: Omit<Sale, 'id' |
             
             return {
                 itemId: item.id,
-                itemName: item.name.replace(/\s*\(.*\)\s*/, '').trim(),
+                itemName: item.name,
                 quantity: si.quantity || 1,
                 price: item.salePrice,
                 color: si.color || item.color,
@@ -563,3 +569,5 @@ export default function SalesPage() {
     </>
   );
 }
+
+    
