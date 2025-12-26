@@ -9,17 +9,15 @@ import { useEffect } from "react";
 import { Button } from "@/components/ui/button";
 
 function AdminCheck({ children }: { children: React.ReactNode }) {
-  const { user, isUserLoading } = useUser();
   const { isAdmin, isAdminLoading } = useData();
   const router = useRouter();
+  const { user, isUserLoading } = useUser();
 
   useEffect(() => {
-    if (!isUserLoading && !user) {
-      router.push("/login");
-    }
+    // This effect can handle redirecting non-logged-in users if needed,
+    // though the main one is in AppContent.
   }, [user, isUserLoading, router]);
 
-  // This is the key change: We MUST wait for both user and admin status to be resolved.
   if (isUserLoading || isAdminLoading) {
     return (
       <div className="flex h-screen items-center justify-center">
@@ -31,7 +29,6 @@ function AdminCheck({ children }: { children: React.ReactNode }) {
     );
   }
 
-  // After loading, if the user is confirmed to not be an admin, then deny access.
   if (!isAdmin) {
      return (
       <div className="flex h-screen items-center justify-center">
