@@ -199,12 +199,12 @@ function NewSaleForm({ onSaleAdded }: { onSaleAdded: (newSale: Omit<Sale, 'id' |
     const { toast } = useToast();
     const { customers, items: allItems, addCustomer } = useDataContext();
     const [selectedCustomer, setSelectedCustomer] = useState("");
-    const [saleItems, setSaleItems] = useState<Partial<SaleItem>[]>([{itemId: "", quantity: 1, feet: 1, discount: 0 }]);
+    const [saleItems, setSaleItems] = useState<Partial<SaleItem>[]>([{itemId: "", quantity: 1, feet: 1, discount: 0, color: '' }]);
     const [overallDiscount, setOverallDiscount] = useState(0);
     const [isCustomerModalOpen, setCustomerModalOpen] = useState(false);
 
     const handleAddItem = () => {
-        setSaleItems([...saleItems, {itemId: "", quantity: 1, feet: 1, discount: 0 }]);
+        setSaleItems([...saleItems, {itemId: "", quantity: 1, feet: 1, discount: 0, color: '' }]);
     }
 
     const handleRemoveItem = (index: number) => {
@@ -213,7 +213,17 @@ function NewSaleForm({ onSaleAdded }: { onSaleAdded: (newSale: Omit<Sale, 'id' |
 
     const handleItemChange = (index: number, key: keyof SaleItem, value: any) => {
         const newItems = [...saleItems];
-        (newItems[index] as any)[key] = value;
+        const currentItem = { ...newItems[index] };
+        (currentItem as any)[key] = value;
+        
+        if (key === 'itemId') {
+            const itemDetails = allItems.find(i => i.id === value);
+            if (itemDetails) {
+                currentItem.color = itemDetails.color;
+            }
+        }
+
+        newItems[index] = currentItem;
         setSaleItems(newItems);
     }
 
@@ -236,7 +246,7 @@ function NewSaleForm({ onSaleAdded }: { onSaleAdded: (newSale: Omit<Sale, 'id' |
 
     const clearForm = () => {
         setSelectedCustomer("");
-        setSaleItems([{itemId: "", quantity: 1, feet: 1, discount: 0}]);
+        setSaleItems([{itemId: "", quantity: 1, feet: 1, discount: 0, color: ''}]);
         setOverallDiscount(0);
     }
     
@@ -268,7 +278,7 @@ function NewSaleForm({ onSaleAdded }: { onSaleAdded: (newSale: Omit<Sale, 'id' |
                 itemName: item.name.replace(/\s*\(.*\)\s*/, '').trim(),
                 quantity: si.quantity || 1,
                 price: item.salePrice,
-                color: item.color,
+                color: si.color || item.color,
                 weight: item.weight,
                 thickness: thicknessMatch ? thicknessMatch[1] : undefined,
                 feet: feet,
@@ -342,7 +352,7 @@ function NewSaleForm({ onSaleAdded }: { onSaleAdded: (newSale: Omit<Sale, 'id' |
                     {saleItems.map((saleItem, index) => {
                          const itemDetails = allItems.find(i => i.id === saleItem.itemId);
                          return (
-                         <div key={index} className="grid grid-cols-1 md:grid-cols-5 gap-2 items-end p-3 border rounded-md">
+                         <div key={index} className="grid grid-cols-1 md:grid-cols-6 gap-2 items-end p-3 border rounded-md">
                             <div className="md:col-span-2 space-y-2">
                                 <Label>Item</Label>
                                 <Select onValueChange={(value) => handleItemChange(index, "itemId", value)} value={saleItem.itemId}>
@@ -355,6 +365,15 @@ function NewSaleForm({ onSaleAdded }: { onSaleAdded: (newSale: Omit<Sale, 'id' |
                                 </Select>
                             </div>
                             
+                            <div className="space-y-2">
+                                <Label>Colour</Label>
+                                <Input 
+                                    placeholder="e.g. White" 
+                                    value={saleItem.color}
+                                    onChange={(e) => handleItemChange(index, "color", e.target.value)}
+                                />
+                            </div>
+
                             {itemDetails?.category === "Aluminium" ? (
                                 <div className="space-y-2">
                                     <Label>Feet</Label>
@@ -365,7 +384,7 @@ function NewSaleForm({ onSaleAdded }: { onSaleAdded: (newSale: Omit<Sale, 'id' |
                                         onChange={(e) => handleItemChange(index, "feet", parseFloat(e.target.value))}
                                     />
                                 </div>
-                            ) : <div /> }
+                            ) : <div className="md:col-span-1"/> }
                            
                             <div className="space-y-2">
                                 <Label>Discount (%)</Label>
@@ -524,4 +543,3 @@ export default function SalesPage() {
     </>
   );
 }
-
