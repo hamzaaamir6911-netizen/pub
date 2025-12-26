@@ -238,6 +238,11 @@ function NewSaleForm({ onSaleAdded }: { onSaleAdded: (newSale: Omit<Sale, 'id' |
             const item = allItems.find(i => i.id === si.itemId)!;
             const thicknessMatch = item.name.match(/\((.*?)\)/);
 
+            let feet = si.feet || 1;
+            if (item.category !== 'Aluminium') {
+                feet = 1;
+            }
+
             return {
                 ...si,
                 itemId: item.id,
@@ -247,7 +252,7 @@ function NewSaleForm({ onSaleAdded }: { onSaleAdded: (newSale: Omit<Sale, 'id' |
                 color: item.color,
                 weight: item.weight,
                 thickness: thicknessMatch ? thicknessMatch[1] : undefined,
-                feet: si.feet || 1,
+                feet: feet,
                 discount: si.discount || 0,
             }
         }) as SaleItem[];
