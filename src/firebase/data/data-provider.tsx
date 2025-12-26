@@ -16,11 +16,11 @@ interface DataContextProps {
   expenses: Expense[];
   transactions: Transaction[];
   loading: boolean;
-  addItem: (item: Omit<Item, 'id' | 'createdAt'>) => Promise<void>;
+  addItem: (item: Omit<Item, 'id' | 'createdAt'>) => Promise<any>;
   deleteItem: (id: string) => Promise<void>;
-  addCustomer: (customer: Omit<Customer, 'id' | 'createdAt'>) => Promise<void>;
+  addCustomer: (customer: Omit<Customer, 'id' | 'createdAt'>) => Promise<any>;
   deleteCustomer: (id: string) => Promise<void>;
-  addVendor: (vendor: Omit<Vendor, 'id' | 'createdAt'>) => Promise<void>;
+  addVendor: (vendor: Omit<Vendor, 'id' | 'createdAt'>) => Promise<any>;
   deleteVendor: (id: string) => Promise<void>;
   addSale: (sale: Omit<Sale, 'id' | 'date' | 'total' | 'status'>) => Promise<void>;
   postSale: (saleId: string) => Promise<void>;
@@ -48,6 +48,11 @@ const firestoreTimestampToDate = (timestamp: any): Date => {
   if (timestamp instanceof Timestamp) {
     return timestamp.toDate();
   }
+  // Handle cases where the timestamp might be a string or a plain object from server rendering
+  if (timestamp && typeof timestamp.seconds === 'number' && typeof timestamp.nanoseconds === 'number') {
+    return new Timestamp(timestamp.seconds, timestamp.nanoseconds).toDate();
+  }
+  // Fallback for string dates, though server timestamps should be objects
   return new Date(timestamp);
 };
 
@@ -72,12 +77,14 @@ export const DataProvider = ({ children }: { children: ReactNode }) => {
     const { db } = useFirebase();
     const { user } = useAuth();
 
-    const itemsQuery = useMemo(() => user ? query(collection(db, 'users', user.uid, 'items'), orderBy('createdAt', 'desc')) : null, [db, user]);
-    const customersQuery = useMemo(() => user ? query(collection(db, 'users', user.uid, 'customers'), orderBy('createdAt', 'desc')) : null, [db, user]);
-    const vendorsQuery = useMemo(() => user ? query(collection(db, 'users', user.uid, 'vendors'), orderBy('createdAt', 'desc')) : null, [db, user]);
-    const salesQuery = useMemo(() => user ? query(collection(db, 'users', user.uid, 'sales'), orderBy('date', 'desc')) : null, [db, user]);
-    const expensesQuery = useMemo(() => user ? query(collection(db, 'users', user.uid, 'expenses'), orderBy('date', 'desc')) : null, [db, user]);
-    const transactionsQuery = useMemo(() => user ? query(collection(db, 'users', user.uid, 'transactions'), orderBy('date', 'desc')) : null, [db, user]);
+    const basePath = user ? `users/${user.uid}` : null;
+
+    const itemsQuery = useMemo(() => basePath ? query(collection(db, basePath, 'items'), orderBy('createdAt', 'desc')) : null, [db, basePath]);
+    const customersQuery = useMemo(() => basePath ? query(collection(db, basePath, 'customers'), orderBy('createdAt', 'desc')) : null, [db, basePath]);
+    const vendorsQuery = useMemo(() => basePath ? query(collection(db, basePath, 'vendors'), orderBy('createdAt', 'desc')) : null, [db, basePath]);
+    const salesQuery = useMemo(() => basePath ? query(collection(db, basePath, 'sales'), orderBy('date', 'desc')) : null, [db, basePath]);
+    const expensesQuery = useMemo(() => basePath ? query(collection(db, basePath, 'expenses'), orderBy('date', 'desc')) : null, [db, basePath]);
+    const transactionsQuery = useMemo(() => basePath ? query(collection(db, basePath, 'transactions'), orderBy('date', 'desc')) : null, [db, basePath]);
 
     const [itemsSnapshot, itemsLoading] = useCollection(itemsQuery);
     const [customersSnapshot, customersLoading] = useCollection(customersQuery);
@@ -95,46 +102,50 @@ export const DataProvider = ({ children }: { children: ReactNode }) => {
 
     const loading = itemsLoading || customersLoading || vendorsLoading || salesLoading || expensesLoading || transactionsLoading;
 
-    if (!user || !db) {
-        return <>{children}</>
+    const getCollectionRef = (collectionName: string) => {
+        if (!basePath) throw new Error("User not authenticated.");
+        return collection(db, basePath, collectionName);
     }
-
-    const basePath = `users/${user.uid}`;
-
+    
     // --- Item Management ---
     const addItem = async (item: Omit<Item, 'id' | 'createdAt'>) => {
-        await addDoc(collection(db, basePath, 'items'), {...item, createdAt: serverTimestamp()});
+        return addDoc(getCollectionRef('items'), {...item, createdAt: serverTimestamp()});
     };
     const deleteItem = async (id: string) => {
+        if (!basePath) return;
         await deleteDoc(doc(db, basePath, 'items', id));
     };
 
     // --- Customer Management ---
     const addCustomer = async (customer: Omit<Customer, 'id' | 'createdAt'>) => {
-        await addDoc(collection(db, basePath, 'customers'), {...customer, createdAt: serverTimestamp()});
+        return addDoc(getCollectionRef('customers'), {...customer, createdAt: serverTimestamp()});
     };
     const deleteCustomer = async (id: string) => {
+        if (!basePath) return;
         await deleteDoc(doc(db, basePath, 'customers', id));
     };
 
     // --- Vendor Management ---
     const addVendor = async (vendor: Omit<Vendor, 'id' | 'createdAt'>) => {
-        await addDoc(collection(db, basePath, 'vendors'), {...vendor, createdAt: serverTimestamp()});
+        return addDoc(getCollectionRef('vendors'), {...vendor, createdAt: serverTimestamp()});
     };
     const deleteVendor = async (id: string) => {
+        if (!basePath) return;
         await deleteDoc(doc(db, basePath, 'vendors', id));
     };
 
     // --- Transaction Management ---
     const addTransaction = async (transaction: Omit<Transaction, 'id' | 'date'>) => {
-        await addDoc(collection(db, basePath, 'transactions'), {...transaction, date: serverTimestamp()});
+        await addDoc(getCollectionRef('transactions'), {...transaction, date: serverTimestamp()});
     };
     const deleteTransaction = async (id: string) => {
+        if (!basePath) return;
         await deleteDoc(doc(db, basePath, 'transactions', id));
     };
 
     // --- Sale Management ---
     const addSale = async (sale: Omit<Sale, 'id' | 'date' | 'total' | 'status'>) => {
+        if (!basePath) return;
         const subtotal = sale.items.reduce((total, currentItem) => {
             const itemTotal = (currentItem.feet || 1) * currentItem.price * currentItem.quantity;
             const discountAmount = itemTotal * ((currentItem.discount || 0) / 100);
@@ -143,10 +154,11 @@ export const DataProvider = ({ children }: { children: ReactNode }) => {
         const overallDiscountAmount = (subtotal * sale.discount) / 100;
         const total = subtotal - overallDiscountAmount;
         const newSale = { ...sale, total, status: 'draft', date: serverTimestamp() };
-        await addDoc(collection(db, basePath, 'sales'), newSale);
+        await addDoc(getCollectionRef('sales'), newSale);
     };
 
     const postSale = async (saleId: string) => {
+        if (!basePath) return;
         const saleRef = doc(db, basePath, 'sales', saleId);
         const sale = sales.find(s => s.id === saleId);
         if (!sale) return;
@@ -163,13 +175,14 @@ export const DataProvider = ({ children }: { children: ReactNode }) => {
             customerName: sale.customerName,
             date: sale.date // Use the original sale date for the transaction
         };
-        const transactionRef = doc(collection(db, basePath, 'transactions'));
+        const transactionRef = doc(getCollectionRef('transactions'));
         batch.set(transactionRef, transactionData);
 
         await batch.commit();
     };
 
     const deleteSale = async (id: string) => {
+        if (!basePath) return;
         const saleToDelete = sales.find(s => s.id === id);
         if (!saleToDelete) return;
     
@@ -181,7 +194,7 @@ export const DataProvider = ({ children }: { children: ReactNode }) => {
     
         // If the sale was posted, find and delete the associated transaction
         if (saleToDelete.status === 'posted') {
-            const q = query(collection(db, basePath, 'transactions'), 
+            const q = query(getCollectionRef('transactions'), 
                 where("category", "==", "Sale"), 
                 where("description", "==", `Sale to ${saleToDelete.customerName}`),
                 where("amount", "==", saleToDelete.total)
@@ -199,13 +212,14 @@ export const DataProvider = ({ children }: { children: ReactNode }) => {
 
     // --- Expense Management ---
     const addExpense = async (expense: Omit<Expense, 'id' | 'date'>) => {
+        if (!basePath) return;
         const vendor = vendors.find(v => v.id === expense.vendorId);
         const batch = writeBatch(db);
 
-        const expenseRef = doc(collection(db, basePath, 'expenses'));
+        const expenseRef = doc(getCollectionRef('expenses'));
         batch.set(expenseRef, {...expense, date: serverTimestamp()});
 
-        const transactionRef = doc(collection(db, basePath, 'transactions'));
+        const transactionRef = doc(getCollectionRef('transactions'));
         batch.set(transactionRef, {
             description: expense.title,
             amount: expense.amount,
@@ -220,6 +234,7 @@ export const DataProvider = ({ children }: { children: ReactNode }) => {
     };
 
     const deleteExpense = async (id: string) => {
+        if (!basePath) return;
         const expenseToDelete = expenses.find(e => e.id === id);
         if (!expenseToDelete) return;
     
@@ -228,7 +243,7 @@ export const DataProvider = ({ children }: { children: ReactNode }) => {
         batch.delete(expenseRef);
     
         // Find and delete the associated transaction
-        const q = query(collection(db, basePath, 'transactions'),
+        const q = query(getCollectionRef('transactions'),
             where("category", "==", expenseToDelete.category),
             where("description", "==", expenseToDelete.title),
             where("amount", "==", expenseToDelete.amount),
@@ -305,7 +320,7 @@ export const DataProvider = ({ children }: { children: ReactNode }) => {
 
     return (
         <DataContext.Provider value={value}>
-            {loading ? <div className="flex h-screen items-center justify-center">Loading data...</div> : children}
+            {children}
         </DataContext.Provider>
     );
 };
@@ -317,3 +332,5 @@ export const useData = () => {
   }
   return context;
 };
+
+    
