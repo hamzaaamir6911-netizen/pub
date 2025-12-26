@@ -6,6 +6,7 @@ import { useUser } from "@/firebase";
 import { DataProvider, useData } from "@/firebase/data/data-provider";
 import { useRouter } from "next/navigation";
 import { useEffect } from "react";
+import { Button } from "@/components/ui/button";
 
 function AdminCheck({ children }: { children: React.ReactNode }) {
   const { user, isUserLoading } = useUser();
