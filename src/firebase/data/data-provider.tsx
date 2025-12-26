@@ -1,5 +1,6 @@
 
 
+
 "use client";
 
 import React, { createContext, useContext, ReactNode } from 'react';
@@ -19,6 +20,7 @@ interface DataContextProps {
   transactions: Transaction[];
   loading: boolean;
   addItem: (item: Omit<Item, 'id' | 'createdAt'>) => Promise<any>;
+  updateItemStock: (id: string, newQuantity: number) => Promise<void>;
   deleteItem: (id: string) => Promise<void>;
   addCustomer: (customer: Omit<Customer, 'id' | 'createdAt'>) => Promise<any>;
   deleteCustomer: (id: string) => Promise<void>;
@@ -100,6 +102,13 @@ export const DataProvider = ({ children }: { children: ReactNode }) => {
         const newItem = { ...item, createdAt: serverTimestamp() };
         return addDocumentNonBlocking(itemsCol, newItem);
     };
+
+    const updateItemStock = async (id: string, newQuantity: number) => {
+        if (!user) throw new Error("User not authenticated");
+        const itemRef = doc(firestore, 'items', id);
+        updateDocumentNonBlocking(itemRef, { quantity: newQuantity });
+    };
+
     const deleteItem = async (id: string) => {
         if (!user) throw new Error("User not authenticated");
         deleteDocumentNonBlocking(doc(firestore, 'items', id));
@@ -345,7 +354,7 @@ export const DataProvider = ({ children }: { children: ReactNode }) => {
     
     const value = {
         items, customers, vendors, sales, expenses, transactions, loading,
-        addItem, deleteItem,
+        addItem, updateItemStock, deleteItem,
         addCustomer, deleteCustomer,
         addVendor, deleteVendor,
         addSale, postSale, deleteSale,

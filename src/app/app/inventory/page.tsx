@@ -3,7 +3,7 @@
 "use client";
 
 import { useState } from "react";
-import { MoreHorizontal, PlusCircle } from "lucide-react";
+import { MoreHorizontal, PlusCircle, Pencil } from "lucide-react";
 import {
   Table,
   TableBody,
@@ -18,6 +18,7 @@ import {
   DropdownMenuItem,
   DropdownMenuLabel,
   DropdownMenuTrigger,
+  DropdownMenuSeparator,
 } from "@/components/ui/dropdown-menu";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -87,7 +88,7 @@ function AddItemForm({ onItemAdded }: { onItemAdded: (newItem: Omit<Item, 'id' |
                     </Select>
                 </div>
                 <div className="space-y-2">
-                    <Label>Quantity in Stock</Label>
+                    <Label>Opening Stock</Label>
                     <Input type="number" value={quantity} onChange={(e) => setQuantity(parseInt(e.target.value) || 0)} />
                 </div>
                 <div className="space-y-2">
@@ -114,9 +115,47 @@ function AddItemForm({ onItemAdded }: { onItemAdded: (newItem: Omit<Item, 'id' |
     );
 }
 
+function UpdateStockForm({ item, onStockUpdated }: { item: Item, onStockUpdated: () => void }) {
+    const { updateItemStock } = useData();
+    const { toast } = useToast();
+    const [newQuantity, setNewQuantity] = useState(item.quantity);
+
+    const handleSubmit = () => {
+        if (newQuantity < 0) {
+            toast({ variant: 'destructive', title: 'Quantity cannot be negative.' });
+            return;
+        }
+        updateItemStock(item.id, newQuantity);
+        toast({ title: "Stock Updated!", description: `Stock for ${item.name} has been updated.`});
+        onStockUpdated();
+    }
+
+    return (
+        <DialogContent>
+            <DialogHeader>
+                <DialogTitle>Update Stock</DialogTitle>
+            </DialogHeader>
+             <div className="space-y-4 py-4">
+                <div className="space-y-2">
+                    <h4 className="font-medium">{item.name}</h4>
+                    <p className="text-sm text-muted-foreground">Current Stock: {item.quantity} {item.unit}</p>
+                </div>
+                <div className="space-y-2">
+                    <Label htmlFor="new-quantity">New Stock Quantity</Label>
+                    <Input id="new-quantity" type="number" value={newQuantity} onChange={e => setNewQuantity(parseInt(e.target.value) || 0)} />
+                </div>
+             </div>
+            <DialogFooter>
+                <Button onClick={handleSubmit}>Update Stock</Button>
+            </DialogFooter>
+        </DialogContent>
+    );
+}
+
 export default function InventoryPage() {
   const { items, addItem, deleteItem } = useData();
   const [isItemModalOpen, setItemModalOpen] = useState(false);
+  const [selectedItemForStock, setSelectedItemForStock] = useState<Item | null>(null);
 
   const handleDelete = (id: string) => {
     deleteItem(id);
@@ -125,6 +164,14 @@ export default function InventoryPage() {
   const handleItemAdded = (newItem: Omit<Item, 'id' | 'createdAt'>) => {
     addItem(newItem);
     setItemModalOpen(false);
+  }
+
+  const handleStockUpdateDialog = (item: Item) => {
+    setSelectedItemForStock(item);
+  }
+
+  const onStockUpdated = () => {
+    setSelectedItemForStock(null);
   }
 
   const categoryVariant = {
@@ -186,24 +233,36 @@ export default function InventoryPage() {
                   {formatCurrency(item.salePrice)}
                 </TableCell>
                 <TableCell>
-                  <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
-                      <Button aria-haspopup="true" size="icon" variant="ghost">
-                        <MoreHorizontal className="h-4 w-4" />
-                        <span className="sr-only">Toggle menu</span>
-                      </Button>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent align="end">
-                      <DropdownMenuLabel>Actions</DropdownMenuLabel>
-                      <DropdownMenuItem>Edit</DropdownMenuItem>
-                      <DropdownMenuItem
-                        onSelect={() => handleDelete(item.id)}
-                        className="text-red-500 focus:bg-red-500/10 focus:text-red-500"
-                      >
-                        Delete
-                      </DropdownMenuItem>
-                    </DropdownMenuContent>
-                  </DropdownMenu>
+                   <Dialog onOpenChange={(open) => !open && setSelectedItemForStock(null)}>
+                     <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                        <Button aria-haspopup="true" size="icon" variant="ghost">
+                            <MoreHorizontal className="h-4 w-4" />
+                            <span className="sr-only">Toggle menu</span>
+                        </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end">
+                        <DropdownMenuLabel>Actions</DropdownMenuLabel>
+                        <DropdownMenuItem>Edit</DropdownMenuItem>
+                        <DialogTrigger asChild>
+                             <DropdownMenuItem onSelect={() => handleStockUpdateDialog(item)}>
+                                <Pencil className="mr-2 h-4 w-4" />
+                                Update Stock
+                            </DropdownMenuItem>
+                        </DialogTrigger>
+                        <DropdownMenuSeparator />
+                        <DropdownMenuItem
+                            onSelect={() => handleDelete(item.id)}
+                            className="text-red-500 focus:bg-red-500/10 focus:text-red-500"
+                        >
+                            Delete
+                        </DropdownMenuItem>
+                        </DropdownMenuContent>
+                    </DropdownMenu>
+                    {selectedItemForStock && selectedItemForStock.id === item.id && (
+                        <UpdateStockForm item={selectedItemForStock} onStockUpdated={onStockUpdated} />
+                    )}
+                   </Dialog>
                 </TableCell>
               </TableRow>
             ))}
