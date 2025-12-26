@@ -3,7 +3,7 @@
 "use client";
 
 import { useState } from "react";
-import { MoreHorizontal, PlusCircle, Trash2, RotateCcw, FileText } from "lucide-react";
+import { MoreHorizontal, PlusCircle, Trash2, RotateCcw, FileText, CheckCircle } from "lucide-react";
 import {
   Table,
   TableBody,
@@ -44,12 +44,19 @@ import { formatCurrency, formatDate } from "@/lib/utils";
 import type { Sale, SaleItem, Customer, Item } from "@/lib/types";
 import { useToast } from "@/hooks/use-toast";
 import { useDataContext } from "@/context/data-provider";
+import { Badge } from "@/components/ui/badge";
 
-function SaleInvoice({ sale }: { sale: Sale }) {
-    const { customers, items: allItems } = useDataContext();
+function SaleInvoice({ sale, onPost }: { sale: Sale, onPost: (saleId: string) => void }) {
+    const { customers } = useDataContext();
     const customer = customers.find(c => c.id === sale.customerId);
+    const { toast } = useToast();
 
     let runningTotal = 0;
+
+    const handlePost = () => {
+        onPost(sale.id);
+        toast({ title: 'Sale Posted!', description: `Sale ${sale.id} has been posted to the ledger.`});
+    }
 
     return (
         <DialogContent className="max-w-6xl">
@@ -70,6 +77,8 @@ function SaleInvoice({ sale }: { sale: Sale }) {
                     <div className="text-right">
                         <p className="font-semibold">Date:</p>
                         <p>{formatDate(sale.date)}</p>
+                        <p className="font-semibold mt-2">Status:</p>
+                        <Badge variant={sale.status === 'posted' ? 'default' : 'secondary'}>{sale.status}</Badge>
                     </div>
                 </div>
 
@@ -118,9 +127,19 @@ function SaleInvoice({ sale }: { sale: Sale }) {
                     </div>
                 </div>
 
-                <div className="mt-8 text-center print:hidden">
-                    <Button onClick={() => window.print()}>Print Invoice</Button>
-                </div>
+                 <DialogFooter className="mt-8 print:hidden">
+                    <Button variant="outline" onClick={() => window.print()}>Print Invoice</Button>
+                     {sale.status === 'draft' ? (
+                        <Button onClick={handlePost}>
+                            <CheckCircle className="mr-2 h-4 w-4" />
+                            Post to Ledger
+                        </Button>
+                    ) : (
+                        <p className="text-sm text-green-600 font-semibold flex items-center">
+                            <CheckCircle className="mr-2 h-4 w-4" /> Posted to Ledger
+                        </p>
+                    )}
+                </DialogFooter>
             </div>
         </DialogContent>
     )
@@ -176,7 +195,7 @@ function AddCustomerForm({ onCustomerAdded }: { onCustomerAdded: (newCustomer: O
 }
 
 
-function NewSaleForm({ onSaleAdded }: { onSaleAdded: (newSale: Omit<Sale, 'id' | 'date' | 'total'>) => void }) {
+function NewSaleForm({ onSaleAdded }: { onSaleAdded: (newSale: Omit<Sale, 'id' | 'date' | 'total' | 'status'>) => void }) {
     const { toast } = useToast();
     const { customers, items: allItems, addCustomer } = useDataContext();
     const [selectedCustomer, setSelectedCustomer] = useState("");
@@ -257,7 +276,7 @@ function NewSaleForm({ onSaleAdded }: { onSaleAdded: (newSale: Omit<Sale, 'id' |
             }
         }) as SaleItem[];
 
-        const newSale: Omit<Sale, 'id' | 'date' | 'total'> = {
+        const newSale: Omit<Sale, 'id' | 'date' | 'total' | 'status'> = {
             customerId: selectedCustomer,
             customerName: customer.name,
             items: finalSaleItems,
@@ -265,7 +284,7 @@ function NewSaleForm({ onSaleAdded }: { onSaleAdded: (newSale: Omit<Sale, 'id' |
         };
 
         onSaleAdded(newSale);
-        toast({ title: "Sale Saved!", description: `Sale has been recorded.` });
+        toast({ title: "Sale Draft Saved!", description: `Sale has been saved as a draft.` });
         clearForm();
     }
     
@@ -386,7 +405,7 @@ function NewSaleForm({ onSaleAdded }: { onSaleAdded: (newSale: Omit<Sale, 'id' |
                 <div className="text-xl font-bold">
                     Total: {formatCurrency(calculateTotal())}
                 </div>
-                <Button onClick={handleSaveSale}>Save Sale</Button>
+                <Button onClick={handleSaveSale}>Save Draft</Button>
             </CardFooter>
         </Card>
         </>
@@ -394,16 +413,23 @@ function NewSaleForm({ onSaleAdded }: { onSaleAdded: (newSale: Omit<Sale, 'id' |
 }
 
 export default function SalesPage() {
-  const { sales, addSale, deleteSale } = useDataContext();
+  const { sales, addSale, deleteSale, postSale } = useDataContext();
   const [activeTab, setActiveTab] = useState("history");
+  const [selectedSale, setSelectedSale] = useState<Sale | null>(null);
 
   const handleDelete = (id: string) => {
     deleteSale(id);
   };
   
-  const handleSaleAdded = (newSale: Omit<Sale, 'id'|'date'|'total'>) => {
+  const handleSaleAdded = (newSale: Omit<Sale, 'id'|'date'|'total'|'status'>) => {
     addSale(newSale);
     setActiveTab("history");
+  }
+
+  const handlePostSale = (saleId: string) => {
+      postSale(saleId);
+      // Close the dialog by resetting the selected sale
+      setSelectedSale(null);
   }
 
   return (
@@ -425,6 +451,7 @@ export default function SalesPage() {
                   <TableHead>Sale ID</TableHead>
                   <TableHead>Customer</TableHead>
                   <TableHead>Date</TableHead>
+                  <TableHead>Status</TableHead>
                   <TableHead className="text-right">Total Amount</TableHead>
                   <TableHead>
                     <span className="sr-only">Actions</span>
@@ -434,7 +461,7 @@ export default function SalesPage() {
               <TableBody>
                 {sales.length === 0 ? (
                   <TableRow>
-                    <TableCell colSpan={5} className="text-center h-24">No sales recorded yet.</TableCell>
+                    <TableCell colSpan={6} className="text-center h-24">No sales recorded yet.</TableCell>
                   </TableRow>
                 ) : (
                   sales.map((sale) => (
@@ -442,11 +469,16 @@ export default function SalesPage() {
                       <TableCell className="font-medium">{sale.id}</TableCell>
                       <TableCell>{sale.customerName}</TableCell>
                       <TableCell>{formatDate(sale.date)}</TableCell>
+                       <TableCell>
+                          <Badge variant={sale.status === 'posted' ? 'default' : 'secondary'}>
+                            {sale.status}
+                          </Badge>
+                       </TableCell>
                       <TableCell className="text-right">
                         {formatCurrency(sale.total)}
                       </TableCell>
                       <TableCell>
-                        <Dialog>
+                        <Dialog onOpenChange={(open) => !open && setSelectedSale(null)}>
                           <DropdownMenu>
                             <DropdownMenuTrigger asChild>
                               <Button aria-haspopup="true" size="icon" variant="ghost">
@@ -457,7 +489,7 @@ export default function SalesPage() {
                             <DropdownMenuContent align="end">
                               <DropdownMenuLabel>Actions</DropdownMenuLabel>
                                <DialogTrigger asChild>
-                                <DropdownMenuItem>
+                                <DropdownMenuItem onSelect={() => setSelectedSale(sale)}>
                                     <FileText className="mr-2 h-4 w-4"/>
                                     View Details
                                 </DropdownMenuItem>
@@ -471,7 +503,9 @@ export default function SalesPage() {
                               </DropdownMenuItem>
                             </DropdownMenuContent>
                           </DropdownMenu>
-                          <SaleInvoice sale={sale} />
+                          {selectedSale && selectedSale.id === sale.id && (
+                              <SaleInvoice sale={selectedSale} onPost={handlePostSale} />
+                          )}
                         </Dialog>
                       </TableCell>
                     </TableRow>
@@ -490,3 +524,4 @@ export default function SalesPage() {
     </>
   );
 }
+

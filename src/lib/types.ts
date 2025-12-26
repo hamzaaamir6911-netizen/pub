@@ -46,6 +46,7 @@ export type Sale = {
   total: number;
   date: Date;
   discount: number; // Overall discount percentage
+  status: 'draft' | 'posted';
 };
 
 export type Expense = {

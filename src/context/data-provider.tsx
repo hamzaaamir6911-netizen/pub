@@ -17,7 +17,7 @@ function useLocalStorageState<T>(key: string, defaultValue: T): [T, React.Dispat
             if (storedValue) {
                 // The reviver function is crucial for converting date strings back to Date objects
                 return JSON.parse(storedValue, (reviverKey, value) => {
-                    if (reviverKey === 'date' && typeof value === 'string') {
+                    if (['date'].includes(reviverKey) && typeof value === 'string') {
                         const d = new Date(value);
                         if (!isNaN(d.getTime())) {
                             return d;
@@ -57,7 +57,8 @@ interface DataContextProps {
   deleteCustomer: (id: string) => void;
   addVendor: (vendor: Omit<Vendor, 'id'>) => Vendor;
   deleteVendor: (id: string) => void;
-  addSale: (sale: Omit<Sale, 'id' | 'date' | 'total'>) => Sale;
+  addSale: (sale: Omit<Sale, 'id' | 'date' | 'total' | 'status'>) => Sale;
+  postSale: (saleId: string) => void;
   deleteSale: (id: string) => void;
   addExpense: (expense: Omit<Expense, 'id' | 'date'>) => Expense;
   deleteExpense: (id:string) => void;
@@ -78,7 +79,7 @@ interface DataContextProps {
 
 const DataContext = createContext<DataContextProps | undefined>(undefined);
 
-const DATA_VERSION = '1.3'; // Increment this to force a refresh
+const DATA_VERSION = '1.4'; // Increment this to force a refresh
 
 export const DataProvider = ({ children }: { children: ReactNode }) => {
     
@@ -139,7 +140,7 @@ export const DataProvider = ({ children }: { children: ReactNode }) => {
     };
 
   // --- Sale Management ---
-  const addSale = (sale: Omit<Sale, 'id' | 'date' | 'total'>): Sale => {
+  const addSale = (sale: Omit<Sale, 'id' | 'date' | 'total' | 'status'>): Sale => {
     const subtotal = sale.items.reduce((total, currentItem) => {
         const itemTotal = (currentItem.feet || 1) * currentItem.price * currentItem.quantity;
         const discountAmount = itemTotal * ((currentItem.discount || 0) / 100);
@@ -150,29 +151,47 @@ export const DataProvider = ({ children }: { children: ReactNode }) => {
     const overallDiscountAmount = (subtotal * sale.discount) / 100;
     const total = subtotal - overallDiscountAmount;
 
-    const newSale: Sale = { ...sale, id: `SALE${Date.now().toString().slice(-4)}`, date: new Date(), total };
-    setSales(prev => [newSale, ...prev]);
-    
-    // A sale DEBITS the customer's account (increases their due balance)
-    addTransaction({
-        description: `Sale to ${newSale.customerName}`,
-        amount: newSale.total,
-        type: 'debit',
-        category: 'Sale',
-        customerId: newSale.customerId,
-        customerName: newSale.customerName,
-    });
+    const newSale: Sale = { ...sale, id: `SALE${Date.now().toString().slice(-4)}`, date: new Date(), total, status: 'draft' };
+    setSales(prev => [newSale, ...prev].sort((a,b) => new Date(b.date).getTime() - new Date(a.date).getTime()));
     
     return newSale;
   };
+
+  const postSale = (saleId: string) => {
+    let postedSale: Sale | undefined;
+    setSales(prev => {
+        const newSales = prev.map(s => {
+            if (s.id === saleId) {
+                postedSale = { ...s, status: 'posted' };
+                return postedSale;
+            }
+            return s;
+        });
+        return newSales.sort((a,b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+    });
+
+    if (postedSale) {
+        // A sale DEBITS the customer's account (increases their due balance)
+        addTransaction({
+            description: `Sale to ${postedSale.customerName}`,
+            amount: postedSale.total,
+            type: 'debit',
+            category: 'Sale',
+            customerId: postedSale.customerId,
+            customerName: postedSale.customerName,
+        });
+    }
+  }
 
   const deleteSale = (id: string) => {
     const saleToDelete = sales.find(s => s.id === id);
     if (!saleToDelete) return;
 
     setSales(prev => prev.filter(sale => sale.id !== id));
-    // Also remove the associated transaction
-    setTransactions(prev => prev.filter(t => !(t.category === 'Sale' && t.description === `Sale to ${saleToDelete.customerName}` && t.amount === saleToDelete.total)));
+    // Also remove the associated transaction if the sale was posted
+    if (saleToDelete.status === 'posted') {
+        setTransactions(prev => prev.filter(t => !(t.category === 'Sale' && t.description === `Sale to ${saleToDelete.customerName}` && t.amount === saleToDelete.total)));
+    }
   };
   
   // --- Expense Management ---
@@ -219,7 +238,7 @@ export const DataProvider = ({ children }: { children: ReactNode }) => {
   
   // --- Dashboard & Report Calculations ---
   const getDashboardStats = () => {
-    const totalSales = sales.reduce((sum, sale) => sum + sale.total, 0);
+    const totalSales = sales.filter(s => s.status === 'posted').reduce((sum, sale) => sum + sale.total, 0);
     const cashReceived = transactions.reduce((sum, transaction) => {
         // Only include cash receipts not directly tied to a sale's creation
         if (transaction.type === 'credit' && transaction.category !== 'Sale') {
@@ -234,7 +253,7 @@ export const DataProvider = ({ children }: { children: ReactNode }) => {
     
     const totalStockValue = 0; 
     
-    const totalCostOfGoodsSold = sales.reduce((sum, sale) => {
+    const totalCostOfGoodsSold = sales.filter(s => s.status === 'posted').reduce((sum, sale) => {
       const saleCost = sale.items.reduce((itemSum, saleItem) => {
         const item = items.find(i => i.id === saleItem.itemId);
         if (!item) return itemSum;
@@ -253,7 +272,7 @@ export const DataProvider = ({ children }: { children: ReactNode }) => {
   
     const today = new Date();
     const todaySummary = {
-      sales: sales.filter(s => new Date(s.date).toDateString() === today.toDateString()),
+      sales: sales.filter(s => new Date(s.date).toDateString() === today.toDateString() && s.status === 'posted'),
       expenses: expenses.filter(e => new Date(e.date).toDateString() === today.toDateString()),
     };
     
@@ -270,7 +289,7 @@ export const DataProvider = ({ children }: { children: ReactNode }) => {
     const revenueByMonth: { [key: string]: number } = {};
     const expensesByMonth: { [key: string]: number } = {};
     
-    sales.forEach(sale => {
+    sales.filter(s => s.status === 'posted').forEach(sale => {
       const saleDate = new Date(sale.date);
       const month = saleDate.toLocaleString('default', { month: 'short' });
       if (!revenueByMonth[month]) {
@@ -316,6 +335,7 @@ export const DataProvider = ({ children }: { children: ReactNode }) => {
     addVendor,
     deleteVendor,
     addSale,
+    postSale,
     deleteSale,
     addExpense,
     deleteExpense,
