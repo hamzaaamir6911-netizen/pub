@@ -1,4 +1,5 @@
 
+
 "use client";
 
 import { useState } from "react";
@@ -30,7 +31,7 @@ import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
 
-function AddItemForm({ onItemAdded }: { onItemAdded: (newItem: Omit<Item, 'id' | 'quantity'>) => void }) {
+function AddItemForm({ onItemAdded }: { onItemAdded: (newItem: Omit<Item, 'id'>) => void }) {
     const [name, setName] = useState('');
     const [category, setCategory] = useState<'Aluminium' | 'Glass' | 'Accessories'>('Aluminium');
     const [unit, setUnit] = useState<'Kg' | 'Feet' | 'Piece'>('Feet');
@@ -45,10 +46,10 @@ function AddItemForm({ onItemAdded }: { onItemAdded: (newItem: Omit<Item, 'id' |
             toast({ variant: "destructive", title: "Please fill all required fields." });
             return;
         }
-        const newItem: Omit<Item, 'id' | 'quantity'> = {
+        const newItem: Omit<Item, 'id'> = {
             name, category, unit, purchasePrice, salePrice, color, weight,
         };
-        onItemAdded(newItem as Omit<Item, 'id' | 'quantity'>);
+        onItemAdded(newItem as Omit<Item, 'id'>);
         toast({ title: "Item Added!", description: `${name} has been added to inventory.` });
         // Reset form
         setName(''); setCategory('Aluminium'); setUnit('Feet'); setPurchasePrice(0); setSalePrice(0); setColor(''); setWeight(0);
@@ -116,8 +117,8 @@ export default function InventoryPage() {
     deleteItem(id);
   };
   
-  const handleItemAdded = (newItem: Omit<Item, 'id' | 'quantity'>) => {
-    addItem({ ...newItem, quantity: 0});
+  const handleItemAdded = (newItem: Omit<Item, 'id'>) => {
+    addItem(newItem);
     setItemModalOpen(false);
   }
 

@@ -1,4 +1,5 @@
 
+
 "use client";
 
 import { useState } from "react";
@@ -48,25 +49,15 @@ function SaleInvoice({ sale }: { sale: Sale }) {
     const { customers, items: allItems } = useDataContext();
     const customer = customers.find(c => c.id === sale.customerId);
 
-    const subtotal = sale.items.reduce((acc, saleItem) => {
-        const itemDetails = allItems.find(i => i.id === saleItem.itemId);
-        if (!itemDetails) return acc;
-
-        if (itemDetails.category === 'Aluminium' && saleItem.length && saleItem.width) {
-            const totalFeet = (saleItem.length * saleItem.width / 144) * saleItem.quantity;
-            return acc + (itemDetails.salePrice * totalFeet);
-        }
-        // For accessories or items sold by piece/kg without dimensions
-        return acc + (saleItem.price * saleItem.quantity);
-    }, 0);
-    
-    const discountAmount = (subtotal * sale.discount) / 100;
-    const total = subtotal - discountAmount;
+    let runningTotal = 0;
 
     return (
-        <DialogContent className="max-w-4xl">
+        <DialogContent className="max-w-6xl">
             <DialogHeader>
-                <DialogTitle>Sale Invoice: {sale.id}</DialogTitle>
+                 <div className="flex flex-col items-center justify-center pt-4">
+                    <h1 className="text-3xl font-bold font-headline">Arco aluminium</h1>
+                    <DialogTitle>Sale Invoice: {sale.id}</DialogTitle>
+                </div>
             </DialogHeader>
             <div className="p-6 print:p-0">
                 <div className="grid grid-cols-2 gap-4 mb-6">
@@ -86,37 +77,32 @@ function SaleInvoice({ sale }: { sale: Sale }) {
                     <TableHeader>
                         <TableRow>
                             <TableHead>Item</TableHead>
-                            <TableHead>Color</TableHead>
-                            <TableHead className="text-right">Qty (Pcs)</TableHead>
-                            <TableHead className="text-right">Total Feet</TableHead>
-                            <TableHead className="text-right">Rate (per Ft.)</TableHead>
-                            <TableHead className="text-right">Total Amount</TableHead>
+                            <TableHead>Colour</TableHead>
+                            <TableHead>Thickness</TableHead>
+                            <TableHead className="text-right">Feet</TableHead>
+                            <TableHead className="text-right">Quantity</TableHead>
+                            <TableHead className="text-right">Rate</TableHead>
+                            <TableHead className="text-right">Discount</TableHead>
+                            <TableHead className="text-right">Amount</TableHead>
                         </TableRow>
                     </TableHeader>
                     <TableBody>
                         {sale.items.map((item, index) => {
-                             const itemDetails = allItems.find(i => i.id === item.itemId);
-                             const isAluminium = itemDetails?.category === 'Aluminium';
+                             const itemSubtotal = (item.feet || 1) * item.price * item.quantity;
+                             const discountAmount = itemSubtotal * ((item.discount || 0) / 100);
+                             const finalAmount = itemSubtotal - discountAmount;
+                             runningTotal += finalAmount;
                              
-                             let totalFeet = 0;
-                             if (isAluminium && item.length && item.width) {
-                                totalFeet = (item.length * item.width / 144) * item.quantity;
-                             }
-
-                             const rate = itemDetails?.salePrice || 0;
-                             const itemSubtotal = isAluminium ? totalFeet * rate : item.price * item.quantity;
-
                              return (
                                 <TableRow key={index}>
-                                    <TableCell>
-                                        <div className="font-medium">{item.itemName}</div>
-                                        {itemDetails?.weight && <div className="text-xs text-muted-foreground">({itemDetails.weight} kg/ft)</div>}
-                                    </TableCell>
+                                    <TableCell>{item.itemName}</TableCell>
                                     <TableCell>{item.color}</TableCell>
+                                    <TableCell>{item.thickness || '-'}</TableCell>
+                                    <TableCell className="text-right">{item.feet ? item.feet.toFixed(2) : '-'}</TableCell>
                                     <TableCell className="text-right">{item.quantity}</TableCell>
-                                    <TableCell className="text-right">{isAluminium ? totalFeet.toFixed(2) : '-'}</TableCell>
-                                    <TableCell className="text-right">{isAluminium ? formatCurrency(rate) : '-'}</TableCell>
-                                    <TableCell className="text-right">{formatCurrency(itemSubtotal)}</TableCell>
+                                    <TableCell className="text-right">{formatCurrency(item.price)}</TableCell>
+                                    <TableCell className="text-right">{item.discount || 0}%</TableCell>
+                                    <TableCell className="text-right">{formatCurrency(finalAmount)}</TableCell>
                                 </TableRow>
                              )
                         })}
@@ -124,18 +110,10 @@ function SaleInvoice({ sale }: { sale: Sale }) {
                 </Table>
 
                 <div className="mt-6 flex justify-end">
-                    <div className="w-64 space-y-2">
-                        <div className="flex justify-between">
-                            <span>Subtotal:</span>
-                            <span>{formatCurrency(subtotal)}</span>
-                        </div>
-                        <div className="flex justify-between">
-                            <span>Discount ({sale.discount}%):</span>
-                            <span className="text-red-500">- {formatCurrency(discountAmount)}</span>
-                        </div>
+                    <div className="w-80 space-y-2">
                         <div className="flex justify-between font-bold text-lg border-t pt-2">
                             <span>Total:</span>
-                            <span>{formatCurrency(total)}</span>
+                            <span>{formatCurrency(runningTotal)}</span>
                         </div>
                     </div>
                 </div>
@@ -202,12 +180,12 @@ function NewSaleForm({ onSaleAdded }: { onSaleAdded: (newSale: Omit<Sale, 'id' |
     const { toast } = useToast();
     const { customers, items: allItems, addCustomer } = useDataContext();
     const [selectedCustomer, setSelectedCustomer] = useState("");
-    const [saleItems, setSaleItems] = useState<Partial<SaleItem>[]>([{itemId: "", quantity: 1, length: 0, width: 0}]);
-    const [discount, setDiscount] = useState(0);
+    const [saleItems, setSaleItems] = useState<Partial<SaleItem>[]>([{itemId: "", quantity: 1, length: 0, width: 0, discount: 0 }]);
+    const [overallDiscount, setOverallDiscount] = useState(0);
     const [isCustomerModalOpen, setCustomerModalOpen] = useState(false);
 
     const handleAddItem = () => {
-        setSaleItems([...saleItems, {itemId: "", quantity: 1, length: 0, width: 0}]);
+        setSaleItems([...saleItems, {itemId: "", quantity: 1, length: 0, width: 0, discount: 0 }]);
     }
 
     const handleRemoveItem = (index: number) => {
@@ -226,22 +204,24 @@ function NewSaleForm({ onSaleAdded }: { onSaleAdded: (newSale: Omit<Sale, 'id' |
             const itemDetails = allItems.find(i => i.id === currentItem.itemId);
             if (!itemDetails) return total;
 
+            let feet = 1;
             if (itemDetails.category === 'Aluminium' && currentItem.length && currentItem.width) {
-                 const totalFeet = (currentItem.length * currentItem.width / 144) * (currentItem.quantity || 1);
-                 return total + (itemDetails.salePrice * totalFeet);
+                 feet = (currentItem.length * currentItem.width / 144);
             }
-            // For accessories or other items
-            return total + (itemDetails.salePrice * (currentItem.quantity || 1));
+            const itemTotal = feet * itemDetails.salePrice * (currentItem.quantity || 1);
+            const discountAmount = itemTotal * ((currentItem.discount || 0) / 100);
+            
+            return total + (itemTotal - discountAmount);
         }, 0);
         
-        const discountAmount = (subtotal * discount) / 100;
-        return subtotal - discountAmount;
+        const overallDiscountAmount = (subtotal * overallDiscount) / 100;
+        return subtotal - overallDiscountAmount;
     }
 
     const clearForm = () => {
         setSelectedCustomer("");
-        setSaleItems([{itemId: "", quantity: 1, length: 0, width: 0}]);
-        setDiscount(0);
+        setSaleItems([{itemId: "", quantity: 1, length: 0, width: 0, discount: 0}]);
+        setOverallDiscount(0);
     }
     
     const handleSaveSale = () => {
@@ -259,24 +239,24 @@ function NewSaleForm({ onSaleAdded }: { onSaleAdded: (newSale: Omit<Sale, 'id' |
 
         const finalSaleItems = saleItems.map(si => {
             const item = allItems.find(i => i.id === si.itemId)!;
-            const pricePerUnit = item.salePrice;
-            let price = pricePerUnit;
+            const thicknessMatch = item.name.match(/\((.*?)\)/);
 
+            let feet = 1;
             if (item.category === 'Aluminium' && si.length && si.width) {
-                const totalFeet = (si.length * si.width / 144) * (si.quantity || 1);
-                price = pricePerUnit * totalFeet;
-            } else {
-                 price = pricePerUnit * (si.quantity || 1);
+                feet = (si.length * si.width / 144);
             }
 
             return {
                 ...si,
                 itemId: item.id,
-                itemName: item.name,
+                itemName: item.name.replace(/\s*\(.*\)\s*/, '').trim(),
                 quantity: si.quantity || 1,
-                price: price / (si.quantity || 1), 
+                price: item.salePrice,
                 color: item.color,
                 weight: item.weight,
+                thickness: thicknessMatch ? thicknessMatch[1] : undefined,
+                feet: feet,
+                discount: si.discount || 0,
             }
         }) as SaleItem[];
 
@@ -284,7 +264,7 @@ function NewSaleForm({ onSaleAdded }: { onSaleAdded: (newSale: Omit<Sale, 'id' |
             customerId: selectedCustomer,
             customerName: customer.name,
             items: finalSaleItems,
-            discount: discount,
+            discount: overallDiscount,
         };
 
         onSaleAdded(newSale);
@@ -330,13 +310,13 @@ function NewSaleForm({ onSaleAdded }: { onSaleAdded: (newSale: Omit<Sale, 'id' |
                         </div>
                     </div>
                     <div className="space-y-2">
-                        <Label htmlFor="discount">Discount (%)</Label>
+                        <Label htmlFor="discount">Overall Discount (%)</Label>
                         <Input 
                             id="discount"
                             type="number"
                             placeholder="e.g. 5"
-                            value={discount}
-                            onChange={(e) => setDiscount(parseFloat(e.target.value) || 0)}
+                            value={overallDiscount}
+                            onChange={(e) => setOverallDiscount(parseFloat(e.target.value) || 0)}
                         />
                     </div>
                 </div>
@@ -346,7 +326,7 @@ function NewSaleForm({ onSaleAdded }: { onSaleAdded: (newSale: Omit<Sale, 'id' |
                     {saleItems.map((saleItem, index) => {
                          const itemDetails = allItems.find(i => i.id === saleItem.itemId);
                          return (
-                         <div key={index} className="grid grid-cols-1 md:grid-cols-5 gap-2 items-end p-3 border rounded-md">
+                         <div key={index} className="grid grid-cols-1 md:grid-cols-6 gap-2 items-end p-3 border rounded-md">
                             <div className="md:col-span-2 space-y-2">
                                 <Label>Item</Label>
                                 <Select onValueChange={(value) => handleItemChange(index, "itemId", value)} value={saleItem.itemId}>
@@ -382,6 +362,16 @@ function NewSaleForm({ onSaleAdded }: { onSaleAdded: (newSale: Omit<Sale, 'id' |
                                 </>
                             ) : <div className="md:col-span-2" /> }
                            
+                            <div className="space-y-2">
+                                <Label>Discount (%)</Label>
+                                <Input 
+                                    type="number" 
+                                    placeholder="%" 
+                                    value={saleItem.discount}
+                                    onChange={(e) => handleItemChange(index, "discount", parseInt(e.target.value) || 0)}
+                                    min="0"
+                                />
+                            </div>
                             <div className="flex gap-2 items-end">
                                 <div className="flex-grow space-y-2">
                                     <Label>Qty</Label>

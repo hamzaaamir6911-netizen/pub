@@ -2,7 +2,6 @@ export type Item = {
   id: string;
   name: string;
   category: 'Aluminium' | 'Glass' | 'Accessories';
-  quantity: number;
   unit: 'Kg' | 'Feet' | 'Piece';
   purchasePrice: number;
   salePrice: number;
@@ -21,11 +20,14 @@ export type SaleItem = {
   itemId: string;
   itemName: string;
   quantity: number;
-  price: number;
+  price: number; // This will now be Rate
   length?: number;
   width?: number;
   color?: string;
   weight?: number;
+  thickness?: string;
+  feet?: number;
+  discount?: number; // Item-level discount percentage
 }
 
 export type Sale = {
@@ -35,7 +37,7 @@ export type Sale = {
   items: SaleItem[];
   total: number;
   date: Date;
-  discount: number;
+  discount: number; // Overall discount percentage
 };
 
 export type Expense = {

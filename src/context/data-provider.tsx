@@ -1,4 +1,5 @@
 
+
 "use client";
 
 import React, { createContext, useContext, useState, ReactNode, useEffect } from 'react';
@@ -105,19 +106,22 @@ export const DataProvider = ({ children }: { children: ReactNode }) => {
   // --- Sale Management ---
   const addSale = (sale: Omit<Sale, 'id' | 'date' | 'total'>): Sale => {
     const subtotal = sale.items.reduce((total, currentItem) => {
+        if (!currentItem.itemId) return total;
         const itemDetails = items.find(i => i.id === currentItem.itemId);
         if (!itemDetails) return total;
 
+        let feet = 1;
         if (itemDetails.category === 'Aluminium' && currentItem.length && currentItem.width) {
-             const totalFeet = (currentItem.length * currentItem.width / 144) * (currentItem.quantity || 1);
-             return total + (itemDetails.salePrice * totalFeet);
+             feet = (currentItem.length * currentItem.width / 144);
         }
-        // For accessories or items sold by piece/kg without dimensions
-        return total + (itemDetails.salePrice * (currentItem.quantity || 1));
+        const itemTotal = feet * itemDetails.salePrice * (currentItem.quantity || 1);
+        const discountAmount = itemTotal * ((currentItem.discount || 0) / 100);
+        
+        return total + (itemTotal - discountAmount);
     }, 0);
     
-    const discountAmount = (subtotal * sale.discount) / 100;
-    const total = subtotal - discountAmount;
+    const overallDiscountAmount = (subtotal * sale.discount) / 100;
+    const total = subtotal - overallDiscountAmount;
 
     const newSale: Sale = { ...sale, id: `SALE${Date.now().toString().slice(-4)}`, date: new Date(), total };
     setSales(prev => [newSale, ...prev]);
@@ -129,21 +133,6 @@ export const DataProvider = ({ children }: { children: ReactNode }) => {
         category: 'Sale'
     });
     
-    // Deduct stock
-    newSale.items.forEach(saleItem => {
-        setItems(prevItems => prevItems.map(stockItem => {
-            if (stockItem.id === saleItem.itemId) {
-                let quantityToDeduct = saleItem.quantity;
-                 if (stockItem.category === 'Aluminium' && saleItem.length && saleItem.width) {
-                    const totalFeet = (saleItem.length * saleItem.width / 144) * saleItem.quantity;
-                    quantityToDeduct = totalFeet; 
-                }
-                // No quantity to deduct from as it was removed
-                return stockItem;
-            }
-            return stockItem;
-        }));
-    });
     return newSale;
   };
 
@@ -192,18 +181,19 @@ export const DataProvider = ({ children }: { children: ReactNode }) => {
     const totalSales = sales.reduce((sum, sale) => sum + sale.total, 0);
     const totalExpenses = expenses.reduce((sum, expense) => sum + expense.amount, 0);
     
-    const totalStockValue = 0; // Removed as per user request
+    const totalStockValue = 0; 
     
     const totalCostOfGoodsSold = sales.reduce((sum, sale) => {
       const saleCost = sale.items.reduce((itemSum, saleItem) => {
         const item = items.find(i => i.id === saleItem.itemId);
         if (!item) return itemSum;
   
-        if (item.category === 'Aluminium' && saleItem.length && saleItem.width) {
-          const totalFeet = (saleItem.length * saleItem.width / 144) * saleItem.quantity;
-          return itemSum + (item.purchasePrice * totalFeet);
+        let quantity = saleItem.quantity;
+        if (item.category === 'Aluminium' && saleItem.feet) {
+          quantity = saleItem.feet * saleItem.quantity;
         }
-        return itemSum + (item.purchasePrice * saleItem.quantity);
+
+        return itemSum + (item.purchasePrice * quantity);
       }, 0);
       return sum + saleCost;
     }, 0);
