@@ -7,6 +7,27 @@
     -webkit-print-color-adjust: exact !important;
     print-color-adjust: exact !important;
   }
+
+  /* Hide everything by default */
+  body * {
+    visibility: hidden;
+  }
+
+  /* Show only the printable area and its children */
+  .printable-area, .printable-area * {
+    visibility: visible;
+  }
+
+  /* Position the printable area to take up the whole page */
+  .printable-area {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 100%;
+    margin: 0;
+    padding: 0;
+  }
+  
   .dark body {
     color: #fff !important;
     background-color: hsl(var(--background)) !important;
@@ -18,11 +39,11 @@
   .dark .text-muted-foreground {
     color: #a1a1aa !important;
   }
-  .dark .text-green-600 {
-      color: #16a34a !important;
+  .dark .text-green-600, .dark .text-green-700 {
+      color: #22c55e !important;
   }
-  .dark .text-red-600 {
-      color: #dc2626 !important;
+  .dark .text-red-600, .dark .text-red-700 {
+      color: #ef4444 !important;
   }
   .dark .border, .dark .border-t {
     border-color: hsl(var(--border)) !important;
