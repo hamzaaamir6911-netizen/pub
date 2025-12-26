@@ -2,8 +2,8 @@
 
 "use client";
 
-import { useState } from "react";
-import { MoreHorizontal, PlusCircle, Trash2, RotateCcw, FileText, CheckCircle } from "lucide-react";
+import { useState, useRef } from "react";
+import { MoreHorizontal, PlusCircle, Trash2, RotateCcw, FileText, CheckCircle, Printer } from "lucide-react";
 import {
   Table,
   TableBody,
@@ -45,11 +45,18 @@ import type { Sale, SaleItem, Customer, Item } from "@/lib/types";
 import { useToast } from "@/hooks/use-toast";
 import { useDataContext } from "@/context/data-provider";
 import { Badge } from "@/components/ui/badge";
+import { useReactToPrint } from "react-to-print";
+
 
 function SaleInvoice({ sale, onPost }: { sale: Sale, onPost: (saleId: string) => void }) {
     const { customers } = useDataContext();
     const customer = customers.find(c => c.id === sale.customerId);
     const { toast } = useToast();
+    const printRef = useRef(null);
+    
+    const handlePrint = useReactToPrint({
+        content: () => printRef.current,
+    });
 
     let runningTotal = 0;
 
@@ -60,87 +67,91 @@ function SaleInvoice({ sale, onPost }: { sale: Sale, onPost: (saleId: string) =>
 
     return (
         <DialogContent className="max-w-6xl">
-            <DialogHeader>
-                 <div className="flex flex-col items-center justify-center pt-4">
-                    <h1 className="text-3xl font-bold font-headline">Arco aluminium</h1>
-                    <DialogTitle>Sale Invoice: {sale.id}</DialogTitle>
-                </div>
-            </DialogHeader>
-            <div className="p-6 print:p-0">
-                <div className="grid grid-cols-2 gap-4 mb-6">
-                    <div>
-                        <p className="font-semibold">Customer:</p>
-                        <p>{sale.customerName}</p>
-                        <p>{customer?.address}</p>
-                        <p>{customer?.phone}</p>
+            <div ref={printRef} className="print-area">
+                <DialogHeader>
+                    <div className="flex flex-col items-center justify-center pt-4">
+                        <h1 className="text-3xl font-bold font-headline">Arco aluminium</h1>
+                        <DialogTitle>Sale Invoice: {sale.id}</DialogTitle>
                     </div>
-                    <div className="text-right">
-                        <p className="font-semibold">Date:</p>
-                        <p>{formatDate(sale.date)}</p>
-                        <p className="font-semibold mt-2">Status:</p>
-                        <Badge variant={sale.status === 'posted' ? 'default' : 'secondary'}>{sale.status}</Badge>
+                </DialogHeader>
+                <div className="p-6">
+                    <div className="grid grid-cols-2 gap-4 mb-6">
+                        <div>
+                            <p className="font-semibold">Customer:</p>
+                            <p>{sale.customerName}</p>
+                            <p>{customer?.address}</p>
+                            <p>{customer?.phone}</p>
+                        </div>
+                        <div className="text-right">
+                            <p className="font-semibold">Date:</p>
+                            <p>{formatDate(sale.date)}</p>
+                            <p className="font-semibold mt-2">Status:</p>
+                            <Badge variant={sale.status === 'posted' ? 'default' : 'secondary'}>{sale.status}</Badge>
+                        </div>
                     </div>
-                </div>
 
-                <Table>
-                    <TableHeader>
-                        <TableRow>
-                            <TableHead>Item</TableHead>
-                            <TableHead>Colour</TableHead>
-                            <TableHead>Thickness</TableHead>
-                            <TableHead className="text-right">Feet</TableHead>
-                            <TableHead className="text-right">Quantity</TableHead>
-                            <TableHead className="text-right">Rate</TableHead>
-                            <TableHead className="text-right">Discount</TableHead>
-                            <TableHead className="text-right">Amount</TableHead>
-                        </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                        {sale.items.map((item, index) => {
-                             const itemSubtotal = (item.feet || 1) * item.price * item.quantity;
-                             const discountAmount = itemSubtotal * ((item.discount || 0) / 100);
-                             const finalAmount = itemSubtotal - discountAmount;
-                             runningTotal += finalAmount;
-                             
-                             return (
-                                <TableRow key={index}>
-                                    <TableCell>{item.itemName}</TableCell>
-                                    <TableCell>{item.color}</TableCell>
-                                    <TableCell>{item.thickness || '-'}</TableCell>
-                                    <TableCell className="text-right">{item.feet ? item.feet.toFixed(2) : '-'}</TableCell>
-                                    <TableCell className="text-right">{item.quantity}</TableCell>
-                                    <TableCell className="text-right">{formatCurrency(item.price)}</TableCell>
-                                    <TableCell className="text-right">{item.discount || 0}%</TableCell>
-                                    <TableCell className="text-right">{formatCurrency(finalAmount)}</TableCell>
-                                </TableRow>
-                             )
-                        })}
-                    </TableBody>
-                </Table>
+                    <Table>
+                        <TableHeader>
+                            <TableRow>
+                                <TableHead>Item</TableHead>
+                                <TableHead>Colour</TableHead>
+                                <TableHead>Thickness</TableHead>
+                                <TableHead className="text-right">Feet</TableHead>
+                                <TableHead className="text-right">Quantity</TableHead>
+                                <TableHead className="text-right">Rate</TableHead>
+                                <TableHead className="text-right">Discount</TableHead>
+                                <TableHead className="text-right">Amount</TableHead>
+                            </TableRow>
+                        </TableHeader>
+                        <TableBody>
+                            {sale.items.map((item, index) => {
+                                const itemSubtotal = (item.feet || 1) * item.price * item.quantity;
+                                const discountAmount = itemSubtotal * ((item.discount || 0) / 100);
+                                const finalAmount = itemSubtotal - discountAmount;
+                                runningTotal += finalAmount;
+                                
+                                return (
+                                    <TableRow key={index}>
+                                        <TableCell>{item.itemName}</TableCell>
+                                        <TableCell>{item.color}</TableCell>
+                                        <TableCell>{item.thickness || '-'}</TableCell>
+                                        <TableCell className="text-right">{item.feet ? item.feet.toFixed(2) : '-'}</TableCell>
+                                        <TableCell className="text-right">{item.quantity}</TableCell>
+                                        <TableCell className="text-right">{formatCurrency(item.price)}</TableCell>
+                                        <TableCell className="text-right">{item.discount || 0}%</TableCell>
+                                        <TableCell className="text-right">{formatCurrency(finalAmount)}</TableCell>
+                                    </TableRow>
+                                )
+                            })}
+                        </TableBody>
+                    </Table>
 
-                <div className="mt-6 flex justify-end">
-                    <div className="w-80 space-y-2">
-                        <div className="flex justify-between font-bold text-lg border-t pt-2">
-                            <span>Total:</span>
-                            <span>{formatCurrency(runningTotal)}</span>
+                    <div className="mt-6 flex justify-end">
+                        <div className="w-80 space-y-2">
+                            <div className="flex justify-between font-bold text-lg border-t pt-2">
+                                <span>Total:</span>
+                                <span>{formatCurrency(runningTotal)}</span>
+                            </div>
                         </div>
                     </div>
                 </div>
-
-                 <DialogFooter className="mt-8 print:hidden">
-                    <Button variant="outline" onClick={() => window.print()}>Print Invoice</Button>
-                     {sale.status === 'draft' ? (
-                        <Button onClick={handlePost}>
-                            <CheckCircle className="mr-2 h-4 w-4" />
-                            Post to Ledger
-                        </Button>
-                    ) : (
-                        <p className="text-sm text-green-600 font-semibold flex items-center">
-                            <CheckCircle className="mr-2 h-4 w-4" /> Posted to Ledger
-                        </p>
-                    )}
-                </DialogFooter>
             </div>
+            <DialogFooter className="mt-8 print:hidden">
+                <Button variant="outline" onClick={handlePrint}>
+                    <Printer className="mr-2 h-4 w-4" />
+                    Print Invoice
+                </Button>
+                {sale.status === 'draft' ? (
+                    <Button onClick={handlePost}>
+                        <CheckCircle className="mr-2 h-4 w-4" />
+                        Post to Ledger
+                    </Button>
+                ) : (
+                    <p className="text-sm text-green-600 font-semibold flex items-center">
+                        <CheckCircle className="mr-2 h-4 w-4" /> Posted to Ledger
+                    </p>
+                )}
+            </DialogFooter>
         </DialogContent>
     )
 }

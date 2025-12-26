@@ -12,14 +12,12 @@
   body * {
     visibility: hidden;
   }
-
-  /* Show only the printable area and its children */
-  .printable-area, .printable-area * {
+  
+  .print-area, .print-area * {
     visibility: visible;
   }
-
-  /* Position the printable area to take up the whole page */
-  .printable-area {
+  
+  .print-area {
     position: absolute;
     left: 0;
     top: 0;
@@ -27,25 +25,32 @@
     margin: 0;
     padding: 0;
   }
-  
-  .dark body {
-    color: #fff !important;
-    background-color: hsl(var(--background)) !important;
+
+  .dark {
+    color-scheme: dark;
   }
-  .dark table, .dark th, .dark td, .dark div {
-    color: #fff !important;
+
+  .dark body {
+    background-color: hsl(var(--background)) !important;
+    color: hsl(var(--foreground)) !important;
+  }
+
+  .dark .print-area, .dark .print-area * {
+    color: hsl(var(--foreground)) !important;
     font-weight: bold !important;
   }
-  .dark .text-muted-foreground {
-    color: #a1a1aa !important;
+
+  .dark .print-area .text-muted-foreground {
+    color: hsl(var(--muted-foreground)) !important;
   }
-  .dark .text-green-600, .dark .text-green-700 {
-      color: #22c55e !important;
+
+  .dark .print-area .text-green-600, .dark .print-area .text-green-700 {
+    color: #22c55e !important;
   }
-  .dark .text-red-600, .dark .text-red-700 {
-      color: #ef4444 !important;
+  .dark .print-area .text-red-600, .dark .print-area .text-red-700 {
+    color: #ef4444 !important;
   }
-  .dark .border, .dark .border-t {
+  .dark .print-area .border, .dark .print-area .border-t {
     border-color: hsl(var(--border)) !important;
   }
 }

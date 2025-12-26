@@ -2,7 +2,7 @@
 
 "use client";
 
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo, useRef } from "react";
 import { PlusCircle, X, MoreHorizontal, Printer } from "lucide-react";
 import {
   Table,
@@ -39,6 +39,7 @@ import { formatCurrency, formatDate } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { cn } from "@/lib/utils";
+import { useReactToPrint } from "react-to-print";
 
 
 function AddTransactionForm({ onTransactionAdded }: { onTransactionAdded: (newTransaction: Omit<Transaction, 'id' | 'date'>) => void }) {
@@ -175,6 +176,17 @@ export default function LedgerPage() {
   const [selectedCustomerId, setSelectedCustomerId] = useState<string | null>(null);
   const [selectedVendorId, setSelectedVendorId] = useState<string | null>(null);
   const { toast } = useToast();
+  const printRef = useRef(null);
+
+  const handlePrint = useReactToPrint({
+      content: () => printRef.current,
+      onBeforeGetContent: async () => {
+          document.body.classList.add('print-body');
+      },
+      onAfterPrint: () => {
+          document.body.classList.remove('print-body');
+      }
+  });
 
   const handleTransactionAdded = (newTransaction: Omit<Transaction, 'id' | 'date'>) => {
     addTransaction(newTransaction);
@@ -232,7 +244,7 @@ export default function LedgerPage() {
         description="A record of all financial transactions."
       >
         <div className="flex items-center gap-2">
-            <Button variant="outline" onClick={() => window.print()} className="print:hidden">
+            <Button variant="outline" onClick={handlePrint} className="print:hidden">
                 <Printer className="mr-2 h-4 w-4" />
                 Print
             </Button>
@@ -275,7 +287,7 @@ export default function LedgerPage() {
         )}
       </div>
 
-      <div className="rounded-lg border shadow-sm print:border-none print:shadow-none">
+      <div ref={printRef} className="print-area rounded-lg border shadow-sm print:border-none print:shadow-none">
         <Table>
           <TableHeader>
             <TableRow>
