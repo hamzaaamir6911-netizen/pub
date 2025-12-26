@@ -196,18 +196,6 @@ export const DataProvider = ({ children }: { children: ReactNode }) => {
         const transactionRef = doc(collection(firestore, 'transactions'));
         batch.set(transactionRef, transactionData);
 
-        // 3. Update inventory stock
-        for (const saleItem of sale.items) {
-            const itemRef = doc(firestore, 'items', saleItem.itemId);
-            const itemDetails = items.find(i => i.id === saleItem.itemId);
-            if(itemDetails) {
-                 const quantityToDecrement = (itemDetails.category === 'Aluminium' && saleItem.feet) 
-                    ? saleItem.feet * saleItem.quantity
-                    : saleItem.quantity;
-                batch.update(itemRef, { quantity: increment(-quantityToDecrement) });
-            }
-        }
-
         await batch.commit();
     };
 
@@ -221,7 +209,7 @@ export const DataProvider = ({ children }: { children: ReactNode }) => {
         batch.delete(saleRef);
     
         if (saleToDelete.status === 'posted') {
-            // 1. Delete associated transaction
+            // Delete associated transaction
             const q = query(
                 collection(firestore, 'transactions'), 
                 where("category", "==", "Sale"), 
@@ -231,18 +219,6 @@ export const DataProvider = ({ children }: { children: ReactNode }) => {
             querySnapshot.forEach((doc) => {
                 batch.delete(doc.ref);
             });
-
-            // 2. Replenish inventory stock
-            for (const saleItem of saleToDelete.items) {
-                const itemRef = doc(firestore, 'items', saleItem.itemId);
-                const itemDetails = items.find(i => i.id === saleItem.itemId);
-                 if(itemDetails) {
-                    const quantityToIncrement = (itemDetails.category === 'Aluminium' && saleItem.feet) 
-                        ? saleItem.feet * saleItem.quantity
-                        : saleItem.quantity;
-                    batch.update(itemRef, { quantity: increment(quantityToIncrement) });
-                }
-            }
         }
         await batch.commit();
     };
@@ -299,16 +275,11 @@ export const DataProvider = ({ children }: { children: ReactNode }) => {
     const getDashboardStats = () => {
         const totalSales = sales.filter(s => s.status === 'posted').reduce((sum, sale) => sum + sale.total, 0);
         const totalExpenses = expenses.reduce((sum, expense) => sum + expense.amount, 0);
-        const totalStockValue = items.reduce((sum, item) => sum + (item.purchasePrice * item.quantity), 0);
-        const totalCostOfGoodsSold = sales.filter(s => s.status === 'posted').reduce((sum, sale) => {
-            return sum + sale.items.reduce((itemSum, saleItem) => {
-                const item = items.find(i => i.id === saleItem.itemId);
-                if (!item) return itemSum;
-                let quantity = (item.category === 'Aluminium' && saleItem.feet) ? saleItem.feet * saleItem.quantity : saleItem.quantity;
-                return itemSum + (item.purchasePrice * quantity);
-            }, 0);
-        }, 0);
-        const profitLoss = totalSales - totalCostOfGoodsSold - totalExpenses;
+        const totalStockValue = 0; // Removed stock calculation
+        
+        // Simplified Profit/Loss
+        const profitLoss = totalSales - totalExpenses;
+
         const today = new Date();
         const todaySummary = {
             sales: sales.filter(s => new Date(s.date).toDateString() === today.toDateString() && s.status === 'posted'),
