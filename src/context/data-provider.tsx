@@ -106,15 +106,10 @@ export const DataProvider = ({ children }: { children: ReactNode }) => {
   // --- Sale Management ---
   const addSale = (sale: Omit<Sale, 'id' | 'date' | 'total'>): Sale => {
     const subtotal = sale.items.reduce((total, currentItem) => {
-        if (!currentItem.itemId) return total;
         const itemDetails = items.find(i => i.id === currentItem.itemId);
         if (!itemDetails) return total;
-
-        let feet = 1;
-        if (itemDetails.category === 'Aluminium' && currentItem.length && currentItem.width) {
-             feet = (currentItem.length * currentItem.width / 144);
-        }
-        const itemTotal = feet * itemDetails.salePrice * (currentItem.quantity || 1);
+        
+        const itemTotal = (currentItem.feet || 1) * currentItem.price * currentItem.quantity;
         const discountAmount = itemTotal * ((currentItem.discount || 0) / 100);
         
         return total + (itemTotal - discountAmount);
