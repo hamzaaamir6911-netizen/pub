@@ -58,7 +58,7 @@ function AddItemForm({ onItemAdded }: { onItemAdded: (newItem: Omit<Item, 'id'>)
     return (
         <DialogContent className="max-w-2xl">
             <DialogHeader><DialogTitle>Add New Item</DialogTitle></DialogHeader>
-            <div className="grid grid-cols-2 gap-4 py-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 py-4">
                 <div className="space-y-2">
                     <Label>Item Name</Label>
                     <Input value={name} onChange={(e) => setName(e.target.value)} placeholder="e.g. D 40" />
@@ -144,7 +144,7 @@ export default function InventoryPage() {
             <AddItemForm onItemAdded={handleItemAdded} />
         </Dialog>
       </PageHeader>
-      <div className="rounded-lg border shadow-sm">
+      <div className="rounded-lg border shadow-sm overflow-x-auto">
         <Table>
           <TableHeader>
             <TableRow>

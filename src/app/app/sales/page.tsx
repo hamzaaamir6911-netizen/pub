@@ -96,41 +96,43 @@ function SaleInvoice({ sale, onPost }: { sale: Sale, onPost: (saleId: string) =>
                         </div>
                     </div>
 
-                    <Table>
-                        <TableHeader>
-                            <TableRow>
-                                <TableHead>Item</TableHead>
-                                <TableHead>Colour</TableHead>
-                                <TableHead>Thickness</TableHead>
-                                <TableHead className="text-right">Feet</TableHead>
-                                <TableHead className="text-right">Quantity</TableHead>
-                                <TableHead className="text-right">Rate</TableHead>
-                                <TableHead className="text-right">Discount</TableHead>
-                                <TableHead className="text-right">Amount</TableHead>
-                            </TableRow>
-                        </TableHeader>
-                        <TableBody>
-                            {sale.items.map((item, index) => {
-                                const itemSubtotal = (item.feet || 1) * item.price * item.quantity;
-                                const discountAmount = itemSubtotal * ((item.discount || 0) / 100);
-                                const finalAmount = itemSubtotal - discountAmount;
-                                runningTotal += finalAmount;
-                                
-                                return (
-                                    <TableRow key={index}>
-                                        <TableCell>{item.itemName}</TableCell>
-                                        <TableCell>{item.color}</TableCell>
-                                        <TableCell>{item.thickness || '-'}</TableCell>
-                                        <TableCell className="text-right">{item.feet ? item.feet.toFixed(2) : '-'}</TableCell>
-                                        <TableCell className="text-right">{item.quantity}</TableCell>
-                                        <TableCell className="text-right">{formatCurrency(item.price)}</TableCell>
-                                        <TableCell className="text-right">{item.discount || 0}%</TableCell>
-                                        <TableCell className="text-right">{formatCurrency(finalAmount)}</TableCell>
-                                    </TableRow>
-                                )
-                            })}
-                        </TableBody>
-                    </Table>
+                    <div className="overflow-x-auto">
+                        <Table>
+                            <TableHeader>
+                                <TableRow>
+                                    <TableHead>Item</TableHead>
+                                    <TableHead>Colour</TableHead>
+                                    <TableHead>Thickness</TableHead>
+                                    <TableHead className="text-right">Feet</TableHead>
+                                    <TableHead className="text-right">Quantity</TableHead>
+                                    <TableHead className="text-right">Rate</TableHead>
+                                    <TableHead className="text-right">Discount</TableHead>
+                                    <TableHead className="text-right">Amount</TableHead>
+                                </TableRow>
+                            </TableHeader>
+                            <TableBody>
+                                {sale.items.map((item, index) => {
+                                    const itemSubtotal = (item.feet || 1) * item.price * item.quantity;
+                                    const discountAmount = itemSubtotal * ((item.discount || 0) / 100);
+                                    const finalAmount = itemSubtotal - discountAmount;
+                                    runningTotal += finalAmount;
+                                    
+                                    return (
+                                        <TableRow key={index}>
+                                            <TableCell>{item.itemName}</TableCell>
+                                            <TableCell>{item.color}</TableCell>
+                                            <TableCell>{item.thickness || '-'}</TableCell>
+                                            <TableCell className="text-right">{item.feet ? item.feet.toFixed(2) : '-'}</TableCell>
+                                            <TableCell className="text-right">{item.quantity}</TableCell>
+                                            <TableCell className="text-right">{formatCurrency(item.price)}</TableCell>
+                                            <TableCell className="text-right">{item.discount || 0}%</TableCell>
+                                            <TableCell className="text-right">{formatCurrency(finalAmount)}</TableCell>
+                                        </TableRow>
+                                    )
+                                })}
+                            </TableBody>
+                        </Table>
+                    </div>
 
                     <div className="mt-6 flex justify-end">
                         <div className="w-80 space-y-2">
@@ -484,12 +486,12 @@ export default function SalesPage() {
         description="Record new sales and view sales history."
       />
       <Tabs value={activeTab} onValueChange={setActiveTab}>
-        <TabsList>
+        <TabsList className="w-full sm:w-auto grid grid-cols-2">
           <TabsTrigger value="history">Sales History</TabsTrigger>
           <TabsTrigger value="new">New Sale</TabsTrigger>
         </TabsList>
         <TabsContent value="history">
-          <div className="rounded-lg border shadow-sm mt-4">
+          <div className="rounded-lg border shadow-sm mt-4 overflow-x-auto">
             <Table>
               <TableHeader>
                 <TableRow>
@@ -569,5 +571,3 @@ export default function SalesPage() {
     </>
   );
 }
-
-    

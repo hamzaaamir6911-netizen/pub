@@ -67,6 +67,7 @@ function LedgerReport() {
 
     const handlePrint = useReactToPrint({
         content: () => printRef.current,
+        bodyClass: "print-body",
     });
 
     const filteredTransactions = transactions.filter(t => {
@@ -91,7 +92,7 @@ function LedgerReport() {
                     <CardTitle>Ledger Report</CardTitle>
                     <CardDescription>View transactions within a specific date range.</CardDescription>
                 </div>
-                 <Button variant="outline" onClick={handlePrint}>
+                 <Button variant="outline" onClick={handlePrint} className="print:hidden">
                     <Printer className="mr-2 h-4 w-4" />
                     Print Report
                 </Button>
@@ -135,7 +136,13 @@ function LedgerReport() {
                         </PopoverContent>
                     </Popover>
                 </div>
-                <div ref={printRef} className="print-area rounded-lg border print:border-none">
+                <div ref={printRef} className="print-area rounded-lg border print:border-none print:shadow-none">
+                     <div className="p-4 print:block hidden">
+                        <h2 className="text-2xl font-bold text-center">Ledger Report</h2>
+                        <p className="text-center text-sm text-muted-foreground">
+                            {date?.from && format(date.from, "LLL dd, y")} - {date?.to && format(date.to, "LLL dd, y")}
+                        </p>
+                    </div>
                     <Table>
                         <TableHeader>
                             <TableRow>
@@ -183,9 +190,11 @@ export default function ReportsPage() {
     const stats = getDashboardStats();
     const monthlyData = getMonthlySalesData();
     const printRef = useRef(null);
+    const [activeTab, setActiveTab] = useState("monthly");
 
     const handlePrint = useReactToPrint({
         content: () => printRef.current,
+        bodyClass: "print-body",
     });
     
     const dailyReportData = [
@@ -205,95 +214,101 @@ export default function ReportsPage() {
         </Button>
       </PageHeader>
 
-       <Tabs defaultValue="monthly">
-        <TabsList className="grid w-full grid-cols-4 md:w-[500px] print:hidden">
+       <Tabs defaultValue="monthly" value={activeTab} onValueChange={setActiveTab}>
+        <TabsList className="grid w-full grid-cols-2 md:grid-cols-4 md:w-[500px] print:hidden">
           <TabsTrigger value="daily">Daily</TabsTrigger>
           <TabsTrigger value="monthly">Monthly</TabsTrigger>
           <TabsTrigger value="pl">Profit & Loss</TabsTrigger>
           <TabsTrigger value="ledger">Ledger</TabsTrigger>
         </TabsList>
         <TabsContent value="daily">
-             <Card ref={printRef} className="print-area mt-4">
-                <CardHeader>
-                    <CardTitle>Daily Report</CardTitle>
-                    <CardDescription>{formatDate(new Date())}</CardDescription>
-                </CardHeader>
-                <CardContent>
-                    <ChartContainer config={chartConfig} className="min-h-[200px] w-full">
-                        <BarChart accessibilityLayer data={dailyReportData}>
-                            <CartesianGrid vertical={false} />
-                            <XAxis
-                                dataKey="date"
-                                tickLine={false}
-                                tickMargin={10}
-                                axisLine={false}
-                            />
-                            <YAxis tickFormatter={(value) => formatCurrency(value as number)} />
-                            <Tooltip
-                                cursor={{ fill: 'hsl(var(--accent))' }}
-                                content={<ChartTooltipContent hideLabel />}
-                            />
-                            <Legend />
-                            <Bar dataKey="sales" fill="var(--color-sales)" radius={4} />
-                            <Bar dataKey="expenses" fill="var(--color-expenses)" radius={4} />
-                        </BarChart>
-                    </ChartContainer>
-                </CardContent>
-            </Card>
+             <div ref={activeTab === 'daily' ? printRef : null}>
+                 <Card className="print-area mt-4">
+                    <CardHeader>
+                        <CardTitle>Daily Report</CardTitle>
+                        <CardDescription>{formatDate(new Date())}</CardDescription>
+                    </CardHeader>
+                    <CardContent>
+                        <ChartContainer config={chartConfig} className="min-h-[200px] w-full">
+                            <BarChart accessibilityLayer data={dailyReportData}>
+                                <CartesianGrid vertical={false} />
+                                <XAxis
+                                    dataKey="date"
+                                    tickLine={false}
+                                    tickMargin={10}
+                                    axisLine={false}
+                                />
+                                <YAxis tickFormatter={(value) => formatCurrency(value as number)} />
+                                <Tooltip
+                                    cursor={{ fill: 'hsl(var(--accent))' }}
+                                    content={<ChartTooltipContent hideLabel />}
+                                />
+                                <Legend />
+                                <Bar dataKey="sales" fill="var(--color-sales)" radius={4} />
+                                <Bar dataKey="expenses" fill="var(--color-expenses)" radius={4} />
+                            </BarChart>
+                        </ChartContainer>
+                    </CardContent>
+                </Card>
+            </div>
         </TabsContent>
         <TabsContent value="monthly">
-             <Card ref={printRef} className="print-area mt-4">
-                <CardHeader>
-                    <CardTitle>Monthly Performance</CardTitle>
-                    <CardDescription>Comparison of revenue and expenses over the months.</CardDescription>
-                </CardHeader>
-                <CardContent>
-                    <ChartContainer config={chartConfig} className="min-h-[300px] w-full">
-                        <BarChart accessibilityLayer data={monthlyData}>
-                            <CartesianGrid vertical={false} />
-                            <XAxis
-                                dataKey="month"
-                                tickLine={false}
-                                tickMargin={10}
-                                axisLine={false}
-                                
-                            />
-                             <YAxis tickFormatter={(value) => formatCurrency(value as number).slice(0,-3)+'k'} />
-                            <Tooltip
-                                cursor={{ fill: 'hsl(var(--accent))' }}
-                                content={<ChartTooltipContent indicator="dot" />}
-                            />
-                            <Legend />
-                            <Bar dataKey="sales" fill="var(--color-sales)" radius={4} />
-                            <Bar dataKey="expenses" fill="var(--color-expenses)" radius={4} />
-                        </BarChart>
-                    </ChartContainer>
-                </CardContent>
-            </Card>
+             <div ref={activeTab === 'monthly' ? printRef : null}>
+                 <Card className="print-area mt-4">
+                    <CardHeader>
+                        <CardTitle>Monthly Performance</CardTitle>
+                        <CardDescription>Comparison of revenue and expenses over the months.</CardDescription>
+                    </CardHeader>
+                    <CardContent>
+                        <ChartContainer config={chartConfig} className="min-h-[300px] w-full">
+                            <BarChart accessibilityLayer data={monthlyData}>
+                                <CartesianGrid vertical={false} />
+                                <XAxis
+                                    dataKey="month"
+                                    tickLine={false}
+                                    tickMargin={10}
+                                    axisLine={false}
+                                    
+                                />
+                                 <YAxis tickFormatter={(value) => formatCurrency(value as number).slice(0,-3)+'k'} />
+                                <Tooltip
+                                    cursor={{ fill: 'hsl(var(--accent))' }}
+                                    content={<ChartTooltipContent indicator="dot" />}
+                                />
+                                <Legend />
+                                <Bar dataKey="sales" fill="var(--color-sales)" radius={4} />
+                                <Bar dataKey="expenses" fill="var(--color-expenses)" radius={4} />
+                            </BarChart>
+                        </ChartContainer>
+                    </CardContent>
+                </Card>
+            </div>
         </TabsContent>
         <TabsContent value="pl">
-             <Card ref={printRef} className="print-area mt-4">
-                <CardHeader>
-                    <CardTitle>Profit & Loss Statement</CardTitle>
-                    <CardDescription>A summary of revenues, costs, and expenses.</CardDescription>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                    <div className="rounded-lg border p-4 grid gap-4">
-                        <div className="flex justify-between">
-                            <span className="text-muted-foreground">Total Revenue</span>
-                            <span className="font-medium text-green-600">{formatCurrency(stats.totalSales)}</span>
+            <div ref={activeTab === 'pl' ? printRef : null}>
+                 <Card className="print-area mt-4">
+                    <CardHeader>
+                        <CardTitle>Profit & Loss Statement</CardTitle>
+                        <CardDescription>A summary of revenues, costs, and expenses.</CardDescription>
+                    </CardHeader>
+                    <CardContent className="space-y-4">
+                        <div className="rounded-lg border p-4 grid gap-4">
+                            <div className="flex justify-between">
+                                <span className="text-muted-foreground">Total Revenue</span>
+                                <span className="font-medium text-green-600">{formatCurrency(stats.totalSales)}</span>
+                            </div>
+                            <div className="flex justify-between">
+                                <span className="text-muted-foreground">Total Expenses</span>
+                                <span className="font-medium text-red-600">- {formatCurrency(stats.totalExpenses)}</span>
+                            </div>
+                             <div className="border-t pt-4 flex justify-between font-bold text-lg">
+                                <span>Net Profit / Loss</span>
+                                <span className={stats.profitLoss >= 0 ? 'text-green-700' : 'text-red-700'}>{formatCurrency(stats.profitLoss)}</span>
+                            </div>
                         </div>
-                        <div className="flex justify-between">
-                            <span className="text-muted-foreground">Total Expenses</span>
-                            <span className="font-medium text-red-600">- {formatCurrency(stats.totalExpenses)}</span>
-                        </div>
-                         <div className="border-t pt-4 flex justify-between font-bold text-lg">
-                            <span>Net Profit / Loss</span>
-                            <span className={stats.profitLoss >= 0 ? 'text-green-700' : 'text-red-700'}>{formatCurrency(stats.profitLoss)}</span>
-                        </div>
-                    </div>
-                </CardContent>
-            </Card>
+                    </CardContent>
+                </Card>
+            </div>
         </TabsContent>
         <TabsContent value="ledger">
             <LedgerReport />
@@ -302,7 +317,3 @@ export default function ReportsPage() {
     </>
   );
 }
-
-      
-
-    
