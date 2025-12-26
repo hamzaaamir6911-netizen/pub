@@ -42,7 +42,7 @@ export function AppSidebar() {
         <SidebarMenu>
           {navItems.map((item) => (
             <SidebarMenuItem key={item.href}>
-              <Link href={item.href} passHref legacyBehavior>
+              <Link href={item.href}>
                 <SidebarMenuButton
                   isActive={pathname.startsWith(item.href)}
                   tooltip={item.label}
@@ -59,7 +59,7 @@ export function AppSidebar() {
       <SidebarFooter>
          <SidebarMenu>
           <SidebarMenuItem>
-             <Link href="/login" passHref legacyBehavior>
+             <Link href="/login">
                 <SidebarMenuButton tooltip="Logout" className="justify-start text-red-400 hover:bg-red-500/10 hover:text-red-300">
                     <LogOut className="size-5" />
                     <span className="group-data-[collapsible=icon]:hidden">Logout</span>
