@@ -1,4 +1,5 @@
 
+
 "use client";
 
 import React, { createContext, useContext, ReactNode } from 'react';
@@ -83,7 +84,7 @@ export const DataProvider = ({ children }: { children: ReactNode }) => {
     const { data: expensesData, isLoading: expensesLoading } = useCollection<Expense>(expensesCol);
     const { data: transactionsData, isLoading: transactionsLoading } = useCollection<Transaction>(transactionsCol);
     
-    const items = itemsData?.map(item => ({ ...item, createdAt: toDate(item.createdAt) })) || [];
+    const items = itemsData?.map(item => ({ ...item, quantity: item.quantity ?? 0, createdAt: toDate(item.createdAt) })) || [];
     const customers = customersData?.map(customer => ({ ...customer, createdAt: toDate(customer.createdAt) })) || [];
     const vendors = vendorsData?.map(vendor => ({ ...vendor, createdAt: toDate(vendor.createdAt) })) || [];
     const sales = salesData?.map(sale => ({ ...sale, date: toDate(sale.date) })) || [];
@@ -367,3 +368,5 @@ export const useData = () => {
   }
   return context;
 };
+
+    
