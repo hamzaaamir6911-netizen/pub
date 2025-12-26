@@ -1,0 +1,487 @@
+
+
+"use client";
+
+import { useState } from "react";
+import { MoreHorizontal, PlusCircle, Trash2, RotateCcw, FileText } from "lucide-react";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+  DialogFooter,
+} from "@/components/ui/dialog"
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Card, CardContent, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
+import { Label } from "@/components/ui/label";
+import { PageHeader } from "@/components/page-header";
+import { formatCurrency, formatDate } from "@/lib/utils";
+import type { Sale, SaleItem, Customer, Item } from "@/lib/types";
+import { useToast } from "@/hooks/use-toast";
+import { useDataContext } from "@/context/data-provider";
+
+function SaleInvoice({ sale }: { sale: Sale }) {
+    const { customers, items: allItems } = useDataContext();
+    const customer = customers.find(c => c.id === sale.customerId);
+
+    let runningTotal = 0;
+
+    return (
+        <DialogContent className="max-w-6xl">
+            <DialogHeader>
+                 <div className="flex flex-col items-center justify-center pt-4">
+                    <h1 className="text-3xl font-bold font-headline">Arco aluminium</h1>
+                    <DialogTitle>Sale Invoice: {sale.id}</DialogTitle>
+                </div>
+            </DialogHeader>
+            <div className="p-6 print:p-0">
+                <div className="grid grid-cols-2 gap-4 mb-6">
+                    <div>
+                        <p className="font-semibold">Customer:</p>
+                        <p>{sale.customerName}</p>
+                        <p>{customer?.address}</p>
+                        <p>{customer?.phone}</p>
+                    </div>
+                    <div className="text-right">
+                        <p className="font-semibold">Date:</p>
+                        <p>{formatDate(sale.date)}</p>
+                    </div>
+                </div>
+
+                <Table>
+                    <TableHeader>
+                        <TableRow>
+                            <TableHead>Item</TableHead>
+                            <TableHead>Colour</TableHead>
+                            <TableHead>Thickness</TableHead>
+                            <TableHead className="text-right">Feet</TableHead>
+                            <TableHead className="text-right">Quantity</TableHead>
+                            <TableHead className="text-right">Rate</TableHead>
+                            <TableHead className="text-right">Discount</TableHead>
+                            <TableHead className="text-right">Amount</TableHead>
+                        </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                        {sale.items.map((item, index) => {
+                             const itemSubtotal = (item.feet || 1) * item.price * item.quantity;
+                             const discountAmount = itemSubtotal * ((item.discount || 0) / 100);
+                             const finalAmount = itemSubtotal - discountAmount;
+                             runningTotal += finalAmount;
+                             
+                             return (
+                                <TableRow key={index}>
+                                    <TableCell>{item.itemName}</TableCell>
+                                    <TableCell>{item.color}</TableCell>
+                                    <TableCell>{item.thickness || '-'}</TableCell>
+                                    <TableCell className="text-right">{item.feet ? item.feet.toFixed(2) : '-'}</TableCell>
+                                    <TableCell className="text-right">{item.quantity}</TableCell>
+                                    <TableCell className="text-right">{formatCurrency(item.price)}</TableCell>
+                                    <TableCell className="text-right">{item.discount || 0}%</TableCell>
+                                    <TableCell className="text-right">{formatCurrency(finalAmount)}</TableCell>
+                                </TableRow>
+                             )
+                        })}
+                    </TableBody>
+                </Table>
+
+                <div className="mt-6 flex justify-end">
+                    <div className="w-80 space-y-2">
+                        <div className="flex justify-between font-bold text-lg border-t pt-2">
+                            <span>Total:</span>
+                            <span>{formatCurrency(runningTotal)}</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div className="mt-8 text-center print:hidden">
+                    <Button onClick={() => window.print()}>Print Invoice</Button>
+                </div>
+            </div>
+        </DialogContent>
+    )
+}
+
+function AddCustomerForm({ onCustomerAdded }: { onCustomerAdded: (newCustomer: Omit<Customer, 'id'>) => void }) {
+  const [name, setName] = useState('');
+  const [phone, setPhone] = useState('');
+  const [address, setAddress] = useState('');
+  const { toast } = useToast();
+
+  const handleSubmit = () => {
+    if (!name || !phone || !address) {
+      toast({ variant: 'destructive', title: 'Please fill all fields.' });
+      return;
+    }
+    const newCustomer: Omit<Customer, 'id'> = {
+      name,
+      phone,
+      address,
+    };
+    onCustomerAdded(newCustomer);
+    toast({ title: 'Customer Added!', description: `${name} has been added.` });
+    setName('');
+    setPhone('');
+    setAddress('');
+  };
+
+  return (
+    <DialogContent>
+      <DialogHeader>
+        <DialogTitle>Add New Customer</DialogTitle>
+      </DialogHeader>
+      <div className="space-y-4 py-4">
+        <div className="space-y-2">
+          <Label htmlFor="name">Customer Name</Label>
+          <Input id="name" value={name} onChange={(e) => setName(e.target.value)} placeholder="John Doe" />
+        </div>
+        <div className="space-y-2">
+          <Label htmlFor="phone">Phone Number</Label>
+          <Input id="phone" value={phone} onChange={(e) => setPhone(e.target.value)} placeholder="0300-1234567" />
+        </div>
+        <div className="space-y-2">
+          <Label htmlFor="address">Address</Label>
+          <Input id="address" value={address} onChange={(e) => setAddress(e.target.value)} placeholder="123, Main Street, City" />
+        </div>
+      </div>
+      <DialogFooter>
+        <Button onClick={handleSubmit}>Add Customer</Button>
+      </DialogFooter>
+    </DialogContent>
+  );
+}
+
+
+function NewSaleForm({ onSaleAdded }: { onSaleAdded: (newSale: Omit<Sale, 'id' | 'date' | 'total'>) => void }) {
+    const { toast } = useToast();
+    const { customers, items: allItems, addCustomer } = useDataContext();
+    const [selectedCustomer, setSelectedCustomer] = useState("");
+    const [saleItems, setSaleItems] = useState<Partial<SaleItem>[]>([{itemId: "", quantity: 1, feet: 1, discount: 0 }]);
+    const [overallDiscount, setOverallDiscount] = useState(0);
+    const [isCustomerModalOpen, setCustomerModalOpen] = useState(false);
+
+    const handleAddItem = () => {
+        setSaleItems([...saleItems, {itemId: "", quantity: 1, feet: 1, discount: 0 }]);
+    }
+
+    const handleRemoveItem = (index: number) => {
+        setSaleItems(saleItems.filter((_, i) => i !== index));
+    }
+
+    const handleItemChange = (index: number, key: keyof SaleItem, value: any) => {
+        const newItems = [...saleItems];
+        (newItems[index] as any)[key] = value;
+        setSaleItems(newItems);
+    }
+
+    const calculateTotal = () => {
+        const subtotal = saleItems.reduce((total, currentItem) => {
+            if (!currentItem.itemId) return total;
+            const itemDetails = allItems.find(i => i.id === currentItem.itemId);
+            if (!itemDetails) return total;
+
+            const feet = currentItem.feet || 1;
+            const itemTotal = feet * itemDetails.salePrice * (currentItem.quantity || 1);
+            const discountAmount = itemTotal * ((currentItem.discount || 0) / 100);
+            
+            return total + (itemTotal - discountAmount);
+        }, 0);
+        
+        const overallDiscountAmount = (subtotal * overallDiscount) / 100;
+        return subtotal - overallDiscountAmount;
+    }
+
+    const clearForm = () => {
+        setSelectedCustomer("");
+        setSaleItems([{itemId: "", quantity: 1, feet: 1, discount: 0}]);
+        setOverallDiscount(0);
+    }
+    
+    const handleSaveSale = () => {
+        if (!selectedCustomer) {
+            toast({ variant: "destructive", title: "Please select a customer." });
+            return;
+        }
+        if (saleItems.some(item => !item.itemId || (item.quantity || 0) <= 0)) {
+            toast({ variant: "destructive", title: "Please fill all item details correctly." });
+            return;
+        }
+
+        const customer = customers.find(c => c.id === selectedCustomer);
+        if (!customer) return;
+
+        const finalSaleItems = saleItems.map(si => {
+            const item = allItems.find(i => i.id === si.itemId)!;
+            const thicknessMatch = item.name.match(/\((.*?)\)/);
+
+            return {
+                ...si,
+                itemId: item.id,
+                itemName: item.name.replace(/\s*\(.*\)\s*/, '').trim(),
+                quantity: si.quantity || 1,
+                price: item.salePrice,
+                color: item.color,
+                weight: item.weight,
+                thickness: thicknessMatch ? thicknessMatch[1] : undefined,
+                feet: si.feet || 1,
+                discount: si.discount || 0,
+            }
+        }) as SaleItem[];
+
+        const newSale: Omit<Sale, 'id' | 'date' | 'total'> = {
+            customerId: selectedCustomer,
+            customerName: customer.name,
+            items: finalSaleItems,
+            discount: overallDiscount,
+        };
+
+        onSaleAdded(newSale);
+        toast({ title: "Sale Saved!", description: `Sale has been recorded.` });
+        clearForm();
+    }
+    
+    const handleCustomerAdded = (newCustomer: Omit<Customer, 'id'>) => {
+        const addedCustomer = addCustomer(newCustomer);
+        setSelectedCustomer(addedCustomer.id);
+        setCustomerModalOpen(false);
+    }
+
+    return (
+        <>
+         <Card>
+            <CardHeader className="flex flex-row items-center justify-between">
+                <CardTitle>Create New Sale</CardTitle>
+                 <Button variant="ghost" size="icon" onClick={clearForm}>
+                    <RotateCcw className="h-4 w-4" />
+                    <span className="sr-only">Clear Form</span>
+                </Button>
+            </CardHeader>
+            <CardContent className="space-y-6">
+                <div className="grid md:grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                        <Label htmlFor="customer">Customer</Label>
+                        <div className="flex gap-2">
+                        <Select onValueChange={setSelectedCustomer} value={selectedCustomer}>
+                            <SelectTrigger id="customer">
+                                <SelectValue placeholder="Select a customer" />
+                            </SelectTrigger>
+                            <SelectContent>
+                                {customers.map(c => <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>)}
+                            </SelectContent>
+                        </Select>
+                        <Dialog open={isCustomerModalOpen} onOpenChange={setCustomerModalOpen}>
+                            <DialogTrigger asChild>
+                                <Button variant="outline" size="icon"><PlusCircle className="h-4 w-4" /></Button>
+                            </DialogTrigger>
+                            <AddCustomerForm onCustomerAdded={handleCustomerAdded} />
+                        </Dialog>
+                        </div>
+                    </div>
+                    <div className="space-y-2">
+                        <Label htmlFor="discount">Overall Discount (%)</Label>
+                        <Input 
+                            id="discount"
+                            type="number"
+                            placeholder="e.g. 5"
+                            value={overallDiscount}
+                            onChange={(e) => setOverallDiscount(parseFloat(e.target.value) || 0)}
+                        />
+                    </div>
+                </div>
+                
+                <div className="space-y-4">
+                    <Label>Items</Label>
+                    {saleItems.map((saleItem, index) => {
+                         const itemDetails = allItems.find(i => i.id === saleItem.itemId);
+                         return (
+                         <div key={index} className="grid grid-cols-1 md:grid-cols-6 gap-2 items-end p-3 border rounded-md">
+                            <div className="md:col-span-3 space-y-2">
+                                <Label>Item</Label>
+                                <Select onValueChange={(value) => handleItemChange(index, "itemId", value)} value={saleItem.itemId}>
+                                    <SelectTrigger>
+                                        <SelectValue placeholder="Select an item" />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        {allItems.map(i => <SelectItem key={i.id} value={i.id}>{i.name} ({i.color})</SelectItem>)}
+                                    </SelectContent>
+                                </Select>
+                            </div>
+                            
+                            {itemDetails?.category === "Aluminium" ? (
+                                <div className="space-y-2">
+                                    <Label>Feet</Label>
+                                    <Input 
+                                        type="number" 
+                                        placeholder="e.g. 12.5" 
+                                        value={saleItem.feet}
+                                        onChange={(e) => handleItemChange(index, "feet", parseFloat(e.target.value))}
+                                    />
+                                </div>
+                            ) : <div /> }
+                           
+                            <div className="space-y-2">
+                                <Label>Discount (%)</Label>
+                                <Input 
+                                    type="number" 
+                                    placeholder="%" 
+                                    value={saleItem.discount}
+                                    onChange={(e) => handleItemChange(index, "discount", parseInt(e.target.value) || 0)}
+                                    min="0"
+                                />
+                            </div>
+                            <div className="flex gap-2 items-end">
+                                <div className="flex-grow space-y-2">
+                                    <Label>Qty</Label>
+                                    <Input 
+                                        type="number" 
+                                        placeholder="Qty" 
+                                        value={saleItem.quantity}
+                                        onChange={(e) => handleItemChange(index, "quantity", parseInt(e.target.value) || 1)}
+                                        min="1"
+                                    />
+                                </div>
+                                <Button variant="ghost" size="icon" onClick={() => handleRemoveItem(index)} disabled={saleItems.length === 1}>
+                                    <Trash2 className="h-4 w-4 text-destructive" />
+                                </Button>
+                            </div>
+                        </div>
+                         )
+                    })}
+                    <Button variant="outline" size="sm" onClick={handleAddItem}>
+                        <PlusCircle className="mr-2 h-4 w-4" /> Add Item
+                    </Button>
+                </div>
+
+            </CardContent>
+            <CardFooter className="flex justify-between items-center bg-muted/50 p-4 rounded-b-lg">
+                <div className="text-xl font-bold">
+                    Total: {formatCurrency(calculateTotal())}
+                </div>
+                <Button onClick={handleSaveSale}>Save Sale</Button>
+            </CardFooter>
+        </Card>
+        </>
+    )
+}
+
+export default function SalesPage() {
+  const { sales, addSale, deleteSale } = useDataContext();
+  const [activeTab, setActiveTab] = useState("history");
+
+  const handleDelete = (id: string) => {
+    deleteSale(id);
+  };
+  
+  const handleSaleAdded = (newSale: Omit<Sale, 'id'|'date'|'total'>) => {
+    addSale(newSale);
+    setActiveTab("history");
+  }
+
+  return (
+    <>
+      <PageHeader
+        title="Sales"
+        description="Record new sales and view sales history."
+      />
+      <Tabs value={activeTab} onValueChange={setActiveTab}>
+        <TabsList>
+          <TabsTrigger value="history">Sales History</TabsTrigger>
+          <TabsTrigger value="new">New Sale</TabsTrigger>
+        </TabsList>
+        <TabsContent value="history">
+          <div className="rounded-lg border shadow-sm mt-4">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Sale ID</TableHead>
+                  <TableHead>Customer</TableHead>
+                  <TableHead>Date</TableHead>
+                  <TableHead className="text-right">Total Amount</TableHead>
+                  <TableHead>
+                    <span className="sr-only">Actions</span>
+                  </TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {sales.length === 0 ? (
+                  <TableRow>
+                    <TableCell colSpan={5} className="text-center h-24">No sales recorded yet.</TableCell>
+                  </TableRow>
+                ) : (
+                  sales.map((sale) => (
+                    <TableRow key={sale.id}>
+                      <TableCell className="font-medium">{sale.id}</TableCell>
+                      <TableCell>{sale.customerName}</TableCell>
+                      <TableCell>{formatDate(sale.date)}</TableCell>
+                      <TableCell className="text-right">
+                        {formatCurrency(sale.total)}
+                      </TableCell>
+                      <TableCell>
+                        <Dialog>
+                          <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                              <Button aria-haspopup="true" size="icon" variant="ghost">
+                                <MoreHorizontal className="h-4 w-4" />
+                                <span className="sr-only">Toggle menu</span>
+                              </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="end">
+                              <DropdownMenuLabel>Actions</DropdownMenuLabel>
+                               <DialogTrigger asChild>
+                                <DropdownMenuItem>
+                                    <FileText className="mr-2 h-4 w-4"/>
+                                    View Details
+                                </DropdownMenuItem>
+                              </DialogTrigger>
+                              <DropdownMenuItem
+                                onSelect={() => handleDelete(sale.id)}
+                                className="text-red-500 focus:bg-red-500/10 focus:text-red-500"
+                              >
+                                <Trash2 className="mr-2 h-4 w-4"/>
+                                Delete
+                              </DropdownMenuItem>
+                            </DropdownMenuContent>
+                          </DropdownMenu>
+                          <SaleInvoice sale={sale} />
+                        </Dialog>
+                      </TableCell>
+                    </TableRow>
+                  ))
+                )}
+              </TableBody>
+            </Table>
+          </div>
+        </TabsContent>
+        <TabsContent value="new">
+            <div className="mt-4">
+                <NewSaleForm onSaleAdded={handleSaleAdded} />
+            </div>
+        </TabsContent>
+      </Tabs>
+    </>
+  );
+}
