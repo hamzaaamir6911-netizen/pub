@@ -4,26 +4,22 @@ import { getAuth, type Auth } from 'firebase/auth';
 import { getFirestore, type Firestore } from 'firebase/firestore';
 import { firebaseConfig } from './config';
 
-let firebaseApp: FirebaseApp;
-let auth: Auth;
-let db: Firestore;
-
-function initializeFirebase() {
-  if (typeof window !== 'undefined') {
-    if (!getApps().length) {
-      firebaseApp = initializeApp(firebaseConfig);
-    } else {
-      firebaseApp = getApp();
-    }
-    auth = getAuth(firebaseApp);
-    db = getFirestore(firebaseApp);
-    return { app: firebaseApp, auth, db };
+// This function ensures Firebase is initialized only once.
+function initializeFirebaseApp(): FirebaseApp {
+  if (getApps().length) {
+    return getApp();
   }
-  
-  // This part of the code won't be reached in the browser, but it's good practice
-  // to handle the server-side case, even though our app is client-focused.
-  // We return null or mock objects here.
-  return { app: null as any, auth: null as any, db: null as any };
+  return initializeApp(firebaseConfig);
 }
 
-export { initializeFirebase };
+const app = initializeFirebaseApp();
+const auth = getAuth(app);
+const db = getFirestore(app);
+
+// This function is what the rest of the app will use.
+// It consistently returns the initialized services.
+function getFirebaseInstances() {
+    return { app, auth, db };
+}
+
+export { getFirebaseInstances as initializeFirebase };

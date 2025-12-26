@@ -30,6 +30,7 @@ function AppContent({ children }: { children: React.ReactNode }) {
     );
   }
 
+  // DataProvider is now INSIDE AppContent, so it only runs when a user is confirmed.
   return (
      <DataProvider>
         <div className="relative flex min-h-screen flex-col">
