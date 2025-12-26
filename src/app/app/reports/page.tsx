@@ -1,5 +1,4 @@
 
-
 "use client"
 
 import React, { useState, useRef } from "react"
@@ -247,7 +246,8 @@ export default function ReportsPage() {
                  <Card className="print-area mt-4">
                     <CardHeader>
                         <CardTitle>Monthly Performance</CardTitle>
-                        <CardDescription>Comparison of revenue and expenses over the months.</CardDescription> damper>
+                        <CardDescription>Comparison of revenue and expenses over the months.</CardDescription>
+                    </CardHeader>
                     <CardContent>
                         <ChartContainer config={chartConfig} className="min-h-[300px] w-full">
                             <BarChart accessibilityLayer data={monthlyData}>
