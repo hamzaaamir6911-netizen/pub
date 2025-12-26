@@ -262,16 +262,16 @@ function NewSaleForm({ onSaleAdded }: { onSaleAdded: (newSale: Omit<Sale, 'id' |
             if (item.category !== 'Aluminium') {
                 feet = 1;
             }
+            const thicknessMatch = item.name.match(/\((.*?)\)/);
 
             return {
-                ...si,
                 itemId: item.id,
-                itemName: item.name,
+                itemName: item.name.replace(/\s*\(.*\)\s*/, '').trim(),
                 quantity: si.quantity || 1,
                 price: item.salePrice,
                 color: si.color || item.color,
                 weight: item.weight,
-                thickness: si.thickness,
+                thickness: si.thickness || (thicknessMatch ? thicknessMatch[1] : ''),
                 feet: feet,
                 discount: si.discount || 0,
             }
@@ -351,7 +351,7 @@ function NewSaleForm({ onSaleAdded }: { onSaleAdded: (newSale: Omit<Sale, 'id' |
                                         <SelectValue placeholder="Select an item" />
                                     </SelectTrigger>
                                     <SelectContent>
-                                        {allItems.map(i => <SelectItem key={i.id} value={i.id}>{i.name}</SelectItem>)}
+                                        {allItems.map(i => <SelectItem key={i.id} value={i.id}>{i.name.replace(/\s*\(.*\)\s*/, '').trim()}</SelectItem>)}
                                     </SelectContent>
                                 </Select>
                             </div>
@@ -543,3 +543,5 @@ export default function SalesPage() {
     </>
   );
 }
+
+    
