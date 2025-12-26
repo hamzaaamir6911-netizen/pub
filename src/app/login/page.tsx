@@ -16,7 +16,6 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
-import { PlaceHolderImages } from "@/lib/placeholder-images";
 
 export default function LoginPage() {
   const router = useRouter();
@@ -24,7 +23,11 @@ export default function LoginPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [isLoading, setIsLoading] = useState(false);
-  const loginImage = PlaceHolderImages.find(p => p.id === 'login-background');
+  const loginImage = {
+    imageUrl: "https://images.unsplash.com/photo-1617990794833-24837885994b?w=800&q=80",
+    description: "Aluminum sections stacked together",
+    imageHint: "aluminium sections"
+  };
 
   const handleLogin = (e: React.FormEvent) => {
     e.preventDefault();
