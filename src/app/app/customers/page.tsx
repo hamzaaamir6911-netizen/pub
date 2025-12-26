@@ -31,9 +31,9 @@ import type { Customer } from "@/lib/types";
 import { useToast } from "@/hooks/use-toast";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
-import { useDataContext } from "@/context/data-provider";
+import { useData } from "@/firebase/data/data-provider";
 
-function AddCustomerForm({ onCustomerAdded }: { onCustomerAdded: (newCustomer: Omit<Customer, 'id'>) => void }) {
+function AddCustomerForm({ onCustomerAdded }: { onCustomerAdded: (newCustomer: Omit<Customer, 'id' | 'createdAt'>) => void }) {
   const [name, setName] = useState('');
   const [phone, setPhone] = useState('');
   const [address, setAddress] = useState('');
@@ -44,7 +44,7 @@ function AddCustomerForm({ onCustomerAdded }: { onCustomerAdded: (newCustomer: O
       toast({ variant: 'destructive', title: 'Please fill all fields.' });
       return;
     }
-    const newCustomer: Omit<Customer, 'id'> = {
+    const newCustomer: Omit<Customer, 'id' | 'createdAt'> = {
       name,
       phone,
       address,
@@ -84,14 +84,14 @@ function AddCustomerForm({ onCustomerAdded }: { onCustomerAdded: (newCustomer: O
 
 
 export default function CustomersPage() {
-  const { customers, addCustomer, deleteCustomer } = useDataContext();
+  const { customers, addCustomer, deleteCustomer } = useData();
   const [isCustomerModalOpen, setCustomerModalOpen] = useState(false);
 
   const handleDelete = (id: string) => {
     deleteCustomer(id);
   };
 
-  const handleCustomerAdded = (newCustomer: Omit<Customer, 'id'>) => {
+  const handleCustomerAdded = (newCustomer: Omit<Customer, 'id' | 'createdAt'>) => {
     addCustomer(newCustomer);
     setCustomerModalOpen(false);
   }

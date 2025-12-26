@@ -24,14 +24,14 @@ import { Badge } from "@/components/ui/badge";
 import { PageHeader } from "@/components/page-header";
 import { formatCurrency } from "@/lib/utils";
 import type { Item } from "@/lib/types";
-import { useDataContext } from "@/context/data-provider";
+import { useData } from "@/firebase/data/data-provider";
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
 
-function AddItemForm({ onItemAdded }: { onItemAdded: (newItem: Omit<Item, 'id'>) => void }) {
+function AddItemForm({ onItemAdded }: { onItemAdded: (newItem: Omit<Item, 'id' | 'createdAt'>) => void }) {
     const [name, setName] = useState('');
     const [category, setCategory] = useState<'Aluminium' | 'Glass' | 'Accessories'>('Aluminium');
     const [unit, setUnit] = useState<'Kg' | 'Feet' | 'Piece'>('Feet');
@@ -46,10 +46,10 @@ function AddItemForm({ onItemAdded }: { onItemAdded: (newItem: Omit<Item, 'id'>)
             toast({ variant: "destructive", title: "Please fill all required fields." });
             return;
         }
-        const newItem: Omit<Item, 'id'> = {
+        const newItem: Omit<Item, 'id' | 'createdAt'> = {
             name, category, unit, purchasePrice, salePrice, color, weight,
         };
-        onItemAdded(newItem as Omit<Item, 'id'>);
+        onItemAdded(newItem as Omit<Item, 'id' | 'createdAt'>);
         toast({ title: "Item Added!", description: `${name} has been added to inventory.` });
         // Reset form
         setName(''); setCategory('Aluminium'); setUnit('Feet'); setPurchasePrice(0); setSalePrice(0); setColor(''); setWeight(0);
@@ -110,14 +110,14 @@ function AddItemForm({ onItemAdded }: { onItemAdded: (newItem: Omit<Item, 'id'>)
 }
 
 export default function InventoryPage() {
-  const { items, addItem, deleteItem } = useDataContext();
+  const { items, addItem, deleteItem } = useData();
   const [isItemModalOpen, setItemModalOpen] = useState(false);
 
   const handleDelete = (id: string) => {
     deleteItem(id);
   };
   
-  const handleItemAdded = (newItem: Omit<Item, 'id'>) => {
+  const handleItemAdded = (newItem: Omit<Item, 'id' | 'createdAt'>) => {
     addItem(newItem);
     setItemModalOpen(false);
   }

@@ -34,7 +34,7 @@ import type { Transaction } from "@/lib/types";
 import { useToast } from "@/hooks/use-toast";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
-import { useDataContext } from "@/context/data-provider";
+import { useData } from "@/firebase/data/data-provider";
 import { formatCurrency, formatDate } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -43,7 +43,7 @@ import { useReactToPrint } from "react-to-print";
 
 
 function AddTransactionForm({ onTransactionAdded }: { onTransactionAdded: (newTransaction: Omit<Transaction, 'id' | 'date'>) => void }) {
-  const { customers, vendors } = useDataContext();
+  const { customers, vendors } = useData();
   const [description, setDescription] = useState('');
   const [amount, setAmount] = useState(0);
   const [type, setType] = useState<'credit' | 'debit'>('credit');
@@ -171,7 +171,7 @@ function AddTransactionForm({ onTransactionAdded }: { onTransactionAdded: (newTr
 
 
 export default function LedgerPage() {
-  const { transactions, addTransaction, deleteTransaction, customers, vendors } = useDataContext();
+  const { transactions, addTransaction, deleteTransaction, customers, vendors } = useData();
   const [isModalOpen, setModalOpen] = useState(false);
   const [selectedCustomerId, setSelectedCustomerId] = useState<string | null>(null);
   const [selectedVendorId, setSelectedVendorId] = useState<string | null>(null);

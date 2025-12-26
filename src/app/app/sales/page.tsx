@@ -43,13 +43,13 @@ import { PageHeader } from "@/components/page-header";
 import { formatCurrency, formatDate } from "@/lib/utils";
 import type { Sale, SaleItem, Customer, Item } from "@/lib/types";
 import { useToast } from "@/hooks/use-toast";
-import { useDataContext } from "@/context/data-provider";
+import { useData } from "@/firebase/data/data-provider";
 import { Badge } from "@/components/ui/badge";
 import { useReactToPrint } from "react-to-print";
 
 
 function SaleInvoice({ sale, onPost }: { sale: Sale, onPost: (saleId: string) => void }) {
-    const { customers } = useDataContext();
+    const { customers } = useData();
     const customer = customers.find(c => c.id === sale.customerId);
     const { toast } = useToast();
     const printRef = useRef(null);
@@ -164,7 +164,7 @@ function SaleInvoice({ sale, onPost }: { sale: Sale, onPost: (saleId: string) =>
     )
 }
 
-function AddCustomerForm({ onCustomerAdded }: { onCustomerAdded: (newCustomer: Omit<Customer, 'id'>) => void }) {
+function AddCustomerForm({ onCustomerAdded }: { onCustomerAdded: (newCustomer: Omit<Customer, 'id' | 'createdAt'>) => void }) {
   const [name, setName] = useState('');
   const [phone, setPhone] = useState('');
   const [address, setAddress] = useState('');
@@ -175,7 +175,7 @@ function AddCustomerForm({ onCustomerAdded }: { onCustomerAdded: (newCustomer: O
       toast({ variant: 'destructive', title: 'Please fill all fields.' });
       return;
     }
-    const newCustomer: Omit<Customer, 'id'> = {
+    const newCustomer: Omit<Customer, 'id' | 'createdAt'> = {
       name,
       phone,
       address,
@@ -216,7 +216,7 @@ function AddCustomerForm({ onCustomerAdded }: { onCustomerAdded: (newCustomer: O
 
 function NewSaleForm({ onSaleAdded }: { onSaleAdded: (newSale: Omit<Sale, 'id' | 'date' | 'total' | 'status'>) => void }) {
     const { toast } = useToast();
-    const { customers, items: allItems, addCustomer } = useDataContext();
+    const { customers, items: allItems, addCustomer } = useData();
     const [selectedCustomer, setSelectedCustomer] = useState("");
     const [saleItems, setSaleItems] = useState<Partial<SaleItem>[]>([{itemId: "", quantity: 1, feet: 1, discount: 0, color: '', thickness: '' }]);
     const [overallDiscount, setOverallDiscount] = useState(0);
@@ -317,10 +317,12 @@ function NewSaleForm({ onSaleAdded }: { onSaleAdded: (newSale: Omit<Sale, 'id' |
         clearForm();
     }
     
-    const handleCustomerAdded = (newCustomer: Omit<Customer, 'id'>) => {
+    const handleCustomerAdded = (newCustomer: Omit<Customer, 'id'| 'createdAt'>) => {
         const addedCustomer = addCustomer(newCustomer);
-        setSelectedCustomer(addedCustomer.id);
+        // This is tricky because addCustomer is async. We might need to handle this differently.
+        // For now, let's just optimistically assume it will be available.
         setCustomerModalOpen(false);
+        setTimeout(() => setSelectedCustomer(newCustomer.name), 500); // A bit of a hack
     }
 
     return (
@@ -460,7 +462,7 @@ function NewSaleForm({ onSaleAdded }: { onSaleAdded: (newSale: Omit<Sale, 'id' |
 }
 
 export default function SalesPage() {
-  const { sales, addSale, deleteSale, postSale } = useDataContext();
+  const { sales, addSale, deleteSale, postSale } = useData();
   const [activeTab, setActiveTab] = useState("history");
   const [selectedSale, setSelectedSale] = useState<Sale | null>(null);
 

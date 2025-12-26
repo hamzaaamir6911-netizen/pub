@@ -22,7 +22,7 @@ import { Badge } from "@/components/ui/badge";
 import { PageHeader } from "@/components/page-header";
 import { formatCurrency, formatDate } from "@/lib/utils";
 import type { Expense } from "@/lib/types";
-import { useDataContext } from "@/context/data-provider";
+import { useData } from "@/firebase/data/data-provider";
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { useToast } from "@/hooks/use-toast";
 import { Label } from "@/components/ui/label";
@@ -30,7 +30,7 @@ import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 function AddExpenseForm({ onExpenseAdded }: { onExpenseAdded: (newExpense: Omit<Expense, 'id' | 'date'>) => void }) {
-    const { vendors } = useDataContext();
+    const { vendors } = useData();
     const [title, setTitle] = useState('');
     const [amount, setAmount] = useState(0);
     const [category, setCategory] = useState<'Labour' | 'Transport' | 'Electricity' | 'Vendor Payment' | 'Other'>('Other');
@@ -102,7 +102,7 @@ function AddExpenseForm({ onExpenseAdded }: { onExpenseAdded: (newExpense: Omit<
 }
 
 export default function ExpensesPage() {
-  const { expenses, addExpense, deleteExpense } = useDataContext();
+  const { expenses, addExpense, deleteExpense } = useData();
   const [isExpenseModalOpen, setExpenseModalOpen] = useState(false);
 
   const handleDelete = (id: string) => {

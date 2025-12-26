@@ -23,7 +23,7 @@ import {
 import { PageHeader } from "@/components/page-header"
 import { formatCurrency, formatDate } from "@/lib/utils"
 import { ChartContainer, ChartTooltip, ChartTooltipContent, ChartConfig, ChartLegend, ChartLegendContent } from "@/components/ui/chart"
-import { useDataContext } from "@/context/data-provider"
+import { useData } from "@/firebase/data/data-provider"
 
 const chartConfig = {
   sales: {
@@ -37,7 +37,7 @@ const chartConfig = {
 } satisfies ChartConfig
 
 export default function DashboardPage() {
-  const { getDashboardStats, getMonthlySalesData, sales } = useDataContext();
+  const { getDashboardStats, getMonthlySalesData, sales } = useData();
   const stats = getDashboardStats();
   const monthlyData = getMonthlySalesData();
 

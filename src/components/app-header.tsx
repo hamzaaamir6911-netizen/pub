@@ -3,12 +3,14 @@
 
 import * as React from "react"
 import Link from "next/link"
-import { usePathname } from "next/navigation"
-import { Factory, LayoutDashboard, Warehouse, ShoppingCart, Users, CreditCard, BarChart3, LogOut, BookUser, Settings, Truck, Menu, X } from "lucide-react"
+import { usePathname, useRouter } from "next/navigation"
+import { Factory, LayoutDashboard, Warehouse, ShoppingCart, Users, CreditCard, BarChart3, LogOut, BookUser, Settings, Truck, Menu } from "lucide-react"
 
 import { cn } from "@/lib/utils"
 import { Button } from "./ui/button"
 import { Sheet, SheetContent, SheetTrigger } from "./ui/sheet"
+import { getAuth, signOut } from "firebase/auth"
+import { useToast } from "@/hooks/use-toast"
 
 const navItems = [
   { href: "/app/dashboard", icon: LayoutDashboard, label: "Dashboard" },
@@ -24,7 +26,20 @@ const navItems = [
 
 export function AppHeader() {
   const pathname = usePathname()
+  const router = useRouter()
+  const { toast } = useToast()
   const [mobileMenuOpen, setMobileMenuOpen] = React.useState(false);
+
+  const handleLogout = async () => {
+    const auth = getAuth();
+    try {
+      await signOut(auth);
+      toast({ title: "Logged Out", description: "You have been successfully logged out." });
+      router.push('/login');
+    } catch (error: any) {
+      toast({ variant: "destructive", title: "Logout Failed", description: error.message });
+    }
+  };
 
   return (
     <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 print:hidden">
@@ -53,12 +68,10 @@ export function AppHeader() {
 
         <div className="flex flex-1 items-center justify-end space-x-4">
            <nav className="flex items-center space-x-2">
-            <Link href="/login">
-                <Button variant="ghost" className="text-sm font-medium text-foreground/60 transition-colors hover:text-foreground/80">
-                    <LogOut className="mr-2 h-4 w-4" />
-                    Logout
-                </Button>
-            </Link>
+              <Button variant="ghost" className="text-sm font-medium text-foreground/60 transition-colors hover:text-foreground/80" onClick={handleLogout}>
+                  <LogOut className="mr-2 h-4 w-4" />
+                  Logout
+              </Button>
             
             <Sheet open={mobileMenuOpen} onOpenChange={setMobileMenuOpen}>
                 <SheetTrigger asChild>

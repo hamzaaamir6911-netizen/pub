@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { Factory } from "lucide-react";
+import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword } from "firebase/auth";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -12,31 +13,48 @@ import { useToast } from "@/hooks/use-toast";
 export default function LoginPage() {
   const router = useRouter();
   const { toast } = useToast();
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
+  const [email, setEmail] = useState("admin@arco.com");
+  const [password, setPassword] = useState("password");
   const [isLoading, setIsLoading] = useState(false);
+  const auth = getAuth();
 
-  const handleLogin = (e: React.FormEvent) => {
+  const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
 
-    // Mock authentication
-    setTimeout(() => {
-      if (email === "admin@arco.com" && password === "password") {
-        toast({
-          title: "Login Successful",
-          description: "Welcome, Admin!",
-        });
-        router.push("/app/dashboard");
+    try {
+      await signInWithEmailAndPassword(auth, email, password);
+      toast({
+        title: "Login Successful",
+        description: "Welcome back!",
+      });
+      router.push("/app/dashboard");
+    } catch (error: any) {
+       if (error.code === 'auth/user-not-found') {
+        try {
+          await createUserWithEmailAndPassword(auth, email, password);
+          toast({
+            title: "Account Created",
+            description: "Welcome to ARCO Factory Manager!",
+          });
+          router.push("/app/dashboard");
+        } catch (creationError: any) {
+          toast({
+            variant: "destructive",
+            title: "Account Creation Failed",
+            description: creationError.message,
+          });
+        }
       } else {
         toast({
           variant: "destructive",
           title: "Login Failed",
-          description: "Invalid email or password. Please try again.",
+          description: error.message,
         });
-        setIsLoading(false);
       }
-    }, 1000);
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (

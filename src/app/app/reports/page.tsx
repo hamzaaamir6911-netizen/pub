@@ -24,7 +24,7 @@ import { PageHeader } from "@/components/page-header"
 import { formatCurrency, formatDate } from "@/lib/utils"
 import { ChartConfig, ChartContainer, ChartTooltipContent } from "@/components/ui/chart"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { useDataContext } from "@/context/data-provider"
+import { useData } from "@/firebase/data/data-provider"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
 import { Button } from "@/components/ui/button"
 import { Calendar as CalendarIcon, Printer } from "lucide-react"
@@ -35,16 +35,6 @@ import type { Transaction } from "@/lib/types"
 import { Badge } from "@/components/ui/badge"
 import { cn } from "@/lib/utils"
 import { useReactToPrint } from "react-to-print";
-
-
-const monthlyData = [
-    { month: "Jan", sales: 186000, expenses: 80000 },
-    { month: "Feb", sales: 305000, expenses: 200000 },
-    { month: "Mar", sales: 237000, expenses: 120000 },
-    { month: "Apr", sales: 73000, expenses: 190000 },
-    { month: "May", sales: 209000, expenses: 130000 },
-    { month: "Jun", sales: 214000, expenses: 140000 },
-]
 
 const chartConfig = {
   sales: {
@@ -58,7 +48,7 @@ const chartConfig = {
 } satisfies ChartConfig
 
 function LedgerReport() {
-    const { transactions } = useDataContext();
+    const { transactions } = useData();
     const printRef = useRef(null);
     const [date, setDate] = React.useState<DateRange | undefined>({
         from: addDays(new Date(), -30),
@@ -186,7 +176,7 @@ function LedgerReport() {
 }
 
 export default function ReportsPage() {
-    const { getDashboardStats, getMonthlySalesData } = useDataContext();
+    const { getDashboardStats, getMonthlySalesData } = useData();
     const stats = getDashboardStats();
     const monthlyData = getMonthlySalesData();
     const printRef = useRef(null);
@@ -257,8 +247,7 @@ export default function ReportsPage() {
                  <Card className="print-area mt-4">
                     <CardHeader>
                         <CardTitle>Monthly Performance</CardTitle>
-                        <CardDescription>Comparison of revenue and expenses over the months.</CardDescription>
-                    </CardHeader>
+                        <CardDescription>Comparison of revenue and expenses over the months.</CardDescription> damper>
                     <CardContent>
                         <ChartContainer config={chartConfig} className="min-h-[300px] w-full">
                             <BarChart accessibilityLayer data={monthlyData}>

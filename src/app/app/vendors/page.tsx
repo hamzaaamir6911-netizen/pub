@@ -32,9 +32,9 @@ import type { Vendor } from "@/lib/types";
 import { useToast } from "@/hooks/use-toast";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
-import { useDataContext } from "@/context/data-provider";
+import { useData } from "@/firebase/data/data-provider";
 
-function AddVendorForm({ onVendorAdded }: { onVendorAdded: (newVendor: Omit<Vendor, 'id'>) => void }) {
+function AddVendorForm({ onVendorAdded }: { onVendorAdded: (newVendor: Omit<Vendor, 'id' | 'createdAt'>) => void }) {
   const [name, setName] = useState('');
   const [phone, setPhone] = useState('');
   const [address, setAddress] = useState('');
@@ -45,7 +45,7 @@ function AddVendorForm({ onVendorAdded }: { onVendorAdded: (newVendor: Omit<Vend
       toast({ variant: 'destructive', title: 'Please fill vendor name.' });
       return;
     }
-    const newVendor: Omit<Vendor, 'id'> = {
+    const newVendor: Omit<Vendor, 'id' | 'createdAt'> = {
       name,
       phone,
       address,
@@ -85,14 +85,14 @@ function AddVendorForm({ onVendorAdded }: { onVendorAdded: (newVendor: Omit<Vend
 
 
 export default function VendorsPage() {
-  const { vendors, addVendor, deleteVendor } = useDataContext();
+  const { vendors, addVendor, deleteVendor } = useData();
   const [isVendorModalOpen, setVendorModalOpen] = useState(false);
 
   const handleDelete = (id: string) => {
     deleteVendor(id);
   };
 
-  const handleVendorAdded = (newVendor: Omit<Vendor, 'id'>) => {
+  const handleVendorAdded = (newVendor: Omit<Vendor, 'id' | 'createdAt'>) => {
     addVendor(newVendor);
     setVendorModalOpen(false);
   }

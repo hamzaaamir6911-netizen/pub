@@ -1,5 +1,4 @@
 
-
 export type Item = {
   id: string;
   name: string;
@@ -10,6 +9,7 @@ export type Item = {
   color: string;
   weight?: number;
   quantity?: number;
+  createdAt: Date;
 };
 
 export type Customer = {
@@ -17,6 +17,7 @@ export type Customer = {
   name: string;
   phone: string;
   address: string;
+  createdAt: Date;
 };
 
 export type Vendor = {
@@ -24,6 +25,7 @@ export type Vendor = {
   name: string;
   phone: string;
   address: string;
+  createdAt: Date;
 }
 
 export type SaleItem = {
@@ -70,7 +72,4 @@ export type Transaction = {
   vendorId?: string;
   vendorName?: string;
 }
-
-    
-
     
