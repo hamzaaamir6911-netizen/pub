@@ -2,23 +2,22 @@
 "use client";
 
 import { AppHeader } from "@/components/app-header";
-import { AuthProvider, useAuth } from "@/lib/auth-provider";
+import { useUser } from "@/firebase";
 import { DataProvider } from "@/firebase/data/data-provider";
 import { useRouter } from "next/navigation";
 import { useEffect } from "react";
-import { Toaster } from "@/components/ui/toaster";
 
 function AppContent({ children }: { children: React.ReactNode }) {
-  const { user, loading } = useAuth();
+  const { user, isUserLoading } = useUser();
   const router = useRouter();
 
   useEffect(() => {
-    if (!loading && !user) {
+    if (!isUserLoading && !user) {
       router.push("/login");
     }
-  }, [user, loading, router]);
+  }, [user, isUserLoading, router]);
 
-  if (loading || !user) {
+  if (isUserLoading || !user) {
     return (
        <div className="flex h-screen items-center justify-center">
         <div className="text-center">
@@ -50,11 +49,6 @@ export default function AppLayout({
   children: React.ReactNode;
 }) {
   return (
-    <>
-      <AuthProvider>
-        <AppContent>{children}</AppContent>
-      </AuthProvider>
-      <Toaster />
-    </>
+      <AppContent>{children}</AppContent>
   );
 }

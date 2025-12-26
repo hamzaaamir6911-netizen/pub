@@ -10,7 +10,8 @@ import { cn } from "@/lib/utils"
 import { Button } from "./ui/button"
 import { Sheet, SheetContent, SheetTrigger } from "./ui/sheet"
 import { useToast } from "@/hooks/use-toast"
-import { useAuth } from "@/lib/auth-provider"
+import { useAuth } from "@/firebase"
+import { signOut } from "firebase/auth"
 
 const navItems = [
   { href: "/app/dashboard", icon: LayoutDashboard, label: "Dashboard" },
@@ -28,12 +29,12 @@ export function AppHeader() {
   const pathname = usePathname()
   const router = useRouter()
   const { toast } = useToast()
-  const { logout } = useAuth();
+  const auth = useAuth();
   const [mobileMenuOpen, setMobileMenuOpen] = React.useState(false);
 
   const handleLogout = async () => {
     try {
-      await logout();
+      await signOut(auth);
       toast({ title: "Logged Out", description: "You have been successfully logged out." });
       router.push('/login');
     } catch (error: any) {

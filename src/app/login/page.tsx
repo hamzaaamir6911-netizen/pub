@@ -8,14 +8,14 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
-import { Toaster } from "@/components/ui/toaster";
-import { AuthProvider, useAuth } from "@/lib/auth-provider";
+import { useAuth } from "@/firebase";
+import { signInWithEmailAndPassword } from "firebase/auth";
 
 
-function LoginComponent() {
+export default function LoginPage() {
   const router = useRouter();
   const { toast } = useToast();
-  const { login } = useAuth();
+  const auth = useAuth();
   const [email, setEmail] = useState("admin@arco.com");
   const [password, setPassword] = useState("password");
   const [isLoading, setIsLoading] = useState(false);
@@ -25,21 +25,17 @@ function LoginComponent() {
     setIsLoading(true);
 
     try {
-      const success = await login(email, password);
-      if (success) {
-        toast({
-          title: "Login Successful",
-          description: "Welcome back!",
-        });
-        router.push("/app/dashboard");
-      } else {
-        throw new Error("Invalid credentials. Please try again.");
-      }
+      await signInWithEmailAndPassword(auth, email, password);
+      toast({
+        title: "Login Successful",
+        description: "Welcome back!",
+      });
+      router.push("/app/dashboard");
     } catch (error: any) {
         toast({
           variant: "destructive",
           title: "Login Failed",
-          description: error.message,
+          description: "Invalid credentials. Please try again.",
         });
     } finally {
       setIsLoading(false);
@@ -92,14 +88,4 @@ function LoginComponent() {
       </div>
     </div>
   );
-}
-
-
-export default function LoginPage() {
-  return (
-    <AuthProvider>
-      <LoginComponent />
-      <Toaster />
-    </AuthProvider>
-  )
 }

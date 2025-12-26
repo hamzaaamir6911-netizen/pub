@@ -1,5 +1,4 @@
 
-
 "use client";
 
 import { useState, useRef } from "react";
@@ -138,7 +137,7 @@ function SaleInvoice({ sale, onPost }: { sale: Sale, onPost: (saleId: string) =>
                         <div className="w-80 space-y-2">
                             <div className="flex justify-between font-bold text-lg border-t pt-2">
                                 <span>Total:</span>
-                                <span>{formatCurrency(runningTotal)}</span>
+                                <span>{formatCurrency(sale.total)}</span>
                             </div>
                         </div>
                     </div>
@@ -170,7 +169,7 @@ function AddCustomerForm({ onCustomerAdded }: { onCustomerAdded: (newCustomer: O
   const [address, setAddress] = useState('');
   const { toast } = useToast();
 
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
     if (!name || !phone || !address) {
       toast({ variant: 'destructive', title: 'Please fill all fields.' });
       return;
@@ -180,7 +179,7 @@ function AddCustomerForm({ onCustomerAdded }: { onCustomerAdded: (newCustomer: O
       phone,
       address,
     };
-    onCustomerAdded(newCustomer);
+    await onCustomerAdded(newCustomer);
     toast({ title: 'Customer Added!', description: `${name} has been added.` });
     setName('');
     setPhone('');
@@ -271,7 +270,7 @@ function NewSaleForm({ onSaleAdded }: { onSaleAdded: (newSale: Omit<Sale, 'id' |
         setOverallDiscount(0);
     }
     
-    const handleSaveSale = () => {
+    const handleSaveSale = async () => {
         if (!selectedCustomer) {
             toast({ variant: "destructive", title: "Please select a customer." });
             return;
@@ -312,17 +311,17 @@ function NewSaleForm({ onSaleAdded }: { onSaleAdded: (newSale: Omit<Sale, 'id' |
             discount: overallDiscount,
         };
 
-        onSaleAdded(newSale);
+        await onSaleAdded(newSale);
         toast({ title: "Sale Draft Saved!", description: `Sale has been saved as a draft.` });
         clearForm();
     }
     
-    const handleCustomerAdded = (newCustomer: Omit<Customer, 'id'| 'createdAt'>) => {
-        const addedCustomer = addCustomer(newCustomer);
-        // This is tricky because addCustomer is async. We might need to handle this differently.
-        // For now, let's just optimistically assume it will be available.
+    const handleCustomerAdded = async (newCustomer: Omit<Customer, 'id'| 'createdAt'>) => {
+        const addedCustomer = await addCustomer(newCustomer);
+        if (addedCustomer?.id) {
+            setSelectedCustomer(addedCustomer.id);
+        }
         setCustomerModalOpen(false);
-        setTimeout(() => setSelectedCustomer(newCustomer.name), 500); // A bit of a hack
     }
 
     return (

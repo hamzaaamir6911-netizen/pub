@@ -1,8 +1,12 @@
 
 "use client";
 
-import React, { createContext, useContext, ReactNode, useState, useEffect, useMemo } from 'react';
+import React, { createContext, useContext, ReactNode } from 'react';
 import type { Item, Customer, Sale, Expense, Transaction, Vendor } from '@/lib/types';
+import { useCollection, useFirestore, useMemoFirebase, useUser } from '@/firebase';
+import { collection, doc, writeBatch, serverTimestamp, Timestamp, orderBy, query, where, getDocs, runTransaction } from 'firebase/firestore';
+import { addDocumentNonBlocking, deleteDocumentNonBlocking, updateDocumentNonBlocking } from '../non-blocking-updates';
+import { date } from 'zod';
 
 interface DataContextProps {
   items: Item[];
@@ -40,164 +44,226 @@ interface DataContextProps {
 
 const DataContext = createContext<DataContextProps | undefined>(undefined);
 
-const useLocalStorage = <T,>(key: string, initialValue: T): [T, React.Dispatch<React.SetStateAction<T>>] => {
-  const [storedValue, setStoredValue] = useState<T>(() => {
-    if (typeof window === 'undefined') {
-      return initialValue;
+const toDate = (timestamp: any) => {
+    if (timestamp instanceof Timestamp) {
+      return timestamp.toDate();
     }
-    try {
-      const item = window.localStorage.getItem(key);
-      return item ? JSON.parse(item, (k, v) => (k.endsWith('date') || k.endsWith('At')) && typeof v === 'string' ? new Date(v) : v) : initialValue;
-    } catch (error) {
-      console.error(error);
-      return initialValue;
+    // Handle cases where it might already be a Date object or a string
+    if (timestamp instanceof Date) {
+      return timestamp;
     }
-  });
-
-  useEffect(() => {
-     if (typeof window !== 'undefined') {
-        window.localStorage.setItem(key, JSON.stringify(storedValue));
-     }
-  }, [key, storedValue]);
-
-  return [storedValue, setStoredValue];
+    if (typeof timestamp === 'string' || typeof timestamp === 'number') {
+      return new Date(timestamp);
+    }
+    // Fallback for serverTimestamp, which might be null initially
+    return new Date();
 };
 
 export const DataProvider = ({ children }: { children: ReactNode }) => {
-    const [items, setItems] = useLocalStorage<Item[]>('items', []);
-    const [customers, setCustomers] = useLocalStorage<Customer[]>('customers', []);
-    const [vendors, setVendors] = useLocalStorage<Vendor[]>('vendors', []);
-    const [sales, setSales] = useLocalStorage<Sale[]>('sales', []);
-    const [expenses, setExpenses] = useLocalStorage<Expense[]>('expenses', []);
-    const [transactions, setTransactions] = useLocalStorage<Transaction[]>('transactions', []);
-    const [loading, setLoading] = useState(true);
+    const firestore = useFirestore();
+    const { user } = useUser();
 
-    useEffect(() => {
-        // Simulate loading delay
-        setTimeout(() => setLoading(false), 500);
-    }, []);
+    // Memoize collection references
+    const itemsCol = useMemoFirebase(() => user ? collection(firestore, 'items') : null, [firestore, user]);
+    const customersCol = useMemoFirebase(() => user ? collection(firestore, 'customers') : null, [firestore, user]);
+    const vendorsCol = useMemoFirebase(() => user ? collection(firestore, 'vendors') : null, [firestore, user]);
+    const salesCol = useMemoFirebase(() => user ? query(collection(firestore, 'sales'), orderBy('date', 'desc')) : null, [firestore, user]);
+    const expensesCol = useMemoFirebase(() => user ? query(collection(firestore, 'expenses'), orderBy('date', 'desc')) : null, [firestore, user]);
+    const transactionsCol = useMemoFirebase(() => user ? query(collection(firestore, 'transactions'), orderBy('date', 'desc')) : null, [firestore, user]);
+
+    // Fetch data
+    const { data: itemsData, isLoading: itemsLoading } = useCollection<Item>(itemsCol);
+    const { data: customersData, isLoading: customersLoading } = useCollection<Customer>(customersCol);
+    const { data: vendorsData, isLoading: vendorsLoading } = useCollection<Vendor>(vendorsCol);
+    const { data: salesData, isLoading: salesLoading } = useCollection<Sale>(salesCol);
+    const { data: expensesData, isLoading: expensesLoading } = useCollection<Expense>(expensesCol);
+    const { data: transactionsData, isLoading: transactionsLoading } = useCollection<Transaction>(transactionsCol);
+    
+    const items = itemsData?.map(item => ({ ...item, createdAt: toDate(item.createdAt) })) || [];
+    const customers = customersData?.map(customer => ({ ...customer, createdAt: toDate(customer.createdAt) })) || [];
+    const vendors = vendorsData?.map(vendor => ({ ...vendor, createdAt: toDate(vendor.createdAt) })) || [];
+    const sales = salesData?.map(sale => ({ ...sale, date: toDate(sale.date) })) || [];
+    const expenses = expensesData?.map(expense => ({ ...expense, date: toDate(expense.date) })) || [];
+    const transactions = transactionsData?.map(transaction => ({ ...transaction, date: toDate(transaction.date) })) || [];
+
+    const loading = itemsLoading || customersLoading || vendorsLoading || salesLoading || expensesLoading || transactionsLoading;
+
+    // --- Write Operations ---
 
     const addItem = async (item: Omit<Item, 'id' | 'createdAt'>) => {
-        const newItem = { ...item, id: crypto.randomUUID(), createdAt: new Date() };
-        setItems(prev => [newItem, ...prev]);
-        return newItem;
+        if (!itemsCol) throw new Error("Items collection not available");
+        const newItem = { ...item, createdAt: serverTimestamp() };
+        return addDocumentNonBlocking(itemsCol, newItem);
     };
     const deleteItem = async (id: string) => {
-        setItems(prev => prev.filter(i => i.id !== id));
+        if (!user) throw new Error("User not authenticated");
+        deleteDocumentNonBlocking(doc(firestore, 'items', id));
     };
 
     const addCustomer = async (customer: Omit<Customer, 'id' | 'createdAt'>) => {
-        const newCustomer = { ...customer, id: crypto.randomUUID(), createdAt: new Date() };
-        setCustomers(prev => [newCustomer, ...prev]);
-        return newCustomer;
+        if (!customersCol) throw new Error("Customers collection not available");
+        const newCustomer = { ...customer, createdAt: serverTimestamp() };
+        return addDocumentNonBlocking(customersCol, newCustomer);
     };
     const deleteCustomer = async (id: string) => {
-        setCustomers(prev => prev.filter(c => c.id !== id));
+        if (!user) throw new Error("User not authenticated");
+        deleteDocumentNonBlocking(doc(firestore, 'customers', id));
     };
     
     const addVendor = async (vendor: Omit<Vendor, 'id' | 'createdAt'>) => {
-        const newVendor = { ...vendor, id: crypto.randomUUID(), createdAt: new Date() };
-        setVendors(prev => [newVendor, ...prev]);
-        return newVendor;
+       if (!vendorsCol) throw new Error("Vendors collection not available");
+        const newVendor = { ...vendor, createdAt: serverTimestamp() };
+        return addDocumentNonBlocking(vendorsCol, newVendor);
     };
     const deleteVendor = async (id: string) => {
-        setVendors(prev => prev.filter(v => v.id !== id));
+        if (!user) throw new Error("User not authenticated");
+        deleteDocumentNonBlocking(doc(firestore, 'vendors', id));
     };
 
     const addTransaction = async (transaction: Omit<Transaction, 'id' | 'date'>) => {
-        const newTransaction = { ...transaction, id: crypto.randomUUID(), date: new Date() };
-        setTransactions(prev => [newTransaction, ...prev].sort((a,b) => b.date.getTime() - a.date.getTime()));
+        if (!transactionsCol) throw new Error("Transactions collection not available");
+        const newTransaction = { ...transaction, date: serverTimestamp() };
+        // We can't use the non-blocking helper here because it doesn't handle query objects
+        const colRef = collection(firestore, 'transactions');
+        return addDocumentNonBlocking(colRef, newTransaction);
     };
     const deleteTransaction = async (id: string) => {
-        setTransactions(prev => prev.filter(t => t.id !== id));
+        if (!user) throw new Error("User not authenticated");
+        deleteDocumentNonBlocking(doc(firestore, 'transactions', id));
     };
 
     const addSale = async (sale: Omit<Sale, 'id' | 'date' | 'total' | 'status'>) => {
-        const subtotal = sale.items.reduce((total, currentItem) => {
-            const itemTotal = (currentItem.feet || 1) * currentItem.price * currentItem.quantity;
-            const discountAmount = itemTotal * ((currentItem.discount || 0) / 100);
-            return total + (itemTotal - discountAmount);
-        }, 0);
-        const overallDiscountAmount = (subtotal * sale.discount) / 100;
-        const total = subtotal - overallDiscountAmount;
-
-        setSales(prevSales => {
-            const latestSaleNumber = prevSales.reduce((max, s) => {
+        if (!salesCol || !user) throw new Error("Sales collection not available or user not authenticated");
+        
+        await runTransaction(firestore, async (transaction) => {
+            const salesCollectionRef = collection(firestore, 'sales');
+            const salesSnapshot = await getDocs(salesCollectionRef);
+            const latestSaleNumber = salesSnapshot.docs.reduce((max, s) => {
                 const num = parseInt(s.id.split('-')[1]);
                 return isNaN(num) ? max : Math.max(max, num);
             }, 0);
-            const newSaleNumber = latestSaleNumber + 1;
-            const newSaleId = `INV-${String(newSaleNumber).padStart(3, '0')}`;
-            const newSale = { ...sale, total, status: 'draft' as const, date: new Date(), id: newSaleId };
-            return [newSale, ...prevSales].sort((a,b) => b.date.getTime() - a.date.getTime());
+            const newSaleId = `INV-${String(latestSaleNumber + 1).padStart(3, '0')}`;
+            const newSaleRef = doc(salesCollectionRef, newSaleId);
+
+            const subtotal = sale.items.reduce((total, currentItem) => {
+                const itemTotal = (currentItem.feet || 1) * currentItem.price * currentItem.quantity;
+                const discountAmount = itemTotal * ((currentItem.discount || 0) / 100);
+                return total + (itemTotal - discountAmount);
+            }, 0);
+            const overallDiscountAmount = (subtotal * sale.discount) / 100;
+            const total = subtotal - overallDiscountAmount;
+
+            const newSaleData = {
+                ...sale,
+                id: newSaleId,
+                total,
+                status: 'draft' as const,
+                date: serverTimestamp(),
+            };
+
+            transaction.set(newSaleRef, newSaleData);
         });
     };
+    
 
     const postSale = async (saleId: string) => {
+        if (!user) throw new Error("User not authenticated");
+        const saleRef = doc(firestore, 'sales', saleId);
         const sale = sales.find(s => s.id === saleId);
         if (!sale) return;
 
-        setSales(prev => prev.map(s => s.id === saleId ? { ...s, status: 'posted' as const } : s));
+        const batch = writeBatch(firestore);
+        batch.update(saleRef, { status: 'posted' });
 
-        await addTransaction({
-            description: `Sale to ${sale.customerName}`,
+        const transactionData = {
+            description: `Sale to ${sale.customerName} (Invoice: ${sale.id})`,
             amount: sale.total,
-            type: 'debit',
+            type: 'debit' as const,
             category: 'Sale',
             customerId: sale.customerId,
             customerName: sale.customerName,
-        });
+            date: serverTimestamp()
+        };
+        const transactionRef = doc(collection(firestore, 'transactions'));
+        batch.set(transactionRef, transactionData);
+        await batch.commit();
     };
 
     const deleteSale = async (id: string) => {
+        if (!user) throw new Error("User not authenticated");
         const saleToDelete = sales.find(s => s.id === id);
         if (!saleToDelete) return;
-
-        setSales(prev => prev.filter(s => s.id !== id));
-
+    
+        const batch = writeBatch(firestore);
+        const saleRef = doc(firestore, 'sales', id);
+        batch.delete(saleRef);
+    
         if (saleToDelete.status === 'posted') {
-            const transactionToDelete = transactions.find(t => 
-                t.category === 'Sale' &&
-                t.description === `Sale to ${saleToDelete.customerName}` &&
-                t.amount === saleToDelete.total
+            const q = query(
+                collection(firestore, 'transactions'), 
+                where("category", "==", "Sale"), 
+                where("customerId", "==", saleToDelete.customerId),
+                where("amount", "==", saleToDelete.total)
+                // Note: This is not foolproof if multiple sales have the same amount for the same customer
             );
-            if (transactionToDelete) {
-                await deleteTransaction(transactionToDelete.id);
-            }
+            const querySnapshot = await getDocs(q);
+            querySnapshot.forEach((doc) => {
+                // Heuristic to find the right transaction to delete
+                if(doc.data().description.includes(saleToDelete.id)) {
+                    batch.delete(doc.ref);
+                }
+            });
         }
+        await batch.commit();
     };
     
     const addExpense = async (expense: Omit<Expense, 'id' | 'date'>) => {
+        if (!user) throw new Error("User not authenticated");
         const vendor = vendors.find(v => v.id === expense.vendorId);
-        const newExpense = { ...expense, id: crypto.randomUUID(), date: new
-Date() };
-        setExpenses(prev => [newExpense, ...prev].sort((a,b) => b.date.getTime() - a.date.getTime()));
+        
+        const batch = writeBatch(firestore);
 
-        await addTransaction({
+        const newExpense = { ...expense, date: serverTimestamp() };
+        const expenseRef = doc(collection(firestore, 'expenses'));
+        batch.set(expenseRef, newExpense);
+
+        const transactionData = {
             description: expense.title,
             amount: expense.amount,
-            type: 'debit',
+            type: 'debit' as const,
             category: expense.category,
             vendorId: expense.vendorId,
             vendorName: vendor?.name,
-        });
+            date: serverTimestamp()
+        };
+        const transactionRef = doc(collection(firestore, 'transactions'));
+        batch.set(transactionRef, transactionData);
+
+        await batch.commit();
     };
 
     const deleteExpense = async (id: string) => {
+        if (!user) throw new Error("User not authenticated");
         const expenseToDelete = expenses.find(e => e.id === id);
         if (!expenseToDelete) return;
 
-        setExpenses(prev => prev.filter(e => e.id !== id));
-
-        const transactionToDelete = transactions.find(t => 
-            t.category === expenseToDelete.category &&
-            t.description === expenseToDelete.title &&
-            t.amount === expenseToDelete.amount &&
-            t.type === 'debit'
+        const batch = writeBatch(firestore);
+        const expenseRef = doc(firestore, 'expenses', id);
+        batch.delete(expenseRef);
+    
+        const q = query(
+            collection(firestore, 'transactions'),
+            where("category", "==", expenseToDelete.category),
+            where("description", "==", expenseToDelete.title),
+            where("amount", "==", expenseToDelete.amount),
+            where("type", "==", "debit")
         );
-        if (transactionToDelete) {
-            await deleteTransaction(transactionToDelete.id);
-        }
+        const querySnapshot = await getDocs(q);
+        querySnapshot.forEach((doc) => {
+            batch.delete(doc.ref);
+        });
+
+        await batch.commit();
     };
 
     const getDashboardStats = () => {
@@ -273,5 +339,3 @@ export const useData = () => {
   }
   return context;
 };
-
-    
