@@ -4,18 +4,19 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { Factory } from "lucide-react";
-import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword } from "firebase/auth";
+import { signInWithEmailAndPassword, createUserWithEmailAndPassword } from "firebase/auth";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { FirebaseProvider, useFirebase } from "@/firebase/firebase-provider";
+import { Toaster } from "@/components/ui/toaster";
 
 function LoginComponent() {
   const router = useRouter();
   const { toast } = useToast();
-  const { auth } = useFirebase();
+  const { auth } = useFirebase(); // Correctly use the hook here
   const [email, setEmail] = useState("admin@arco.com");
   const [password, setPassword] = useState("password");
   const [isLoading, setIsLoading] = useState(false);
@@ -23,6 +24,16 @@ function LoginComponent() {
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
+
+    if (!auth) {
+        toast({
+            variant: "destructive",
+            title: "Error",
+            description: "Firebase is not initialized. Please refresh the page.",
+        });
+        setIsLoading(false);
+        return;
+    }
 
     try {
       await signInWithEmailAndPassword(auth, email, password);
@@ -32,7 +43,7 @@ function LoginComponent() {
       });
       router.push("/app/dashboard");
     } catch (error: any) {
-       if (error.code === 'auth/user-not-found') {
+       if (error.code === 'auth/user-not-found' || error.code === 'auth/invalid-credential') {
         try {
           await createUserWithEmailAndPassword(auth, email, password);
           toast({
@@ -112,6 +123,7 @@ export default function LoginPage() {
   return (
     <FirebaseProvider>
       <LoginComponent />
+      <Toaster />
     </FirebaseProvider>
   )
 }
