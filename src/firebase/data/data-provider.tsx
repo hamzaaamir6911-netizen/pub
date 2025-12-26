@@ -1,13 +1,12 @@
 
 
-
 "use client";
 
 import React, { createContext, useContext, ReactNode } from 'react';
 import type { Item, Customer, Sale, Expense, Transaction, Vendor } from '@/lib/types';
 import { useCollection, useFirestore, useMemoFirebase, useUser } from '@/firebase';
 import { collection, doc, writeBatch, serverTimestamp, Timestamp, orderBy, query, where, getDocs, runTransaction, increment } from 'firebase/firestore';
-import { addDocumentNonBlocking, deleteDocumentNonBlocking, updateDocumentNonBlocking } from '../non-blocking-updates';
+import { addDocumentNonBlocking, deleteDocumentNonBlocking } from '../non-blocking-updates';
 import { date } from 'zod';
 
 
@@ -20,7 +19,6 @@ interface DataContextProps {
   transactions: Transaction[];
   loading: boolean;
   addItem: (item: Omit<Item, 'id' | 'createdAt'>) => Promise<any>;
-  updateItemStock: (id: string, newQuantity: number) => Promise<void>;
   deleteItem: (id: string) => Promise<void>;
   addCustomer: (customer: Omit<Customer, 'id' | 'createdAt'>) => Promise<any>;
   deleteCustomer: (id: string) => Promise<void>;
@@ -101,12 +99,6 @@ export const DataProvider = ({ children }: { children: ReactNode }) => {
         if (!itemsCol) throw new Error("Items collection not available");
         const newItem = { ...item, createdAt: serverTimestamp() };
         return addDocumentNonBlocking(itemsCol, newItem);
-    };
-
-    const updateItemStock = async (id: string, newQuantity: number) => {
-        if (!user) throw new Error("User not authenticated");
-        const itemRef = doc(firestore, 'items', id);
-        updateDocumentNonBlocking(itemRef, { quantity: newQuantity });
     };
 
     const deleteItem = async (id: string) => {
@@ -354,7 +346,7 @@ export const DataProvider = ({ children }: { children: ReactNode }) => {
     
     const value = {
         items, customers, vendors, sales, expenses, transactions, loading,
-        addItem, updateItemStock, deleteItem,
+        addItem, deleteItem,
         addCustomer, deleteCustomer,
         addVendor, deleteVendor,
         addSale, postSale, deleteSale,
