@@ -49,9 +49,10 @@ export default function LoginPage() {
 
                 toast({
                     title: "Admin Account Created",
-                    description: "Logged in successfully and granted admin privileges.",
+                    description: "Logged in successfully and granted admin privileges. Redirecting...",
                 });
-                router.push("/app/dashboard");
+                // Perform a hard reload to ensure Firebase auth state and custom claims are refreshed
+                window.location.href = "/app/dashboard";
             } catch (creationError: any) {
                  toast({
                     variant: "destructive",
