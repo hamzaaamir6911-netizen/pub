@@ -17,7 +17,7 @@ export const mockItems: Item[] = [
   { id: 'ITM-GSL-1-DG26-2-H23', name: 'GSL-1-DG26 (2mm)', category: 'Aluminium', unit: 'Feet', purchasePrice: 1034, salePrice: 1066, color: 'H23/PC-RAL' },
   { id: 'ITM-GSL-1-DG26-2-Sahra', name: 'GSL-1-DG26 (2mm)', category: 'Aluminium', unit: 'Feet', purchasePrice: 1109, salePrice: 1141, color: 'Sahra/BRN' },
   { id: 'ITM-GSL-1-DG26-2-Black', name: 'GSL-1-DG26 (2mm)', category: 'Aluminium', unit: 'Feet', purchasePrice: 1162, salePrice: 1194, color: 'Black/Multi' },
-  { id: 'ITM-GSL-1-DG26-2-Wood', name: 'GSL-1-DG26 (2mm)', category: 'Aluminium', unit: 'Feet', purchasePrice: 1301, salePrice: 1333, color: 'Wood Coat' },
+  { id: 'ITM-GSL-1-DG26-2-Wood', name: 'GSL-1-DG26 (2mm)', category: 'Aluminium', unitChaos: 'Feet', purchasePrice: 1301, salePrice: 1333, color: 'Wood Coat' },
   { id: 'ITM-GSL-1-F-DG26F-1.6-Dull', name: 'GSL-1-F-DG26F (1.6mm)', category: 'Aluminium', unit: 'Feet', purchasePrice: 938, salePrice: 970, color: 'Dull' },
   { id: 'ITM-GSL-1-F-DG26F-1.6-H23', name: 'GSL-1-F-DG26F (1.6mm)', category: 'Aluminium', unit: 'Feet', purchasePrice: 940, salePrice: 972, color: 'H23/PC-RAL' },
   { id: 'ITM-GSL-1-F-DG26F-1.6-Sahra', name: 'GSL-1-F-DG26F (1.6mm)', category: 'Aluminium', unit: 'Feet', purchasePrice: 1008, salePrice: 1040, color: 'Sahra/BRN' },
@@ -46,7 +46,7 @@ export const mockItems: Item[] = [
   { id: 'ITM-GSL-2-DG23A-1.6-Dull', name: 'GSL-2-DG23A (1.6mm)', category: 'Aluminium', unit: 'Feet', purchasePrice: 511, salePrice: 543, color: 'Dull' },
   { id: 'ITM-GSL-2-DG23A-1.6-H23', name: 'GSL-2-DG23A (1.6mm)', category: 'Aluminium', unit: 'Feet', purchasePrice: 513, salePrice: 545, color: 'H23/PC-RAL' },
   { id: 'ITM-GSL-2-DG23A-1.6-Sahra', name: 'GSL-2-DG23A (1.6mm)', category: 'Aluminium', unit: 'Feet', purchasePrice: 551, salePrice: 583, color: 'Sahra/BRN' },
-  { id: 'ITM-GSL-2-DG23A-1.6-Black', name: 'GSL-2-DG23A (1.6mm)', category: 'Aluminium', unit: 'Feet' , purchasePrice: 578, salePrice: 610, color: 'Black/Multi' },
+  { id: 'ITM-GSL-2-DG23A-1.6-Black', name: 'GSL-2-DG23A (1.6mm)', category: 'Aluminium', unit: 'Feet', purchasePrice: 578, salePrice: 610, color: 'Black/Multi' },
   { id: 'ITM-GSL-2-DG23A-1.6-Wood', name: 'GSL-2-DG23A (1.6mm)', category: 'Aluminium', unit: 'Feet', purchasePrice: 649, salePrice: 681, color: 'Wood Coat' },
   { id: 'ITM-GSL-2-DG23A-2-Dull', name: 'GSL-2-DG23A (2mm)', category: 'Aluminium', unit: 'Feet', purchasePrice: 614, salePrice: 646, color: 'Dull' },
   { id: 'ITM-GSL-2-DG23A-2-H23', name: 'GSL-2-DG23A (2mm)', category: 'Aluminium', unit: 'Feet', purchasePrice: 616, salePrice: 648, color: 'H23/PC-RAL' },
@@ -320,11 +320,11 @@ export const mockItems: Item[] = [
   { id: 'ITM-M23A-1.2-Sahra', name: 'M23A (1.2mm)', category: 'Aluminium', unit: 'Feet', purchasePrice: 276, salePrice: 308, color: 'Sahra/BRN' },
   { id: 'ITM-M23A-1.2-Black', name: 'M23A (1.2mm)', category: 'Aluminium', unit: 'Feet', purchasePrice: 291, salePrice: 323, color: 'Black/Multi' },
   { id: 'ITM-M23A-1.2-Wood', name: 'M23A (1.2mm)', category: 'Aluminium', unit: 'Feet', purchasePrice: 328, salePrice: 360, color: 'Wood Coat' },
-  { id: 'ITM-M23H-1.2-Dull', name: 'M23H (1.2mm)', category: 'Aluminium', unit: 'Feet', purchasePrice: 272, salePrice: 304, color: 'Dull' },
-  { id: 'ITM-M23H-1.2-H23', name: 'M23H (1.2mm)', category: 'Aluminium', unit: 'Feet', purchasePrice: 274, salePrice: 306, color: 'H23/PC-RAL' },
-  { id: 'ITM-M23H-1.2-Sahra', name: 'M23H (1.2mm)', category: 'Aluminium', unit: 'Feet', purchasePrice: 295, salePrice: 327, color: 'Sahra/BRN' },
-  { id: 'ITM-M23H-1.2-Black', name: 'M23H (1.2mm)', category: 'Aluminium', unit: 'Feet', purchasePrice: 311, salePrice: 343, color: 'Black/Multi' },
-  { id: 'ITM-M23H-1.2-Wood', name: 'M23H (1.2mm)', category: 'Aluminium', unit: 'Feet', purchasePrice: 351, salePrice: 383, color: 'Wood Coat' },
+  { id: 'ITM-M23H-1.2-Dull', name: 'M23Η (1.2mm)', category: 'Aluminium', unit: 'Feet', purchasePrice: 272, salePrice: 304, color: 'Dull' },
+  { id: 'ITM-M23H-1.2-H23', name: 'M23Η (1.2mm)', category: 'Aluminium', unit: 'Feet', purchasePrice: 274, salePrice: 306, color: 'H23/PC-RAL' },
+  { id: 'ITM-M23H-1.2-Sahra', name: 'M23Η (1.2mm)', category: 'Aluminium', unit: 'Feet', purchasePrice: 295, salePrice: 327, color: 'Sahra/BRN' },
+  { id: 'ITM-M23H-1.2-Black', name: 'M23Η (1.2mm)', category: 'Aluminium', unit: 'Feet', purchasePrice: 311, salePrice: 343, color: 'Black/Multi' },
+  { id: 'ITM-M23H-1.2-Wood', name: 'M23Η (1.2mm)', category: 'Aluminium', unit: 'Feet', purchasePrice: 351, salePrice: 383, color: 'Wood Coat' },
   { id: 'ITM-M28A-1.2-Dull', name: 'M28A (1.2mm)', category: 'Aluminium', unit: 'Feet', purchasePrice: 312, salePrice: 344, color: 'Dull' },
   { id: 'ITM-M28A-1.2-H23', name: 'M28A (1.2mm)', category: 'Aluminium', unit: 'Feet', purchasePrice: 314, salePrice: 346, color: 'H23/PC-RAL' },
   { id: 'ITM-M28A-1.2-Sahra', name: 'M28A (1.2mm)', category: 'Aluminium', unit: 'Feet', purchasePrice: 338, salePrice: 370, color: 'Sahra/BRN' },
@@ -747,3 +747,5 @@ export const getTransactions = () => {
 
   return [...salesAsTransactions, ...expensesAsTransactions].sort((a,b) => b.date.getTime() - a.date.getTime());
 }
+
+    
