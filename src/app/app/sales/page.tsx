@@ -44,6 +44,7 @@ import type { Sale, SaleItem, Customer, Item, Expense } from "@/lib/types";
 import { useToast } from "@/hooks/use-toast";
 
 function SaleInvoice({ sale }: { sale: Sale }) {
+    const customer = mockCustomers.find(c => c.id === sale.customerId);
     const subtotal = sale.items.reduce((acc, item) => {
         const itemDetails = mockItems.find(i => i.id === item.itemId);
         if (!itemDetails) return acc;
@@ -62,12 +63,13 @@ function SaleInvoice({ sale }: { sale: Sale }) {
             <DialogHeader>
                 <DialogTitle>Sale Invoice: {sale.id}</DialogTitle>
             </DialogHeader>
-            <div className="p-6">
+            <div className="p-6 print:p-0">
                 <div className="grid grid-cols-2 gap-4 mb-6">
                     <div>
                         <p className="font-semibold">Customer:</p>
                         <p>{sale.customerName}</p>
-                        <p>{mockCustomers.find(c => c.id === sale.customerId)?.address}</p>
+                        <p>{customer?.address}</p>
+                        <p>{customer?.phone}</p>
                     </div>
                     <div className="text-right">
                         <p className="font-semibold">Date:</p>
@@ -127,7 +129,7 @@ function SaleInvoice({ sale }: { sale: Sale }) {
                     </div>
                 </div>
 
-                <div className="mt-8 text-center">
+                <div className="mt-8 text-center print:hidden">
                     <Button onClick={() => window.print()}>Print Invoice</Button>
                 </div>
             </div>
@@ -147,7 +149,7 @@ function AddCustomerForm({ onCustomerAdded }: { onCustomerAdded: (newCustomer: C
       return;
     }
     const newCustomer: Customer = {
-      id: `CUST${(mockCustomers.length + 1).toString().padStart(3, '0')}`,
+      id: `CUST${(mockCustomers.length + Date.now()).toString().slice(-4)}`,
       name,
       phone,
       address,
@@ -325,11 +327,12 @@ function AddExpenseForm({ onExpenseAdded }: { onExpenseAdded: (newExpense: Expen
 }
 
 
-function NewSaleForm({ onSaleAdded, customers }: { onSaleAdded: (newSale: Sale) => void, customers: Customer[] }) {
+function NewSaleForm({ onSaleAdded, customers, onCustomerAdded }: { onSaleAdded: (newSale: Sale) => void, customers: Customer[], onCustomerAdded: (customer: Customer) => void }) {
     const { toast } = useToast();
     const [selectedCustomer, setSelectedCustomer] = useState("");
     const [saleItems, setSaleItems] = useState<Partial<SaleItem>[]>([{itemId: "", quantity: 1, length: 0, width: 0}]);
     const [discount, setDiscount] = useState(0);
+    const [isCustomerModalOpen, setCustomerModalOpen] = useState(false);
 
     const handleAddItem = () => {
         setSaleItems([...saleItems, {itemId: "", quantity: 1, length: 0, width: 0}]);
@@ -420,8 +423,15 @@ function NewSaleForm({ onSaleAdded, customers }: { onSaleAdded: (newSale: Sale) 
         toast({ title: "Sale Saved!", description: `Sale ${newSale.id} has been recorded.` });
         clearForm();
     }
+    
+    const handleCustomerAdded = (newCustomer: Customer) => {
+        onCustomerAdded(newCustomer);
+        setSelectedCustomer(newCustomer.id);
+        setCustomerModalOpen(false);
+    }
 
     return (
+        <>
          <Card>
             <CardHeader className="flex flex-row items-center justify-between">
                 <CardTitle>Create New Sale</CardTitle>
@@ -434,6 +444,7 @@ function NewSaleForm({ onSaleAdded, customers }: { onSaleAdded: (newSale: Sale) 
                 <div className="grid md:grid-cols-2 gap-4">
                     <div className="space-y-2">
                         <Label htmlFor="customer">Customer</Label>
+                        <div className="flex gap-2">
                         <Select onValueChange={setSelectedCustomer} value={selectedCustomer}>
                             <SelectTrigger id="customer">
                                 <SelectValue placeholder="Select a customer" />
@@ -442,6 +453,13 @@ function NewSaleForm({ onSaleAdded, customers }: { onSaleAdded: (newSale: Sale) 
                                 {customers.map(c => <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>)}
                             </SelectContent>
                         </Select>
+                        <Dialog open={isCustomerModalOpen} onOpenChange={setCustomerModalOpen}>
+                            <DialogTrigger asChild>
+                                <Button variant="outline" size="icon"><PlusCircle className="h-4 w-4" /></Button>
+                            </DialogTrigger>
+                            <AddCustomerForm onCustomerAdded={handleCustomerAdded} />
+                        </Dialog>
+                        </div>
                     </div>
                     <div className="space-y-2">
                         <Label htmlFor="discount">Discount (%)</Label>
@@ -527,6 +545,7 @@ function NewSaleForm({ onSaleAdded, customers }: { onSaleAdded: (newSale: Sale) 
                 <Button onClick={handleSaveSale}>Save Sale</Button>
             </CardFooter>
         </Card>
+        </>
     )
 }
 
@@ -537,7 +556,6 @@ export default function SalesPage() {
   const [expenses, setExpenses] = useState<Expense[]>(mockExpenses);
   const [activeTab, setActiveTab] = useState("history");
 
-  const [isCustomerModalOpen, setCustomerModalOpen] = useState(false);
   const [isItemModalOpen, setItemModalOpen] = useState(false);
   const [isExpenseModalOpen, setExpenseModalOpen] = useState(false);
 
@@ -552,7 +570,8 @@ export default function SalesPage() {
 
   const handleCustomerAdded = (newCustomer: Customer) => {
     setCustomers(prev => [newCustomer, ...prev]);
-    setCustomerModalOpen(false);
+    // Also update the mockData array so it's available across pages
+    mockCustomers.unshift(newCustomer);
   }
 
   const handleItemAdded = (newItem: Item) => {
@@ -642,13 +661,11 @@ export default function SalesPage() {
         </TabsContent>
         <TabsContent value="new">
             <div className="mt-4">
-                <NewSaleForm onSaleAdded={handleSaleAdded} customers={customers} />
+                <NewSaleForm onSaleAdded={handleSaleAdded} customers={customers} onCustomerAdded={handleCustomerAdded} />
             </div>
         </TabsContent>
       </Tabs>
-       <Dialog open={isCustomerModalOpen} onOpenChange={setCustomerModalOpen}>
-        <AddCustomerForm onCustomerAdded={handleCustomerAdded} />
-      </Dialog>
+
       <Dialog open={isItemModalOpen} onOpenChange={setItemModalOpen}>
         <AddItemForm onItemAdded={handleItemAdded} />
       </Dialog>

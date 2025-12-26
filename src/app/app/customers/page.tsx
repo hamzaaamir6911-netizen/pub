@@ -45,7 +45,7 @@ function AddCustomerForm({ onCustomerAdded }: { onCustomerAdded: (newCustomer: C
       return;
     }
     const newCustomer: Customer = {
-      id: `CUST${(mockCustomers.length + 1).toString().padStart(3, '0')}`,
+      id: `CUST${(mockCustomers.length + Date.now()).toString().slice(-4)}`,
       name,
       phone,
       address,
@@ -144,7 +144,7 @@ export default function CustomersPage() {
                       <DropdownMenuItem>Edit</DropdownMenuItem>
                       <DropdownMenuItem
                         onSelect={() => handleDelete(customer.id)}
-                        className="text-red-600 focus:text-red-600"
+                        className="text-red-500 focus:bg-red-500/10 focus:text-red-500"
                       >
                         Delete
                       </DropdownMenuItem>
