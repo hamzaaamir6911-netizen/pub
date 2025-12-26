@@ -1,9 +1,8 @@
 
-
 "use client";
 
 import React, { createContext, useContext, useState, ReactNode, useEffect } from 'react';
-import type { Item, Customer, Sale, Expense, SaleItem, Transaction } from '@/lib/types';
+import type { Item, Customer, Sale, Expense, SaleItem, Transaction, Vendor } from '@/lib/types';
 import { mockItems, mockCustomers as initialMockCustomers, mockSales as initialMockSales, mockExpenses as initialMockExpenses } from '@/lib/data';
 
 // --- LocalStorage Hook ---
@@ -47,6 +46,7 @@ function useLocalStorageState<T>(key: string, defaultValue: T): [T, React.Dispat
 interface DataContextProps {
   items: Item[];
   customers: Customer[];
+  vendors: Vendor[];
   sales: Sale[];
   expenses: Expense[];
   transactions: Transaction[];
@@ -54,6 +54,8 @@ interface DataContextProps {
   deleteItem: (id: string) => void;
   addCustomer: (customer: Omit<Customer, 'id'>) => Customer;
   deleteCustomer: (id: string) => void;
+  addVendor: (vendor: Omit<Vendor, 'id'>) => Vendor;
+  deleteVendor: (id: string) => void;
   addSale: (sale: Omit<Sale, 'id' | 'date' | 'total'>) => Sale;
   deleteSale: (id: string) => void;
   addExpense: (expense: Omit<Expense, 'id' | 'date'>) => Expense;
@@ -77,6 +79,7 @@ const DataContext = createContext<DataContextProps | undefined>(undefined);
 export const DataProvider = ({ children }: { children: ReactNode }) => {
   const [items, setItems] = useLocalStorageState<Item[]>('items', mockItems);
   const [customers, setCustomers] = useLocalStorageState<Customer[]>('customers', initialMockCustomers);
+  const [vendors, setVendors] = useLocalStorageState<Vendor[]>('vendors', []);
   const [sales, setSales] = useLocalStorageState<Sale[]>('sales', initialMockSales);
   const [expenses, setExpenses] = useLocalStorageState<Expense[]>('expenses', initialMockExpenses);
   const [transactions, setTransactions] = useLocalStorageState<Transaction[]>('transactions', []);
@@ -102,6 +105,17 @@ export const DataProvider = ({ children }: { children: ReactNode }) => {
   const deleteCustomer = (id: string) => {
     setCustomers(prev => prev.filter(customer => customer.id !== id));
   };
+
+  // --- Vendor Management ---
+    const addVendor = (vendor: Omit<Vendor, 'id'>): Vendor => {
+        const newVendor = { ...vendor, id: `VEND${Date.now().toString().slice(-4)}` };
+        setVendors(prev => [newVendor, ...prev]);
+        return newVendor;
+    };
+
+    const deleteVendor = (id: string) => {
+        setVendors(prev => prev.filter(vendor => vendor.id !== id));
+    };
 
   // --- Sale Management ---
   const addSale = (sale: Omit<Sale, 'id' | 'date' | 'total'>): Sale => {
@@ -237,6 +251,7 @@ export const DataProvider = ({ children }: { children: ReactNode }) => {
   const value = {
     items,
     customers,
+    vendors,
     sales,
     expenses,
     transactions,
@@ -244,6 +259,8 @@ export const DataProvider = ({ children }: { children: ReactNode }) => {
     deleteItem,
     addCustomer,
     deleteCustomer,
+    addVendor,
+    deleteVendor,
     addSale,
     deleteSale,
     addExpense,
@@ -267,5 +284,3 @@ export const useDataContext = () => {
   }
   return context;
 };
-
-    

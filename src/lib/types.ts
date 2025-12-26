@@ -1,3 +1,4 @@
+
 export type Item = {
   id: string;
   name: string;
@@ -15,6 +16,13 @@ export type Customer = {
   phone: string;
   address: string;
 };
+
+export type Vendor = {
+  id: string;
+  name: string;
+  phone: string;
+  address: string;
+}
 
 export type SaleItem = {
   itemId: string;
