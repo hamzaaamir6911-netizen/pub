@@ -108,10 +108,11 @@ export const DataProvider = ({ children }: { children: ReactNode }) => {
         const itemDetails = items.find(i => i.id === currentItem.itemId);
         if (!itemDetails) return total;
 
-        if (itemDetails.unit === 'Feet' && currentItem.length && currentItem.width) {
+        if (itemDetails.category === 'Aluminium' && currentItem.length && currentItem.width) {
              const totalFeet = (currentItem.length * currentItem.width / 144) * (currentItem.quantity || 1);
              return total + (itemDetails.salePrice * totalFeet);
         }
+        // For accessories or items sold by piece/kg without dimensions
         return total + (itemDetails.salePrice * (currentItem.quantity || 1));
     }, 0);
     
@@ -133,7 +134,7 @@ export const DataProvider = ({ children }: { children: ReactNode }) => {
         setItems(prevItems => prevItems.map(stockItem => {
             if (stockItem.id === saleItem.itemId) {
                 let quantityToDeduct = saleItem.quantity;
-                 if (stockItem.unit === 'Feet' && saleItem.length && saleItem.width) {
+                 if (stockItem.category === 'Aluminium' && saleItem.length && saleItem.width) {
                     const totalFeet = (saleItem.length * saleItem.width / 144) * saleItem.quantity;
                     quantityToDeduct = totalFeet; 
                 }
@@ -198,7 +199,7 @@ export const DataProvider = ({ children }: { children: ReactNode }) => {
         const item = items.find(i => i.id === saleItem.itemId);
         if (!item) return itemSum;
   
-        if (item.unit === 'Feet' && saleItem.length && saleItem.width) {
+        if (item.category === 'Aluminium' && saleItem.length && saleItem.width) {
           const totalFeet = (saleItem.length * saleItem.width / 144) * saleItem.quantity;
           return itemSum + (item.purchasePrice * totalFeet);
         }
@@ -281,3 +282,5 @@ export const useDataContext = () => {
   }
   return context;
 };
+
+    

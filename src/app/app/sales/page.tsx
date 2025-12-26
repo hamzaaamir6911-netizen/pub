@@ -48,19 +48,18 @@ function SaleInvoice({ sale }: { sale: Sale }) {
     const { customers, items: allItems } = useDataContext();
     const customer = customers.find(c => c.id === sale.customerId);
 
-    const subtotal = sale.items.reduce((acc, item) => {
-        const itemDetails = allItems.find(i => i.id === item.itemId);
+    const subtotal = sale.items.reduce((acc, saleItem) => {
+        const itemDetails = allItems.find(i => i.id === saleItem.itemId);
         if (!itemDetails) return acc;
-        
-        if (itemDetails.unit === 'Feet' && item.length && item.width) {
-            const totalFeet = (item.length * item.width / 144) * item.quantity;
+
+        if (itemDetails.category === 'Aluminium' && saleItem.length && saleItem.width) {
+            const totalFeet = (saleItem.length * saleItem.width / 144) * saleItem.quantity;
             return acc + (itemDetails.salePrice * totalFeet);
-        } else if (itemDetails.unit === 'Kg' && item.weight) {
-            const totalWeight = item.weight * item.quantity;
-            return acc + (itemDetails.salePrice * totalWeight);
         }
-        return acc + (item.price * item.quantity);
+        // For accessories or items sold by piece/kg without dimensions
+        return acc + (saleItem.price * saleItem.quantity);
     }, 0);
+    
     const discountAmount = (subtotal * sale.discount) / 100;
     const total = subtotal - discountAmount;
 
@@ -97,9 +96,15 @@ function SaleInvoice({ sale }: { sale: Sale }) {
                     <TableBody>
                         {sale.items.map((item, index) => {
                              const itemDetails = allItems.find(i => i.id === item.itemId);
-                             const totalFeet = item.length && item.width ? (item.length * item.width / 144) * item.quantity : (itemDetails?.weight || 0) * item.quantity;
+                             const isAluminium = itemDetails?.category === 'Aluminium';
+                             
+                             let totalFeet = 0;
+                             if (isAluminium && item.length && item.width) {
+                                totalFeet = (item.length * item.width / 144) * item.quantity;
+                             }
+
                              const rate = itemDetails?.salePrice || 0;
-                             const itemSubtotal = totalFeet * rate;
+                             const itemSubtotal = isAluminium ? totalFeet * rate : item.price * item.quantity;
 
                              return (
                                 <TableRow key={index}>
@@ -109,8 +114,8 @@ function SaleInvoice({ sale }: { sale: Sale }) {
                                     </TableCell>
                                     <TableCell>{item.color}</TableCell>
                                     <TableCell className="text-right">{item.quantity}</TableCell>
-                                    <TableCell className="text-right">{totalFeet.toFixed(2)}</TableCell>
-                                    <TableCell className="text-right">{formatCurrency(rate)}</TableCell>
+                                    <TableCell className="text-right">{isAluminium ? totalFeet.toFixed(2) : '-'}</TableCell>
+                                    <TableCell className="text-right">{isAluminium ? formatCurrency(rate) : '-'}</TableCell>
                                     <TableCell className="text-right">{formatCurrency(itemSubtotal)}</TableCell>
                                 </TableRow>
                              )
@@ -221,10 +226,11 @@ function NewSaleForm({ onSaleAdded }: { onSaleAdded: (newSale: Omit<Sale, 'id' |
             const itemDetails = allItems.find(i => i.id === currentItem.itemId);
             if (!itemDetails) return total;
 
-            if (itemDetails.unit === 'Feet' && currentItem.length && currentItem.width) {
+            if (itemDetails.category === 'Aluminium' && currentItem.length && currentItem.width) {
                  const totalFeet = (currentItem.length * currentItem.width / 144) * (currentItem.quantity || 1);
                  return total + (itemDetails.salePrice * totalFeet);
             }
+            // For accessories or other items
             return total + (itemDetails.salePrice * (currentItem.quantity || 1));
         }, 0);
         
@@ -256,7 +262,7 @@ function NewSaleForm({ onSaleAdded }: { onSaleAdded: (newSale: Omit<Sale, 'id' |
             const pricePerUnit = item.salePrice;
             let price = pricePerUnit;
 
-            if (item.unit === 'Feet' && si.length && si.width) {
+            if (item.category === 'Aluminium' && si.length && si.width) {
                 const totalFeet = (si.length * si.width / 144) * (si.quantity || 1);
                 price = pricePerUnit * totalFeet;
             } else {
@@ -348,12 +354,12 @@ function NewSaleForm({ onSaleAdded }: { onSaleAdded: (newSale: Omit<Sale, 'id' |
                                         <SelectValue placeholder="Select an item" />
                                     </SelectTrigger>
                                     <SelectContent>
-                                        {allItems.map(i => <SelectItem key={i.id} value={i.id}>{i.name}</SelectItem>)}
+                                        {allItems.map(i => <SelectItem key={i.id} value={i.id}>{i.name} ({i.color})</SelectItem>)}
                                     </SelectContent>
                                 </Select>
                             </div>
                             
-                            {itemDetails?.unit === "Feet" ? (
+                            {itemDetails?.category === "Aluminium" ? (
                                 <>
                                     <div className="space-y-2">
                                         <Label>Length (in)</Label>
@@ -508,3 +514,5 @@ export default function SalesPage() {
     </>
   );
 }
+
+    
