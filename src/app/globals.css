@@ -9,13 +9,23 @@
   }
   .dark body {
     color: #fff !important;
+    background-color: hsl(var(--background)) !important;
   }
-  .dark table, .dark th, .dark td {
+  .dark table, .dark th, .dark td, .dark div {
     color: #fff !important;
     font-weight: bold !important;
   }
   .dark .text-muted-foreground {
-    color: #ccc !important;
+    color: #a1a1aa !important;
+  }
+  .dark .text-green-600 {
+      color: #16a34a !important;
+  }
+  .dark .text-red-600 {
+      color: #dc2626 !important;
+  }
+  .dark .border, .dark .border-t {
+    border-color: hsl(var(--border)) !important;
   }
 }
 
