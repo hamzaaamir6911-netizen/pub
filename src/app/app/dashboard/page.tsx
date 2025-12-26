@@ -1,7 +1,7 @@
 "use client"
 
 import { DollarSign, Warehouse, TrendingUp, TrendingDown, ArrowUpRight, ArrowDownRight } from "lucide-react"
-import { Bar, BarChart, Line, LineChart, ResponsiveContainer, XAxis, YAxis, Tooltip } from "recharts"
+import { Bar, BarChart, XAxis, YAxis } from "recharts"
 
 import {
   Card,
@@ -21,7 +21,14 @@ import {
 import { PageHeader } from "@/components/page-header"
 import { getDashboardStats, getMonthlySalesData, mockSales } from "@/lib/data"
 import { formatCurrency, formatDate } from "@/lib/utils"
-import { ChartTooltip, ChartTooltipContent } from "@/components/ui/chart"
+import { ChartContainer, ChartTooltip, ChartTooltipContent, type ChartConfig } from "@/components/ui/chart"
+
+const chartConfig = {
+  sales: {
+    label: "Sales",
+    color: "hsl(var(--primary))",
+  },
+} satisfies ChartConfig
 
 export default function DashboardPage() {
   const stats = getDashboardStats();
@@ -89,8 +96,8 @@ export default function DashboardPage() {
             <CardDescription>Monthly sales performance.</CardDescription>
           </CardHeader>
           <CardContent className="pl-2">
-            <ResponsiveContainer width="100%" height={350}>
-              <BarChart data={monthlySales}>
+             <ChartContainer config={chartConfig} className="min-h-[350px] w-full">
+              <BarChart accessibilityLayer data={monthlySales}>
                 <XAxis
                   dataKey="name"
                   stroke="#888888"
@@ -105,13 +112,13 @@ export default function DashboardPage() {
                   axisLine={false}
                   tickFormatter={(value) => `${formatCurrency(value as number)}`}
                 />
-                 <Tooltip
+                 <ChartTooltip
                   cursor={{ fill: 'hsl(var(--accent))' }}
                   content={<ChartTooltipContent formatter={(value) => formatCurrency(value as number)} />}
                 />
-                <Bar dataKey="sales" fill="hsl(var(--primary))" radius={[4, 4, 0, 0]} />
+                <Bar dataKey="sales" fill="var(--color-sales)" radius={[4, 4, 0, 0]} />
               </BarChart>
-            </ResponsiveContainer>
+            </ChartContainer>
           </CardContent>
         </Card>
 
