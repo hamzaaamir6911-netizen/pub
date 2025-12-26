@@ -19,8 +19,8 @@ function AdminCheck({ children }: { children: React.ReactNode }) {
     }
   }, [user, isUserLoading, router]);
 
-  // Combined loading state
-  if (isUserLoading || isAdminLoading || !user) {
+  // This is the key change: We MUST wait for both user and admin status to be resolved.
+  if (isUserLoading || isAdminLoading) {
     return (
       <div className="flex h-screen items-center justify-center">
         <div className="text-center">
@@ -31,7 +31,7 @@ function AdminCheck({ children }: { children: React.ReactNode }) {
     );
   }
 
-  // If user is loaded but not an admin, deny access
+  // After loading, if the user is confirmed to not be an admin, then deny access.
   if (!isAdmin) {
      return (
       <div className="flex h-screen items-center justify-center">

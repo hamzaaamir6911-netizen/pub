@@ -19,8 +19,10 @@ function useUserIsAdmin() {
 
     const { data: adminDoc, isLoading: isAdminDocLoading } = useDoc(adminRoleRef);
     
+    // The !!adminDoc ensures we get a clean boolean. true if doc exists, false if it's null.
     const isAdmin = !!adminDoc;
-    const isAdminLoading = isUserLoading || (user && isAdminDocLoading);
+    // The loading state is true if we are still checking for a user, or if we have a user but are still fetching their admin doc.
+    const isAdminLoading = isUserLoading || (!!user && isAdminDocLoading);
 
     return { isAdmin, isAdminLoading };
 }
