@@ -15,8 +15,8 @@ function useLocalStorageState<T>(key: string, defaultValue: T): [T, React.Dispat
             const storedValue = window.localStorage.getItem(key);
             if (storedValue) {
                 // The reviver function is crucial for converting date strings back to Date objects
-                return JSON.parse(storedValue, (key, value) => {
-                    if (key === 'date' && typeof value === 'string') {
+                return JSON.parse(storedValue, (reviverKey, value) => {
+                    if (reviverKey === 'date' && typeof value === 'string') {
                         const d = new Date(value);
                         if (!isNaN(d.getTime())) {
                             return d;
@@ -76,7 +76,21 @@ interface DataContextProps {
 
 const DataContext = createContext<DataContextProps | undefined>(undefined);
 
+const DATA_VERSION = '1.1'; // Increment this to force a refresh
+
 export const DataProvider = ({ children }: { children: ReactNode }) => {
+    
+  useEffect(() => {
+    const storedVersion = window.localStorage.getItem('data_version');
+    if (storedVersion !== DATA_VERSION) {
+      console.log('Data version mismatch. Clearing old inventory data.');
+      window.localStorage.removeItem('items');
+      window.localStorage.setItem('data_version', DATA_VERSION);
+      // Optional: force a reload to ensure the new data is loaded
+      window.location.reload();
+    }
+  }, []);
+
   const [items, setItems] = useLocalStorageState<Item[]>('items', mockItems);
   const [customers, setCustomers] = useLocalStorageState<Customer[]>('customers', initialMockCustomers);
   const [vendors, setVendors] = useLocalStorageState<Vendor[]>('vendors', []);
@@ -298,4 +312,4 @@ export const useDataContext = () => {
   return context;
 };
 
-      
+  
