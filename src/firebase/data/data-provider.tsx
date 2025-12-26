@@ -17,11 +17,12 @@ function useUserIsAdmin() {
         [firestore, user]
     );
 
-    const { data: adminDoc, isLoading: isAdminLoading } = useDoc(adminRoleRef);
+    const { data: adminDoc, isLoading: isAdminDocLoading } = useDoc(adminRoleRef);
     
-    const isAdmin = adminDoc !== null;
+    const isAdmin = !!adminDoc;
+    const isAdminLoading = isUserLoading || (user && isAdminDocLoading);
 
-    return { isAdmin, isAdminLoading: isUserLoading || isAdminLoading };
+    return { isAdmin, isAdminLoading };
 }
 
 
