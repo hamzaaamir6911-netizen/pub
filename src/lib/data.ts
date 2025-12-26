@@ -268,4 +268,32 @@ export const mockItems: Item[] = [
   { id: 'ITM-DC30JC-1.2-Dull', name: 'DC30JC (1.2mm)', category: 'Aluminium', unit: 'Feet', purchasePrice: 560, salePrice: 592, color: 'Dull', weight: 0.473 },
   { id: 'ITM-DC30JC-1.2-H23', name: 'DC30JC (1.2mm)', category: 'Aluminium', unit: 'Feet', purchasePrice: 562, salePrice: 594, color: 'H23/PC-RAL', weight: 0.473 },
   { id: 'ITM-DC30JC-1.2-Sahra', name: 'DC30JC (1.2mm)', category: 'Aluminium', unit: 'Feet', purchasePrice: 604, salePrice: 636, color: 'Sahra/BRN', weight: 0.473 },
-  { id:.
+  { id: 'ITM-DC30JC-1.2-Black', name: 'DC30JC (1.2mm)', category: 'Aluminium', unit: 'Feet', purchasePrice: 634, salePrice: 666, color: 'Black/Multi', weight: 0.473 },
+  { id: 'ITM-DC30JC-1.2-Wood', name: 'DC30JC (1.2mm)', category: 'Aluminium', unit: 'Feet', purchasePrice: 711, salePrice: 743, color: 'Wood Coat', weight: 0.473 }
+];
+
+export const mockCustomers: Customer[] = [
+  { id: 'CUST001', name: 'Ali Khan', phone: '0300-1234567', address: '123, Gulberg, Lahore' },
+  { id: 'CUST002', name: 'Fatima Ahmed', phone: '0321-7654321', address: '456, DHA, Karachi' },
+];
+
+export const mockSales: Sale[] = [
+  {
+    id: 'SALE001',
+    customerId: 'CUST001',
+    customerName: 'Ali Khan',
+    items: [
+      { itemId: 'ITM-GSL-1-DG26-1.2-Dull', itemName: 'GSL-1-DG26 (1.2mm)', quantity: 10, price: 682, feet: 10, discount: 5, color: 'Dull', weight: 0.547 },
+      { itemId: 'ITM-HD-1-DG59-1.6-Dull', itemName: 'HD-1 (DG59) (1.6mm)', quantity: 5, price: 646, feet: 5, discount: 0, color: 'Dull', weight: 0.52 },
+    ],
+    total: 9713,
+    date: new Date('2024-05-20'),
+    discount: 0,
+  },
+];
+
+export const mockExpenses: Expense[] = [
+  { id: 'EXP001', title: 'Factory Rent', amount: 50000, category: 'Other', date: new Date('2024-05-01') },
+  { id: 'EXP002', title: 'Electricity Bill', amount: 25000, category: 'Electricity', date: new Date('2024-05-05') },
+  { id: 'EXP003', title: 'Worker Salaries', amount: 150000, category: 'Labour', date: new Date('2024-05-25') },
+];
