@@ -34,12 +34,13 @@ import { cn } from "@/lib/utils";
 
 
 function AddTransactionForm({ onTransactionAdded }: { onTransactionAdded: (newTransaction: Omit<Transaction, 'id' | 'date'>) => void }) {
-  const { customers } = useDataContext();
+  const { customers, vendors } = useDataContext();
   const [description, setDescription] = useState('');
   const [amount, setAmount] = useState(0);
-  const [type, setType] = useState<'credit' | 'debit'>('debit');
+  const [type, setType] = useState<'credit' | 'debit'>('credit');
   const [category, setCategory] = useState('');
   const [customerId, setCustomerId] = useState<string | undefined>(undefined);
+  const [vendorId, setVendorId] = useState<string | undefined>(undefined);
   const { toast } = useToast();
 
   useEffect(() => {
@@ -49,39 +50,51 @@ function AddTransactionForm({ onTransactionAdded }: { onTransactionAdded: (newTr
             setDescription(`Cash received from ${customer.name}`);
             setCategory('Customer Payment');
         }
-    } else if (type === 'debit') {
+    } else if (type === 'debit' && vendorId) {
+        const vendor = vendors.find(v => v.id === vendorId);
+        if(vendor) {
+            setDescription(`Payment to ${vendor.name}`);
+            setCategory('Vendor Payment');
+        }
+    } else {
         setDescription('');
         setCategory('');
         setCustomerId(undefined);
+        setVendorId(undefined);
     }
-  }, [type, customerId, customers]);
+  }, [type, customerId, vendorId, customers, vendors]);
 
   const handleSubmit = () => {
-    if (!description || amount <= 0 || !category) {
+    if (!description || amount <= 0) {
       toast({ variant: 'destructive', title: 'Please fill all fields.' });
       return;
     }
     const customer = customers.find(c => c.id === customerId);
+    const vendor = vendors.find(v => v.id === vendorId);
+
     const newTransaction: Omit<Transaction, 'id' | 'date'> = {
       description,
       amount,
       type,
-      category,
+      category: category || (type === 'credit' ? 'Cash Received' : 'Payment'),
       customerId: customerId,
-      customerName: customer?.name
+      customerName: customer?.name,
+      vendorId: vendorId,
+      vendorName: vendor?.name,
     };
     onTransactionAdded(newTransaction);
-    toast({ title: 'Transaction Added!', description: `A ${type} of ${formatCurrency(amount)} has been recorded.` });
+    toast({ title: 'Transaction Added!', description: `A transaction of ${formatCurrency(amount)} has been recorded.` });
     setDescription('');
     setAmount(0);
     setCategory('');
     setCustomerId(undefined);
+    setVendorId(undefined);
   };
 
   return (
     <DialogContent>
       <DialogHeader>
-        <DialogTitle>Add New Transaction</DialogTitle>
+        <DialogTitle>Add New Voucher</DialogTitle>
       </DialogHeader>
       <div className="space-y-4 py-4">
         <div className="space-y-2">
@@ -92,20 +105,34 @@ function AddTransactionForm({ onTransactionAdded }: { onTransactionAdded: (newTr
                 </SelectTrigger>
                 <SelectContent>
                     <SelectItem value="credit">Cash Received (Credit)</SelectItem>
-                    <SelectItem value="debit">Vendor Payment (Debit)</SelectItem>
+                    <SelectItem value="debit">Payment (Debit)</SelectItem>
                 </SelectContent>
             </Select>
         </div>
 
         {type === 'credit' && (
             <div className="space-y-2">
-                <Label htmlFor="customer">Customer</Label>
+                <Label htmlFor="customer">From Customer</Label>
                 <Select onValueChange={setCustomerId} value={customerId}>
                     <SelectTrigger id="customer">
                         <SelectValue placeholder="Select a customer" />
                     </SelectTrigger>
                     <SelectContent>
                         {customers.map(c => <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>)}
+                    </SelectContent>
+                </Select>
+            </div>
+        )}
+        
+        {type === 'debit' && (
+            <div className="space-y-2">
+                <Label htmlFor="vendor">To Vendor</Label>
+                <Select onValueChange={setVendorId} value={vendorId}>
+                    <SelectTrigger id="vendor">
+                        <SelectValue placeholder="Select a vendor" />
+                    </SelectTrigger>
+                    <SelectContent>
+                        {vendors.map(v => <SelectItem key={v.id} value={v.id}>{v.name}</SelectItem>)}
                     </SelectContent>
                 </Select>
             </div>
@@ -117,23 +144,13 @@ function AddTransactionForm({ onTransactionAdded }: { onTransactionAdded: (newTr
             id="description" 
             value={description} 
             onChange={(e) => setDescription(e.target.value)} 
-            placeholder={type === 'debit' ? "Payment to supplier" : "Cash from customer"}
-            disabled={type === 'credit' && !!customerId}
+            placeholder={type === 'debit' ? "Payment for supplies" : "Cash from customer"}
+            disabled={ (type === 'credit' && !!customerId) || (type === 'debit' && !!vendorId) }
           />
         </div>
         <div className="space-y-2">
           <Label htmlFor="amount">Amount</Label>
-          <Input id="amount" type="number" value={amount} onChange={(e) => setAmount(parseFloat(e.target.value))} placeholder="Amount in PKR"/>
-        </div>
-         <div className="space-y-2">
-          <Label htmlFor="category">Category</Label>
-          <Input 
-            id="category" 
-            value={category} 
-            onChange={(e) => setCategory(e.target.value)} 
-            placeholder={type === 'debit' ? "Vendor Payment" : "Customer Payment"}
-            disabled={type === 'credit' && !!customerId}
-          />
+          <Input id="amount" type="number" value={amount} onChange={(e) => setAmount(parseFloat(e.target.value) || 0)} placeholder="Amount in PKR"/>
         </div>
       </div>
       <DialogFooter>
@@ -159,19 +176,27 @@ export default function LedgerPage() {
     let filtered = transactions;
     if (selectedCustomerId) {
         filtered = transactions.filter(t => t.customerId === selectedCustomerId);
-    }
-    if (selectedVendorId) {
+    } else if (selectedVendorId) { // Use else if to make filters mutually exclusive
         filtered = transactions.filter(t => t.vendorId === selectedVendorId);
     }
+    // Correct sorting: oldest to newest for chronological order
     return filtered.sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
   }, [transactions, selectedCustomerId, selectedVendorId]);
 
   let runningBalance = 0;
+  // For a customer ledger: Debit increases balance, Credit decreases.
+  // For a vendor ledger: Debit (payment to them) decreases our liability, Credit (purchase from them) increases.
+  // The current transaction model is simplified, so we'll adjust based on context.
   const transactionsWithBalance = filteredTransactions.map(t => {
-      if (t.type === 'credit') {
-          runningBalance += t.amount;
+      if (selectedCustomerId) {
+        // Customer Ledger: debit is sale (increases what they owe), credit is payment (decreases)
+        runningBalance += (t.type === 'debit' ? t.amount : -t.amount);
+      } else if (selectedVendorId) {
+        // Vendor Ledger: debit is payment (decreases what we owe), credit would be purchase (increases what we owe)
+        runningBalance += (t.type === 'credit' ? t.amount : -t.amount);
       } else {
-          runningBalance -= t.amount;
+        // General Ledger: credit is income, debit is expense
+        runningBalance += (t.type === 'credit' ? t.amount : -t.amount);
       }
       return { ...t, balance: runningBalance };
   });
@@ -202,7 +227,7 @@ export default function LedgerPage() {
         <h3 className="text-sm font-medium">Filters</h3>
         <div className="flex items-center gap-2">
             <Label htmlFor="customer-filter" className="text-sm">Customer</Label>
-            <Select onValueChange={(value) => { setSelectedCustomerId(value); setSelectedVendorId(null); }} value={selectedCustomerId || ''}>
+            <Select onValueChange={(value) => { setSelectedCustomerId(value || null); setSelectedVendorId(null); }} value={selectedCustomerId || ''}>
                 <SelectTrigger id="customer-filter" className="w-[200px]"><SelectValue placeholder="Select Customer" /></SelectTrigger>
                 <SelectContent>
                     {customers.map(c => <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>)}
@@ -211,7 +236,7 @@ export default function LedgerPage() {
         </div>
         <div className="flex items-center gap-2">
             <Label htmlFor="vendor-filter" className="text-sm">Vendor</Label>
-            <Select onValueChange={(value) => { setSelectedVendorId(value); setSelectedCustomerId(null); }} value={selectedVendorId || ''}>
+            <Select onValueChange={(value) => { setSelectedVendorId(value || null); setSelectedCustomerId(null); }} value={selectedVendorId || ''}>
                 <SelectTrigger id="vendor-filter" className="w-[200px]"><SelectValue placeholder="Select Vendor" /></SelectTrigger>
                 <SelectContent>
                     {vendors.map(v => <SelectItem key={v.id} value={v.id}>{v.name}</SelectItem>)}
@@ -252,10 +277,10 @@ export default function LedgerPage() {
                     <TableCell>
                         <Badge variant="outline">{transaction.category}</Badge>
                     </TableCell>
-                    <TableCell className={cn("text-right font-mono", transaction.type === 'debit' && "text-red-500")}>
+                    <TableCell className={cn("text-right font-mono", transaction.type === 'debit' && "font-semibold")}>
                         {transaction.type === 'debit' ? formatCurrency(transaction.amount) : '-'}
                     </TableCell>
-                    <TableCell className={cn("text-right font-mono", transaction.type === 'credit' && "text-green-500")}>
+                    <TableCell className={cn("text-right font-mono", transaction.type === 'credit' && "font-semibold")}>
                         {transaction.type === 'credit' ? formatCurrency(transaction.amount) : '-'}
                     </TableCell>
                     {(selectedCustomerId || selectedVendorId) && <TableCell className="text-right font-mono">{formatCurrency(transaction.balance)}</TableCell>}
@@ -278,4 +303,3 @@ export default function LedgerPage() {
     </>
   );
 }
-    

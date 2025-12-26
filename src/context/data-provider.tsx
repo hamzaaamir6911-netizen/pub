@@ -76,15 +76,20 @@ interface DataContextProps {
 
 const DataContext = createContext<DataContextProps | undefined>(undefined);
 
-const DATA_VERSION = '1.2'; // Increment this to force a refresh
+const DATA_VERSION = '1.3'; // Increment this to force a refresh
 
 export const DataProvider = ({ children }: { children: ReactNode }) => {
     
   useEffect(() => {
     const storedVersion = window.localStorage.getItem('data_version');
     if (storedVersion !== DATA_VERSION) {
-      console.log('Data version mismatch. Clearing old inventory data.');
+      console.log('Data version mismatch. Clearing old data.');
       window.localStorage.removeItem('items');
+      window.localStorage.removeItem('sales');
+      window.localStorage.removeItem('customers');
+      window.localStorage.removeItem('vendors');
+      window.localStorage.removeItem('expenses');
+      window.localStorage.removeItem('transactions');
       window.localStorage.setItem('data_version', DATA_VERSION);
       // Optional: force a reload to ensure the new data is loaded
       window.location.reload();
@@ -146,10 +151,11 @@ export const DataProvider = ({ children }: { children: ReactNode }) => {
     const newSale: Sale = { ...sale, id: `SALE${Date.now().toString().slice(-4)}`, date: new Date(), total };
     setSales(prev => [newSale, ...prev]);
     
+    // A sale DEBITS the customer's account (increases their due balance)
     addTransaction({
         description: `Sale to ${newSale.customerName}`,
         amount: newSale.total,
-        type: 'credit',
+        type: 'debit',
         category: 'Sale',
         customerId: newSale.customerId,
         customerName: newSale.customerName,
@@ -174,6 +180,7 @@ export const DataProvider = ({ children }: { children: ReactNode }) => {
     
     const vendor = vendors.find(v => v.id === expense.vendorId);
     
+    // An expense is a debit from our main ledger
     addTransaction({
         description: newExpense.title,
         amount: newExpense.amount,
@@ -197,6 +204,8 @@ export const DataProvider = ({ children }: { children: ReactNode }) => {
 
   // --- Transaction Management ---
   const addTransaction = (transaction: Omit<Transaction, 'id'| 'date'>): Transaction => {
+    // Cash received from customer CREDITS their account (reduces their due balance)
+    // Payments to vendors DEBIT our cash account.
     const newTransaction = { ...transaction, id: `TRN${Date.now().toString().slice(-4)}`, date: new Date() };
     setTransactions(prev => [newTransaction, ...prev].sort((a,b) => new Date(b.date).getTime() - new Date(a.date).getTime()));
     return newTransaction;
@@ -204,19 +213,18 @@ export const DataProvider = ({ children }: { children: ReactNode }) => {
   
   // --- Dashboard & Report Calculations ---
   const getDashboardStats = () => {
-    const totalSales = transactions.reduce((sum, transaction) => {
-      if (transaction.type === 'credit') {
-        return sum + transaction.amount;
-      }
-      return sum;
-    }, 0);
-
-    const totalExpenses = transactions.reduce((sum, transaction) => {
-        if (transaction.type === 'debit') {
+    const totalSales = sales.reduce((sum, sale) => sum + sale.total, 0);
+    const cashReceived = transactions.reduce((sum, transaction) => {
+        // Only include cash receipts not directly tied to a sale's creation
+        if (transaction.type === 'credit' && transaction.category !== 'Sale') {
             return sum + transaction.amount;
         }
         return sum;
     }, 0);
+    
+    const totalRevenue = totalSales + cashReceived;
+
+    const totalExpenses = expenses.reduce((sum, expense) => sum + expense.amount, 0);
     
     const totalStockValue = 0; 
     
@@ -225,18 +233,17 @@ export const DataProvider = ({ children }: { children: ReactNode }) => {
         const item = items.find(i => i.id === saleItem.itemId);
         if (!item) return itemSum;
   
-        let quantity = saleItem.quantity;
+        let quantityInFeet = saleItem.quantity;
         if (item.category === 'Aluminium' && saleItem.feet) {
-          quantity = saleItem.feet * saleItem.quantity;
+          quantityInFeet = saleItem.feet * saleItem.quantity;
         }
 
-        return itemSum + (item.purchasePrice * quantity);
+        return itemSum + (item.purchasePrice * quantityInFeet);
       }, 0);
       return sum + saleCost;
     }, 0);
   
-    // Profit loss calculation should consider COGS for sales and other expenses
-    const profitLoss = totalSales - totalCostOfGoodsSold - totalExpenses;
+    const profitLoss = totalRevenue - totalCostOfGoodsSold - totalExpenses;
   
     const today = new Date();
     const todaySummary = {
@@ -245,7 +252,7 @@ export const DataProvider = ({ children }: { children: ReactNode }) => {
     };
     
     return {
-      totalSales,
+      totalSales: totalRevenue,
       totalExpenses,
       totalStockValue,
       profitLoss,
@@ -254,15 +261,25 @@ export const DataProvider = ({ children }: { children: ReactNode }) => {
   };
 
   const getMonthlySalesData = () => {
-    const salesByMonth: { [key: string]: number } = {};
+    const revenueByMonth: { [key: string]: number } = {};
+    
+    sales.forEach(sale => {
+      const saleDate = new Date(sale.date);
+      const month = saleDate.toLocaleString('default', { month: 'short' });
+      if (!revenueByMonth[month]) {
+        revenueByMonth[month] = 0;
+      }
+      revenueByMonth[month] += sale.total;
+    });
+
     transactions.forEach(transaction => {
-      if (transaction.type === 'credit') {
-        const saleDate = new Date(transaction.date);
-        const month = saleDate.toLocaleString('default', { month: 'short' });
-        if (!salesByMonth[month]) {
-          salesByMonth[month] = 0;
+      if (transaction.type === 'credit' && transaction.category !== 'Sale') {
+        const transDate = new Date(transaction.date);
+        const month = transDate.toLocaleString('default', { month: 'short' });
+        if (!revenueByMonth[month]) {
+          revenueByMonth[month] = 0;
         }
-        salesByMonth[month] += transaction.amount;
+        revenueByMonth[month] += transaction.amount;
       }
     });
 
@@ -275,7 +292,7 @@ export const DataProvider = ({ children }: { children: ReactNode }) => {
 
     return lastSixMonths.map(month => ({
       name: month,
-      sales: salesByMonth[month] || 0,
+      sales: revenueByMonth[month] || 0,
     }));
   };
 
