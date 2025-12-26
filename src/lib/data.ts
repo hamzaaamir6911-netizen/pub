@@ -1,3 +1,4 @@
+
 import type { Item, Customer, Sale, Expense } from '@/lib/types';
 
 export const mockItems: Item[] = [
@@ -14,7 +15,7 @@ export const mockItems: Item[] = [
   { id: 'ITM-GSL-1-DG26-1.6-Wood', name: 'GSL-1-DG26 (1.6mm)', category: 'Aluminium', unit: 'Feet', purchasePrice: 1073, salePrice: 1105, color: 'Wood Coat' },
   { id: 'ITM-GSL-1-DG26-2-Dull', name: 'GSL-1-DG26 (2mm)', category: 'Aluminium', unit: 'Feet', purchasePrice: 1032, salePrice: 1064, color: 'Dull' },
   { id: 'ITM-GSL-1-DG26-2-H23', name: 'GSL-1-DG26 (2mm)', category: 'Aluminium', unit: 'Feet', purchasePrice: 1034, salePrice: 1066, color: 'H23/PC-RAL' },
-  { id_ITM-GSL-1-DG26-2-Sahra', name: 'GSL-1-DG26 (2mm)', category: 'Aluminium', unit: 'Feet', purchasePrice: 1109, salePrice: 1141, color: 'Sahra/BRN' },
+  { id: 'ITM-GSL-1-DG26-2-Sahra', name: 'GSL-1-DG26 (2mm)', category: 'Aluminium', unit: 'Feet', purchasePrice: 1109, salePrice: 1141, color: 'Sahra/BRN' },
   { id: 'ITM-GSL-1-DG26-2-Black', name: 'GSL-1-DG26 (2mm)', category: 'Aluminium', unit: 'Feet', purchasePrice: 1162, salePrice: 1194, color: 'Black/Multi' },
   { id: 'ITM-GSL-1-DG26-2-Wood', name: 'GSL-1-DG26 (2mm)', category: 'Aluminium', unit: 'Feet', purchasePrice: 1301, salePrice: 1333, color: 'Wood Coat' },
   { id: 'ITM-GSL-1-F-DG26F-1.6-Dull', name: 'GSL-1-F-DG26F (1.6mm)', category: 'Aluminium', unit: 'Feet', purchasePrice: 938, salePrice: 970, color: 'Dull' },
@@ -233,7 +234,7 @@ export const mockItems: Item[] = [
   { id: 'ITM-DC26B-1.2-H23', name: 'DC26B (1.2mm)', category: 'Aluminium', unit: 'Feet', purchasePrice: 540, salePrice: 572, color: 'H23/PC-RAL' },
   { id: 'ITM-DC26B-1.2-Sahra', name: 'DC26B (1.2mm)', category: 'Aluminium', unit: 'Feet', purchasePrice: 580, salePrice: 612, color: 'Sahra/BRN' },
   { id: 'ITM-DC26B-1.2-Black', name: 'DC26B (1.2mm)', category: 'Aluminium', unit: 'Feet', purchasePrice: 609, salePrice: 641, color: 'Black/Multi' },
-  { id: 'ITM-DC26B-1.2-Wood', name 'DC26B (1.2mm)', category: 'Aluminium', unit: 'Feet', purchasePrice: 683, salePrice: 715, color: 'Wood Coat' },
+  { id: 'ITM-DC26B-1.2-Wood', name: 'DC26B (1.2mm)', category: 'Aluminium', unit: 'Feet', purchasePrice: 683, salePrice: 715, color: 'Wood Coat' },
   { id: 'ITM-DC30B-1.2-Dull', name: 'DC30B (1.2mm)', category: 'Aluminium', unit: 'Feet', purchasePrice: 452, salePrice: 484, color: 'Dull' },
   { id: 'ITM-DC30B-1.2-H23', name: 'DC30B (1.2mm)', category: 'Aluminium', unit: 'Feet', purchasePrice: 454, salePrice: 486, color: 'H23/PC-RAL' },
   { id: 'ITM-DC30B-1.2-Sahra', name: 'DC30B (1.2mm)', category: 'Aluminium', unit: 'Feet', purchasePrice: 488, salePrice: 520, color: 'Sahra/BRN' },
@@ -632,11 +633,11 @@ export const mockItems: Item[] = [
   { id: 'ITM-AA23-2-H23', name: 'AA23 (2mm)', category: 'Aluminium', unit: 'Feet', purchasePrice: 648, salePrice: 680, color: 'H23/PC-RAL' },
   { id: 'ITM-AA23-2-Sahra', name: 'AA23 (2mm)', category: 'Aluminium', unit: 'Feet', purchasePrice: 696, salePrice: 728, color: 'Sahra/BRN' },
   { id: 'ITM-AA23-2-Black', name: 'AA23 (2mm)', category: 'Aluminium', unit: 'Feet', purchasePrice: 730, salePrice: 762, color: 'Black/Multi' },
-  { id_ITM-AA23-2-Wood', name: 'AA23 (2mm)', category: 'Aluminium', unit: 'Feet', purchasePrice: 818, salePrice: 850, color: 'Wood Coat' },
+  { id: 'ITM-AA23-2-Wood', name: 'AA23 (2mm)', category: 'Aluminium', unit: 'Feet', purchasePrice: 818, salePrice: 850, color: 'Wood Coat' },
   { id: 'ITM-AA23-S-2-Dull', name: 'AA23-S (2mm)', category: 'Aluminium', unit: 'Feet', purchasePrice: 637, salePrice: 669, color: 'Dull' },
   { id: 'ITM-AA23-S-2-H23', name: 'AA23-S (2mm)', category: 'Aluminium', unit: 'Feet', purchasePrice: 639, salePrice: 671, color: 'H23/PC-RAL' },
   { id: 'ITM-AA23-S-2-Sahra', name: 'AA23-S (2mm)', category: 'Aluminium', unit: 'Feet', purchasePrice: 686, salePrice: 718, color: 'Sahra/BRN' },
-_ { id: 'ITM-AA23-S-2-Black', name: 'AA23-S (2mm)', category: 'Aluminium', unit: 'Feet', purchasePrice: 720, salePrice: 752, color: 'Black/Multi' },
+  { id: 'ITM-AA23-S-2-Black', name: 'AA23-S (2mm)', category: 'Aluminium', unit: 'Feet', purchasePrice: 720, salePrice: 752, color: 'Black/Multi' },
   { id: 'ITM-AA23-S-2-Wood', name: 'AA23-S (2mm)', category: 'Aluminium', unit: 'Feet', purchasePrice: 807, salePrice: 839, color: 'Wood Coat' },
   { id: 'ITM-AA28-2-Dull', name: 'AA28 (2mm)', category: 'Aluminium', unit: 'Feet', purchasePrice: 709, salePrice: 741, color: 'Dull' },
   { id: 'ITM-AA28-2-H23', name: 'AA28 (2mm)', category: 'Aluminium', unit: 'Feet', purchasePrice: 711, salePrice: 743, color: 'H23/PC-RAL' },
