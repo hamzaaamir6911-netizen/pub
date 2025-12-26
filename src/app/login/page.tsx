@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import Image from "next/image";
 import { Factory } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
@@ -47,52 +48,60 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="flex min-h-screen flex-col items-center justify-center p-4">
-      <div className="mx-auto w-full max-w-sm">
-        <div className="mb-4 flex justify-center">
-          <Factory className="h-10 w-10 text-primary" />
-        </div>
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-center text-2xl font-bold font-headline">ARCO Factory Manager</CardTitle>
-            <CardDescription className="text-center">
+    <div className="w-full lg:grid lg:min-h-screen lg:grid-cols-2 xl:min-h-screen">
+      <div className="flex items-center justify-center py-12">
+        <div className="mx-auto grid w-[350px] gap-6">
+           <div className="grid gap-2 text-center">
+             <div className="mb-4 flex justify-center">
+                <Factory className="h-10 w-10 text-primary" />
+            </div>
+            <h1 className="text-3xl font-bold font-headline">ARCO Factory Manager</h1>
+            <p className="text-balance text-muted-foreground">
               Enter your credentials to access the admin panel
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <form onSubmit={handleLogin} className="grid gap-4">
-              <div className="grid gap-2">
-                <Label htmlFor="email">Email</Label>
-                <Input
-                  id="email"
-                  type="email"
-                  placeholder="admin@arco.com"
-                  required
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  disabled={isLoading}
-                />
+            </p>
+          </div>
+          <form onSubmit={handleLogin} className="grid gap-4">
+            <div className="grid gap-2">
+              <Label htmlFor="email">Email</Label>
+              <Input
+                id="email"
+                type="email"
+                placeholder="admin@arco.com"
+                required
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                disabled={isLoading}
+              />
+            </div>
+            <div className="grid gap-2">
+              <div className="flex items-center">
+                <Label htmlFor="password">Password</Label>
               </div>
-              <div className="grid gap-2">
-                <div className="flex items-center">
-                  <Label htmlFor="password">Password</Label>
-                </div>
-                <Input
-                  id="password"
-                  type="password"
-                  placeholder="password"
-                  required
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  disabled={isLoading}
-                />
-              </div>
-              <Button type="submit" className="w-full mt-2" disabled={isLoading}>
-                {isLoading ? "Logging in..." : "Login"}
-              </Button>
-            </form>
-          </CardContent>
-        </Card>
+              <Input
+                id="password"
+                type="password"
+                placeholder="password"
+                required
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                disabled={isLoading}
+              />
+            </div>
+            <Button type="submit" className="w-full mt-2" disabled={isLoading}>
+              {isLoading ? "Logging in..." : "Login"}
+            </Button>
+          </form>
+        </div>
+      </div>
+      <div className="hidden bg-muted lg:block">
+        <Image
+          src="https://images.unsplash.com/photo-1617990794833-24837885994b?w=1200&q=80"
+          alt="Image"
+          width="1920"
+          height="1080"
+          className="h-full w-full object-cover dark:brightness-[0.4]"
+          data-ai-hint="aluminium sections"
+        />
       </div>
     </div>
   );
