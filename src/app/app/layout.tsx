@@ -54,8 +54,8 @@ export default function AppLayout({
     <FirebaseClientProvider>
       <AuthProvider>
         <AppContent>{children}</AppContent>
-        <Toaster />
       </AuthProvider>
+      <Toaster />
     </FirebaseClientProvider>
   );
 }

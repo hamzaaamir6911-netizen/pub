@@ -48,11 +48,9 @@ const firestoreTimestampToDate = (timestamp: any): Date => {
   if (timestamp instanceof Timestamp) {
     return timestamp.toDate();
   }
-  // Handle cases where the timestamp might be a string or a plain object from server rendering
   if (timestamp && typeof timestamp.seconds === 'number' && typeof timestamp.nanoseconds === 'number') {
     return new Timestamp(timestamp.seconds, timestamp.nanoseconds).toDate();
   }
-  // Fallback for string dates, though server timestamps should be objects
   return new Date(timestamp);
 };
 
@@ -100,7 +98,7 @@ export const DataProvider = ({ children }: { children: ReactNode }) => {
     const expenses: Expense[] = useMemo(() => expensesSnapshot ? expensesSnapshot.docs.map(doc => mapDocument<Expense>(doc)) : [], [expensesSnapshot]);
     const transactions: Transaction[] = useMemo(() => transactionsSnapshot ? transactionsSnapshot.docs.map(doc => mapDocument<Transaction>(doc)) : [], [transactionsSnapshot]);
 
-    const loading = itemsLoading || customersLoading || vendorsLoading || salesLoading || expensesLoading || transactionsLoading;
+    const loading = !user || itemsLoading || customersLoading || vendorsLoading || salesLoading || expensesLoading || transactionsLoading;
 
     const getCollectionRef = (collectionName: string) => {
         if (!basePath) throw new Error("User not authenticated.");
@@ -332,5 +330,3 @@ export const useData = () => {
   }
   return context;
 };
-
-    
