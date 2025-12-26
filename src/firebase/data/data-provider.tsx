@@ -3,32 +3,10 @@
 
 import React, { createContext, useContext, ReactNode } from 'react';
 import type { Item, Customer, Sale, Expense, Transaction, Vendor } from '@/lib/types';
-import { useCollection, useFirestore, useMemoFirebase, useUser, useDoc } from '@/firebase';
+import { useCollection, useFirestore, useMemoFirebase, useUser } from '@/firebase';
 import { collection, doc, writeBatch, serverTimestamp, Timestamp, orderBy, query, where, getDocs, runTransaction } from 'firebase/firestore';
 import { addDocumentNonBlocking, deleteDocumentNonBlocking, updateDocumentNonBlocking } from '../non-blocking-updates';
 import { date } from 'zod';
-
-function useUserIsAdmin() {
-    const { user, isUserLoading } = useUser();
-    const firestore = useFirestore();
-
-    const adminRoleRef = useMemoFirebase(
-        // Only create the doc reference if we have a user
-        () => (user ? doc(firestore, 'roles_admin', user.uid) : null),
-        [firestore, user]
-    );
-
-    const { data: adminDoc, isLoading: isAdminDocLoading } = useDoc(adminRoleRef);
-    
-    // An admin is someone for whom the admin document exists.
-    const isAdmin = !!adminDoc;
-    
-    // The overall loading state is true if we are still checking for a user, 
-    // OR if we have a user but are still fetching their admin role document.
-    const isAdminLoading = isUserLoading || (!!user && isAdminDocLoading);
-
-    return { isAdmin, isAdminLoading };
-}
 
 
 interface DataContextProps {
@@ -39,8 +17,6 @@ interface DataContextProps {
   expenses: Expense[];
   transactions: Transaction[];
   loading: boolean;
-  isAdmin: boolean;
-  isAdminLoading: boolean;
   addItem: (item: Omit<Item, 'id' | 'createdAt'>) => Promise<any>;
   deleteItem: (id: string) => Promise<void>;
   addCustomer: (customer: Omit<Customer, 'id' | 'createdAt'>) => Promise<any>;
@@ -86,10 +62,10 @@ const toDate = (timestamp: any) => {
 
 export const DataProvider = ({ children }: { children: ReactNode }) => {
     const firestore = useFirestore();
-    const { user } = useUser();
-    const { isAdmin, isAdminLoading } = useUserIsAdmin();
+    const { user, isUserLoading } = useUser();
 
-    const shouldFetch = isAdmin && !isAdminLoading;
+    // Fetch data only if the user is logged in.
+    const shouldFetch = !!user;
 
     // Memoize collection references
     const itemsCol = useMemoFirebase(() => shouldFetch ? collection(firestore, 'items') : null, [firestore, shouldFetch]);
@@ -114,7 +90,7 @@ export const DataProvider = ({ children }: { children: ReactNode }) => {
     const expenses = expensesData?.map(expense => ({ ...expense, date: toDate(expense.date) })) || [];
     const transactions = transactionsData?.map(transaction => ({ ...transaction, date: toDate(transaction.date) })) || [];
 
-    const loading = itemsLoading || customersLoading || vendorsLoading || salesLoading || expensesLoading || transactionsLoading;
+    const loading = isUserLoading || itemsLoading || customersLoading || vendorsLoading || salesLoading || expensesLoading || transactionsLoading;
 
     // --- Write Operations ---
 
@@ -344,7 +320,6 @@ export const DataProvider = ({ children }: { children: ReactNode }) => {
     
     const value = {
         items, customers, vendors, sales, expenses, transactions, loading,
-        isAdmin, isAdminLoading,
         addItem, deleteItem,
         addCustomer, deleteCustomer,
         addVendor, deleteVendor,
@@ -368,5 +343,3 @@ export const useData = () => {
   }
   return context;
 };
-
-    

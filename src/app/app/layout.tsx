@@ -3,62 +3,22 @@
 
 import { AppHeader } from "@/components/app-header";
 import { useUser } from "@/firebase";
-import { DataProvider, useData } from "@/firebase/data/data-provider";
+import { DataProvider } from "@/firebase/data/data-provider";
 import { useRouter } from "next/navigation";
 import { useEffect } from "react";
-import { Button } from "@/components/ui/button";
-
-function AdminCheck({ children }: { children: React.ReactNode }) {
-  const { isAdmin, isAdminLoading } = useData();
-  const router = useRouter();
-
-  if (isAdminLoading) {
-    return (
-      <div className="flex h-screen items-center justify-center">
-        <div className="text-center">
-          <p className="text-lg font-semibold">Loading Application...</p>
-          <p className="text-muted-foreground">Verifying permissions, please wait.</p>
-        </div>
-      </div>
-    );
-  }
-
-  if (!isAdmin) {
-     return (
-      <div className="flex h-screen items-center justify-center">
-        <div className="text-center">
-          <h1 className="text-2xl font-bold text-destructive">Access Denied</h1>
-          <p className="text-muted-foreground">You do not have administrative privileges.</p>
-           <Button onClick={() => router.push('/login')} className="mt-4">Go to Login</Button>
-        </div>
-      </div>
-    );
-  }
-
-  // If all checks pass, render the main content
-  return (
-    <div className="relative flex min-h-screen flex-col">
-      <AppHeader />
-      <main className="flex-1">
-        <div className="container relative p-4 sm:p-6 md:p-8 print:p-0">
-          {children}
-        </div>
-      </main>
-    </div>
-  );
-}
-
 
 function AppContent({ children }: { children: React.ReactNode }) {
   const { user, isUserLoading } = useUser();
   const router = useRouter();
 
   useEffect(() => {
+    // If the user check is done and there's no user, redirect to login.
     if (!isUserLoading && !user) {
       router.push("/login");
     }
   }, [user, isUserLoading, router]);
 
+  // While checking for the user, or if there's no user yet, show a loading screen.
   if (isUserLoading || !user) {
     return (
        <div className="flex h-screen items-center justify-center">
@@ -70,9 +30,18 @@ function AppContent({ children }: { children: React.ReactNode }) {
     );
   }
   
+  // If the user is logged in, provide the data and show the app.
+  // Security is handled by Firestore rules. If a non-admin is logged in, data hooks will just return empty/error.
   return (
      <DataProvider>
-        <AdminCheck>{children}</AdminCheck>
+        <div className="relative flex min-h-screen flex-col">
+          <AppHeader />
+          <main className="flex-1">
+            <div className="container relative p-4 sm:p-6 md:p-8 print:p-0">
+              {children}
+            </div>
+          </main>
+        </div>
     </DataProvider>
   )
 }
