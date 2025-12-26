@@ -2,12 +2,12 @@
 "use client";
 
 import { AppHeader } from "@/components/app-header";
-import { AuthProvider, useAuth } from "@/firebase/auth/auth-provider";
+import { AuthProvider } from "@/firebase/auth/auth-provider";
 import { DataProvider } from "@/firebase/data/data-provider";
-import { FirebaseProvider } from "@/firebase/firebase-provider";
 import { useRouter } from "next/navigation";
 import { useEffect } from "react";
 import { Toaster } from "@/components/ui/toaster";
+import { FirebaseClientProvider } from "@/firebase/client-provider";
 
 function AppContent({ children }: { children: React.ReactNode }) {
   const { user, loading } = useAuth();
@@ -51,11 +51,11 @@ export default function AppLayout({
   children: React.ReactNode;
 }) {
   return (
-    <FirebaseProvider>
+    <FirebaseClientProvider>
       <AuthProvider>
         <AppContent>{children}</AppContent>
         <Toaster />
       </AuthProvider>
-    </FirebaseProvider>
+    </FirebaseClientProvider>
   );
 }

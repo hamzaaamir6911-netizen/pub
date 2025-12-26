@@ -10,13 +10,14 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
-import { FirebaseProvider, useFirebase } from "@/firebase/firebase-provider";
 import { Toaster } from "@/components/ui/toaster";
+import { useFirebase } from "@/firebase/firebase-provider";
+import { FirebaseClientProvider } from "@/firebase/client-provider";
 
 function LoginComponent() {
   const router = useRouter();
   const { toast } = useToast();
-  const { auth } = useFirebase(); // Correctly use the hook here
+  const { auth } = useFirebase();
   const [email, setEmail] = useState("admin@arco.com");
   const [password, setPassword] = useState("password");
   const [isLoading, setIsLoading] = useState(false);
@@ -121,9 +122,9 @@ function LoginComponent() {
 
 export default function LoginPage() {
   return (
-    <FirebaseProvider>
+    <FirebaseClientProvider>
       <LoginComponent />
       <Toaster />
-    </FirebaseProvider>
+    </FirebaseClientProvider>
   )
 }

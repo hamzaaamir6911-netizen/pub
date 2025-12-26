@@ -2,10 +2,9 @@
 "use client";
 
 import { createContext, useContext, ReactNode } from 'react';
-import { FirebaseApp, initializeApp } from 'firebase/app';
-import { Auth, getAuth } from 'firebase/auth';
-import { Firestore, getFirestore } from 'firebase/firestore';
-import { firebaseConfig } from './config';
+import type { FirebaseApp } from 'firebase/app';
+import type { Auth } from 'firebase/auth';
+import type { Firestore } from 'firebase/firestore';
 
 interface FirebaseContextType {
   app: FirebaseApp;
@@ -15,21 +14,7 @@ interface FirebaseContextType {
 
 const FirebaseContext = createContext<FirebaseContextType | undefined>(undefined);
 
-let firebaseApp: FirebaseApp;
-let auth: Auth;
-let db: Firestore;
-
-try {
-  firebaseApp = initializeApp(firebaseConfig);
-  auth = getAuth(firebaseApp);
-  db = getFirestore(firebaseApp);
-} catch (e) {
-  console.error("Error initializing Firebase", e);
-}
-
-
-export const FirebaseProvider = ({ children }: { children: ReactNode }) => {
-  const value = { app: firebaseApp, auth, db };
+export const FirebaseProvider = ({ children, value }: { children: ReactNode, value: FirebaseContextType }) => {
   return (
     <FirebaseContext.Provider value={value}>
       {children}
