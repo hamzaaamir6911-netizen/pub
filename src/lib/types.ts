@@ -31,9 +31,9 @@ export type SaleItem = {
   itemName: string;
   quantity: number;
   price: number; // This will now be Rate
-  color?: string;
+  color: string;
   weight?: number;
-  thickness?: string;
+  thickness: string;
   feet?: number;
   discount?: number; // Item-level discount percentage
 }

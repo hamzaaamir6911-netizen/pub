@@ -199,12 +199,12 @@ function NewSaleForm({ onSaleAdded }: { onSaleAdded: (newSale: Omit<Sale, 'id' |
     const { toast } = useToast();
     const { customers, items: allItems, addCustomer } = useDataContext();
     const [selectedCustomer, setSelectedCustomer] = useState("");
-    const [saleItems, setSaleItems] = useState<Partial<SaleItem>[]>([{itemId: "", quantity: 1, feet: 1, discount: 0, color: '' }]);
+    const [saleItems, setSaleItems] = useState<Partial<SaleItem>[]>([{itemId: "", quantity: 1, feet: 1, discount: 0, color: '', thickness: '' }]);
     const [overallDiscount, setOverallDiscount] = useState(0);
     const [isCustomerModalOpen, setCustomerModalOpen] = useState(false);
 
     const handleAddItem = () => {
-        setSaleItems([...saleItems, {itemId: "", quantity: 1, feet: 1, discount: 0, color: '' }]);
+        setSaleItems([...saleItems, {itemId: "", quantity: 1, feet: 1, discount: 0, color: '', thickness: '' }]);
     }
 
     const handleRemoveItem = (index: number) => {
@@ -220,6 +220,8 @@ function NewSaleForm({ onSaleAdded }: { onSaleAdded: (newSale: Omit<Sale, 'id' |
             const itemDetails = allItems.find(i => i.id === value);
             if (itemDetails) {
                 currentItem.color = itemDetails.color;
+                const thicknessMatch = itemDetails.name.match(/\((.*?)\)/);
+                currentItem.thickness = thicknessMatch ? thicknessMatch[1] : '';
             }
         }
 
@@ -246,7 +248,7 @@ function NewSaleForm({ onSaleAdded }: { onSaleAdded: (newSale: Omit<Sale, 'id' |
 
     const clearForm = () => {
         setSelectedCustomer("");
-        setSaleItems([{itemId: "", quantity: 1, feet: 1, discount: 0, color: ''}]);
+        setSaleItems([{itemId: "", quantity: 1, feet: 1, discount: 0, color: '', thickness: ''}]);
         setOverallDiscount(0);
     }
     
@@ -265,8 +267,7 @@ function NewSaleForm({ onSaleAdded }: { onSaleAdded: (newSale: Omit<Sale, 'id' |
 
         const finalSaleItems = saleItems.map(si => {
             const item = allItems.find(i => i.id === si.itemId)!;
-            const thicknessMatch = item.name.match(/\((.*?)\)/);
-
+            
             let feet = si.feet || 1;
             if (item.category !== 'Aluminium') {
                 feet = 1;
@@ -280,7 +281,7 @@ function NewSaleForm({ onSaleAdded }: { onSaleAdded: (newSale: Omit<Sale, 'id' |
                 price: item.salePrice,
                 color: si.color || item.color,
                 weight: item.weight,
-                thickness: thicknessMatch ? thicknessMatch[1] : undefined,
+                thickness: si.thickness,
                 feet: feet,
                 discount: si.discount || 0,
             }
@@ -352,7 +353,7 @@ function NewSaleForm({ onSaleAdded }: { onSaleAdded: (newSale: Omit<Sale, 'id' |
                     {saleItems.map((saleItem, index) => {
                          const itemDetails = allItems.find(i => i.id === saleItem.itemId);
                          return (
-                         <div key={index} className="grid grid-cols-1 md:grid-cols-6 gap-2 items-end p-3 border rounded-md">
+                         <div key={index} className="grid grid-cols-1 md:grid-cols-7 gap-2 items-end p-3 border rounded-md">
                             <div className="md:col-span-2 space-y-2">
                                 <Label>Item</Label>
                                 <Select onValueChange={(value) => handleItemChange(index, "itemId", value)} value={saleItem.itemId}>
@@ -371,6 +372,15 @@ function NewSaleForm({ onSaleAdded }: { onSaleAdded: (newSale: Omit<Sale, 'id' |
                                     placeholder="e.g. White" 
                                     value={saleItem.color}
                                     onChange={(e) => handleItemChange(index, "color", e.target.value)}
+                                />
+                            </div>
+
+                             <div className="space-y-2">
+                                <Label>Thickness</Label>
+                                <Input 
+                                    placeholder="e.g. 1.2mm" 
+                                    value={saleItem.thickness}
+                                    onChange={(e) => handleItemChange(index, "thickness", e.target.value)}
                                 />
                             </div>
 
