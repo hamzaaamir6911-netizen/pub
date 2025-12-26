@@ -2,12 +2,11 @@
 "use client";
 
 import { AppHeader } from "@/components/app-header";
-import { AuthProvider, useAuth } from "@/firebase/auth/auth-provider";
+import { AuthProvider, useAuth } from "@/lib/auth-provider";
 import { DataProvider } from "@/firebase/data/data-provider";
 import { useRouter } from "next/navigation";
 import { useEffect } from "react";
 import { Toaster } from "@/components/ui/toaster";
-import { FirebaseClientProvider } from "@/firebase/client-provider";
 
 function AppContent({ children }: { children: React.ReactNode }) {
   const { user, loading } = useAuth();
@@ -29,8 +28,7 @@ function AppContent({ children }: { children: React.ReactNode }) {
       </div>
     );
   }
-
-  // DataProvider is now INSIDE AppContent, so it only runs when a user is confirmed.
+  
   return (
      <DataProvider>
         <div className="relative flex min-h-screen flex-col">
@@ -52,11 +50,11 @@ export default function AppLayout({
   children: React.ReactNode;
 }) {
   return (
-    <FirebaseClientProvider>
+    <>
       <AuthProvider>
         <AppContent>{children}</AppContent>
       </AuthProvider>
       <Toaster />
-    </FirebaseClientProvider>
+    </>
   );
 }

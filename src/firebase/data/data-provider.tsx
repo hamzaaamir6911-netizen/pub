@@ -1,12 +1,9 @@
 
 "use client";
 
-import React, { createContext, useContext, ReactNode, useMemo } from 'react';
-import { collection, query, where, orderBy, serverTimestamp, addDoc, deleteDoc, doc, writeBatch, Timestamp, getDocs } from 'firebase/firestore';
-import { useCollection } from 'react-firebase-hooks/firestore';
+import React, { createContext, useContext, ReactNode, useState, useEffect, useMemo } from 'react';
+import { v4 as uuidv4 } from 'uuid';
 import type { Item, Customer, Sale, Expense, Transaction, Vendor } from '@/lib/types';
-import { useFirebase } from '../firebase-provider';
-import { useAuth } from '../auth/auth-provider';
 
 interface DataContextProps {
   items: Item[];
@@ -44,107 +41,79 @@ interface DataContextProps {
 
 const DataContext = createContext<DataContextProps | undefined>(undefined);
 
-const firestoreTimestampToDate = (timestamp: any): Date => {
-  if (timestamp instanceof Timestamp) {
-    return timestamp.toDate();
-  }
-  if (timestamp && typeof timestamp.seconds === 'number' && typeof timestamp.nanoseconds === 'number') {
-    return new Timestamp(timestamp.seconds, timestamp.nanoseconds).toDate();
-  }
-  // Fallback for strings or other formats, might need adjustment
-  return new Date(timestamp);
-};
-
-
-const mapDocument = <T extends { id: string, date?: any, createdAt?: any }>(doc: any): T => {
-    const data = doc.data();
-    const result: any = {
-        id: doc.id,
-        ...data,
-    };
-    if (data.date) {
-        result.date = firestoreTimestampToDate(data.date);
+const useLocalStorage = <T,>(key: string, initialValue: T): [T, React.Dispatch<React.SetStateAction<T>>] => {
+  const [storedValue, setStoredValue] = useState<T>(() => {
+    if (typeof window === 'undefined') {
+      return initialValue;
     }
-     if (data.createdAt) {
-        result.createdAt = firestoreTimestampToDate(data.createdAt);
+    try {
+      const item = window.localStorage.getItem(key);
+      return item ? JSON.parse(item, (k, v) => (k.endsWith('date') || k.endsWith('At')) && typeof v === 'string' ? new Date(v) : v) : initialValue;
+    } catch (error) {
+      console.error(error);
+      return initialValue;
     }
-    return result as T;
-};
+  });
 
+  useEffect(() => {
+     if (typeof window !== 'undefined') {
+        window.localStorage.setItem(key, JSON.stringify(storedValue));
+     }
+  }, [key, storedValue]);
+
+  return [storedValue, setStoredValue];
+};
 
 export const DataProvider = ({ children }: { children: ReactNode }) => {
-    const { firestore } = useFirebase();
-    const { user } = useAuth();
+    const [items, setItems] = useLocalStorage<Item[]>('items', []);
+    const [customers, setCustomers] = useLocalStorage<Customer[]>('customers', []);
+    const [vendors, setVendors] = useLocalStorage<Vendor[]>('vendors', []);
+    const [sales, setSales] = useLocalStorage<Sale[]>('sales', []);
+    const [expenses, setExpenses] = useLocalStorage<Expense[]>('expenses', []);
+    const [transactions, setTransactions] = useLocalStorage<Transaction[]>('transactions', []);
+    const [loading, setLoading] = useState(true);
 
-    const basePath = user ? `users/${user.uid}` : null;
+    useEffect(() => {
+        // Simulate loading delay
+        setTimeout(() => setLoading(false), 500);
+    }, []);
 
-    const itemsQuery = useMemo(() => basePath ? query(collection(firestore, basePath, 'items'), orderBy('createdAt', 'desc')) : null, [firestore, basePath]);
-    const customersQuery = useMemo(() => basePath ? query(collection(firestore, basePath, 'customers'), orderBy('createdAt', 'desc')) : null, [firestore, basePath]);
-    const vendorsQuery = useMemo(() => basePath ? query(collection(firestore, basePath, 'vendors'), orderBy('createdAt', 'desc')) : null, [firestore, basePath]);
-    const salesQuery = useMemo(() => basePath ? query(collection(firestore, basePath, 'sales'), orderBy('date', 'desc')) : null, [firestore, basePath]);
-    const expensesQuery = useMemo(() => basePath ? query(collection(firestore, basePath, 'expenses'), orderBy('date', 'desc')) : null, [firestore, basePath]);
-    const transactionsQuery = useMemo(() => basePath ? query(collection(firestore, basePath, 'transactions'), orderBy('date', 'desc')) : null, [firestore, basePath]);
-
-    const [itemsSnapshot, itemsLoading] = useCollection(itemsQuery);
-    const [customersSnapshot, customersLoading] = useCollection(customersQuery);
-    const [vendorsSnapshot, vendorsLoading] = useCollection(vendorsQuery);
-    const [salesSnapshot, salesLoading] = useCollection(salesQuery);
-    const [expensesSnapshot, expensesLoading] = useCollection(expensesQuery);
-    const [transactionsSnapshot, transactionsLoading] = useCollection(transactionsQuery);
-    
-    const items: Item[] = useMemo(() => itemsSnapshot ? itemsSnapshot.docs.map(doc => mapDocument<Item>(doc)) : [], [itemsSnapshot]);
-    const customers: Customer[] = useMemo(() => customersSnapshot ? customersSnapshot.docs.map(doc => mapDocument<Customer>(doc)) : [], [customersSnapshot]);
-    const vendors: Vendor[] = useMemo(() => vendorsSnapshot ? vendorsSnapshot.docs.map(doc => mapDocument<Vendor>(doc)) : [], [vendorsSnapshot]);
-    const sales: Sale[] = useMemo(() => salesSnapshot ? salesSnapshot.docs.map(doc => mapDocument<Sale>(doc)) : [], [salesSnapshot]);
-    const expenses: Expense[] = useMemo(() => expensesSnapshot ? expensesSnapshot.docs.map(doc => mapDocument<Expense>(doc)) : [], [expensesSnapshot]);
-    const transactions: Transaction[] = useMemo(() => transactionsSnapshot ? transactionsSnapshot.docs.map(doc => mapDocument<Transaction>(doc)) : [], [transactionsSnapshot]);
-
-    const loading = !user || itemsLoading || customersLoading || vendorsLoading || salesLoading || expensesLoading || transactionsLoading;
-
-    const getCollectionRef = (collectionName: string) => {
-        if (!basePath) throw new Error("User not authenticated.");
-        return collection(firestore, basePath, collectionName);
-    }
-    
-    // --- Item Management ---
     const addItem = async (item: Omit<Item, 'id' | 'createdAt'>) => {
-        return addDoc(getCollectionRef('items'), {...item, createdAt: serverTimestamp()});
+        const newItem = { ...item, id: uuidv4(), createdAt: new Date() };
+        setItems(prev => [newItem, ...prev]);
+        return newItem;
     };
     const deleteItem = async (id: string) => {
-        if (!basePath) return;
-        await deleteDoc(doc(firestore, basePath, 'items', id));
+        setItems(prev => prev.filter(i => i.id !== id));
     };
 
-    // --- Customer Management ---
     const addCustomer = async (customer: Omit<Customer, 'id' | 'createdAt'>) => {
-        return addDoc(getCollectionRef('customers'), {...customer, createdAt: serverTimestamp()});
+        const newCustomer = { ...customer, id: uuidv4(), createdAt: new Date() };
+        setCustomers(prev => [newCustomer, ...prev]);
+        return newCustomer;
     };
     const deleteCustomer = async (id: string) => {
-        if (!basePath) return;
-        await deleteDoc(doc(firestore, basePath, 'customers', id));
+        setCustomers(prev => prev.filter(c => c.id !== id));
     };
-
-    // --- Vendor Management ---
+    
     const addVendor = async (vendor: Omit<Vendor, 'id' | 'createdAt'>) => {
-        return addDoc(getCollectionRef('vendors'), {...vendor, createdAt: serverTimestamp()});
+        const newVendor = { ...vendor, id: uuidv4(), createdAt: new Date() };
+        setVendors(prev => [newVendor, ...prev]);
+        return newVendor;
     };
     const deleteVendor = async (id: string) => {
-        if (!basePath) return;
-        await deleteDoc(doc(firestore, basePath, 'vendors', id));
+        setVendors(prev => prev.filter(v => v.id !== id));
     };
 
-    // --- Transaction Management ---
     const addTransaction = async (transaction: Omit<Transaction, 'id' | 'date'>) => {
-        await addDoc(getCollectionRef('transactions'), {...transaction, date: serverTimestamp()});
+        const newTransaction = { ...transaction, id: uuidv4(), date: new Date() };
+        setTransactions(prev => [newTransaction, ...prev].sort((a,b) => b.date.getTime() - a.date.getTime()));
     };
     const deleteTransaction = async (id: string) => {
-        if (!basePath) return;
-        await deleteDoc(doc(firestore, basePath, 'transactions', id));
+        setTransactions(prev => prev.filter(t => t.id !== id));
     };
 
-    // --- Sale Management ---
     const addSale = async (sale: Omit<Sale, 'id' | 'date' | 'total' | 'status'>) => {
-        if (!basePath) return;
         const subtotal = sale.items.reduce((total, currentItem) => {
             const itemTotal = (currentItem.feet || 1) * currentItem.price * currentItem.quantity;
             const discountAmount = itemTotal * ((currentItem.discount || 0) / 100);
@@ -152,112 +121,76 @@ export const DataProvider = ({ children }: { children: ReactNode }) => {
         }, 0);
         const overallDiscountAmount = (subtotal * sale.discount) / 100;
         const total = subtotal - overallDiscountAmount;
-        const newSale = { ...sale, total, status: 'draft', date: serverTimestamp() };
-        await addDoc(getCollectionRef('sales'), newSale);
+        const newSale = { ...sale, total, status: 'draft' as const, date: new Date(), id: uuidv4() };
+        setSales(prev => [newSale, ...prev].sort((a,b) => b.date.getTime() - a.date.getTime()));
     };
 
     const postSale = async (saleId: string) => {
-        if (!basePath) return;
-        const saleRef = doc(firestore, basePath, 'sales', saleId);
         const sale = sales.find(s => s.id === saleId);
         if (!sale) return;
 
-        const batch = writeBatch(firestore);
-        batch.update(saleRef, { status: 'posted' });
+        setSales(prev => prev.map(s => s.id === saleId ? { ...s, status: 'posted' as const } : s));
 
-        const transactionData = {
+        await addTransaction({
             description: `Sale to ${sale.customerName}`,
             amount: sale.total,
             type: 'debit',
             category: 'Sale',
             customerId: sale.customerId,
             customerName: sale.customerName,
-            date: sale.date // Use the original sale date for the transaction
-        };
-        const transactionRef = doc(getCollectionRef('transactions'));
-        batch.set(transactionRef, transactionData);
-
-        await batch.commit();
+        });
     };
 
     const deleteSale = async (id: string) => {
-        if (!basePath) return;
         const saleToDelete = sales.find(s => s.id === id);
         if (!saleToDelete) return;
-    
-        const batch = writeBatch(firestore);
-    
-        // Delete the sale document
-        const saleRef = doc(firestore, basePath, 'sales', id);
-        batch.delete(saleRef);
-    
-        // If the sale was posted, find and delete the associated transaction
+
+        setSales(prev => prev.filter(s => s.id !== id));
+
         if (saleToDelete.status === 'posted') {
-            const q = query(getCollectionRef('transactions'), 
-                where("category", "==", "Sale"), 
-                where("description", "==", `Sale to ${saleToDelete.customerName}`),
-                where("amount", "==", saleToDelete.total)
+            const transactionToDelete = transactions.find(t => 
+                t.category === 'Sale' &&
+                t.description === `Sale to ${saleToDelete.customerName}` &&
+                t.amount === saleToDelete.total
             );
-            
-            const querySnapshot = await getDocs(q);
-            querySnapshot.forEach((doc) => {
-                // To be more precise, you might want to match dates, but this is often good enough
-                batch.delete(doc.ref);
-            });
+            if (transactionToDelete) {
+                await deleteTransaction(transactionToDelete.id);
+            }
         }
-    
-        await batch.commit();
     };
-
-    // --- Expense Management ---
+    
     const addExpense = async (expense: Omit<Expense, 'id' | 'date'>) => {
-        if (!basePath) return;
         const vendor = vendors.find(v => v.id === expense.vendorId);
-        const batch = writeBatch(firestore);
+        const newExpense = { ...expense, id: uuidv4(), date: new Date() };
+        setExpenses(prev => [newExpense, ...prev].sort((a,b) => b.date.getTime() - a.date.getTime()));
 
-        const expenseRef = doc(getCollectionRef('expenses'));
-        batch.set(expenseRef, {...expense, date: serverTimestamp()});
-
-        const transactionRef = doc(getCollectionRef('transactions'));
-        batch.set(transactionRef, {
+        await addTransaction({
             description: expense.title,
             amount: expense.amount,
             type: 'debit',
             category: expense.category,
             vendorId: expense.vendorId,
             vendorName: vendor?.name,
-            date: serverTimestamp()
         });
-
-        await batch.commit();
     };
 
     const deleteExpense = async (id: string) => {
-        if (!basePath) return;
         const expenseToDelete = expenses.find(e => e.id === id);
         if (!expenseToDelete) return;
-    
-        const batch = writeBatch(firestore);
-        const expenseRef = doc(firestore, basePath, 'expenses', id);
-        batch.delete(expenseRef);
-    
-        // Find and delete the associated transaction
-        const q = query(getCollectionRef('transactions'),
-            where("category", "==", expenseToDelete.category),
-            where("description", "==", expenseToDelete.title),
-            where("amount", "==", expenseToDelete.amount),
-            where("type", "==", "debit")
+
+        setExpenses(prev => prev.filter(e => e.id !== id));
+
+        const transactionToDelete = transactions.find(t => 
+            t.category === expenseToDelete.category &&
+            t.description === expenseToDelete.title &&
+            t.amount === expenseToDelete.amount &&
+            t.type === 'debit'
         );
-    
-        const querySnapshot = await getDocs(q);
-        querySnapshot.forEach((doc) => {
-            batch.delete(doc.ref);
-        });
-    
-        await batch.commit();
+        if (transactionToDelete) {
+            await deleteTransaction(transactionToDelete.id);
+        }
     };
 
-    // --- Dashboard & Report Calculations ---
     const getDashboardStats = () => {
         const totalSales = sales.filter(s => s.status === 'posted').reduce((sum, sale) => sum + sale.total, 0);
         const totalExpenses = expenses.reduce((sum, expense) => sum + expense.amount, 0);
@@ -305,7 +238,7 @@ export const DataProvider = ({ children }: { children: ReactNode }) => {
             expenses: expensesByMonth[month] || 0,
         }));
     };
-
+    
     const value = {
         items, customers, vendors, sales, expenses, transactions, loading,
         addItem, deleteItem,
@@ -319,7 +252,7 @@ export const DataProvider = ({ children }: { children: ReactNode }) => {
 
     return (
         <DataContext.Provider value={value}>
-            {children}
+            {!loading && children}
         </DataContext.Provider>
     );
 };
