@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { MoreHorizontal, PlusCircle, Trash2 } from "lucide-react";
+import { MoreHorizontal, PlusCircle, Trash2, RotateCcw } from "lucide-react";
 import {
   Table,
   TableBody,
@@ -34,8 +34,10 @@ import { PageHeader } from "@/components/page-header";
 import { mockSales, mockCustomers, mockItems } from "@/lib/data";
 import { formatCurrency, formatDate } from "@/lib/utils";
 import type { Sale } from "@/lib/types";
+import { useToast } from "@/hooks/use-toast";
 
-function NewSaleForm() {
+function NewSaleForm({ onSaleAdded }: { onSaleAdded: (newSale: Sale) => void }) {
+    const { toast } = useToast();
     const [selectedCustomer, setSelectedCustomer] = useState("");
     const [saleItems, setSaleItems] = useState<{itemId: string; quantity: number}[]>([{itemId: "", quantity: 1}]);
 
@@ -67,10 +69,54 @@ function NewSaleForm() {
         }, 0);
     }
 
+    const clearForm = () => {
+        setSelectedCustomer("");
+        setSaleItems([{itemId: "", quantity: 1}]);
+    }
+    
+    const handleSaveSale = () => {
+        if (!selectedCustomer) {
+            toast({ variant: "destructive", title: "Please select a customer." });
+            return;
+        }
+        if (saleItems.some(item => !item.itemId || item.quantity <= 0)) {
+            toast({ variant: "destructive", title: "Please fill all item details correctly." });
+            return;
+        }
+
+        const customer = mockCustomers.find(c => c.id === selectedCustomer);
+        if (!customer) return;
+
+        const newSale: Sale = {
+            id: `SALE${(mockSales.length + 1).toString().padStart(3, '0')}`,
+            customerId: selectedCustomer,
+            customerName: customer.name,
+            date: new Date(),
+            items: saleItems.map(si => {
+                const item = mockItems.find(i => i.id === si.itemId)!;
+                return {
+                    itemId: si.itemId,
+                    itemName: item.name,
+                    quantity: si.quantity,
+                    price: item.salePrice,
+                }
+            }),
+            total: calculateTotal(),
+        };
+
+        onSaleAdded(newSale);
+        toast({ title: "Sale Saved!", description: `Sale ${newSale.id} has been recorded.` });
+        clearForm();
+    }
+
     return (
          <Card>
-            <CardHeader>
+            <CardHeader className="flex flex-row items-center justify-between">
                 <CardTitle>Create New Sale</CardTitle>
+                 <Button variant="ghost" size="icon" onClick={clearForm}>
+                    <RotateCcw className="h-4 w-4" />
+                    <span className="sr-only">Clear Form</span>
+                </Button>
             </CardHeader>
             <CardContent className="space-y-6">
                 <div className="space-y-2">
@@ -89,7 +135,7 @@ function NewSaleForm() {
                     <Label>Items</Label>
                     {saleItems.map((saleItem, index) => (
                          <div key={index} className="flex gap-2 items-center">
-                            <Select onValueChange={(value) => handleItemChange(index, value)}>
+                            <Select onValueChange={(value) => handleItemChange(index, value)} value={saleItem.itemId}>
                                 <SelectTrigger>
                                     <SelectValue placeholder="Select an item" />
                                 </SelectTrigger>
@@ -102,10 +148,10 @@ function NewSaleForm() {
                                 placeholder="Qty" 
                                 className="w-24"
                                 value={saleItem.quantity}
-                                onChange={(e) => handleQuantityChange(index, parseInt(e.target.value))}
+                                onChange={(e) => handleQuantityChange(index, parseInt(e.target.value) || 1)}
                                 min="1"
                             />
-                            <Button variant="ghost" size="icon" onClick={() => handleRemoveItem(index)}>
+                            <Button variant="ghost" size="icon" onClick={() => handleRemoveItem(index)} disabled={saleItems.length === 1}>
                                 <Trash2 className="h-4 w-4 text-destructive" />
                             </Button>
                         </div>
@@ -120,7 +166,7 @@ function NewSaleForm() {
                 <div className="text-xl font-bold">
                     Total: {formatCurrency(calculateTotal())}
                 </div>
-                <Button>Save Sale</Button>
+                <Button onClick={handleSaveSale}>Save Sale</Button>
             </CardFooter>
         </Card>
     )
@@ -128,10 +174,16 @@ function NewSaleForm() {
 
 export default function SalesPage() {
   const [sales, setSales] = useState<Sale[]>(mockSales);
+  const [activeTab, setActiveTab] = useState("history");
 
   const handleDelete = (id: string) => {
     setSales(sales.filter((sale) => sale.id !== id));
   };
+  
+  const handleSaleAdded = (newSale: Sale) => {
+    setSales(prevSales => [...prevSales, newSale]);
+    setActiveTab("history");
+  }
 
   return (
     <>
@@ -139,7 +191,7 @@ export default function SalesPage() {
         title="Sales"
         description="Record new sales and view sales history."
       />
-      <Tabs defaultValue="history">
+      <Tabs value={activeTab} onValueChange={setActiveTab}>
         <TabsList>
           <TabsTrigger value="history">Sales History</TabsTrigger>
           <TabsTrigger value="new">New Sale</TabsTrigger>
@@ -159,43 +211,49 @@ export default function SalesPage() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {sales.map((sale) => (
-                  <TableRow key={sale.id}>
-                    <TableCell className="font-medium">{sale.id}</TableCell>
-                    <TableCell>{sale.customerName}</TableCell>
-                    <TableCell>{formatDate(sale.date)}</TableCell>
-                    <TableCell className="text-right">
-                      {formatCurrency(sale.total)}
-                    </TableCell>
-                    <TableCell>
-                      <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                          <Button aria-haspopup="true" size="icon" variant="ghost">
-                            <MoreHorizontal className="h-4 w-4" />
-                            <span className="sr-only">Toggle menu</span>
-                          </Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end">
-                          <DropdownMenuLabel>Actions</DropdownMenuLabel>
-                          <DropdownMenuItem>View Details</DropdownMenuItem>
-                          <DropdownMenuItem
-                            onSelect={() => handleDelete(sale.id)}
-                            className="text-red-600"
-                          >
-                            Delete
-                          </DropdownMenuItem>
-                        </DropdownMenuContent>
-                      </DropdownMenu>
-                    </TableCell>
+                {sales.length === 0 ? (
+                  <TableRow>
+                    <TableCell colSpan={5} className="text-center h-24">No sales recorded yet.</TableCell>
                   </TableRow>
-                ))}
+                ) : (
+                  sales.map((sale) => (
+                    <TableRow key={sale.id}>
+                      <TableCell className="font-medium">{sale.id}</TableCell>
+                      <TableCell>{sale.customerName}</TableCell>
+                      <TableCell>{formatDate(sale.date)}</TableCell>
+                      <TableCell className="text-right">
+                        {formatCurrency(sale.total)}
+                      </TableCell>
+                      <TableCell>
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild>
+                            <Button aria-haspopup="true" size="icon" variant="ghost">
+                              <MoreHorizontal className="h-4 w-4" />
+                              <span className="sr-only">Toggle menu</span>
+                            </Button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent align="end">
+                            <DropdownMenuLabel>Actions</DropdownMenuLabel>
+                            <DropdownMenuItem>View Details</DropdownMenuItem>
+                            <DropdownMenuItem
+                              onSelect={() => handleDelete(sale.id)}
+                              className="text-red-600"
+                            >
+                              Delete
+                            </DropdownMenuItem>
+                          </DropdownMenuContent>
+                        </DropdownMenu>
+                      </TableCell>
+                    </TableRow>
+                  ))
+                )}
               </TableBody>
             </Table>
           </div>
         </TabsContent>
         <TabsContent value="new">
             <div className="mt-4">
-                <NewSaleForm />
+                <NewSaleForm onSaleAdded={handleSaleAdded} />
             </div>
         </TabsContent>
       </Tabs>

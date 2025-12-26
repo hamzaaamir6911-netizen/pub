@@ -15,36 +15,9 @@ export const mockCustomers: Customer[] = [
   { id: 'CUS003', name: 'Glass & Doors Co.', phone: '7654321098', address: '789 Decor St, Delhi' },
 ];
 
-export const mockSales: Sale[] = [
-  { 
-    id: 'SALE001', 
-    customerId: 'CUS001', 
-    customerName: 'BuildWell Constructions',
-    items: [
-      { itemId: 'ITM001', itemName: 'Aluminium Section A', quantity: 20, price: 250 },
-      { itemId: 'ITM002', itemName: 'Toughened Glass 5mm', quantity: 5, price: 1500 }
-    ],
-    total: (20 * 250) + (5 * 1500), 
-    date: new Date('2024-07-20T10:30:00') 
-  },
-  { 
-    id: 'SALE002', 
-    customerId: 'CUS002', 
-    customerName: 'Modern Homes Inc.',
-    items: [
-      { itemId: 'ITM004', itemName: 'Aluminium Pipe 2"', quantity: 100, price: 110 }
-    ],
-    total: 100 * 110, 
-    date: new Date('2024-07-21T14:00:00') 
-  },
-];
+export const mockSales: Sale[] = [];
 
-export const mockExpenses: Expense[] = [
-  { id: 'EXP001', title: 'Factory Worker Salaries', category: 'Labour', amount: 85000, date: new Date('2024-07-01') },
-  { id: 'EXP002', title: 'Goods Transport to Site', category: 'Transport', amount: 5000, date: new Date('2024-07-20') },
-  { id: 'EXP003', title: 'Monthly Electricity Bill', category: 'Electricity', amount: 15000, date: new Date('2024-07-05') },
-  { id: 'EXP004', title: 'Office Supplies', category: 'Other', amount: 2500, date: new Date('2024-07-15') },
-];
+export const mockExpenses: Expense[] = [];
 
 export const getDashboardStats = () => {
   const totalSales = mockSales.reduce((sum, sale) => sum + sale.total, 0);
