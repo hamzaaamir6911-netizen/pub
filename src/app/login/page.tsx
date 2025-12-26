@@ -41,9 +41,10 @@ export default function LoginPage() {
                 const userCredential = await createUserWithEmailAndPassword(auth, email, password);
                 const user = userCredential.user;
 
-                // Grant admin role to the new user
-                if (user) {
+                // Grant admin role to the new user by creating a document in roles_admin
+                if (user && firestore) {
                   const adminRoleRef = doc(firestore, 'roles_admin', user.uid);
+                  // Ensure you set some data in the document for the 'exists' check to work reliably
                   await setDoc(adminRoleRef, { role: 'admin' });
                 }
 
