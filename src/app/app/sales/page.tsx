@@ -215,16 +215,6 @@ function NewSaleForm({ onSaleAdded }: { onSaleAdded: (newSale: Omit<Sale, 'id' |
         const newItems = [...saleItems];
         const currentItem = { ...newItems[index] };
         (currentItem as any)[key] = value;
-        
-        if (key === 'itemId') {
-            const itemDetails = allItems.find(i => i.id === value);
-            if (itemDetails) {
-                currentItem.color = itemDetails.color;
-                const thicknessMatch = itemDetails.name.match(/\((.*?)\)/);
-                currentItem.thickness = thicknessMatch ? thicknessMatch[1] : '';
-            }
-        }
-
         newItems[index] = currentItem;
         setSaleItems(newItems);
     }
@@ -276,7 +266,7 @@ function NewSaleForm({ onSaleAdded }: { onSaleAdded: (newSale: Omit<Sale, 'id' |
             return {
                 ...si,
                 itemId: item.id,
-                itemName: item.name.replace(/\s*\(.*\)\s*/, '').trim(),
+                itemName: item.name,
                 quantity: si.quantity || 1,
                 price: item.salePrice,
                 color: si.color || item.color,
@@ -361,7 +351,7 @@ function NewSaleForm({ onSaleAdded }: { onSaleAdded: (newSale: Omit<Sale, 'id' |
                                         <SelectValue placeholder="Select an item" />
                                     </SelectTrigger>
                                     <SelectContent>
-                                        {allItems.map(i => <SelectItem key={i.id} value={i.id}>{i.name} ({i.color})</SelectItem>)}
+                                        {allItems.map(i => <SelectItem key={i.id} value={i.id}>{i.name}</SelectItem>)}
                                     </SelectContent>
                                 </Select>
                             </div>
