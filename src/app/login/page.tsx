@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useState } from "react";
@@ -9,14 +10,15 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
+import { FirebaseProvider, useFirebase } from "@/firebase/firebase-provider";
 
-export default function LoginPage() {
+function LoginComponent() {
   const router = useRouter();
   const { toast } = useToast();
+  const { auth } = useFirebase();
   const [email, setEmail] = useState("admin@arco.com");
   const [password, setPassword] = useState("password");
   const [isLoading, setIsLoading] = useState(false);
-  const auth = getAuth();
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -103,4 +105,13 @@ export default function LoginPage() {
       </div>
     </div>
   );
+}
+
+
+export default function LoginPage() {
+  return (
+    <FirebaseProvider>
+      <LoginComponent />
+    </FirebaseProvider>
+  )
 }
