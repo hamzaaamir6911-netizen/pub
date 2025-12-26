@@ -4,8 +4,18 @@
 
 @media print {
   body {
-    -webkit-print-color-adjust: exact;
-    print-color-adjust: exact;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+  .dark body {
+    color: #fff !important;
+  }
+  .dark table, .dark th, .dark td {
+    color: #fff !important;
+    font-weight: bold !important;
+  }
+  .dark .text-muted-foreground {
+    color: #ccc !important;
   }
 }
 
