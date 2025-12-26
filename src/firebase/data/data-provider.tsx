@@ -2,7 +2,6 @@
 "use client";
 
 import React, { createContext, useContext, ReactNode, useState, useEffect, useMemo } from 'react';
-import { v4 as uuidv4 } from 'uuid';
 import type { Item, Customer, Sale, Expense, Transaction, Vendor } from '@/lib/types';
 
 interface DataContextProps {
@@ -79,7 +78,7 @@ export const DataProvider = ({ children }: { children: ReactNode }) => {
     }, []);
 
     const addItem = async (item: Omit<Item, 'id' | 'createdAt'>) => {
-        const newItem = { ...item, id: uuidv4(), createdAt: new Date() };
+        const newItem = { ...item, id: crypto.randomUUID(), createdAt: new Date() };
         setItems(prev => [newItem, ...prev]);
         return newItem;
     };
@@ -88,7 +87,7 @@ export const DataProvider = ({ children }: { children: ReactNode }) => {
     };
 
     const addCustomer = async (customer: Omit<Customer, 'id' | 'createdAt'>) => {
-        const newCustomer = { ...customer, id: uuidv4(), createdAt: new Date() };
+        const newCustomer = { ...customer, id: crypto.randomUUID(), createdAt: new Date() };
         setCustomers(prev => [newCustomer, ...prev]);
         return newCustomer;
     };
@@ -97,7 +96,7 @@ export const DataProvider = ({ children }: { children: ReactNode }) => {
     };
     
     const addVendor = async (vendor: Omit<Vendor, 'id' | 'createdAt'>) => {
-        const newVendor = { ...vendor, id: uuidv4(), createdAt: new Date() };
+        const newVendor = { ...vendor, id: crypto.randomUUID(), createdAt: new Date() };
         setVendors(prev => [newVendor, ...prev]);
         return newVendor;
     };
@@ -106,7 +105,7 @@ export const DataProvider = ({ children }: { children: ReactNode }) => {
     };
 
     const addTransaction = async (transaction: Omit<Transaction, 'id' | 'date'>) => {
-        const newTransaction = { ...transaction, id: uuidv4(), date: new Date() };
+        const newTransaction = { ...transaction, id: crypto.randomUUID(), date: new Date() };
         setTransactions(prev => [newTransaction, ...prev].sort((a,b) => b.date.getTime() - a.date.getTime()));
     };
     const deleteTransaction = async (id: string) => {
@@ -121,8 +120,17 @@ export const DataProvider = ({ children }: { children: ReactNode }) => {
         }, 0);
         const overallDiscountAmount = (subtotal * sale.discount) / 100;
         const total = subtotal - overallDiscountAmount;
-        const newSale = { ...sale, total, status: 'draft' as const, date: new Date(), id: uuidv4() };
-        setSales(prev => [newSale, ...prev].sort((a,b) => b.date.getTime() - a.date.getTime()));
+
+        setSales(prevSales => {
+            const latestSaleNumber = prevSales.reduce((max, s) => {
+                const num = parseInt(s.id.split('-')[1]);
+                return isNaN(num) ? max : Math.max(max, num);
+            }, 0);
+            const newSaleNumber = latestSaleNumber + 1;
+            const newSaleId = `INV-${String(newSaleNumber).padStart(3, '0')}`;
+            const newSale = { ...sale, total, status: 'draft' as const, date: new Date(), id: newSaleId };
+            return [newSale, ...prevSales].sort((a,b) => b.date.getTime() - a.date.getTime());
+        });
     };
 
     const postSale = async (saleId: string) => {
@@ -161,7 +169,8 @@ export const DataProvider = ({ children }: { children: ReactNode }) => {
     
     const addExpense = async (expense: Omit<Expense, 'id' | 'date'>) => {
         const vendor = vendors.find(v => v.id === expense.vendorId);
-        const newExpense = { ...expense, id: uuidv4(), date: new Date() };
+        const newExpense = { ...expense, id: crypto.randomUUID(), date: new
+Date() };
         setExpenses(prev => [newExpense, ...prev].sort((a,b) => b.date.getTime() - a.date.getTime()));
 
         await addTransaction({
@@ -264,3 +273,5 @@ export const useData = () => {
   }
   return context;
 };
+
+    
