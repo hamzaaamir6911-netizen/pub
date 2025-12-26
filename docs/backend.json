@@ -1,0 +1,247 @@
+{
+  "entities": {
+    "Item": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "Item",
+      "type": "object",
+      "description": "Represents an item in the inventory.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the item."
+        },
+        "itemName": {
+          "type": "string",
+          "description": "The name of the item."
+        },
+        "category": {
+          "type": "string",
+          "description": "The category of the item (Aluminium, Glass, Accessories)."
+        },
+        "quantity": {
+          "type": "number",
+          "description": "The quantity of the item in stock."
+        },
+        "unit": {
+          "type": "string",
+          "description": "The unit of measurement for the item (Kg, Feet, Piece)."
+        },
+        "purchasePrice": {
+          "type": "number",
+          "description": "The purchase price of the item."
+        },
+        "salePrice": {
+          "type": "number",
+          "description": "The sale price of the item."
+        }
+      },
+      "required": [
+        "id",
+        "itemName",
+        "category",
+        "quantity",
+        "unit",
+        "purchasePrice",
+        "salePrice"
+      ]
+    },
+    "Customer": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "Customer",
+      "type": "object",
+      "description": "Represents a customer.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the customer."
+        },
+        "customerName": {
+          "type": "string",
+          "description": "The name of the customer."
+        },
+        "phoneNumber": {
+          "type": "string",
+          "description": "The phone number of the customer."
+        },
+        "address": {
+          "type": "string",
+          "description": "The address of the customer."
+        }
+      },
+      "required": [
+        "id",
+        "customerName",
+        "phoneNumber",
+        "address"
+      ]
+    },
+    "Sale": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "Sale",
+      "type": "object",
+      "description": "Represents a sales transaction.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the sale."
+        },
+        "customerId": {
+          "type": "string",
+          "description": "Reference to Customer. (Relationship: Customer 1:N Sale)"
+        },
+        "itemId": {
+          "type": "string",
+          "description": "Reference to Item. (Relationship: Item 1:N Sale)"
+        },
+        "quantity": {
+          "type": "number",
+          "description": "The quantity of the item sold in this transaction."
+        },
+        "totalAmount": {
+          "type": "number",
+          "description": "The total amount of the sale."
+        },
+        "saleDate": {
+          "type": "string",
+          "description": "The date of the sale.",
+          "format": "date-time"
+        }
+      },
+      "required": [
+        "id",
+        "customerId",
+        "itemId",
+        "quantity",
+        "totalAmount",
+        "saleDate"
+      ]
+    },
+    "Expense": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "Expense",
+      "type": "object",
+      "description": "Represents an expense.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the expense."
+        },
+        "expenseTitle": {
+          "type": "string",
+          "description": "The title of the expense."
+        },
+        "amount": {
+          "type": "number",
+          "description": "The amount of the expense."
+        },
+        "date": {
+          "type": "string",
+          "description": "The date of the expense.",
+          "format": "date-time"
+        },
+        "category": {
+          "type": "string",
+          "description": "The category of the expense (Labour, Transport, Electricity, Other)."
+        }
+      },
+      "required": [
+        "id",
+        "expenseTitle",
+        "amount",
+        "date",
+        "category"
+      ]
+    }
+  },
+  "auth": {
+    "providers": [
+      "password",
+      "anonymous"
+    ]
+  },
+  "firestore": {
+    "structure": [
+      {
+        "path": "/roles_admin/{userId}",
+        "definition": {
+          "entityName": "role_admin",
+          "schema": {
+            "$ref": "#/backend/entities/role_admin"
+          },
+          "description": "Grants admin access to the user. The existence of a document indicates admin role.",
+          "params": [
+            {
+              "name": "userId",
+              "description": "The Firebase Auth UID of the administrator."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/items/{itemId}",
+        "definition": {
+          "entityName": "item",
+          "schema": {
+            "$ref": "#/backend/entities/Item"
+          },
+          "description": "Stores item information.",
+          "params": [
+            {
+              "name": "itemId",
+              "description": "Unique identifier for the item."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/customers/{customerId}",
+        "definition": {
+          "entityName": "customer",
+          "schema": {
+            "$ref": "#/backend/entities/Customer"
+          },
+          "description": "Stores customer information.",
+          "params": [
+            {
+              "name": "customerId",
+              "description": "Unique identifier for the customer."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/sales/{saleId}",
+        "definition": {
+          "entityName": "sale",
+          "schema": {
+            "$ref": "#/backend/entities/Sale"
+          },
+          "description": "Stores sales transaction information.",
+          "params": [
+            {
+              "name": "saleId",
+              "description": "Unique identifier for the sale."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/expenses/{expenseId}",
+        "definition": {
+          "entityName": "expense",
+          "schema": {
+            "$ref": "#/backend/entities/Expense"
+          },
+          "description": "Stores expense information.",
+          "params": [
+            {
+              "name": "expenseId",
+              "description": "Unique identifier for the expense."
+            }
+          ]
+        }
+      }
+    ],
+    "reasoning": "The Firestore structure is designed to manage an aluminium factory's stock, sales, expenses, and customer data securely and efficiently. It prioritizes authorization independence to ensure robust security rules and scalable operations. The structure includes separate collections for `items`, `customers`, `sales`, and `expenses`, each serving distinct functions within the application. To enforce admin-only access, a dedicated `/roles_admin/{uid}` collection is used; the existence of a document at this path grants admin privileges. This existence check is secure and efficient.\n\n**Authorization Independence and QAPs:**\n\n*   **Admin Role:** Authorization is handled via the existence of documents in the `/roles_admin/{uid}` collection. This avoids complex custom claims and enables straightforward security rules based solely on `request.auth.uid`.\n*   **Segregation:** The segregation of data into separate collections (`items`, `customers`, `sales`, `expenses`) ensures that each collection has a homogeneous security posture, simplifying security rule definitions.\n\nThis structure adheres to the principles of Authorization Independence, Clarity of Intent, DBAC, and QAPs, ensuring a secure, scalable, and debuggable Firestore design."
+  }
+}
