@@ -11,14 +11,8 @@ import { Button } from "@/components/ui/button";
 function AdminCheck({ children }: { children: React.ReactNode }) {
   const { isAdmin, isAdminLoading } = useData();
   const router = useRouter();
-  const { user, isUserLoading } = useUser();
 
-  useEffect(() => {
-    // This effect can handle redirecting non-logged-in users if needed,
-    // though the main one is in AppContent.
-  }, [user, isUserLoading, router]);
-
-  if (isUserLoading || isAdminLoading) {
+  if (isAdminLoading) {
     return (
       <div className="flex h-screen items-center justify-center">
         <div className="text-center">
