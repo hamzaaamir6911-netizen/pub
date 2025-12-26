@@ -1,54 +1,48 @@
-/**
- * @fileoverview Firestore Security Rules
- * @author custom-instructions-engine
- *
- * @description
- * This ruleset allows any authenticated user to read and write to the database.
- * It's a simple rule for single-user or development environments where complex
- * role-based access control is not required.
- *
- * @philosophy
- * Core Philosophy: Simplicity and ease of use. The primary goal is to secure
- * the database from unauthenticated access while allowing any logged-in user
- * to perform all operations. This is suitable for internal tools or initial
- * development phases.
- *
- * Key Security Decisions:
- * - Authenticated Access Only: The `isSignedIn()` function ensures that no
- *   anonymous or unauthenticated user can access any data.
- * - Full Access for Authenticated Users: All collections (`items`, `customers`,
- *   `sales`, `expenses`, etc.) are open for read and write operations to any
- *   user who is signed in.
- * - Default Deny: All paths not explicitly matched are denied access, which is a
- *   Firestore security best practice.
- */
 rules_version = '2';
+
 service cloud.firestore {
   match /databases/{database}/documents {
 
-    // --------------------------------
-    // Helper Functions
-    // --------------------------------
-
-    /**
-     * Checks if the user is authenticated. This is the only check needed.
-     */
+    // Helper function to check if a user is signed in.
     function isSignedIn() {
       return request.auth != null;
     }
 
-    // --------------------------------
-    // Data Collections
-    // --------------------------------
-
-    /**
-     * @description Generic rule for all collections.
-     * @path /{collection}/{docId}
-     * @allow (read, write) Any authenticated user can perform any operation.
-     * @deny (any) Any unauthenticated user is blocked from all operations.
-     */
-    match /{collection}/{docId=**} {
+    // Allow signed-in users to read and write their own data.
+    // This provides a basic level of security.
+    match /users/{userId} {
+      allow read, update, delete: if request.auth.uid == userId;
+      allow create: if isSignedIn();
+    }
+    
+    // Rules for all data collections. Any authenticated user can read/write.
+    match /items/{itemId} {
       allow read, write: if isSignedIn();
+    }
+
+    match /customers/{customerId} {
+      allow read, write: if isSignedIn();
+    }
+    
+    match /vendors/{vendorId} {
+      allow read, write: if isSignedIn();
+    }
+
+    match /sales/{saleId} {
+      allow read, write: if isSignedIn();
+    }
+
+    match /expenses/{expenseId} {
+      allow read, write: if isSignedIn();
+    }
+    
+    match /transactions/{transactionId} {
+        allow read, write: if isSignedIn();
+    }
+    
+    // Admin role check collection.
+    match /roles_admin/{userId} {
+        allow read, write: if isSignedIn();
     }
   }
 }
