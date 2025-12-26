@@ -1,4 +1,3 @@
-
 "use client";
 
 import { useState } from "react";
@@ -10,7 +9,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { Toaster } from "@/components/ui/toaster";
-import { useAuth } from "@/lib/auth-provider";
+import { AuthProvider, useAuth } from "@/lib/auth-provider";
 
 
 function LoginComponent() {
@@ -98,9 +97,9 @@ function LoginComponent() {
 
 export default function LoginPage() {
   return (
-    <>
+    <AuthProvider>
       <LoginComponent />
       <Toaster />
-    </>
+    </AuthProvider>
   )
 }
