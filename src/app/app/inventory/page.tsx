@@ -157,7 +157,6 @@ export default function InventoryPage() {
               <TableHead>Item Name</TableHead>
               <TableHead>Category</TableHead>
               <TableHead>Color</TableHead>
-              <TableHead className="text-right">Stock</TableHead>
               <TableHead className="text-right">Purchase Price</TableHead>
               <TableHead className="text-right">Sale Price</TableHead>
               <TableHead>
@@ -176,9 +175,6 @@ export default function InventoryPage() {
                 </TableCell>
                 <TableCell>
                   {item.color}
-                </TableCell>
-                <TableCell className="text-right font-medium">
-                  {item.quantity} {item.unit}
                 </TableCell>
                 <TableCell className="text-right">
                   {formatCurrency(item.purchasePrice)}
