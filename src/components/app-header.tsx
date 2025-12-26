@@ -1,0 +1,106 @@
+
+"use client"
+
+import * as React from "react"
+import Link from "next/link"
+import { usePathname } from "next/navigation"
+import { Factory, LayoutDashboard, Warehouse, ShoppingCart, Users, CreditCard, BarChart3, LogOut, BookUser, Settings, Truck, Menu, X } from "lucide-react"
+
+import { cn } from "@/lib/utils"
+import { Button } from "./ui/button"
+import { Sheet, SheetContent, SheetTrigger } from "./ui/sheet"
+
+const navItems = [
+  { href: "/app/dashboard", icon: LayoutDashboard, label: "Dashboard" },
+  { href: "/app/inventory", icon: Warehouse, label: "Inventory" },
+  { href: "/app/sales", icon: ShoppingCart, label: "Sales" },
+  { href: "/app/customers", icon: Users, label: "Customers" },
+  { href: "/app/vendors", icon: Truck, label: "Vendors" },
+  { href: "/app/expenses", icon: CreditCard, label: "Expenses" },
+  { href: "/app/ledger", icon: BookUser, label: "Ledger" },
+  { href: "/app/reports", icon: BarChart3, label: "Reports" },
+  { href: "/app/settings", icon: Settings, label: "Settings" },
+]
+
+export function AppHeader() {
+  const pathname = usePathname()
+  const [mobileMenuOpen, setMobileMenuOpen] = React.useState(false);
+
+  return (
+    <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+      <div className="container flex h-14 items-center">
+        <div className="mr-4 flex items-center">
+          <Link href="/app/dashboard" className="flex items-center gap-2">
+            <Factory className="h-6 w-6 text-primary" />
+            <span className="font-bold font-headline">ARCO</span>
+          </Link>
+        </div>
+
+        <nav className="hidden items-center space-x-6 text-sm font-medium md:flex">
+          {navItems.map((item) => (
+            <Link
+              key={item.href}
+              href={item.href}
+              className={cn(
+                "transition-colors hover:text-foreground/80",
+                pathname.startsWith(item.href) ? "text-foreground" : "text-foreground/60"
+              )}
+            >
+              {item.label}
+            </Link>
+          ))}
+        </nav>
+
+        <div className="flex flex-1 items-center justify-end space-x-4">
+           <nav className="flex items-center space-x-2">
+            <Link href="/login">
+                <Button variant="ghost" className="text-sm font-medium text-foreground/60 transition-colors hover:text-foreground/80">
+                    <LogOut className="mr-2 h-4 w-4" />
+                    Logout
+                </Button>
+            </Link>
+            
+            <Sheet open={mobileMenuOpen} onOpenChange={setMobileMenuOpen}>
+                <SheetTrigger asChild>
+                    <Button
+                        variant="ghost"
+                        className="mr-2 px-0 text-base hover:bg-transparent focus-visible:bg-transparent focus-visible:ring-0 focus-visible:ring-offset-0 md:hidden"
+                    >
+                        <Menu className="h-6 w-6" />
+                        <span className="sr-only">Toggle Menu</span>
+                    </Button>
+                </SheetTrigger>
+                <SheetContent side="left" className="pr-0">
+                    <Link
+                        href="/"
+                        className="flex items-center gap-2 mb-4"
+                         onClick={() => setMobileMenuOpen(false)}
+                    >
+                        <Factory className="h-6 w-6 text-primary" />
+                        <span className="font-bold font-headline">ARCO</span>
+                    </Link>
+                    <div className="my-4 h-[calc(100vh-8rem)] pb-10 pl-6">
+                        <div className="flex flex-col space-y-3">
+                            {navItems.map((item) => (
+                                <Link
+                                key={item.href}
+                                href={item.href}
+                                onClick={() => setMobileMenuOpen(false)}
+                                className={cn(
+                                    "text-muted-foreground transition-colors hover:text-foreground",
+                                    pathname?.startsWith(item.href) && "text-foreground"
+                                )}
+                                >
+                                {item.label}
+                                </Link>
+                            ))}
+                        </div>
+                    </div>
+                </SheetContent>
+            </Sheet>
+          </nav>
+        </div>
+      </div>
+    </header>
+  )
+}

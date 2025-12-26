@@ -1,5 +1,5 @@
-import { AppSidebar } from "@/components/app-sidebar";
-import { SidebarProvider, SidebarInset } from "@/components/ui/sidebar";
+
+import { AppHeader } from "@/components/app-header";
 import { DataProvider } from "@/context/data-provider";
 
 export default function AppLayout({
@@ -9,14 +9,14 @@ export default function AppLayout({
 }) {
   return (
     <DataProvider>
-      <SidebarProvider>
-        <AppSidebar />
-        <SidebarInset>
-          <div className="p-4 sm:p-6 md:p-8">
+      <div className="relative flex min-h-screen flex-col">
+        <AppHeader />
+        <main className="flex-1">
+          <div className="container relative p-4 sm:p-6 md:p-8">
             {children}
           </div>
-        </SidebarInset>
-      </SidebarProvider>
+        </main>
+      </div>
     </DataProvider>
   );
 }
