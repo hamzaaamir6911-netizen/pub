@@ -8,14 +8,16 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
-import { useAuth } from "@/firebase";
+import { useAuth, useFirestore } from "@/firebase";
 import { signInWithEmailAndPassword, createUserWithEmailAndPassword } from "firebase/auth";
+import { doc, setDoc } from "firebase/firestore";
 
 
 export default function LoginPage() {
   const router = useRouter();
   const { toast } = useToast();
   const auth = useAuth();
+  const firestore = useFirestore();
   const [email, setEmail] = useState("admin@arco.com");
   const [password, setPassword] = useState("password");
   const [isLoading, setIsLoading] = useState(false);
@@ -36,10 +38,18 @@ export default function LoginPage() {
         // If user not found, create a new user with these credentials
         if (error.code === 'auth/user-not-found' || error.code === 'auth/invalid-credential') {
             try {
-                await createUserWithEmailAndPassword(auth, email, password);
+                const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+                const user = userCredential.user;
+
+                // Grant admin role to the new user
+                if (user) {
+                  const adminRoleRef = doc(firestore, 'roles_admin', user.uid);
+                  await setDoc(adminRoleRef, { role: 'admin' });
+                }
+
                 toast({
                     title: "Admin Account Created",
-                    description: "Logged in successfully.",
+                    description: "Logged in successfully and granted admin privileges.",
                 });
                 router.push("/app/dashboard");
             } catch (creationError: any) {
@@ -53,7 +63,7 @@ export default function LoginPage() {
              toast({
                 variant: "destructive",
                 title: "Login Failed",
-                description: "Invalid credentials or another error occurred.",
+                description: error.message || "Invalid credentials or another error occurred.",
             });
         }
     } finally {
