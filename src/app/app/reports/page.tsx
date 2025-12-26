@@ -9,10 +9,10 @@ import {
   CardTitle,
 } from "@/components/ui/card"
 import { PageHeader } from "@/components/page-header"
-import { getMonthlySalesData, mockSales, mockExpenses, getDashboardStats } from "@/lib/data"
 import { formatCurrency, formatDate } from "@/lib/utils"
 import { ChartConfig, ChartContainer, ChartTooltipContent } from "@/components/ui/chart"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { useDataContext } from "@/context/data-provider"
 
 
 const monthlyData = [
@@ -36,6 +36,7 @@ const chartConfig = {
 } satisfies ChartConfig
 
 export default function ReportsPage() {
+    const { getDashboardStats } = useDataContext();
     const stats = getDashboardStats();
     
     const dailyReportData = [

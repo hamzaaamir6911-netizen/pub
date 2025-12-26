@@ -38,15 +38,17 @@ import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import { PageHeader } from "@/components/page-header";
-import { mockSales, mockCustomers, mockItems, mockExpenses } from "@/lib/data";
 import { formatCurrency, formatDate } from "@/lib/utils";
-import type { Sale, SaleItem, Customer, Item, Expense } from "@/lib/types";
+import type { Sale, SaleItem, Customer, Item } from "@/lib/types";
 import { useToast } from "@/hooks/use-toast";
+import { useDataContext } from "@/context/data-provider";
 
 function SaleInvoice({ sale }: { sale: Sale }) {
-    const customer = mockCustomers.find(c => c.id === sale.customerId);
+    const { customers, items: allItems } = useDataContext();
+    const customer = customers.find(c => c.id === sale.customerId);
+
     const subtotal = sale.items.reduce((acc, item) => {
-        const itemDetails = mockItems.find(i => i.id === item.itemId);
+        const itemDetails = allItems.find(i => i.id === item.itemId);
         if (!itemDetails) return acc;
         
         if (itemDetails.unit === 'Feet' && item.length && item.width) {
@@ -90,7 +92,7 @@ function SaleInvoice({ sale }: { sale: Sale }) {
                     </TableHeader>
                     <TableBody>
                         {sale.items.map((item, index) => {
-                             const itemDetails = mockItems.find(i => i.id === item.itemId);
+                             const itemDetails = allItems.find(i => i.id === item.itemId);
                              const totalFeet = item.length && item.width ? (item.length * item.width / 144) * item.quantity : (itemDetails?.weight || 0) * item.quantity;
                              const rate = itemDetails?.salePrice || 0;
                              const itemSubtotal = totalFeet * rate;
@@ -137,7 +139,7 @@ function SaleInvoice({ sale }: { sale: Sale }) {
     )
 }
 
-function AddCustomerForm({ onCustomerAdded }: { onCustomerAdded: (newCustomer: Customer) => void }) {
+function AddCustomerForm({ onCustomerAdded }: { onCustomerAdded: (newCustomer: Omit<Customer, 'id'>) => void }) {
   const [name, setName] = useState('');
   const [phone, setPhone] = useState('');
   const [address, setAddress] = useState('');
@@ -148,8 +150,7 @@ function AddCustomerForm({ onCustomerAdded }: { onCustomerAdded: (newCustomer: C
       toast({ variant: 'destructive', title: 'Please fill all fields.' });
       return;
     }
-    const newCustomer: Customer = {
-      id: `CUST${(mockCustomers.length + Date.now()).toString().slice(-4)}`,
+    const newCustomer: Omit<Customer, 'id'> = {
       name,
       phone,
       address,
@@ -187,148 +188,10 @@ function AddCustomerForm({ onCustomerAdded }: { onCustomerAdded: (newCustomer: C
   );
 }
 
-function AddItemForm({ onItemAdded }: { onItemAdded: (newItem: Item) => void }) {
-    const [name, setName] = useState('');
-    const [category, setCategory] = useState<'Aluminium' | 'Glass' | 'Accessories'>('Aluminium');
-    const [quantity, setQuantity] = useState(0);
-    const [unit, setUnit] = useState<'Kg' | 'Feet' | 'Piece'>('Feet');
-    const [purchasePrice, setPurchasePrice] = useState(0);
-    const [salePrice, setSalePrice] = useState(0);
-    const [color, setColor] = useState('');
-    const [weight, setWeight] = useState(0);
+
+function NewSaleForm({ onSaleAdded }: { onSaleAdded: (newSale: Omit<Sale, 'id' | 'date' | 'total'>) => void }) {
     const { toast } = useToast();
-
-    const handleSubmit = () => {
-        if (!name || !category || !unit || !color) {
-            toast({ variant: "destructive", title: "Please fill all required fields." });
-            return;
-        }
-        const newItem: Item = {
-            id: `ITM${(mockItems.length + 1).toString().padStart(3, '0')}`,
-            name, category, quantity, unit, purchasePrice, salePrice, color, weight,
-        };
-        onItemAdded(newItem);
-        toast({ title: "Item Added!", description: `${name} has been added to inventory.` });
-        // Reset form
-        setName(''); setCategory('Aluminium'); setQuantity(0); setUnit('Feet'); setPurchasePrice(0); setSalePrice(0); setColor(''); setWeight(0);
-    };
-
-    return (
-        <DialogContent className="max-w-2xl">
-            <DialogHeader><DialogTitle>Add New Item</DialogTitle></DialogHeader>
-            <div className="grid grid-cols-2 gap-4 py-4">
-                <div className="space-y-2">
-                    <Label>Item Name</Label>
-                    <Input value={name} onChange={(e) => setName(e.target.value)} placeholder="e.g. D 40" />
-                </div>
-                <div className="space-y-2">
-                    <Label>Category</Label>
-                    <Select onValueChange={(v: any) => setCategory(v)} value={category}>
-                        <SelectTrigger><SelectValue /></SelectTrigger>
-                        <SelectContent>
-                            <SelectItem value="Aluminium">Aluminium</SelectItem>
-                            <SelectItem value="Glass">Glass</SelectItem>
-                            <SelectItem value="Accessories">Accessories</SelectItem>
-                        </SelectContent>
-                    </Select>
-                </div>
-                <div className="space-y-2">
-                    <Label>Quantity</Label>
-                    <Input type="number" value={quantity} onChange={(e) => setQuantity(parseFloat(e.target.value))} />
-                </div>
-                <div className="space-y-2">
-                    <Label>Unit</Label>
-                     <Select onValueChange={(v: any) => setUnit(v)} value={unit}>
-                        <SelectTrigger><SelectValue /></SelectTrigger>
-                        <SelectContent>
-                            <SelectItem value="Feet">Feet</SelectItem>
-                            <SelectItem value="Kg">Kg</SelectItem>
-                             <SelectItem value="Piece">Piece</SelectItem>
-                        </SelectContent>
-                    </Select>
-                </div>
-                <div className="space-y-2">
-                    <Label>Purchase Price</Label>
-                    <Input type="number" value={purchasePrice} onChange={(e) => setPurchasePrice(parseFloat(e.target.value))} />
-                </div>
-                <div className="space-y-2">
-                    <Label>Sale Price</Label>
-                    <Input type="number" value={salePrice} onChange={(e) => setSalePrice(parseFloat(e.target.value))} />
-                </div>
-                 <div className="space-y-2">
-                    <Label>Color</Label>
-                    <Input value={color} onChange={(e) => setColor(e.target.value)} placeholder="e.g. Silver" />
-                </div>
-                 <div className="space-y-2">
-                    <Label>Weight (kg/ft)</Label>
-                    <Input type="number" value={weight} onChange={(e) => setWeight(parseFloat(e.target.value))} />
-                </div>
-            </div>
-            <DialogFooter>
-                <Button onClick={handleSubmit}>Add Item</Button>
-            </DialogFooter>
-        </DialogContent>
-    );
-}
-
-function AddExpenseForm({ onExpenseAdded }: { onExpenseAdded: (newExpense: Expense) => void }) {
-    const [title, setTitle] = useState('');
-    const [amount, setAmount] = useState(0);
-    const [category, setCategory] = useState<'Labour' | 'Transport' | 'Electricity' | 'Other'>('Other');
-    const { toast } = useToast();
-
-    const handleSubmit = () => {
-        if (!title || amount <= 0) {
-            toast({ variant: "destructive", title: "Please enter a valid title and amount." });
-            return;
-        }
-        const newExpense: Expense = {
-            id: `EXP${(mockExpenses.length + 1).toString().padStart(3, '0')}`,
-            title,
-            amount,
-            category,
-            date: new Date(),
-        };
-        onExpenseAdded(newExpense);
-        toast({ title: "Expense Added!", description: `${title} has been recorded.` });
-        setTitle(''); setAmount(0); setCategory('Other');
-    };
-    
-    return (
-        <DialogContent>
-            <DialogHeader><DialogTitle>Add New Expense</DialogTitle></DialogHeader>
-            <div className="space-y-4 py-4">
-                <div className="space-y-2">
-                    <Label>Title</Label>
-                    <Input value={title} onChange={(e) => setTitle(e.target.value)} placeholder="e.g. Factory Rent" />
-                </div>
-                <div className="space-y-2">
-                    <Label>Amount</Label>
-                    <Input type="number" value={amount} onChange={(e) => setAmount(parseFloat(e.target.value))} />
-                </div>
-                <div className="space-y-2">
-                    <Label>Category</Label>
-                    <Select onValueChange={(v: any) => setCategory(v)} value={category}>
-                        <SelectTrigger><SelectValue /></SelectTrigger>
-                        <SelectContent>
-                            <SelectItem value="Labour">Labour</SelectItem>
-                            <SelectItem value="Transport">Transport</SelectItem>
-                            <SelectItem value="Electricity">Electricity</SelectItem>
-                            <SelectItem value="Other">Other</SelectItem>
-                        </SelectContent>
-                    </Select>
-                </div>
-            </div>
-            <DialogFooter>
-                <Button onClick={handleSubmit}>Add Expense</Button>
-            </DialogFooter>
-        </DialogContent>
-    );
-}
-
-
-function NewSaleForm({ onSaleAdded, customers, onCustomerAdded }: { onSaleAdded: (newSale: Sale) => void, customers: Customer[], onCustomerAdded: (customer: Customer) => void }) {
-    const { toast } = useToast();
+    const { customers, items: allItems, addCustomer } = useDataContext();
     const [selectedCustomer, setSelectedCustomer] = useState("");
     const [saleItems, setSaleItems] = useState<Partial<SaleItem>[]>([{itemId: "", quantity: 1, length: 0, width: 0}]);
     const [discount, setDiscount] = useState(0);
@@ -351,7 +214,7 @@ function NewSaleForm({ onSaleAdded, customers, onCustomerAdded }: { onSaleAdded:
     const calculateTotal = () => {
         const subtotal = saleItems.reduce((total, currentItem) => {
             if (!currentItem.itemId) return total;
-            const itemDetails = mockItems.find(i => i.id === currentItem.itemId);
+            const itemDetails = allItems.find(i => i.id === currentItem.itemId);
             if (!itemDetails) return total;
 
             if (itemDetails.unit === 'Feet' && currentItem.length && currentItem.width) {
@@ -385,48 +248,43 @@ function NewSaleForm({ onSaleAdded, customers, onCustomerAdded }: { onSaleAdded:
         if (!customer) return;
 
         const finalSaleItems = saleItems.map(si => {
-            const item = mockItems.find(i => i.id === si.itemId)!;
+            const item = allItems.find(i => i.id === si.itemId)!;
             const pricePerUnit = item.salePrice;
             let price = pricePerUnit;
 
             if (item.unit === 'Feet' && si.length && si.width) {
                 const totalFeet = (si.length * si.width / 144) * (si.quantity || 1);
-                // The price here is total price for the line item, not per unit
                 price = pricePerUnit * totalFeet;
             } else {
                  price = pricePerUnit * (si.quantity || 1);
             }
-
 
             return {
                 ...si,
                 itemId: item.id,
                 itemName: item.name,
                 quantity: si.quantity || 1,
-                price: price / (si.quantity || 1), // price per piece
+                price: price / (si.quantity || 1), 
                 color: item.color,
                 weight: item.weight,
             }
         }) as SaleItem[];
 
-        const newSale: Sale = {
-            id: `SALE${(mockSales.length + 1).toString().padStart(3, '0')}`,
+        const newSale: Omit<Sale, 'id' | 'date' | 'total'> = {
             customerId: selectedCustomer,
             customerName: customer.name,
-            date: new Date(),
             items: finalSaleItems,
-            total: calculateTotal(),
             discount: discount,
         };
 
         onSaleAdded(newSale);
-        toast({ title: "Sale Saved!", description: `Sale ${newSale.id} has been recorded.` });
+        toast({ title: "Sale Saved!", description: `Sale has been recorded.` });
         clearForm();
     }
     
-    const handleCustomerAdded = (newCustomer: Customer) => {
-        onCustomerAdded(newCustomer);
-        setSelectedCustomer(newCustomer.id);
+    const handleCustomerAdded = (newCustomer: Omit<Customer, 'id'>) => {
+        const addedCustomer = addCustomer(newCustomer);
+        setSelectedCustomer(addedCustomer.id);
         setCustomerModalOpen(false);
     }
 
@@ -476,7 +334,7 @@ function NewSaleForm({ onSaleAdded, customers, onCustomerAdded }: { onSaleAdded:
                 <div className="space-y-4">
                     <Label>Items</Label>
                     {saleItems.map((saleItem, index) => {
-                         const itemDetails = mockItems.find(i => i.id === saleItem.itemId);
+                         const itemDetails = allItems.find(i => i.id === saleItem.itemId);
                          return (
                          <div key={index} className="grid grid-cols-1 md:grid-cols-5 gap-2 items-end p-3 border rounded-md">
                             <div className="md:col-span-2 space-y-2">
@@ -486,7 +344,7 @@ function NewSaleForm({ onSaleAdded, customers, onCustomerAdded }: { onSaleAdded:
                                         <SelectValue placeholder="Select an item" />
                                     </SelectTrigger>
                                     <SelectContent>
-                                        {mockItems.map(i => <SelectItem key={i.id} value={i.id}>{i.name}</SelectItem>)}
+                                        {allItems.map(i => <SelectItem key={i.id} value={i.id}>{i.name}</SelectItem>)}
                                     </SelectContent>
                                 </Select>
                             </div>
@@ -550,38 +408,16 @@ function NewSaleForm({ onSaleAdded, customers, onCustomerAdded }: { onSaleAdded:
 }
 
 export default function SalesPage() {
-  const [sales, setSales] = useState<Sale[]>(mockSales);
-  const [customers, setCustomers] = useState<Customer[]>(mockCustomers);
-  const [items, setItems] = useState<Item[]>(mockItems);
-  const [expenses, setExpenses] = useState<Expense[]>(mockExpenses);
+  const { sales, addSale, deleteSale } = useDataContext();
   const [activeTab, setActiveTab] = useState("history");
 
-  const [isItemModalOpen, setItemModalOpen] = useState(false);
-  const [isExpenseModalOpen, setExpenseModalOpen] = useState(false);
-
   const handleDelete = (id: string) => {
-    setSales(sales.filter((sale) => sale.id !== id));
+    deleteSale(id);
   };
   
-  const handleSaleAdded = (newSale: Sale) => {
-    setSales(prevSales => [newSale, ...prevSales]);
+  const handleSaleAdded = (newSale: Omit<Sale, 'id'|'date'|'total'>) => {
+    addSale(newSale);
     setActiveTab("history");
-  }
-
-  const handleCustomerAdded = (newCustomer: Customer) => {
-    setCustomers(prev => [newCustomer, ...prev]);
-    // Also update the mockData array so it's available across pages
-    mockCustomers.unshift(newCustomer);
-  }
-
-  const handleItemAdded = (newItem: Item) => {
-    setItems(prev => [newItem, ...prev]);
-    setItemModalOpen(false);
-  }
-  
-  const handleExpenseAdded = (newExpense: Expense) => {
-    setExpenses(prev => [newExpense, ...prev]);
-    setExpenseModalOpen(false);
   }
 
   return (
@@ -661,17 +497,10 @@ export default function SalesPage() {
         </TabsContent>
         <TabsContent value="new">
             <div className="mt-4">
-                <NewSaleForm onSaleAdded={handleSaleAdded} customers={customers} onCustomerAdded={handleCustomerAdded} />
+                <NewSaleForm onSaleAdded={handleSaleAdded} />
             </div>
         </TabsContent>
       </Tabs>
-
-      <Dialog open={isItemModalOpen} onOpenChange={setItemModalOpen}>
-        <AddItemForm onItemAdded={handleItemAdded} />
-      </Dialog>
-      <Dialog open={isExpenseModalOpen} onOpenChange={setExpenseModalOpen}>
-        <AddExpenseForm onExpenseAdded={handleExpenseAdded} />
-      </Dialog>
     </>
   );
 }

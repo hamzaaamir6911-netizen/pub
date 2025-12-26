@@ -19,9 +19,9 @@ import {
   TableRow,
 } from "@/components/ui/table"
 import { PageHeader } from "@/components/page-header"
-import { getDashboardStats, getMonthlySalesData, mockSales } from "@/lib/data"
 import { formatCurrency, formatDate } from "@/lib/utils"
 import { ChartContainer, ChartTooltip, ChartTooltipContent, type ChartConfig } from "@/components/ui/chart"
+import { useDataContext } from "@/context/data-provider"
 
 const chartConfig = {
   sales: {
@@ -31,6 +31,7 @@ const chartConfig = {
 } satisfies ChartConfig
 
 export default function DashboardPage() {
+  const { getDashboardStats, getMonthlySalesData, sales } = useDataContext();
   const stats = getDashboardStats();
   const monthlySales = getMonthlySalesData();
 
@@ -160,7 +161,7 @@ export default function DashboardPage() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {mockSales.slice(0, 3).map((sale) => (
+                {sales.slice(0, 3).map((sale) => (
                   <TableRow key={sale.id}>
                     <TableCell>
                       <div className="font-medium">{sale.customerName}</div>

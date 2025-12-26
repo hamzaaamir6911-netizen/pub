@@ -27,13 +27,13 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Button } from "@/components/ui/button";
 import { PageHeader } from "@/components/page-header";
-import { mockCustomers } from "@/lib/data";
 import type { Customer } from "@/lib/types";
 import { useToast } from "@/hooks/use-toast";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
+import { useDataContext } from "@/context/data-provider";
 
-function AddCustomerForm({ onCustomerAdded }: { onCustomerAdded: (newCustomer: Customer) => void }) {
+function AddCustomerForm({ onCustomerAdded }: { onCustomerAdded: (newCustomer: Omit<Customer, 'id'>) => void }) {
   const [name, setName] = useState('');
   const [phone, setPhone] = useState('');
   const [address, setAddress] = useState('');
@@ -44,8 +44,7 @@ function AddCustomerForm({ onCustomerAdded }: { onCustomerAdded: (newCustomer: C
       toast({ variant: 'destructive', title: 'Please fill all fields.' });
       return;
     }
-    const newCustomer: Customer = {
-      id: `CUST${(mockCustomers.length + Date.now()).toString().slice(-4)}`,
+    const newCustomer: Omit<Customer, 'id'> = {
       name,
       phone,
       address,
@@ -85,15 +84,15 @@ function AddCustomerForm({ onCustomerAdded }: { onCustomerAdded: (newCustomer: C
 
 
 export default function CustomersPage() {
-  const [customers, setCustomers] = useState<Customer[]>(mockCustomers);
+  const { customers, addCustomer, deleteCustomer } = useDataContext();
   const [isCustomerModalOpen, setCustomerModalOpen] = useState(false);
 
   const handleDelete = (id: string) => {
-    setCustomers(customers.filter((customer) => customer.id !== id));
+    deleteCustomer(id);
   };
 
-  const handleCustomerAdded = (newCustomer: Customer) => {
-    setCustomers(prev => [newCustomer, ...prev]);
+  const handleCustomerAdded = (newCustomer: Omit<Customer, 'id'>) => {
+    addCustomer(newCustomer);
     setCustomerModalOpen(false);
   }
 

@@ -20,16 +20,80 @@ import {
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { PageHeader } from "@/components/page-header";
-import { mockExpenses } from "@/lib/data";
 import { formatCurrency, formatDate } from "@/lib/utils";
 import type { Expense } from "@/lib/types";
+import { useDataContext } from "@/context/data-provider";
+import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { useToast } from "@/hooks/use-toast";
+import { Label } from "@/components/ui/label";
+import { Input } from "@/components/ui/input";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+
+function AddExpenseForm({ onExpenseAdded }: { onExpenseAdded: (newExpense: Omit<Expense, 'id' | 'date'>) => void }) {
+    const [title, setTitle] = useState('');
+    const [amount, setAmount] = useState(0);
+    const [category, setCategory] = useState<'Labour' | 'Transport' | 'Electricity' | 'Other'>('Other');
+    const { toast } = useToast();
+
+    const handleSubmit = () => {
+        if (!title || amount <= 0) {
+            toast({ variant: "destructive", title: "Please enter a valid title and amount." });
+            return;
+        }
+        const newExpense: Omit<Expense, 'id' | 'date'> = {
+            title,
+            amount,
+            category,
+        };
+        onExpenseAdded(newExpense);
+        toast({ title: "Expense Added!", description: `${title} has been recorded.` });
+        setTitle(''); setAmount(0); setCategory('Other');
+    };
+    
+    return (
+        <DialogContent>
+            <DialogHeader><DialogTitle>Add New Expense</DialogTitle></DialogHeader>
+            <div className="space-y-4 py-4">
+                <div className="space-y-2">
+                    <Label>Title</Label>
+                    <Input value={title} onChange={(e) => setTitle(e.target.value)} placeholder="e.g. Factory Rent" />
+                </div>
+                <div className="space-y-2">
+                    <Label>Amount</Label>
+                    <Input type="number" value={amount} onChange={(e) => setAmount(parseFloat(e.target.value))} />
+                </div>
+                <div className="space-y-2">
+                    <Label>Category</Label>
+                    <Select onValueChange={(v: any) => setCategory(v)} value={category}>
+                        <SelectTrigger><SelectValue /></SelectTrigger>
+                        <SelectContent>
+                            <SelectItem value="Labour">Labour</SelectItem>
+                            <SelectItem value="Transport">Transport</SelectItem>
+                            <SelectItem value="Electricity">Electricity</SelectItem>
+                            <SelectItem value="Other">Other</SelectItem>
+                        </SelectContent>
+                    </Select>
+                </div>
+            </div>
+            <DialogFooter>
+                <Button onClick={handleSubmit}>Add Expense</Button>
+            </DialogFooter>
+        </DialogContent>
+    );
+}
 
 export default function ExpensesPage() {
-  const [expenses, setExpenses] = useState<Expense[]>(mockExpenses);
+  const { expenses, addExpense, deleteExpense } = useDataContext();
+  const [isExpenseModalOpen, setExpenseModalOpen] = useState(false);
 
   const handleDelete = (id: string) => {
-    setExpenses(expenses.filter((expense) => expense.id !== id));
+    deleteExpense(id);
   };
+  
+  const handleExpenseAdded = (newExpense: Omit<Expense, 'id' | 'date'>) => {
+    addExpense(newExpense);
+    setExpenseModalOpen(false);
+  }
 
   return (
     <>
@@ -37,10 +101,15 @@ export default function ExpensesPage() {
         title="Expenses"
         description="Track all your factory and operational expenses."
       >
-        <Button>
-          <PlusCircle className="mr-2 h-4 w-4" />
-          Add Expense
-        </Button>
+        <Dialog open={isExpenseModalOpen} onOpenChange={setExpenseModalOpen}>
+          <DialogTrigger asChild>
+            <Button>
+              <PlusCircle className="mr-2 h-4 w-4" />
+              Add Expense
+            </Button>
+          </DialogTrigger>
+          <AddExpenseForm onExpenseAdded={handleExpenseAdded} />
+        </Dialog>
       </PageHeader>
       <div className="rounded-lg border shadow-sm">
         <Table>
@@ -79,7 +148,7 @@ export default function ExpensesPage() {
                       <DropdownMenuItem>Edit</DropdownMenuItem>
                       <DropdownMenuItem
                         onSelect={() => handleDelete(expense.id)}
-                        className="text-red-600"
+                        className="text-red-500 focus:bg-red-500/10 focus:text-red-500"
                       >
                         Delete
                       </DropdownMenuItem>

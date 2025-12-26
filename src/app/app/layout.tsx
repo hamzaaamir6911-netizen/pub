@@ -1,5 +1,6 @@
 import { AppSidebar } from "@/components/app-sidebar";
 import { SidebarProvider, SidebarInset } from "@/components/ui/sidebar";
+import { DataProvider } from "@/context/data-provider";
 
 export default function AppLayout({
   children,
@@ -7,13 +8,15 @@ export default function AppLayout({
   children: React.ReactNode;
 }) {
   return (
-    <SidebarProvider>
-      <AppSidebar />
-      <SidebarInset>
-        <div className="p-4 sm:p-6 md:p-8">
-          {children}
-        </div>
-      </SidebarInset>
-    </SidebarProvider>
+    <DataProvider>
+      <SidebarProvider>
+        <AppSidebar />
+        <SidebarInset>
+          <div className="p-4 sm:p-6 md:p-8">
+            {children}
+          </div>
+        </SidebarInset>
+      </SidebarProvider>
+    </DataProvider>
   );
 }

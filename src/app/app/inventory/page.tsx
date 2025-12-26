@@ -20,16 +20,110 @@ import {
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { PageHeader } from "@/components/page-header";
-import { mockItems } from "@/lib/data";
 import { formatCurrency } from "@/lib/utils";
 import type { Item } from "@/lib/types";
+import { useDataContext } from "@/context/data-provider";
+import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Label } from "@/components/ui/label";
+import { Input } from "@/components/ui/input";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { useToast } from "@/hooks/use-toast";
+
+function AddItemForm({ onItemAdded }: { onItemAdded: (newItem: Omit<Item, 'id'>) => void }) {
+    const [name, setName] = useState('');
+    const [category, setCategory] = useState<'Aluminium' | 'Glass' | 'Accessories'>('Aluminium');
+    const [quantity, setQuantity] = useState(0);
+    const [unit, setUnit] = useState<'Kg' | 'Feet' | 'Piece'>('Feet');
+    const [purchasePrice, setPurchasePrice] = useState(0);
+    const [salePrice, setSalePrice] = useState(0);
+    const [color, setColor] = useState('');
+    const [weight, setWeight] = useState(0);
+    const { toast } = useToast();
+
+    const handleSubmit = () => {
+        if (!name || !category || !unit || !color) {
+            toast({ variant: "destructive", title: "Please fill all required fields." });
+            return;
+        }
+        const newItem: Omit<Item, 'id'> = {
+            name, category, quantity, unit, purchasePrice, salePrice, color, weight,
+        };
+        onItemAdded(newItem);
+        toast({ title: "Item Added!", description: `${name} has been added to inventory.` });
+        // Reset form
+        setName(''); setCategory('Aluminium'); setQuantity(0); setUnit('Feet'); setPurchasePrice(0); setSalePrice(0); setColor(''); setWeight(0);
+    };
+
+    return (
+        <DialogContent className="max-w-2xl">
+            <DialogHeader><DialogTitle>Add New Item</DialogTitle></DialogHeader>
+            <div className="grid grid-cols-2 gap-4 py-4">
+                <div className="space-y-2">
+                    <Label>Item Name</Label>
+                    <Input value={name} onChange={(e) => setName(e.target.value)} placeholder="e.g. D 40" />
+                </div>
+                <div className="space-y-2">
+                    <Label>Category</Label>
+                    <Select onValueChange={(v: any) => setCategory(v)} value={category}>
+                        <SelectTrigger><SelectValue /></SelectTrigger>
+                        <SelectContent>
+                            <SelectItem value="Aluminium">Aluminium</SelectItem>
+                            <SelectItem value="Glass">Glass</SelectItem>
+                            <SelectItem value="Accessories">Accessories</SelectItem>
+                        </SelectContent>
+                    </Select>
+                </div>
+                <div className="space-y-2">
+                    <Label>Quantity</Label>
+                    <Input type="number" value={quantity} onChange={(e) => setQuantity(parseFloat(e.target.value))} />
+                </div>
+                <div className="space-y-2">
+                    <Label>Unit</Label>
+                     <Select onValueChange={(v: any) => setUnit(v)} value={unit}>
+                        <SelectTrigger><SelectValue /></SelectTrigger>
+                        <SelectContent>
+                            <SelectItem value="Feet">Feet</SelectItem>
+                            <SelectItem value="Kg">Kg</SelectItem>
+                             <SelectItem value="Piece">Piece</SelectItem>
+                        </SelectContent>
+                    </Select>
+                </div>
+                <div className="space-y-2">
+                    <Label>Purchase Price</Label>
+                    <Input type="number" value={purchasePrice} onChange={(e) => setPurchasePrice(parseFloat(e.target.value))} />
+                </div>
+                <div className="space-y-2">
+                    <Label>Sale Price</Label>
+                    <Input type="number" value={salePrice} onChange={(e) => setSalePrice(parseFloat(e.target.value))} />
+                </div>
+                 <div className="space-y-2">
+                    <Label>Color</Label>
+                    <Input value={color} onChange={(e) => setColor(e.target.value)} placeholder="e.g. Silver" />
+                </div>
+                 <div className="space-y-2">
+                    <Label>Weight (kg/ft)</Label>
+                    <Input type="number" value={weight} onChange={(e) => setWeight(parseFloat(e.target.value))} />
+                </div>
+            </div>
+            <DialogFooter>
+                <Button onClick={handleSubmit}>Add Item</Button>
+            </DialogFooter>
+        </DialogContent>
+    );
+}
 
 export default function InventoryPage() {
-  const [items, setItems] = useState<Item[]>(mockItems);
+  const { items, addItem, deleteItem } = useDataContext();
+  const [isItemModalOpen, setItemModalOpen] = useState(false);
 
   const handleDelete = (id: string) => {
-    setItems(items.filter((item) => item.id !== id));
+    deleteItem(id);
   };
+  
+  const handleItemAdded = (newItem: Omit<Item, 'id'>) => {
+    addItem(newItem);
+    setItemModalOpen(false);
+  }
 
   const categoryVariant = {
     Aluminium: "default",
@@ -43,10 +137,15 @@ export default function InventoryPage() {
         title="Inventory"
         description="Manage your stock of materials and accessories."
       >
-        <Button>
-          <PlusCircle className="mr-2 h-4 w-4" />
-          Add Item
-        </Button>
+        <Dialog open={isItemModalOpen} onOpenChange={setItemModalOpen}>
+            <DialogTrigger asChild>
+                <Button>
+                    <PlusCircle className="mr-2 h-4 w-4" />
+                    Add Item
+                </Button>
+            </DialogTrigger>
+            <AddItemForm onItemAdded={handleItemAdded} />
+        </Dialog>
       </PageHeader>
       <div className="rounded-lg border shadow-sm">
         <Table>
@@ -93,7 +192,7 @@ export default function InventoryPage() {
                       <DropdownMenuItem>Edit</DropdownMenuItem>
                       <DropdownMenuItem
                         onSelect={() => handleDelete(item.id)}
-                        className="text-red-600"
+                        className="text-red-500 focus:bg-red-500/10 focus:text-red-500"
                       >
                         Delete
                       </DropdownMenuItem>
