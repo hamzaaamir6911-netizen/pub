@@ -6,13 +6,6 @@ import Image from "next/image";
 import { Factory } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
@@ -51,9 +44,9 @@ export default function LoginPage() {
     <div className="w-full lg:grid lg:min-h-screen lg:grid-cols-2 xl:min-h-screen">
       <div className="flex items-center justify-center py-12">
         <div className="mx-auto grid w-[350px] gap-6">
-           <div className="grid gap-2 text-center">
-             <div className="mb-4 flex justify-center">
-                <Factory className="h-10 w-10 text-primary" />
+          <div className="grid gap-2 text-center">
+            <div className="mb-4 flex justify-center">
+              <Factory className="h-10 w-10 text-primary" />
             </div>
             <h1 className="text-3xl font-bold font-headline">ARCO Factory Manager</h1>
             <p className="text-balance text-muted-foreground">
@@ -95,12 +88,12 @@ export default function LoginPage() {
       </div>
       <div className="hidden bg-muted lg:block">
         <Image
-          src="https://images.unsplash.com/photo-1617990794833-24837885994b?w=1200&q=80"
-          alt="Image"
+          src="https://images.unsplash.com/photo-1599301515233-039053422a07?q=80&w=1887"
+          alt="Aluminum Profiles"
           width="1920"
           height="1080"
           className="h-full w-full object-cover dark:brightness-[0.4]"
-          data-ai-hint="aluminium sections"
+          data-ai-hint="aluminium profiles"
         />
       </div>
     </div>
