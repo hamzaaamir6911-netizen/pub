@@ -92,3 +92,23 @@ h1, h2, h3, h4, h5, h6 {
     @apply bg-background text-foreground;
   }
 }
+
+@media print {
+  body {
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+  .no-print {
+    display: none !important;
+  }
+  body, .printable-content {
+    background-color: #ffffff !important;
+    color: #000000 !important;
+  }
+  .printable-content h1, .printable-content h2, .printable-content p, .printable-content div, .printable-content span, .printable-content td, .printable-content th {
+    color: #000000 !important;
+  }
+  .printable-content .border {
+      border-color: #cccccc !important;
+  }
+}

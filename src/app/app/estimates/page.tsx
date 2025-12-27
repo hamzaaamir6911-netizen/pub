@@ -2,7 +2,8 @@
 "use client";
 
 import { useState, useRef } from "react";
-import { MoreHorizontal, PlusCircle, Trash2, RotateCcw, FileText } from "lucide-react";
+import { useReactToPrint } from "react-to-print";
+import { MoreHorizontal, PlusCircle, Trash2, RotateCcw, FileText, Printer } from "lucide-react";
 import {
   Table,
   TableBody,
@@ -48,83 +49,95 @@ import { useData } from "@/firebase/data/data-provider";
 function EstimatePrint({ estimate }: { estimate: Estimate }) {
     const { customers } = useData();
     const customer = customers.find(c => c.id === estimate.customerId);
+    const componentRef = useRef<HTMLDivElement>(null);
+
+    const handlePrint = useReactToPrint({
+      content: () => componentRef.current,
+      documentTitle: `Estimate-${estimate.id}`,
+    });
     
     let runningTotal = 0;
 
     return (
-        <DialogContent className="max-w-6xl">
-            <div className="p-6">
-                <DialogHeader>
+        <DialogContent className="max-w-6xl max-h-[90vh] flex flex-col">
+             <DialogHeader className="flex-shrink-0 no-print">
+                <div className="flex flex-col items-center justify-center pt-4">
+                    <DialogTitle>Estimate: {estimate.id}</DialogTitle>
+                </div>
+            </DialogHeader>
+            <div className="flex-grow overflow-y-auto">
+                <div ref={componentRef} className="p-6 printable-content">
                     <div className="flex flex-col items-center justify-center pt-4 mb-8">
                         <h1 className="text-3xl font-bold font-headline">Arco aluminium</h1>
-                        <DialogTitle>Estimate: {estimate.id}</DialogTitle>
+                        <p>Estimate: {estimate.id}</p>
                     </div>
-                </DialogHeader>
-                <div className="p-6">
-                    <div className="grid grid-cols-2 gap-4 mb-6">
-                        <div>
-                            <p className="font-semibold">Customer:</p>
-                            <p>{estimate.customerName}</p>
-                            <p>{customer?.address}</p>
-                            <p>{customer?.phone}</p>
+                    <div className="p-6">
+                        <div className="grid grid-cols-2 gap-4 mb-6">
+                            <div>
+                                <p className="font-semibold">Customer:</p>
+                                <p>{estimate.customerName}</p>
+                                <p>{customer?.address}</p>
+                                <p>{customer?.phone}</p>
+                            </div>
+                            <div className="text-right">
+                                <p className="font-semibold">Date:</p>
+                                <p>{formatDate(estimate.date)}</p>
+                            </div>
                         </div>
-                        <div className="text-right">
-                            <p className="font-semibold">Date:</p>
-                            <p>{formatDate(estimate.date)}</p>
+
+                        <div className="overflow-x-auto">
+                            <Table>
+                                <TableHeader>
+                                    <TableRow>
+                                        <TableHead>Item</TableHead>
+                                        <TableHead>Colour</TableHead>
+                                        <TableHead>Thickness</TableHead>
+                                        <TableHead className="text-right">Feet</TableHead>
+                                        <TableHead className="text-right">Quantity</TableHead>
+                                        <TableHead className="text-right">Rate</TableHead>
+                                        <TableHead className="text-right">Discount</TableHead>
+                                        <TableHead className="text-right">Amount</TableHead>
+                                    </TableRow>
+                                </TableHeader>
+                                <TableBody>
+                                    {estimate.items.map((item, index) => {
+                                        const itemSubtotal = (item.feet || 1) * item.price * item.quantity;
+                                        const discountAmount = itemSubtotal * ((item.discount || 0) / 100);
+                                        const finalAmount = itemSubtotal - discountAmount;
+                                        runningTotal += finalAmount;
+                                        
+                                        return (
+                                            <TableRow key={index}>
+                                                <TableCell>{item.itemName}</TableCell>
+                                                <TableCell>{item.color}</TableCell>
+                                                <TableCell>{item.thickness || '-'}</TableCell>
+                                                <TableCell className="text-right">{item.feet ? item.feet.toFixed(2) : '-'}</TableCell>
+                                                <TableCell className="text-right">{item.quantity}</TableCell>
+                                                <TableCell className="text-right">{formatCurrency(item.price)}</TableCell>
+                                                <TableCell className="text-right">{item.discount || 0}%</TableCell>
+                                                <TableCell className="text-right">{formatCurrency(finalAmount)}</TableCell>
+                                            </TableRow>
+                                        )
+                                    })}
+                                </TableBody>
+                            </Table>
                         </div>
-                    </div>
 
-                    <div className="overflow-x-auto">
-                        <Table>
-                            <TableHeader>
-                                <TableRow>
-                                    <TableHead>Item</TableHead>
-                                    <TableHead>Colour</TableHead>
-                                    <TableHead>Thickness</TableHead>
-                                    <TableHead className="text-right">Feet</TableHead>
-                                    <TableHead className="text-right">Quantity</TableHead>
-                                    <TableHead className="text-right">Rate</TableHead>
-                                    <TableHead className="text-right">Discount</TableHead>
-                                    <TableHead className="text-right">Amount</TableHead>
-                                </TableRow>
-                            </TableHeader>
-                            <TableBody>
-                                {estimate.items.map((item, index) => {
-                                    const itemSubtotal = (item.feet || 1) * item.price * item.quantity;
-                                    const discountAmount = itemSubtotal * ((item.discount || 0) / 100);
-                                    const finalAmount = itemSubtotal - discountAmount;
-                                    runningTotal += finalAmount;
-                                    
-                                    return (
-                                        <TableRow key={index}>
-                                            <TableCell>{item.itemName}</TableCell>
-                                            <TableCell>{item.color}</TableCell>
-                                            <TableCell>{item.thickness || '-'}</TableCell>
-                                            <TableCell className="text-right">{item.feet ? item.feet.toFixed(2) : '-'}</TableCell>
-                                            <TableCell className="text-right">{item.quantity}</TableCell>
-                                            <TableCell className="text-right">{formatCurrency(item.price)}</TableCell>
-                                            <TableCell className="text-right">{item.discount || 0}%</TableCell>
-                                            <TableCell className="text-right">{formatCurrency(finalAmount)}</TableCell>
-                                        </TableRow>
-                                    )
-                                })}
-                            </TableBody>
-                        </Table>
-                    </div>
-
-                    <div className="mt-6 flex justify-end">
-                        <div className="w-80 space-y-2">
-                            <div className="flex justify-between font-bold text-lg border-t pt-2">
-                                <span>Total:</span>
-                                <span>{formatCurrency(estimate.total)}</span>
+                        <div className="mt-6 flex justify-end">
+                            <div className="w-80 space-y-2">
+                                <div className="flex justify-between font-bold text-lg border-t pt-2">
+                                    <span>Total:</span>
+                                    <span>{formatCurrency(estimate.total)}</span>
+                                </div>
                             </div>
                         </div>
                     </div>
                 </div>
             </div>
-            <DialogFooter className="mt-8">
-                <Button variant="outline">
-                    Close
+            <DialogFooter className="mt-4 flex-shrink-0 no-print">
+                <Button variant="outline" onClick={handlePrint}>
+                    <Printer className="mr-2 h-4 w-4" />
+                    Print Estimate
                 </Button>
             </DialogFooter>
         </DialogContent>
@@ -449,7 +462,7 @@ export default function EstimatesPage() {
         description="Create and manage quotations for customers."
       />
       <Tabs value={activeTab} onValueChange={setActiveTab}>
-        <TabsList className="w-full sm:w-auto grid grid-cols-2">
+        <TabsList className="w-full sm:w-auto grid grid-cols-2 no-print">
           <TabsTrigger value="history">Estimates History</TabsTrigger>
           <TabsTrigger value="new">New Estimate</TabsTrigger>
         </TabsList>
@@ -462,7 +475,7 @@ export default function EstimatesPage() {
                   <TableHead>Customer</TableHead>
                   <TableHead>Date</TableHead>
                   <TableHead className="text-right">Total Amount</TableHead>
-                  <TableHead>
+                  <TableHead className="no-print">
                     <span className="sr-only">Actions</span>
                   </TableHead>
                 </TableRow>
@@ -481,7 +494,7 @@ export default function EstimatesPage() {
                       <TableCell className="text-right">
                         {formatCurrency(estimate.total)}
                       </TableCell>
-                      <TableCell>
+                      <TableCell className="no-print">
                         <Dialog onOpenChange={(open) => !open && setSelectedEstimate(null)}>
                           <DropdownMenu>
                             <DropdownMenuTrigger asChild>

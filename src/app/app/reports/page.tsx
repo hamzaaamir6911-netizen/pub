@@ -2,6 +2,7 @@
 "use client"
 
 import React, { useState, useRef } from "react"
+import { useReactToPrint } from "react-to-print";
 import { Bar, BarChart, ResponsiveContainer, XAxis, YAxis, Tooltip, CartesianGrid, Legend } from "recharts"
 import {
   Card,
@@ -25,7 +26,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { useData } from "@/firebase/data/data-provider"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
 import { Button } from "@/components/ui/button"
-import { Calendar as CalendarIcon } from "lucide-react"
+import { Calendar as CalendarIcon, Printer } from "lucide-react"
 import { Calendar } from "@/components/ui/calendar"
 import { addDays, format } from "date-fns"
 import type { DateRange } from "react-day-picker"
@@ -66,7 +67,7 @@ function LedgerReport() {
     });
 
     return (
-        <Card className="mt-4 border-none shadow-none sm:border sm:shadow-sm">
+        <Card className="mt-4 border-none shadow-none sm:border sm:shadow-sm printable-content">
             <CardHeader>
                 <div>
                     <CardTitle>Ledger Report</CardTitle>
@@ -74,7 +75,7 @@ function LedgerReport() {
                 </div>
             </CardHeader>
             <CardContent className="space-y-4 px-0 sm:px-6">
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-2 no-print">
                     <Popover>
                         <PopoverTrigger asChild>
                             <Button
@@ -162,6 +163,12 @@ export default function ReportsPage() {
     const stats = getDashboardStats();
     const monthlyData = getMonthlySalesData();
     const [activeTab, setActiveTab] = useState("monthly");
+    const componentRef = useRef(null);
+
+    const handlePrint = useReactToPrint({
+      content: () => componentRef.current,
+      documentTitle: `Report-${activeTab}`
+    });
     
     const dailyReportData = [
         { date: "Today", sales: stats.todaySummary.sales.reduce((acc, s) => acc + s.total, 0), expenses: stats.todaySummary.expenses.reduce((acc, e) => acc + e.amount, 0)},
@@ -175,10 +182,14 @@ export default function ReportsPage() {
         title="Reports"
         description="Analyze your factory's financial performance."
       >
+        <Button variant="outline" onClick={handlePrint} className="no-print">
+            <Printer className="mr-2 h-4 w-4" /> Print Report
+        </Button>
       </PageHeader>
 
+      <div ref={componentRef} className="printable-content">
        <Tabs defaultValue="monthly" value={activeTab} onValueChange={setActiveTab}>
-        <TabsList className="grid w-full grid-cols-2 md:grid-cols-4 md:w-[500px]">
+        <TabsList className="grid w-full grid-cols-2 md:grid-cols-4 md:w-[500px] no-print">
           <TabsTrigger value="daily">Daily</TabsTrigger>
           <TabsTrigger value="monthly">Monthly</TabsTrigger>
           <TabsTrigger value="pl">Profit & Loss</TabsTrigger>
@@ -277,6 +288,7 @@ export default function ReportsPage() {
             <LedgerReport />
         </TabsContent>
       </Tabs>
+      </div>
     </>
   );
 }

@@ -2,7 +2,8 @@
 "use client";
 
 import { useState, useRef, useEffect } from "react";
-import { MoreHorizontal, PlusCircle, Trash2, RotateCcw, FileText, CheckCircle, Edit, Calendar as CalendarIcon, Undo2 } from "lucide-react";
+import { useReactToPrint } from "react-to-print";
+import { MoreHorizontal, PlusCircle, Trash2, RotateCcw, FileText, CheckCircle, Edit, Calendar as CalendarIcon, Undo2, Printer } from "lucide-react";
 import {
   Table,
   TableBody,
@@ -53,6 +54,12 @@ function SaleInvoice({ sale, onPost, onUnpost }: { sale: Sale, onPost: (saleId: 
     const { customers } = useData();
     const customer = customers.find(c => c.id === sale.customerId);
     const { toast } = useToast();
+    const componentRef = useRef<HTMLDivElement>(null);
+
+    const handlePrint = useReactToPrint({
+      content: () => componentRef.current,
+      documentTitle: `Invoice-${sale.id}`,
+    });
     
     let runningTotal = 0;
 
@@ -68,14 +75,17 @@ function SaleInvoice({ sale, onPost, onUnpost }: { sale: Sale, onPost: (saleId: 
 
     return (
         <DialogContent className="max-w-6xl max-h-[90vh] flex flex-col">
-            <DialogHeader className="flex-shrink-0">
+            <DialogHeader className="flex-shrink-0 no-print">
                 <div className="flex flex-col items-center justify-center pt-4">
-                    <h1 className="text-3xl font-bold font-headline">Arco aluminium</h1>
                     <DialogTitle>Sale Invoice: {sale.id}</DialogTitle>
                 </div>
             </DialogHeader>
             <div className="flex-grow overflow-y-auto">
-                <div className="p-6">
+                 <div ref={componentRef} className="p-6 printable-content">
+                    <div className="flex flex-col items-center justify-center pt-4 mb-8">
+                        <h1 className="text-3xl font-bold font-headline">Arco aluminium</h1>
+                        <p>Sale Invoice: {sale.id}</p>
+                    </div>
                     <div className="p-6">
                         <div className="grid grid-cols-2 gap-4 mb-6">
                             <div>
@@ -141,7 +151,11 @@ function SaleInvoice({ sale, onPost, onUnpost }: { sale: Sale, onPost: (saleId: 
                     </div>
                 </div>
             </div>
-            <DialogFooter className="mt-4 flex-shrink-0">
+            <DialogFooter className="mt-4 flex-shrink-0 no-print">
+                 <Button variant="outline" onClick={handlePrint}>
+                    <Printer className="mr-2 h-4 w-4" />
+                    Print Invoice
+                </Button>
                 {sale.status === 'draft' ? (
                     <Button onClick={handlePost}>
                         <CheckCircle className="mr-2 h-4 w-4" />
@@ -560,7 +574,7 @@ export default function SalesPage() {
         description="Record new sales and view sales history."
       />
       <Tabs value={activeTab} onValueChange={setActiveTab}>
-        <TabsList className="w-full sm:w-auto grid grid-cols-2">
+        <TabsList className="w-full sm:w-auto grid grid-cols-2 no-print">
           <TabsTrigger value="history">Sales History</TabsTrigger>
           <TabsTrigger value="new">{editingSale ? 'Edit Sale' : 'New Sale'}</TabsTrigger>
         </TabsList>
@@ -574,7 +588,7 @@ export default function SalesPage() {
                   <TableHead>Date</TableHead>
                   <TableHead>Status</TableHead>
                   <TableHead className="text-right">Total Amount</TableHead>
-                  <TableHead>
+                  <TableHead className="no-print">
                     <span className="sr-only">Actions</span>
                   </TableHead>
                 </TableRow>
@@ -598,7 +612,7 @@ export default function SalesPage() {
                       <TableCell className="text-right">
                         {formatCurrency(sale.total)}
                       </TableCell>
-                      <TableCell>
+                      <TableCell className="no-print">
                         <Dialog onOpenChange={(open) => !open && setSelectedSale(null)}>
                           <DropdownMenu>
                             <DropdownMenuTrigger asChild>
