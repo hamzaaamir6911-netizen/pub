@@ -237,12 +237,6 @@ export const DataProvider = ({ children }: { children: ReactNode }) => {
         const transactionRef = doc(collection(firestore, 'transactions'));
         batch.set(transactionRef, transactionData);
 
-        // No longer updating stock
-        // sale.items.forEach(item => {
-        //     const itemRef = doc(firestore, 'items', item.itemId);
-        //     batch.update(itemRef, { quantity: increment(-item.quantity) });
-        // });
-
         await batch.commit();
     };
 
@@ -266,11 +260,6 @@ export const DataProvider = ({ children }: { children: ReactNode }) => {
             querySnapshot.forEach((doc) => {
                 batch.delete(doc.ref);
             });
-             // No longer updating stock
-            // saleToDelete.items.forEach(item => {
-            //     const itemRef = doc(firestore, 'items', item.itemId);
-            //     batch.update(itemRef, { quantity: increment(item.quantity) });
-            // });
         }
         await batch.commit();
     };
@@ -328,7 +317,6 @@ export const DataProvider = ({ children }: { children: ReactNode }) => {
         const totalSales = sales.filter(s => s.status === 'posted').reduce((sum, sale) => sum + sale.total, 0);
         const totalExpenses = expenses.reduce((sum, expense) => sum + expense.amount, 0);
         
-        // Simplified Profit/Loss
         const profitLoss = totalSales - totalExpenses;
 
         const today = new Date();
