@@ -257,6 +257,8 @@ function NewSaleForm({ onSaleAdded, onSaleUpdated, initialData }: { onSaleAdded:
     const [isCustomerModalOpen, setCustomerModalOpen] = useState(false);
     const [saleDate, setSaleDate] = useState<Date | undefined>(new Date());
     const [comboboxOpen, setComboboxOpen] = useState(false)
+    const [search, setSearch] = useState("");
+
 
     const isEditMode = !!initialData;
 
@@ -385,6 +387,12 @@ function NewSaleForm({ onSaleAdded, onSaleUpdated, initialData }: { onSaleAdded:
         }
         setCustomerModalOpen(false);
     }
+    
+     const filteredItems = search.length < 4
+        ? allItems
+        : allItems.filter(item =>
+            `${item.name} (${item.thickness})`.toLowerCase().includes(search.toLowerCase())
+        );
 
     return (
         <>
@@ -478,17 +486,22 @@ function NewSaleForm({ onSaleAdded, onSaleUpdated, initialData }: { onSaleAdded:
                                     </PopoverTrigger>
                                     <PopoverContent className="w-[300px] p-0">
                                         <Command>
-                                            <CommandInput placeholder="Search item..." />
+                                            <CommandInput 
+                                                placeholder="Search item..." 
+                                                value={search}
+                                                onValueChange={setSearch}
+                                            />
                                             <CommandList>
                                                 <CommandEmpty>No item found.</CommandEmpty>
                                                 <CommandGroup>
-                                                    {allItems.map((item) => (
+                                                    {filteredItems.map((item) => (
                                                     <CommandItem
                                                         key={item.id}
                                                         value={item.id}
                                                         onSelect={(currentValue) => {
                                                             handleItemChange(index, "itemId", currentValue === saleItem.itemId ? "" : currentValue)
                                                             setComboboxOpen(false)
+                                                            setSearch("")
                                                         }}
                                                     >
                                                         <Check
@@ -730,7 +743,3 @@ export default function SalesPage() {
     </>
   );
 }
-
-    
-
-    
