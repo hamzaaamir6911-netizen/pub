@@ -47,6 +47,7 @@ import { useToast } from "@/hooks/use-toast";
 import { useData } from "@/firebase/data/data-provider";
 import { Badge } from "@/components/ui/badge";
 import { format } from "date-fns";
+import { Combobox } from "@/components/ui/combobox";
 
 
 function SaleInvoice({ sale, onPost, onUnpost }: { sale: Sale, onPost: (saleId: string) => void, onUnpost: (saleId: string) => void }) {
@@ -383,6 +384,11 @@ function NewSaleForm({ onSaleAdded, onSaleUpdated, initialData }: { onSaleAdded:
         setCustomerModalOpen(false);
     }
     
+    const itemOptions = allItems.map(item => ({
+        value: item.id,
+        label: `${item.name} ${item.thickness ? `(${item.thickness})` : ''} - ${item.color}`
+    }));
+
     return (
         <>
          <Card>
@@ -459,14 +465,12 @@ function NewSaleForm({ onSaleAdded, onSaleUpdated, initialData }: { onSaleAdded:
                          <div key={index} className="grid grid-cols-1 md:grid-cols-7 gap-2 items-end p-3 border rounded-md">
                             <div className="md:col-span-2 space-y-2">
                                 <Label>Item</Label>
-                                <Select onValueChange={(value) => handleItemChange(index, "itemId", value)} value={saleItem.itemId}>
-                                    <SelectTrigger>
-                                        <SelectValue placeholder="Select an item" />
-                                    </SelectTrigger>
-                                    <SelectContent>
-                                        {allItems.map(i => <SelectItem key={i.id} value={i.id}>{i.name} {i.thickness ? `(${i.thickness})` : ''} - {i.color}</SelectItem>)}
-                                    </SelectContent>
-                                </Select>
+                                <Combobox
+                                    options={itemOptions}
+                                    value={saleItem.itemId}
+                                    onValueChange={(value) => handleItemChange(index, "itemId", value)}
+                                    placeholder="Select an item"
+                                />
                             </div>
                             
                             <div className="space-y-2">
@@ -692,5 +696,7 @@ export default function SalesPage() {
     </>
   );
 }
+
+    
 
     
