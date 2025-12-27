@@ -1,9 +1,7 @@
 
-
 "use client";
 
-import { useState, useEffect, useMemo, useRef } from "react";
-import { useReactToPrint } from "react-to-print";
+import { useState, useEffect, useMemo } from "react";
 import { PlusCircle, X, MoreHorizontal, Printer } from "lucide-react";
 import {
   Table,
@@ -176,12 +174,6 @@ export default function LedgerPage() {
   const [selectedCustomerId, setSelectedCustomerId] = useState<string | null>(null);
   const [selectedVendorId, setSelectedVendorId] = useState<string | null>(null);
   const { toast } = useToast();
-  const componentRef = useRef(null);
-
-  const handlePrint = useReactToPrint({
-      content: () => componentRef.current,
-      documentTitle: `Ledger-${selectedCustomerId ? customers.find(c=>c.id === selectedCustomerId)?.name : ''}${selectedVendorId ? vendors.find(v=>v.id === selectedVendorId)?.name : 'General'}`
-  });
 
   const handleTransactionAdded = (newTransaction: Omit<Transaction, 'id' | 'date'>) => {
     addTransaction(newTransaction);
@@ -239,7 +231,7 @@ export default function LedgerPage() {
         description="A record of all financial transactions."
       >
         <div className="flex items-center gap-2 no-print">
-            <Button variant="outline" onClick={handlePrint}>
+            <Button variant="outline" onClick={() => window.print()}>
                 <Printer className="mr-2 h-4 w-4" /> Print Page
             </Button>
             <Dialog open={isModalOpen} onOpenChange={setModalOpen}>
@@ -254,6 +246,7 @@ export default function LedgerPage() {
         </div>
       </PageHeader>
 
+    <div className="printable-area">
       <div className="flex flex-wrap items-center gap-4 mb-4 p-4 bg-muted/50 rounded-lg no-print">
         <h3 className="text-sm font-medium">Filters</h3>
         <div className="flex items-center gap-2">
@@ -281,7 +274,7 @@ export default function LedgerPage() {
         )}
       </div>
 
-      <div ref={componentRef} className="rounded-lg border shadow-sm printable-content">
+      <div className="rounded-lg border shadow-sm">
         <Table>
           <TableHeader>
             <TableRow>
@@ -353,6 +346,7 @@ export default function LedgerPage() {
            )}
         </Table>
       </div>
+    </div>
     </>
   );
 }

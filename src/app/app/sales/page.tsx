@@ -2,7 +2,6 @@
 "use client";
 
 import { useState, useRef, useEffect } from "react";
-import { useReactToPrint } from "react-to-print";
 import { MoreHorizontal, PlusCircle, Trash2, RotateCcw, FileText, CheckCircle, Edit, Calendar as CalendarIcon, Undo2, Printer } from "lucide-react";
 import {
   Table,
@@ -54,12 +53,6 @@ function SaleInvoice({ sale, onPost, onUnpost }: { sale: Sale, onPost: (saleId: 
     const { customers } = useData();
     const customer = customers.find(c => c.id === sale.customerId);
     const { toast } = useToast();
-    const componentRef = useRef<HTMLDivElement>(null);
-
-    const handlePrint = useReactToPrint({
-      content: () => componentRef.current,
-      documentTitle: `Invoice-${sale.id}`,
-    });
     
     let runningTotal = 0;
 
@@ -80,8 +73,8 @@ function SaleInvoice({ sale, onPost, onUnpost }: { sale: Sale, onPost: (saleId: 
                     <DialogTitle>Sale Invoice: {sale.id}</DialogTitle>
                 </div>
             </DialogHeader>
-            <div className="flex-grow overflow-y-auto">
-                 <div ref={componentRef} className="p-6 printable-content">
+            <div className="flex-grow overflow-y-auto" id="printable-invoice">
+                 <div className="p-6">
                     <div className="flex flex-col items-center justify-center pt-4 mb-8">
                         <h1 className="text-3xl font-bold font-headline">Arco aluminium</h1>
                         <p>Sale Invoice: {sale.id}</p>
@@ -152,7 +145,7 @@ function SaleInvoice({ sale, onPost, onUnpost }: { sale: Sale, onPost: (saleId: 
                 </div>
             </div>
             <DialogFooter className="mt-4 flex-shrink-0 no-print">
-                 <Button variant="outline" onClick={handlePrint}>
+                 <Button variant="outline" onClick={() => window.print()}>
                     <Printer className="mr-2 h-4 w-4" />
                     Print / Save PDF
                 </Button>
@@ -573,7 +566,7 @@ export default function SalesPage() {
         title="Sales"
         description="Record new sales and view sales history."
       />
-      <Tabs value={activeTab} onValueChange={setActiveTab}>
+      <Tabs value={activeTab} onValueChange={setActiveTab} className="printable-area">
         <TabsList className="w-full sm:w-auto grid grid-cols-2 no-print">
           <TabsTrigger value="history">Sales History</TabsTrigger>
           <TabsTrigger value="new">{editingSale ? 'Edit Sale' : 'New Sale'}</TabsTrigger>
@@ -670,5 +663,3 @@ export default function SalesPage() {
     </>
   );
 }
-
-    

@@ -1,8 +1,7 @@
 
 "use client";
 
-import { useState, useRef } from "react";
-import { useReactToPrint } from "react-to-print";
+import { useState } from "react";
 import { MoreHorizontal, PlusCircle, Trash2, RotateCcw, FileText, Printer } from "lucide-react";
 import {
   Table,
@@ -49,12 +48,6 @@ import { useData } from "@/firebase/data/data-provider";
 function EstimatePrint({ estimate }: { estimate: Estimate }) {
     const { customers } = useData();
     const customer = customers.find(c => c.id === estimate.customerId);
-    const componentRef = useRef<HTMLDivElement>(null);
-
-    const handlePrint = useReactToPrint({
-      content: () => componentRef.current,
-      documentTitle: `Estimate-${estimate.id}`,
-    });
     
     let runningTotal = 0;
 
@@ -65,8 +58,8 @@ function EstimatePrint({ estimate }: { estimate: Estimate }) {
                     <DialogTitle>Estimate: {estimate.id}</DialogTitle>
                 </div>
             </DialogHeader>
-            <div className="flex-grow overflow-y-auto">
-                <div ref={componentRef} className="p-6 printable-content">
+            <div id="printable-estimate" className="flex-grow overflow-y-auto">
+                <div className="p-6">
                     <div className="flex flex-col items-center justify-center pt-4 mb-8">
                         <h1 className="text-3xl font-bold font-headline">Arco aluminium</h1>
                         <p>Estimate: {estimate.id}</p>
@@ -135,7 +128,7 @@ function EstimatePrint({ estimate }: { estimate: Estimate }) {
                 </div>
             </div>
             <DialogFooter className="mt-4 flex-shrink-0 no-print">
-                <Button variant="outline" onClick={handlePrint}>
+                <Button variant="outline" onClick={() => window.print()}>
                     <Printer className="mr-2 h-4 w-4" />
                     Print / Save PDF
                 </Button>
@@ -461,7 +454,7 @@ export default function EstimatesPage() {
         title="Estimates"
         description="Create and manage quotations for customers."
       />
-      <Tabs value={activeTab} onValueChange={setActiveTab}>
+      <Tabs value={activeTab} onValueChange={setActiveTab} className="printable-area">
         <TabsList className="w-full sm:w-auto grid grid-cols-2 no-print">
           <TabsTrigger value="history">Estimates History</TabsTrigger>
           <TabsTrigger value="new">New Estimate</TabsTrigger>
@@ -541,5 +534,3 @@ export default function EstimatesPage() {
     </>
   );
 }
-
-    

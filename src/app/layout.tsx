@@ -1,6 +1,6 @@
 
 import type {Metadata} from 'next';
-import { Inter as FontSans } from "next/font/google"
+import { PT_Sans } from "next/font/google"
 import './globals.css';
 import { cn } from "@/lib/utils"
 import { ThemeProvider } from "@/components/theme-provider"
@@ -12,9 +12,16 @@ export const metadata: Metadata = {
   description: 'Factory Management System for ARCO Aluminium',
 };
 
-const fontSans = FontSans({
+const fontBody = PT_Sans({
   subsets: ["latin"],
-  variable: "--font-sans",
+  variable: "--font-body",
+  weight: ['400', '700']
+})
+
+const fontHeadline = PT_Sans({
+  subsets: ["latin"],
+  variable: "--font-headline",
+  weight: '700'
 })
 
 export default function RootLayout({
@@ -26,12 +33,13 @@ export default function RootLayout({
     <html lang="en" suppressHydrationWarning>
       <body className={cn(
           "min-h-screen bg-background font-sans antialiased",
-          fontSans.variable
+          fontBody.variable,
+          fontHeadline.variable
         )}>
          <ThemeProvider
             attribute="class"
-            defaultTheme="dark"
-            enableSystem
+            defaultTheme="light"
+            enableSystem={false}
             disableTransitionOnChange
           >
             <FirebaseClientProvider>

@@ -1,9 +1,8 @@
 
 "use client"
 
-import React, { useState, useRef } from "react"
-import { useReactToPrint } from "react-to-print";
-import { Bar, BarChart, ResponsiveContainer, XAxis, YAxis, Tooltip, CartesianGrid, Legend } from "recharts"
+import React, { useState } from "react"
+import { Bar, BarChart, XAxis, YAxis, Tooltip, CartesianGrid, Legend } from "recharts"
 import {
   Card,
   CardContent,
@@ -67,7 +66,7 @@ function LedgerReport() {
     });
 
     return (
-        <Card className="mt-4 border-none shadow-none sm:border sm:shadow-sm printable-content">
+        <Card className="mt-4 border-none shadow-none sm:border sm:shadow-sm">
             <CardHeader>
                 <div>
                     <CardTitle>Ledger Report</CardTitle>
@@ -163,12 +162,6 @@ export default function ReportsPage() {
     const stats = getDashboardStats();
     const monthlyData = getMonthlySalesData();
     const [activeTab, setActiveTab] = useState("monthly");
-    const componentRef = useRef(null);
-
-    const handlePrint = useReactToPrint({
-      content: () => componentRef.current,
-      documentTitle: `Report-${activeTab}`
-    });
     
     const dailyReportData = [
         { date: "Today", sales: stats.todaySummary.sales.reduce((acc, s) => acc + s.total, 0), expenses: stats.todaySummary.expenses.reduce((acc, e) => acc + e.amount, 0)},
@@ -182,12 +175,12 @@ export default function ReportsPage() {
         title="Reports"
         description="Analyze your factory's financial performance."
       >
-        <Button variant="outline" onClick={handlePrint} className="no-print">
+        <Button variant="outline" onClick={() => window.print()} className="no-print">
             <Printer className="mr-2 h-4 w-4" /> Print Report
         </Button>
       </PageHeader>
 
-      <div ref={componentRef} className="printable-content">
+      <div className="printable-area">
        <Tabs defaultValue="monthly" value={activeTab} onValueChange={setActiveTab}>
         <TabsList className="grid w-full grid-cols-2 md:grid-cols-4 md:w-[500px] no-print">
           <TabsTrigger value="daily">Daily</TabsTrigger>
