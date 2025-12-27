@@ -16,8 +16,8 @@ export type Item = {
 
 export type Customer = {
   id: string;
-  name: string;
-  phone: string;
+  customerName: string;
+  phoneNumber: string;
   address: string;
   createdAt: Date;
   openingBalance?: number;

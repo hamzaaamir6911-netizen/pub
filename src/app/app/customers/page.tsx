@@ -42,29 +42,29 @@ import { Input } from "@/components/ui/input";
 import { useData } from "@/firebase/data/data-provider";
 
 function AddCustomerForm({ onCustomerAdded }: { onCustomerAdded: (newCustomer: Omit<Customer, 'id' | 'createdAt'>) => void }) {
-  const [name, setName] = useState('');
-  const [phone, setPhone] = useState('');
+  const [customerName, setCustomerName] = useState('');
+  const [phoneNumber, setPhoneNumber] = useState('');
   const [address, setAddress] = useState('');
   const [openingBalance, setOpeningBalance] = useState(0);
   const [balanceType, setBalanceType] = useState<'debit' | 'credit'>('debit');
   const { toast } = useToast();
 
   const handleSubmit = () => {
-    if (!name || !phone || !address) {
+    if (!customerName || !phoneNumber || !address) {
       toast({ variant: 'destructive', title: 'Please fill all fields.' });
       return;
     }
     const newCustomer: Omit<Customer, 'id' | 'createdAt'> = {
-      name,
-      phone,
+      customerName,
+      phoneNumber,
       address,
       openingBalance,
       balanceType,
     };
     onCustomerAdded(newCustomer);
-    toast({ title: 'Customer Added!', description: `${name} has been added.` });
-    setName('');
-    setPhone('');
+    toast({ title: 'Customer Added!', description: `${customerName} has been added.` });
+    setCustomerName('');
+    setPhoneNumber('');
     setAddress('');
     setOpeningBalance(0);
     setBalanceType('debit');
@@ -78,11 +78,11 @@ function AddCustomerForm({ onCustomerAdded }: { onCustomerAdded: (newCustomer: O
       <div className="space-y-4 py-4">
         <div className="space-y-2">
           <Label htmlFor="name">Customer Name</Label>
-          <Input id="name" value={name} onChange={(e) => setName(e.target.value)} placeholder="John Doe" />
+          <Input id="name" value={customerName} onChange={(e) => setCustomerName(e.target.value)} placeholder="John Doe" />
         </div>
         <div className="space-y-2">
           <Label htmlFor="phone">Phone Number</Label>
-          <Input id="phone" value={phone} onChange={(e) => setPhone(e.target.value)} placeholder="0300-1234567" />
+          <Input id="phone" value={phoneNumber} onChange={(e) => setPhoneNumber(e.target.value)} placeholder="0300-1234567" />
         </div>
         <div className="space-y-2">
           <Label htmlFor="address">Address</Label>
@@ -117,10 +117,58 @@ function AddCustomerForm({ onCustomerAdded }: { onCustomerAdded: (newCustomer: O
   );
 }
 
+function EditCustomerForm({ customer, onCustomerUpdated }: { customer: Customer; onCustomerUpdated: (id: string, updatedCustomer: Partial<Omit<Customer, 'id' | 'createdAt'>>) => void }) {
+  const [customerName, setCustomerName] = useState(customer.customerName);
+  const [phoneNumber, setPhoneNumber] = useState(customer.phoneNumber);
+  const [address, setAddress] = useState(customer.address);
+  const { toast } = useToast();
+
+  const handleSubmit = () => {
+    if (!customerName || !phoneNumber || !address) {
+      toast({ variant: 'destructive', title: 'Please fill all fields.' });
+      return;
+    }
+    const updatedCustomer: Partial<Omit<Customer, 'id' | 'createdAt'>> = {
+      customerName,
+      phoneNumber,
+      address,
+    };
+    onCustomerUpdated(customer.id, updatedCustomer);
+    toast({ title: 'Customer Updated!', description: `${customerName} has been updated.` });
+  };
+
+  return (
+    <DialogContent className="max-w-xl">
+      <DialogHeader>
+        <DialogTitle>Edit Customer</DialogTitle>
+      </DialogHeader>
+      <div className="space-y-4 py-4">
+        <div className="space-y-2">
+          <Label htmlFor="name">Customer Name</Label>
+          <Input id="name" value={customerName} onChange={(e) => setCustomerName(e.target.value)} placeholder="John Doe" />
+        </div>
+        <div className="space-y-2">
+          <Label htmlFor="phone">Phone Number</Label>
+          <Input id="phone" value={phoneNumber} onChange={(e) => setPhoneNumber(e.target.value)} placeholder="0300-1234567" />
+        </div>
+        <div className="space-y-2">
+          <Label htmlFor="address">Address</Label>
+          <Input id="address" value={address} onChange={(e) => setAddress(e.target.value)} placeholder="123, Main Street, City" />
+        </div>
+      </div>
+      <DialogFooter>
+        <Button onClick={handleSubmit}>Save Changes</Button>
+      </DialogFooter>
+    </DialogContent>
+  );
+}
+
 
 export default function CustomersPage() {
-  const { customers, addCustomer, deleteCustomer } = useData();
-  const [isCustomerModalOpen, setCustomerModalOpen] = useState(false);
+  const { customers, addCustomer, updateCustomer, deleteCustomer } = useData();
+  const [isAddModalOpen, setAddModalOpen] = useState(false);
+  const [isEditModalOpen, setEditModalOpen] = useState(false);
+  const [editingCustomer, setEditingCustomer] = useState<Customer | null>(null);
 
   const handleDelete = (id: string) => {
     deleteCustomer(id);
@@ -128,7 +176,18 @@ export default function CustomersPage() {
 
   const handleCustomerAdded = (newCustomer: Omit<Customer, 'id' | 'createdAt'>) => {
     addCustomer(newCustomer);
-    setCustomerModalOpen(false);
+    setAddModalOpen(false);
+  }
+
+  const handleEditClick = (customer: Customer) => {
+    setEditingCustomer(customer);
+    setEditModalOpen(true);
+  };
+
+  const handleCustomerUpdated = (id: string, updatedCustomer: Partial<Omit<Customer, 'id' | 'createdAt'>>) => {
+    updateCustomer(id, updatedCustomer);
+    setEditModalOpen(false);
+    setEditingCustomer(null);
   }
 
   return (
@@ -137,7 +196,7 @@ export default function CustomersPage() {
         title="Customers"
         description="Manage your client information."
       >
-        <Dialog open={isCustomerModalOpen} onOpenChange={setCustomerModalOpen}>
+        <Dialog open={isAddModalOpen} onOpenChange={setAddModalOpen}>
             <DialogTrigger asChild>
                 <Button>
                     <PlusCircle className="mr-2 h-4 w-4" />
@@ -162,8 +221,8 @@ export default function CustomersPage() {
           <TableBody>
             {customers.map((customer) => (
               <TableRow key={customer.id}>
-                <TableCell className="font-medium">{customer.name}</TableCell>
-                <TableCell>{customer.phone}</TableCell>
+                <TableCell className="font-medium">{customer.customerName}</TableCell>
+                <TableCell>{customer.phoneNumber}</TableCell>
                 <TableCell>{customer.address}</TableCell>
                 <TableCell>
                   <DropdownMenu>
@@ -175,7 +234,7 @@ export default function CustomersPage() {
                     </DropdownMenuTrigger>
                     <DropdownMenuContent align="end">
                       <DropdownMenuLabel>Actions</DropdownMenuLabel>
-                      <DropdownMenuItem>Edit</DropdownMenuItem>
+                      <DropdownMenuItem onSelect={() => handleEditClick(customer)}>Edit</DropdownMenuItem>
                       <DropdownMenuItem
                         onSelect={() => handleDelete(customer.id)}
                         className="text-red-500 focus:bg-red-500/10 focus:text-red-500"
@@ -190,6 +249,13 @@ export default function CustomersPage() {
           </TableBody>
         </Table>
       </div>
+
+       {editingCustomer && (
+        <Dialog open={isEditModalOpen} onOpenChange={setEditModalOpen}>
+          <EditCustomerForm customer={editingCustomer} onCustomerUpdated={handleCustomerUpdated} />
+        </Dialog>
+      )}
     </>
   );
 }
+

@@ -78,7 +78,10 @@
         },
         "balanceType": {
           "type": "string",
-          "enum": ["debit", "credit"],
+          "enum": [
+            "debit",
+            "credit"
+          ],
           "description": "The type of opening balance (debit or credit)."
         }
       },
@@ -117,11 +120,17 @@
         },
         "balanceType": {
           "type": "string",
-          "enum": ["debit", "credit"],
+          "enum": [
+            "debit",
+            "credit"
+          ],
           "description": "The type of opening balance (debit or credit)."
         }
       },
-      "required": ["id", "name"]
+      "required": [
+        "id",
+        "name"
+      ]
     },
     "Sale": {
       "$schema": "http://json-schema.org/draft-07/schema#",
@@ -347,7 +356,7 @@
           ]
         }
       },
-       {
+      {
         "path": "/vendors/{vendorId}",
         "definition": {
           "entityName": "vendor",

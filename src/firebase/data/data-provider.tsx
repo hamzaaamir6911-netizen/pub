@@ -23,6 +23,7 @@ interface DataContextProps {
   deleteItem: (id: string) => Promise<void>;
   updateItemStock: (id: string, newQuantity: number) => Promise<void>;
   addCustomer: (customer: Omit<Customer, 'id' | 'createdAt'>) => Promise<any>;
+  updateCustomer: (id: string, customer: Partial<Omit<Customer, 'id' | 'createdAt'>>) => Promise<void>;
   deleteCustomer: (id: string) => Promise<void>;
   addVendor: (vendor: Omit<Vendor, 'id' | 'createdAt'>) => Promise<any>;
   deleteVendor: (id: string) => Promise<void>;
@@ -135,7 +136,7 @@ export const DataProvider = ({ children }: { children: ReactNode }) => {
                 type: customer.balanceType === 'credit' ? 'credit' : 'debit',
                 category: 'Opening Balance',
                 customerId: newCustomerRef.id,
-                customerName: customer.name,
+                customerName: customer.customerName,
                 date: serverTimestamp() as Timestamp,
             };
             batch.set(transactionRef, transactionData);
@@ -143,6 +144,12 @@ export const DataProvider = ({ children }: { children: ReactNode }) => {
 
         await batch.commit();
         return { ...customer, id: newCustomerRef.id, createdAt: new Date() };
+    };
+
+    const updateCustomer = async (id: string, customer: Partial<Omit<Customer, 'id' | 'createdAt'>>) => {
+        if (!user) throw new Error("User not authenticated");
+        const customerRef = doc(firestore, 'customers', id);
+        updateDocumentNonBlocking(customerRef, customer);
     };
     
     const deleteCustomer = async (id: string) => {
@@ -458,7 +465,7 @@ export const DataProvider = ({ children }: { children: ReactNode }) => {
     const value = {
         items, customers, vendors, sales, estimates, expenses, transactions, loading,
         addItem, deleteItem, updateItemStock,
-        addCustomer, deleteCustomer,
+        addCustomer, updateCustomer, deleteCustomer,
         addVendor, deleteVendor,
         addSale, updateSale, postSale, unpostSale, deleteSale,
         addEstimate, deleteEstimate,
