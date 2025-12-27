@@ -388,11 +388,11 @@ function NewSaleForm({ onSaleAdded, onSaleUpdated, initialData }: { onSaleAdded:
         setCustomerModalOpen(false);
     }
     
-     const filteredItems = search.length < 4
-        ? allItems
-        : allItems.filter(item =>
-            `${item.name} (${item.thickness})`.toLowerCase().includes(search.toLowerCase())
-        );
+     const filteredItems = search
+        ? allItems.filter(item =>
+            `${item.name} ${item.thickness ? `(${item.thickness})` : ''} - ${item.color}`.toLowerCase().includes(search.toLowerCase())
+          )
+        : allItems;
 
     return (
         <>

@@ -333,11 +333,11 @@ function NewEstimateForm({ onEstimateAdded }: { onEstimateAdded: (newEstimate: O
         setCustomerModalOpen(false);
     }
 
-    const filteredItems = search.length < 4
-        ? allItems
-        : allItems.filter(item =>
-            `${item.name} (${item.thickness})`.toLowerCase().includes(search.toLowerCase())
-        );
+    const filteredItems = search
+        ? allItems.filter(item =>
+            `${item.name} ${item.thickness ? `(${item.thickness})` : ''} - ${item.color}`.toLowerCase().includes(search.toLowerCase())
+          )
+        : allItems;
 
     return (
         <>
