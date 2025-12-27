@@ -6,7 +6,7 @@ import React, { createContext, useContext, ReactNode } from 'react';
 import type { Item, Customer, Sale, Expense, Transaction, Vendor, Estimate } from '@/lib/types';
 import { useCollection, useFirestore, useMemoFirebase, useUser } from '@/firebase';
 import { collection, doc, writeBatch, serverTimestamp, Timestamp, orderBy, query, where, getDocs, runTransaction, increment } from 'firebase/firestore';
-import { addDocumentNonBlocking, deleteDocumentNonBlocking } from '../non-blocking-updates';
+import { addDocumentNonBlocking, deleteDocumentNonBlocking, updateDocumentNonBlocking } from '../non-blocking-updates';
 import { date } from 'zod';
 
 
@@ -21,6 +21,7 @@ interface DataContextProps {
   loading: boolean;
   addItem: (item: Omit<Item, 'id' | 'createdAt'>) => Promise<any>;
   deleteItem: (id: string) => Promise<void>;
+  updateItemStock: (id: string, newQuantity: number) => Promise<void>;
   addCustomer: (customer: Omit<Customer, 'id' | 'createdAt'>) => Promise<any>;
   deleteCustomer: (id: string) => Promise<void>;
   addVendor: (vendor: Omit<Vendor, 'id' | 'createdAt'>) => Promise<any>;
@@ -48,19 +49,18 @@ interface DataContextProps {
 
 const DataContext = createContext<DataContextProps | undefined>(undefined);
 
-const toDate = (timestamp: any) => {
+const toDate = (timestamp: any): Date => {
+    if (!timestamp) {
+        return new Date(); // Return current date as a fallback
+    }
     if (timestamp instanceof Timestamp) {
       return timestamp.toDate();
     }
-    // Handle cases where it might already be a Date object or a string
     if (timestamp instanceof Date) {
       return timestamp;
     }
-    if (typeof timestamp === 'string' || typeof timestamp === 'number') {
-      return new Date(timestamp);
-    }
-    // Fallback for serverTimestamp, which might be null initially
-    return new Date();
+    // For string or number dates
+    return new Date(timestamp);
 };
 
 export const DataProvider = ({ children }: { children: ReactNode }) => {
@@ -109,6 +109,12 @@ export const DataProvider = ({ children }: { children: ReactNode }) => {
     const deleteItem = async (id: string) => {
         if (!user) throw new Error("User not authenticated");
         deleteDocumentNonBlocking(doc(firestore, 'items', id));
+    };
+
+    const updateItemStock = async (id: string, newQuantity: number) => {
+        if (!user) throw new Error("User not authenticated");
+        const itemRef = doc(firestore, 'items', id);
+        updateDocumentNonBlocking(itemRef, { quantity: newQuantity });
     };
 
     const addCustomer = async (customer: Omit<Customer, 'id' | 'createdAt'>) => {
@@ -356,7 +362,7 @@ export const DataProvider = ({ children }: { children: ReactNode }) => {
     
     const value = {
         items, customers, vendors, sales, estimates, expenses, transactions, loading,
-        addItem, deleteItem,
+        addItem, deleteItem, updateItemStock,
         addCustomer, deleteCustomer,
         addVendor, deleteVendor,
         addSale, postSale, deleteSale,
