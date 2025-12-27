@@ -45,15 +45,19 @@ function AddItemForm({ onItemAdded, existingItems }: { onItemAdded: (newItem: Om
     const { toast } = useToast();
 
     const handleSubmit = () => {
-        if (!name || !category || !unit || !color) {
+        if (!name || !category || !unit || !color || !thickness) {
             toast({ variant: "destructive", title: "Please fill all required fields." });
             return;
         }
 
-        // Check for duplicates
-        const isDuplicate = existingItems.some(item => item.name.trim().toLowerCase() === name.trim().toLowerCase());
+        // Check for duplicates based on name AND thickness
+        const isDuplicate = existingItems.some(item => 
+            item.name.trim().toLowerCase() === name.trim().toLowerCase() &&
+            item.thickness.trim().toLowerCase() === thickness.trim().toLowerCase()
+        );
+
         if (isDuplicate) {
-            toast({ variant: "destructive", title: "Duplicate Item", description: "An item with this name already exists." });
+            toast({ variant: "destructive", title: "Duplicate Item", description: `An item with the name "${name}" and thickness "${thickness}" already exists.` });
             return;
         }
 
@@ -61,7 +65,7 @@ function AddItemForm({ onItemAdded, existingItems }: { onItemAdded: (newItem: Om
             name, category, unit, quantity, purchasePrice, salePrice, color, weight, thickness,
         };
         onItemAdded(newItem as Omit<Item, 'id' | 'createdAt'>);
-        toast({ title: "Item Added!", description: `${name} has been added to inventory.` });
+        toast({ title: "Item Added!", description: `${name} (${thickness}) has been added to inventory.` });
         // Reset form
         setName(''); setCategory('Aluminium'); setUnit('Feet'); setQuantity(0); setPurchasePrice(0); setSalePrice(0); setColor(''); setWeight(0); setThickness('');
     };
