@@ -47,8 +47,6 @@ import { useToast } from "@/hooks/use-toast";
 import { useData } from "@/firebase/data/data-provider";
 import { Badge } from "@/components/ui/badge";
 import { format } from "date-fns";
-import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
-import { Check, ChevronsUpDown } from "lucide-react"
 
 
 function SaleInvoice({ sale, onPost, onUnpost }: { sale: Sale, onPost: (saleId: string) => void, onUnpost: (saleId: string) => void }) {
@@ -256,9 +254,6 @@ function NewSaleForm({ onSaleAdded, onSaleUpdated, initialData }: { onSaleAdded:
     const [overallDiscount, setOverallDiscount] = useState(0);
     const [isCustomerModalOpen, setCustomerModalOpen] = useState(false);
     const [saleDate, setSaleDate] = useState<Date | undefined>(new Date());
-    const [comboboxOpen, setComboboxOpen] = useState(false)
-    const [search, setSearch] = useState("");
-
 
     const isEditMode = !!initialData;
 
@@ -388,12 +383,6 @@ function NewSaleForm({ onSaleAdded, onSaleUpdated, initialData }: { onSaleAdded:
         setCustomerModalOpen(false);
     }
     
-     const filteredItems = search
-        ? allItems.filter(item =>
-            `${item.name} ${item.thickness ? `(${item.thickness})` : ''} - ${item.color}`.toLowerCase().includes(search.toLowerCase())
-          )
-        : allItems;
-
     return (
         <>
          <Card>
@@ -470,54 +459,14 @@ function NewSaleForm({ onSaleAdded, onSaleUpdated, initialData }: { onSaleAdded:
                          <div key={index} className="grid grid-cols-1 md:grid-cols-7 gap-2 items-end p-3 border rounded-md">
                             <div className="md:col-span-2 space-y-2">
                                 <Label>Item</Label>
-                                <Popover open={comboboxOpen} onOpenChange={setComboboxOpen}>
-                                    <PopoverTrigger asChild>
-                                        <Button
-                                        variant="outline"
-                                        role="combobox"
-                                        aria-expanded={comboboxOpen}
-                                        className="w-full justify-between"
-                                        >
-                                        {saleItem.itemId
-                                            ? allItems.find((item) => item.id === saleItem.itemId)?.name
-                                            : "Select an item"}
-                                        <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
-                                        </Button>
-                                    </PopoverTrigger>
-                                    <PopoverContent className="w-[300px] p-0">
-                                        <Command>
-                                            <CommandInput 
-                                                placeholder="Search item..." 
-                                                value={search}
-                                                onValueChange={setSearch}
-                                            />
-                                            <CommandList>
-                                                <CommandEmpty>No item found.</CommandEmpty>
-                                                <CommandGroup>
-                                                    {filteredItems.map((item) => (
-                                                    <CommandItem
-                                                        key={item.id}
-                                                        value={item.id}
-                                                        onSelect={(currentValue) => {
-                                                            handleItemChange(index, "itemId", currentValue === saleItem.itemId ? "" : currentValue)
-                                                            setComboboxOpen(false)
-                                                            setSearch("")
-                                                        }}
-                                                    >
-                                                        <Check
-                                                        className={cn(
-                                                            "mr-2 h-4 w-4",
-                                                            saleItem.itemId === item.id ? "opacity-100" : "opacity-0"
-                                                        )}
-                                                        />
-                                                        {item.name} {item.thickness ? `(${item.thickness})` : ''} - {item.color}
-                                                    </CommandItem>
-                                                    ))}
-                                                </CommandGroup>
-                                            </CommandList>
-                                        </Command>
-                                    </PopoverContent>
-                                </Popover>
+                                <Select onValueChange={(value) => handleItemChange(index, "itemId", value)} value={saleItem.itemId}>
+                                    <SelectTrigger>
+                                        <SelectValue placeholder="Select an item" />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        {allItems.map(i => <SelectItem key={i.id} value={i.id}>{i.name} {i.thickness ? `(${i.thickness})` : ''} - {i.color}</SelectItem>)}
+                                    </SelectContent>
+                                </Select>
                             </div>
                             
                             <div className="space-y-2">
@@ -743,3 +692,5 @@ export default function SalesPage() {
     </>
   );
 }
+
+    
