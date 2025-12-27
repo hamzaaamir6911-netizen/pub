@@ -8,13 +8,6 @@ service cloud.firestore {
       return request.auth != null;
     }
 
-    // Allow signed-in users to read and write their own data.
-    // This provides a basic level of security.
-    match /users/{userId} {
-      allow read, update, delete: if request.auth.uid == userId;
-      allow create: if isSignedIn();
-    }
-    
     // Rules for all data collections. Any authenticated user can read/write.
     match /items/{itemId} {
       allow read, write: if isSignedIn();
@@ -39,6 +32,10 @@ service cloud.firestore {
     match /transactions/{transactionId} {
         allow read, write: if isSignedIn();
     }
+
+    match /estimates/{estimateId} {
+        allow read, write: if isSignedIn();
+    }
     
     // Admin role check collection.
     match /roles_admin/{userId} {
@@ -46,3 +43,5 @@ service cloud.firestore {
     }
   }
 }
+
+    

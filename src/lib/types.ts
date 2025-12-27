@@ -52,6 +52,16 @@ export type Sale = {
   status: 'draft' | 'posted';
 };
 
+export type Estimate = {
+  id: string;
+  customerId: string;
+  customerName: string;
+  items: SaleItem[];
+  total: number;
+  date: Date;
+  discount: number; // Overall discount percentage
+};
+
 export type Expense = {
   id: string;
   title: string;
@@ -73,4 +83,6 @@ export type Transaction = {
   vendorId?: string;
   vendorName?: string;
 }
+    
+
     

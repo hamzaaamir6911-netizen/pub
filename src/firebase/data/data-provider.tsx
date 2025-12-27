@@ -3,7 +3,7 @@
 "use client";
 
 import React, { createContext, useContext, ReactNode } from 'react';
-import type { Item, Customer, Sale, Expense, Transaction, Vendor } from '@/lib/types';
+import type { Item, Customer, Sale, Expense, Transaction, Vendor, Estimate } from '@/lib/types';
 import { useCollection, useFirestore, useMemoFirebase, useUser } from '@/firebase';
 import { collection, doc, writeBatch, serverTimestamp, Timestamp, orderBy, query, where, getDocs, runTransaction, increment } from 'firebase/firestore';
 import { addDocumentNonBlocking, deleteDocumentNonBlocking } from '../non-blocking-updates';
@@ -15,6 +15,7 @@ interface DataContextProps {
   customers: Customer[];
   vendors: Vendor[];
   sales: Sale[];
+  estimates: Estimate[];
   expenses: Expense[];
   transactions: Transaction[];
   loading: boolean;
@@ -27,6 +28,8 @@ interface DataContextProps {
   addSale: (sale: Omit<Sale, 'id' | 'date' | 'total' | 'status'>) => Promise<void>;
   postSale: (saleId: string) => Promise<void>;
   deleteSale: (id: string) => Promise<void>;
+  addEstimate: (estimate: Omit<Estimate, 'id' | 'date' | 'total'>) => Promise<void>;
+  deleteEstimate: (id: string) => Promise<void>;
   addExpense: (expense: Omit<Expense, 'id' | 'date'>) => Promise<void>;
   deleteExpense: (id:string) => Promise<void>;
   addTransaction: (transaction: Omit<Transaction, 'id' | 'date'>) => Promise<void>;
@@ -34,7 +37,6 @@ interface DataContextProps {
   getDashboardStats: () => {
     totalSales: number;
     totalExpenses: number;
-    totalStockValue: number;
     profitLoss: number;
     todaySummary: {
         sales: Sale[];
@@ -73,6 +75,7 @@ export const DataProvider = ({ children }: { children: ReactNode }) => {
     const customersCol = useMemoFirebase(() => shouldFetch ? collection(firestore, 'customers') : null, [firestore, shouldFetch]);
     const vendorsCol = useMemoFirebase(() => shouldFetch ? collection(firestore, 'vendors') : null, [firestore, shouldFetch]);
     const salesCol = useMemoFirebase(() => shouldFetch ? query(collection(firestore, 'sales'), orderBy('date', 'desc')) : null, [firestore, shouldFetch]);
+    const estimatesCol = useMemoFirebase(() => shouldFetch ? query(collection(firestore, 'estimates'), orderBy('date', 'desc')) : null, [firestore, shouldFetch]);
     const expensesCol = useMemoFirebase(() => shouldFetch ? query(collection(firestore, 'expenses'), orderBy('date', 'desc')) : null, [firestore, shouldFetch]);
     const transactionsCol = useMemoFirebase(() => shouldFetch ? query(collection(firestore, 'transactions'), orderBy('date', 'desc')) : null, [firestore, shouldFetch]);
 
@@ -81,6 +84,7 @@ export const DataProvider = ({ children }: { children: ReactNode }) => {
     const { data: customersData, isLoading: customersLoading } = useCollection<Customer>(customersCol);
     const { data: vendorsData, isLoading: vendorsLoading } = useCollection<Vendor>(vendorsCol);
     const { data: salesData, isLoading: salesLoading } = useCollection<Sale>(salesCol);
+    const { data: estimatesData, isLoading: estimatesLoading } = useCollection<Estimate>(estimatesCol);
     const { data: expensesData, isLoading: expensesLoading } = useCollection<Expense>(expensesCol);
     const { data: transactionsData, isLoading: transactionsLoading } = useCollection<Transaction>(transactionsCol);
     
@@ -88,10 +92,11 @@ export const DataProvider = ({ children }: { children: ReactNode }) => {
     const customers = customersData?.map(customer => ({ ...customer, createdAt: toDate(customer.createdAt) })) || [];
     const vendors = vendorsData?.map(vendor => ({ ...vendor, createdAt: toDate(vendor.createdAt) })) || [];
     const sales = salesData?.map(sale => ({ ...sale, date: toDate(sale.date) })) || [];
+    const estimates = estimatesData?.map(estimate => ({ ...estimate, date: toDate(estimate.date) })) || [];
     const expenses = expensesData?.map(expense => ({ ...expense, date: toDate(expense.date) })) || [];
     const transactions = transactionsData?.map(transaction => ({ ...transaction, date: toDate(transaction.date) })) || [];
 
-    const loading = isUserLoading || itemsLoading || customersLoading || vendorsLoading || salesLoading || expensesLoading || transactionsLoading;
+    const loading = isUserLoading || itemsLoading || customersLoading || vendorsLoading || salesLoading || estimatesLoading || expensesLoading || transactionsLoading;
 
     // --- Write Operations ---
 
@@ -171,6 +176,42 @@ export const DataProvider = ({ children }: { children: ReactNode }) => {
         });
     };
     
+    const addEstimate = async (estimate: Omit<Estimate, 'id' | 'date' | 'total'>) => {
+        if (!estimatesCol || !user) throw new Error("Estimates collection not available or user not authenticated");
+        
+        await runTransaction(firestore, async (transaction) => {
+            const estimatesCollectionRef = collection(firestore, 'estimates');
+            const estimatesSnapshot = await getDocs(estimatesCollectionRef);
+            const latestEstimateNumber = estimatesSnapshot.docs.reduce((max, s) => {
+                const num = parseInt(s.id.split('-')[1]);
+                return isNaN(num) ? max : Math.max(max, num);
+            }, 0);
+            const newEstimateId = `EST-${String(latestEstimateNumber + 1).padStart(3, '0')}`;
+            const newEstimateRef = doc(estimatesCollectionRef, newEstimateId);
+
+            const subtotal = estimate.items.reduce((total, currentItem) => {
+                const itemTotal = (currentItem.feet || 1) * currentItem.price * currentItem.quantity;
+                const discountAmount = itemTotal * ((currentItem.discount || 0) / 100);
+                return total + (itemTotal - discountAmount);
+            }, 0);
+            const overallDiscountAmount = (subtotal * estimate.discount) / 100;
+            const total = subtotal - overallDiscountAmount;
+
+            const newEstimateData = {
+                ...estimate,
+                id: newEstimateId,
+                total,
+                date: serverTimestamp(),
+            };
+
+            transaction.set(newEstimateRef, newEstimateData);
+        });
+    };
+    
+    const deleteEstimate = async (id: string) => {
+        if (!user) throw new Error("User not authenticated");
+        deleteDocumentNonBlocking(doc(firestore, 'estimates', id));
+    };
 
     const postSale = async (saleId: string) => {
         if (!user) throw new Error("User not authenticated");
@@ -196,6 +237,12 @@ export const DataProvider = ({ children }: { children: ReactNode }) => {
         const transactionRef = doc(collection(firestore, 'transactions'));
         batch.set(transactionRef, transactionData);
 
+        // No longer updating stock
+        // sale.items.forEach(item => {
+        //     const itemRef = doc(firestore, 'items', item.itemId);
+        //     batch.update(itemRef, { quantity: increment(-item.quantity) });
+        // });
+
         await batch.commit();
     };
 
@@ -219,6 +266,11 @@ export const DataProvider = ({ children }: { children: ReactNode }) => {
             querySnapshot.forEach((doc) => {
                 batch.delete(doc.ref);
             });
+             // No longer updating stock
+            // saleToDelete.items.forEach(item => {
+            //     const itemRef = doc(firestore, 'items', item.itemId);
+            //     batch.update(itemRef, { quantity: increment(item.quantity) });
+            // });
         }
         await batch.commit();
     };
@@ -275,7 +327,6 @@ export const DataProvider = ({ children }: { children: ReactNode }) => {
     const getDashboardStats = () => {
         const totalSales = sales.filter(s => s.status === 'posted').reduce((sum, sale) => sum + sale.total, 0);
         const totalExpenses = expenses.reduce((sum, expense) => sum + expense.amount, 0);
-        const totalStockValue = 0; // Removed stock calculation
         
         // Simplified Profit/Loss
         const profitLoss = totalSales - totalExpenses;
@@ -285,7 +336,7 @@ export const DataProvider = ({ children }: { children: ReactNode }) => {
             sales: sales.filter(s => new Date(s.date).toDateString() === today.toDateString() && s.status === 'posted'),
             expenses: expenses.filter(e => new Date(e.date).toDateString() === today.toDateString()),
         };
-        return { totalSales, totalExpenses, totalStockValue, profitLoss, todaySummary };
+        return { totalSales, totalExpenses, profitLoss, todaySummary };
     };
 
     const getMonthlySalesData = () => {
@@ -316,11 +367,12 @@ export const DataProvider = ({ children }: { children: ReactNode }) => {
     };
     
     const value = {
-        items, customers, vendors, sales, expenses, transactions, loading,
+        items, customers, vendors, sales, estimates, expenses, transactions, loading,
         addItem, deleteItem,
         addCustomer, deleteCustomer,
         addVendor, deleteVendor,
         addSale, postSale, deleteSale,
+        addEstimate, deleteEstimate,
         addExpense, deleteExpense,
         addTransaction, deleteTransaction,
         getDashboardStats, getMonthlySalesData,
@@ -340,5 +392,7 @@ export const useData = () => {
   }
   return context;
 };
+
+    
 
     

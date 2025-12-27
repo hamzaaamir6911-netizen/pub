@@ -151,6 +151,96 @@
         "date",
         "category"
       ]
+    },
+    "Estimate": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "Estimate",
+      "type": "object",
+      "description": "Represents a cost estimate or quotation for a customer.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the estimate."
+        },
+        "customerId": {
+          "type": "string",
+          "description": "Reference to the Customer this estimate is for."
+        },
+        "customerName": {
+          "type": "string",
+          "description": "The name of the customer."
+        },
+        "items": {
+          "type": "array",
+          "description": "A list of items included in the estimate.",
+          "items": {
+            "$ref": "#/backend/entities/SaleItem"
+          }
+        },
+        "total": {
+          "type": "number",
+          "description": "The total estimated amount."
+        },
+        "date": {
+          "type": "string",
+          "description": "The date the estimate was created.",
+          "format": "date-time"
+        },
+        "discount": {
+          "type": "number",
+          "description": "Overall discount percentage applied to the estimate."
+        }
+      },
+      "required": [
+        "id",
+        "customerId",
+        "customerName",
+        "items",
+        "total",
+        "date"
+      ]
+    },
+    "SaleItem": {
+      "title": "Sale Item",
+      "type": "object",
+      "description": "Represents an item within a sale or estimate.",
+      "properties": {
+        "itemId": {
+          "type": "string"
+        },
+        "itemName": {
+          "type": "string"
+        },
+        "quantity": {
+          "type": "number"
+        },
+        "price": {
+          "type": "number"
+        },
+        "color": {
+          "type": "string"
+        },
+        "weight": {
+          "type": "number"
+        },
+        "thickness": {
+          "type": "string"
+        },
+        "feet": {
+          "type": "number"
+        },
+        "discount": {
+          "type": "number"
+        }
+      },
+      "required": [
+        "itemId",
+        "itemName",
+        "quantity",
+        "price",
+        "color",
+        "thickness"
+      ]
     }
   },
   "auth": {
@@ -240,8 +330,25 @@
             }
           ]
         }
+      },
+      {
+        "path": "/estimates/{estimateId}",
+        "definition": {
+          "entityName": "estimate",
+          "schema": {
+            "$ref": "#/backend/entities/Estimate"
+          },
+          "description": "Stores estimate/quotation information.",
+          "params": [
+            {
+              "name": "estimateId",
+              "description": "Unique identifier for the estimate."
+            }
+          ]
+        }
       }
     ],
-    "reasoning": "The Firestore structure is designed to manage an aluminium factory's stock, sales, expenses, and customer data securely and efficiently. It prioritizes authorization independence to ensure robust security rules and scalable operations. The structure includes separate collections for `items`, `customers`, `sales`, and `expenses`, each serving distinct functions within the application. To enforce admin-only access, a dedicated `/roles_admin/{uid}` collection is used; the existence of a document at this path grants admin privileges. This existence check is secure and efficient.\n\n**Authorization Independence and QAPs:**\n\n*   **Admin Role:** Authorization is handled via the existence of documents in the `/roles_admin/{uid}` collection. This avoids complex custom claims and enables straightforward security rules based solely on `request.auth.uid`.\n*   **Segregation:** The segregation of data into separate collections (`items`, `customers`, `sales`, `expenses`) ensures that each collection has a homogeneous security posture, simplifying security rule definitions.\n\nThis structure adheres to the principles of Authorization Independence, Clarity of Intent, DBAC, and QAPs, ensuring a secure, scalable, and debuggable Firestore design."
+    "reasoning": "The Firestore structure is designed to manage an aluminium factory's stock, sales, expenses, and customer data securely and efficiently. It prioritizes authorization independence to ensure robust security rules and scalable operations. The structure includes separate collections for `items`, `customers`, `sales`, `expenses`, and `estimates`, each serving distinct functions within the application. To enforce admin-only access, a dedicated `/roles_admin/{uid}` collection is used; the existence of a document at this path grants admin privileges. This existence check is secure and efficient.\n\n**Authorization Independence and QAPs:**\n\n*   **Admin Role:** Authorization is handled via the existence of documents in the `/roles_admin/{uid}` collection. This avoids complex custom claims and enables straightforward security rules based solely on `request.auth.uid`.\n*   **Segregation:** The segregation of data into separate collections (`items`, `customers`, `sales`, `expenses`, `estimates`) ensures that each collection has a homogeneous security posture, simplifying security rule definitions.\n\nThis structure adheres to the principles of Authorization Independence, Clarity of Intent, DBAC, and QAPs, ensuring a secure, scalable, and debuggable Firestore design."
   }
 }
+    

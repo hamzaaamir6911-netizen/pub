@@ -4,7 +4,7 @@
 import * as React from "react"
 import Link from "next/link"
 import { usePathname, useRouter } from "next/navigation"
-import { Factory, LayoutDashboard, Warehouse, ShoppingCart, Users, CreditCard, BarChart3, LogOut, BookUser, Settings, Truck, Menu } from "lucide-react"
+import { Factory, LayoutDashboard, Warehouse, ShoppingCart, Users, CreditCard, BarChart3, LogOut, BookUser, Settings, Truck, Menu, FileQuestion } from "lucide-react"
 
 import { cn } from "@/lib/utils"
 import { Button } from "./ui/button"
@@ -16,6 +16,7 @@ import { signOut } from "firebase/auth"
 const navItems = [
   { href: "/app/dashboard", icon: LayoutDashboard, label: "Dashboard" },
   { href: "/app/inventory", icon: Warehouse, label: "Inventory" },
+  { href: "/app/estimates", icon: FileQuestion, label: "Estimates" },
   { href: "/app/sales", icon: ShoppingCart, label: "Sales" },
   { href: "/app/customers", icon: Users, label: "Customers" },
   { href: "/app/vendors", icon: Truck, label: "Vendors" },
@@ -118,3 +119,5 @@ export function AppHeader() {
     </header>
   )
 }
+
+    
