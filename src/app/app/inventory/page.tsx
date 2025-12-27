@@ -175,7 +175,7 @@ export default function InventoryPage() {
               <TableRow key={item.id}>
                 <TableCell className="font-medium">{item.name}</TableCell>
                 <TableCell>
-                  <Badge variant={categoryVariant[item.category]}>
+                  <Badge variant={categoryVariant[item.category] || 'default'}>
                     {item.category}
                   </Badge>
                 </TableCell>
