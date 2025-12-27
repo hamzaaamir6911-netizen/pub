@@ -89,32 +89,49 @@ h1, h2, h3, h4, h5, h6 {
     -webkit-print-color-adjust: exact !important;
     print-color-adjust: exact !important;
   }
-  .no-print {
+
+  .no-print, 
+  .no-print * {
     display: none !important;
   }
-  body, .printable-content, div, .card {
-    background-color: #ffffff !important;
-    color: #000000 !important;
+  
+  body, .printable-area, #printable-invoice, #printable-estimate, .dialog-content {
+      background: #fff !important;
+      color: #000 !important;
+      padding: 0;
+      margin: 0;
   }
-  h1, h2, h3, h4, p, span, div, td, th, .text-foreground, .text-card-foreground, .text-muted-foreground {
-    color: #000000 !important;
+  
+  .printable-area {
+      display: block !important;
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
   }
-  .border {
-      border-color: #cccccc !important;
+
+  .dialog-content,
+  #printable-invoice, 
+  #printable-estimate {
+    display: block !important;
+    position: static;
+    border: none !important;
+    box-shadow: none !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    height: auto !important;
+    max-height: none !important;
   }
-  .bg-muted\/50 {
-    background-color: #f1f5f9 !important;
+
+  body *, .printable-area *, #printable-invoice *, #printable-estimate * {
+    color: #000 !important;
+    border-color: #ccc !important;
   }
+
   .text-red-500, .text-red-600 {
     color: #ef4444 !important;
   }
   .text-green-500, .text-green-600, .text-green-700 {
     color: #22c55e !important;
-  }
-  .bg-green-100 {
-    background-color: #dcfce7 !important;
-  }
-   .bg-red-100 {
-    background-color: #fee2e2 !important;
   }
 }
