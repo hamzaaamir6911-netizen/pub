@@ -34,7 +34,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Button } from "@/components/ui/button";
+import { Button } from "@/componentsui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
@@ -128,6 +128,7 @@ function EstimatePrint({ estimate }: { estimate: Estimate }) {
 
                         <div className="mt-24 text-center text-xs text-gray-500 border-t pt-4">
                             <p className="font-semibold">Industrial Estate, Hayatabad Road B-5 PLOT 59 PESHAWAR</p>
+                            <p className="font-semibold">Phone: +923334646356</p>
                         </div>
                     </div>
                 </div>
