@@ -71,14 +71,14 @@ function SaleInvoice({ sale, onPost }: { sale: Sale, onPost: (saleId: string) =>
     }
 
     return (
-        <DialogContent className="max-w-6xl">
-            <div ref={printRef} className="print-area">
-                <DialogHeader>
-                    <div className="flex flex-col items-center justify-center pt-4">
-                        <h1 className="text-3xl font-bold font-headline">Arco aluminium</h1>
-                        <DialogTitle>Sale Invoice: {sale.id}</DialogTitle>
-                    </div>
-                </DialogHeader>
+        <DialogContent className="max-w-6xl max-h-[90vh] flex flex-col">
+            <DialogHeader className="flex-shrink-0">
+                <div className="flex flex-col items-center justify-center pt-4">
+                    <h1 className="text-3xl font-bold font-headline">Arco aluminium</h1>
+                    <DialogTitle>Sale Invoice: {sale.id}</DialogTitle>
+                </div>
+            </DialogHeader>
+            <div ref={printRef} className="print-area flex-grow overflow-y-auto">
                 <div className="p-6">
                     <div className="grid grid-cols-2 gap-4 mb-6">
                         <div>
@@ -143,7 +143,7 @@ function SaleInvoice({ sale, onPost }: { sale: Sale, onPost: (saleId: string) =>
                     </div>
                 </div>
             </div>
-            <DialogFooter className="mt-8 print:hidden">
+            <DialogFooter className="mt-4 flex-shrink-0 print:hidden">
                 <Button variant="outline" onClick={handlePrint}>
                     <Printer className="mr-2 h-4 w-4" />
                     Print Invoice
@@ -620,3 +620,5 @@ export default function SalesPage() {
     </>
   );
 }
+
+    
