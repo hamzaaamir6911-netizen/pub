@@ -2,7 +2,7 @@
 "use client";
 
 import { useState, useRef, useEffect } from "react";
-import { MoreHorizontal, PlusCircle, Trash2, RotateCcw, FileText, CheckCircle, Printer, Edit, Calendar as CalendarIcon, Undo2 } from "lucide-react";
+import { MoreHorizontal, PlusCircle, Trash2, RotateCcw, FileText, CheckCircle, Edit, Calendar as CalendarIcon, Undo2 } from "lucide-react";
 import {
   Table,
   TableBody,
@@ -46,7 +46,6 @@ import type { Sale, SaleItem, Customer, Item } from "@/lib/types";
 import { useToast } from "@/hooks/use-toast";
 import { useData } from "@/firebase/data/data-provider";
 import { Badge } from "@/components/ui/badge";
-import { useReactToPrint } from "react-to-print";
 import { format } from "date-fns";
 
 
@@ -54,12 +53,7 @@ function SaleInvoice({ sale, onPost, onUnpost }: { sale: Sale, onPost: (saleId: 
     const { customers } = useData();
     const customer = customers.find(c => c.id === sale.customerId);
     const { toast } = useToast();
-    const printRef = useRef(null);
     
-    const handlePrint = useReactToPrint({
-      content: () => printRef.current,
-    });
-
     let runningTotal = 0;
 
     const handlePost = () => {
@@ -74,14 +68,14 @@ function SaleInvoice({ sale, onPost, onUnpost }: { sale: Sale, onPost: (saleId: 
 
     return (
         <DialogContent className="max-w-6xl max-h-[90vh] flex flex-col">
-            <DialogHeader className="flex-shrink-0 print-hidden">
+            <DialogHeader className="flex-shrink-0">
                 <div className="flex flex-col items-center justify-center pt-4">
                     <h1 className="text-3xl font-bold font-headline">Arco aluminium</h1>
                     <DialogTitle>Sale Invoice: {sale.id}</DialogTitle>
                 </div>
             </DialogHeader>
             <div className="flex-grow overflow-y-auto">
-                <div ref={printRef} className="print-area p-6">
+                <div className="p-6">
                     <div className="p-6">
                         <div className="grid grid-cols-2 gap-4 mb-6">
                             <div>
@@ -147,11 +141,7 @@ function SaleInvoice({ sale, onPost, onUnpost }: { sale: Sale, onPost: (saleId: 
                     </div>
                 </div>
             </div>
-            <DialogFooter className="mt-4 flex-shrink-0 print-hidden">
-                <Button variant="outline" onClick={handlePrint}>
-                    <Printer className="mr-2 h-4 w-4" />
-                    Print Invoice
-                </Button>
+            <DialogFooter className="mt-4 flex-shrink-0">
                 {sale.status === 'draft' ? (
                     <Button onClick={handlePost}>
                         <CheckCircle className="mr-2 h-4 w-4" />

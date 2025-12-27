@@ -2,7 +2,7 @@
 "use client";
 
 import { useState, useRef } from "react";
-import { MoreHorizontal, PlusCircle, Trash2, RotateCcw, FileText, Printer } from "lucide-react";
+import { MoreHorizontal, PlusCircle, Trash2, RotateCcw, FileText } from "lucide-react";
 import {
   Table,
   TableBody,
@@ -43,23 +43,17 @@ import { formatCurrency, formatDate } from "@/lib/utils";
 import type { Estimate, SaleItem, Customer, Item } from "@/lib/types";
 import { useToast } from "@/hooks/use-toast";
 import { useData } from "@/firebase/data/data-provider";
-import { useReactToPrint } from "react-to-print";
 
 
 function EstimatePrint({ estimate }: { estimate: Estimate }) {
     const { customers } = useData();
     const customer = customers.find(c => c.id === estimate.customerId);
-    const printRef = useRef(null);
     
-    const handlePrint = useReactToPrint({
-      content: () => printRef.current,
-    });
-
     let runningTotal = 0;
 
     return (
         <DialogContent className="max-w-6xl">
-            <div ref={printRef} className="print-area p-6">
+            <div className="p-6">
                 <DialogHeader>
                     <div className="flex flex-col items-center justify-center pt-4 mb-8">
                         <h1 className="text-3xl font-bold font-headline">Arco aluminium</h1>
@@ -128,10 +122,9 @@ function EstimatePrint({ estimate }: { estimate: Estimate }) {
                     </div>
                 </div>
             </div>
-            <DialogFooter className="mt-8 print-hidden">
-                <Button variant="outline" onClick={handlePrint}>
-                    <Printer className="mr-2 h-4 w-4" />
-                    Print Estimate
+            <DialogFooter className="mt-8">
+                <Button variant="outline">
+                    Close
                 </Button>
             </DialogFooter>
         </DialogContent>
@@ -502,7 +495,7 @@ export default function EstimatesPage() {
                                <DialogTrigger asChild>
                                 <DropdownMenuItem onSelect={() => setSelectedEstimate(estimate)}>
                                     <FileText className="mr-2 h-4 w-4"/>
-                                    View/Print
+                                    View Details
                                 </DropdownMenuItem>
                               </DialogTrigger>
                               <DropdownMenuItem

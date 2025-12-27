@@ -25,13 +25,12 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { useData } from "@/firebase/data/data-provider"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
 import { Button } from "@/components/ui/button"
-import { Calendar as CalendarIcon, Printer } from "lucide-react"
+import { Calendar as CalendarIcon } from "lucide-react"
 import { Calendar } from "@/components/ui/calendar"
 import { addDays, format } from "date-fns"
 import type { DateRange } from "react-day-picker"
 import { Badge } from "@/components/ui/badge"
 import { cn } from "@/lib/utils"
-import { useReactToPrint } from "react-to-print";
 
 const chartConfig = {
   sales: {
@@ -46,15 +45,9 @@ const chartConfig = {
 
 function LedgerReport() {
     const { transactions } = useData();
-    const printRef = useRef(null);
     const [date, setDate] = React.useState<DateRange | undefined>({
         from: addDays(new Date(), -30),
         to: new Date(),
-    });
-
-    const handlePrint = useReactToPrint({
-        content: () => printRef.current,
-        documentTitle: "Ledger Report",
     });
 
     const filteredTransactions = transactions.filter(t => {
@@ -74,18 +67,14 @@ function LedgerReport() {
 
     return (
         <Card className="mt-4 border-none shadow-none sm:border sm:shadow-sm">
-            <CardHeader className="flex flex-row items-center justify-between print-hidden">
+            <CardHeader>
                 <div>
                     <CardTitle>Ledger Report</CardTitle>
                     <CardDescription>View transactions within a specific date range.</CardDescription>
                 </div>
-                 <Button variant="outline" onClick={handlePrint}>
-                    <Printer className="mr-2 h-4 w-4" />
-                    Print Report
-                </Button>
             </CardHeader>
             <CardContent className="space-y-4 px-0 sm:px-6">
-                <div className="flex items-center gap-2 print-hidden">
+                <div className="flex items-center gap-2">
                     <Popover>
                         <PopoverTrigger asChild>
                             <Button
@@ -123,13 +112,7 @@ function LedgerReport() {
                         </PopoverContent>
                     </Popover>
                 </div>
-                <div ref={printRef} className="print-area">
-                     <div className="p-4 hidden print:block text-center mb-4">
-                        <h2 className="text-2xl font-bold">Ledger Report</h2>
-                        <p className="text-sm">
-                            {date?.from && format(date.from, "LLL dd, y")} - {date?.to && format(date.to, "LLL dd, y")}
-                        </p>
-                    </div>
+                <div>
                     <div className="rounded-lg border">
                         <Table>
                             <TableHeader>
@@ -178,21 +161,7 @@ export default function ReportsPage() {
     const { getDashboardStats, getMonthlySalesData } = useData();
     const stats = getDashboardStats();
     const monthlyData = getMonthlySalesData();
-    const dailyPrintRef = useRef(null);
-    const monthlyPrintRef = useRef(null);
-    const plPrintRef = useRef(null);
     const [activeTab, setActiveTab] = useState("monthly");
-
-    const printRefs: { [key: string]: React.RefObject<any> } = {
-        daily: dailyPrintRef,
-        monthly: monthlyPrintRef,
-        pl: plPrintRef,
-    };
-    
-    const handlePrint = useReactToPrint({
-        content: () => printRefs[activeTab]?.current,
-        documentTitle: `${activeTab.charAt(0).toUpperCase() + activeTab.slice(1)} Report`,
-    });
     
     const dailyReportData = [
         { date: "Today", sales: stats.todaySummary.sales.reduce((acc, s) => acc + s.total, 0), expenses: stats.todaySummary.expenses.reduce((acc, e) => acc + e.amount, 0)},
@@ -206,23 +175,17 @@ export default function ReportsPage() {
         title="Reports"
         description="Analyze your factory's financial performance."
       >
-        {activeTab !== 'ledger' && (
-            <Button variant="outline" onClick={handlePrint} className="print-hidden">
-                <Printer className="mr-2 h-4 w-4" />
-                Print Active Report
-            </Button>
-        )}
       </PageHeader>
 
        <Tabs defaultValue="monthly" value={activeTab} onValueChange={setActiveTab}>
-        <TabsList className="grid w-full grid-cols-2 md:grid-cols-4 md:w-[500px] print-hidden">
+        <TabsList className="grid w-full grid-cols-2 md:grid-cols-4 md:w-[500px]">
           <TabsTrigger value="daily">Daily</TabsTrigger>
           <TabsTrigger value="monthly">Monthly</TabsTrigger>
           <TabsTrigger value="pl">Profit & Loss</TabsTrigger>
           <TabsTrigger value="ledger">Ledger</TabsTrigger>
         </TabsList>
         <TabsContent value="daily">
-             <div ref={dailyPrintRef} className="print-area">
+             <div>
                  <Card className="mt-4">
                     <CardHeader>
                         <CardTitle>Daily Report</CardTitle>
@@ -253,7 +216,7 @@ export default function ReportsPage() {
             </div>
         </TabsContent>
         <TabsContent value="monthly">
-             <div ref={monthlyPrintRef} className="print-area">
+             <div>
                  <Card className="mt-4">
                     <CardHeader>
                         <CardTitle>Monthly Performance</CardTitle>
@@ -285,7 +248,7 @@ export default function ReportsPage() {
             </div>
         </TabsContent>
         <TabsContent value="pl">
-            <div ref={plPrintRef} className="print-area">
+            <div>
                  <Card className="mt-4">
                     <CardHeader>
                         <CardTitle>Profit & Loss Statement</CardTitle>

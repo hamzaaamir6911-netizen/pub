@@ -3,64 +3,6 @@
 @tailwind components;
 @tailwind utilities;
 
-@media print {
-  /* Apply a standard light theme for all printouts for consistency */
-  body {
-    -webkit-print-color-adjust: exact !important;
-    print-color-adjust: exact !important;
-  }
-
-  /* Hide everything by default, show only the print area */
-  body * {
-    visibility: hidden;
-  }
-  .print-area, .print-area * {
-    visibility: visible;
-  }
-  .print-area {
-    position: absolute;
-    left: 0;
-    top: 0;
-    width: 100%;
-    margin: 0;
-    padding: 1rem;
-    background-color: #fff !important;
-    color: #000 !important;
-  }
-  
-  /* Make sure all text in the print area is black */
-  .print-area, .print-area * {
-     color: #000 !important;
-  }
-  .print-area .text-muted-foreground {
-    color: #555 !important;
-  }
-  .print-area .text-green-600, .print-area .text-green-700 {
-    color: #16a34a !important;
-  }
-  .print-area .text-red-600, .print-area .text-red-700 {
-    color: #dc2626 !important;
-  }
-  
-  /* Ensure borders are visible */
-  .print-area .border, .print-area .border-t, .print-area .border-b,
-  .print-area table, .print-area tr, .print-area td, .print-area th {
-    border-color: #e5e7eb !important;
-  }
-
-  /* Reset any card styling for a flat print view */
-  .print-area .shadow-sm, .print-area .rounded-lg, .print-area .bg-card {
-    box-shadow: none !important;
-    border-radius: 0 !important;
-    background: transparent !important;
-  }
-
-  /* Elements to hide specifically during print */
-  .print-hidden {
-    display: none !important;
-  }
-}
-
 body {
   font-family: var(--font-body), sans-serif;
 }
