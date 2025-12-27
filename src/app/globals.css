@@ -37,7 +37,6 @@ h1, h2, h3, h4, h5, h6 {
     --chart-3: 233 30% 60%;
     --chart-4: 233 20% 70%;
     --chart-5: 233 10% 80%;
-    --radius: 0.5rem;
     --sidebar-background: 233 64% 20%;
     --sidebar-foreground: 0 0% 98%;
     --sidebar-primary: 233 64% 30%;
@@ -55,32 +54,24 @@ h1, h2, h3, h4, h5, h6 {
     --card-foreground: 0 0% 98%;
     --popover: 224 71.4% 4.1%;
     --popover-foreground: 0 0% 98%;
-    --primary: 0 0% 98%;
+    --primary: 210 40% 98%;
     --primary-foreground: 222.2 47.4% 11.2%;
-    --secondary: 215 27.9% 16.9%;
-    --secondary-foreground: 0 0% 98%;
-    --muted: 215 27.9% 16.9%;
-    --muted-foreground: 217.9 10.6% 64.9%;
-    --accent: 215 27.9% 16.9%;
-    --accent-foreground: 0 0% 98%;
+    --secondary: 217.2 32.6% 17.5%;
+    --secondary-foreground: 210 40% 98%;
+    --muted: 217.2 32.6% 17.5%;
+    --muted-foreground: 215 20.2% 65.1%;
+    --accent: 217.2 32.6% 17.5%;
+    --accent-foreground: 210 40% 98%;
     --destructive: 0 62.8% 30.6%;
-    --destructive-foreground: 0 0% 98%;
-    --border: 215 27.9% 16.9%;
-    --input: 215 27.9% 16.9%;
-    --ring: 215 20.2% 95.1%;
-    --chart-1: 233 70% 70%;
-    --chart-2: 233 60% 60%;
-    --chart-3: 233 50% 50%;
-    --chart-4: 233 40% 40%;
-    --chart-5: 233 30% 30%;
-    --sidebar-background: 233 64% 20%;
-    --sidebar-foreground: 0 0% 98%;
-    --sidebar-primary: 0 0% 98%;
-    --sidebar-primary-foreground: 233 64% 20%;
-    --sidebar-accent: 233 64% 35%;
-    --sidebar-accent-foreground: 0 0% 98%;
-    --sidebar-border: 233 64% 25%;
-    --sidebar-ring: 233 70% 60%;
+    --destructive-foreground: 210 40% 98%;
+    --border: 217.2 32.6% 17.5%;
+    --input: 217.2 32.6% 17.5%;
+    --ring: 212.7 26.8% 83.9%;
+    --chart-1: 210 40% 98%;
+    --chart-2: 217 30% 50%;
+    --chart-3: 217 30% 60%;
+    --chart-4: 217 30% 70%;
+    --chart-5: 217 30% 80%;
   }
 }
 
@@ -95,20 +86,35 @@ h1, h2, h3, h4, h5, h6 {
 
 @media print {
   body {
-    -webkit-print-color-adjust: exact;
-    print-color-adjust: exact;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
   }
   .no-print {
     display: none !important;
   }
-  body, .printable-content {
+  body, .printable-content, div, .card {
     background-color: #ffffff !important;
     color: #000000 !important;
   }
-  .printable-content h1, .printable-content h2, .printable-content p, .printable-content div, .printable-content span, .printable-content td, .printable-content th {
+  h1, h2, h3, h4, p, span, div, td, th, .text-foreground, .text-card-foreground, .text-muted-foreground {
     color: #000000 !important;
   }
-  .printable-content .border {
+  .border {
       border-color: #cccccc !important;
+  }
+  .bg-muted\/50 {
+    background-color: #f1f5f9 !important;
+  }
+  .text-red-500, .text-red-600 {
+    color: #ef4444 !important;
+  }
+  .text-green-500, .text-green-600, .text-green-700 {
+    color: #22c55e !important;
+  }
+  .bg-green-100 {
+    background-color: #dcfce7 !important;
+  }
+   .bg-red-100 {
+    background-color: #fee2e2 !important;
   }
 }
