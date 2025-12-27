@@ -137,7 +137,7 @@ function EstimatePrint({ estimate }: { estimate: Estimate }) {
             <DialogFooter className="mt-4 flex-shrink-0 no-print">
                 <Button variant="outline" onClick={handlePrint}>
                     <Printer className="mr-2 h-4 w-4" />
-                    Print Estimate
+                    Print / Save PDF
                 </Button>
             </DialogFooter>
         </DialogContent>
@@ -541,3 +541,5 @@ export default function EstimatesPage() {
     </>
   );
 }
+
+    

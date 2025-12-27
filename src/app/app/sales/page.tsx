@@ -154,7 +154,7 @@ function SaleInvoice({ sale, onPost, onUnpost }: { sale: Sale, onPost: (saleId: 
             <DialogFooter className="mt-4 flex-shrink-0 no-print">
                  <Button variant="outline" onClick={handlePrint}>
                     <Printer className="mr-2 h-4 w-4" />
-                    Print Invoice
+                    Print / Save PDF
                 </Button>
                 {sale.status === 'draft' ? (
                     <Button onClick={handlePost}>
@@ -670,3 +670,5 @@ export default function SalesPage() {
     </>
   );
 }
+
+    
