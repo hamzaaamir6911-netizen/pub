@@ -135,6 +135,7 @@ function AddItemForm({ onItemAdded, existingItems }: { onItemAdded: (newItem: Om
 export default function InventoryPage() {
   const { items, addItem, deleteItem } = useData();
   const [isItemModalOpen, setItemModalOpen] = useState(false);
+  const [thicknessFilter, setThicknessFilter] = useState<string>("");
 
   const handleDelete = (id: string) => {
     deleteItem(id);
@@ -150,6 +151,12 @@ export default function InventoryPage() {
     Glass: "secondary",
     Accessories: "outline",
   } as const;
+
+  const uniqueThicknesses = [...new Set(items.map(item => item.thickness).filter(Boolean))].sort();
+
+  const filteredItems = items.filter(item => 
+    !thicknessFilter || item.thickness === thicknessFilter
+  );
 
   return (
     <>
@@ -167,6 +174,21 @@ export default function InventoryPage() {
             <AddItemForm onItemAdded={handleItemAdded} existingItems={items} />
         </Dialog>
       </PageHeader>
+
+       <div className="flex items-center gap-4 mb-4 p-4 bg-muted/50 rounded-lg">
+        <h3 className="text-sm font-medium">Filter by Thickness:</h3>
+        <Select onValueChange={(value) => setThicknessFilter(value === "all" ? "" : value)} value={thicknessFilter}>
+            <SelectTrigger className="w-[180px]">
+                <SelectValue placeholder="All Thicknesses" />
+            </SelectTrigger>
+            <SelectContent>
+                <SelectItem value="all">All Thicknesses</SelectItem>
+                {uniqueThicknesses.map(t => <SelectItem key={t} value={t}>{t}</SelectItem>)}
+            </SelectContent>
+        </Select>
+      </div>
+
+
       <div className="rounded-lg border shadow-sm overflow-x-auto">
         <Table>
           <TableHeader>
@@ -183,7 +205,7 @@ export default function InventoryPage() {
             </TableRow>
           </TableHeader>
           <TableBody>
-            {items.map((item) => (
+            {filteredItems.map((item) => (
               <TableRow key={item.id}>
                 <TableCell className="font-medium">{item.name}</TableCell>
                 <TableCell>
