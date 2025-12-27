@@ -32,7 +32,7 @@ import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
 
-function AddItemForm({ onItemAdded }: { onItemAdded: (newItem: Omit<Item, 'id' | 'createdAt'>) => void }) {
+function AddItemForm({ onItemAdded, existingItems }: { onItemAdded: (newItem: Omit<Item, 'id' | 'createdAt'>) => void; existingItems: Item[] }) {
     const [name, setName] = useState('');
     const [category, setCategory] = useState<'Aluminium' | 'Glass' | 'Accessories'>('Aluminium');
     const [unit, setUnit] = useState<'Kg' | 'Feet' | 'Piece'>('Feet');
@@ -49,6 +49,14 @@ function AddItemForm({ onItemAdded }: { onItemAdded: (newItem: Omit<Item, 'id' |
             toast({ variant: "destructive", title: "Please fill all required fields." });
             return;
         }
+
+        // Check for duplicates
+        const isDuplicate = existingItems.some(item => item.name.trim().toLowerCase() === name.trim().toLowerCase());
+        if (isDuplicate) {
+            toast({ variant: "destructive", title: "Duplicate Item", description: "An item with this name already exists." });
+            return;
+        }
+
         const newItem: Omit<Item, 'id' | 'createdAt'> = {
             name, category, unit, quantity, purchasePrice, salePrice, color, weight, thickness,
         };
@@ -152,7 +160,7 @@ export default function InventoryPage() {
                     Add Item
                 </Button>
             </DialogTrigger>
-            <AddItemForm onItemAdded={handleItemAdded} />
+            <AddItemForm onItemAdded={handleItemAdded} existingItems={items} />
         </Dialog>
       </PageHeader>
       <div className="rounded-lg border shadow-sm overflow-x-auto">
