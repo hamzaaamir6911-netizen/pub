@@ -56,7 +56,6 @@ function LedgerReport() {
 
     const handlePrint = useReactToPrint({
         content: () => printRef.current,
-        bodyClass: "print-body",
     });
 
     const filteredTransactions = transactions.filter(t => {
@@ -81,13 +80,13 @@ function LedgerReport() {
                     <CardTitle>Ledger Report</CardTitle>
                     <CardDescription>View transactions within a specific date range.</CardDescription>
                 </div>
-                 <Button variant="outline" onClick={handlePrint} className="print:hidden">
+                 <Button variant="outline" onClick={handlePrint} className="print-hidden">
                     <Printer className="mr-2 h-4 w-4" />
                     Print Report
                 </Button>
             </CardHeader>
             <CardContent className="space-y-4">
-                <div className="flex items-center gap-2 print:hidden">
+                <div className="flex items-center gap-2 print-hidden">
                     <Popover>
                         <PopoverTrigger asChild>
                             <Button
@@ -126,7 +125,7 @@ function LedgerReport() {
                     </Popover>
                 </div>
                 <div ref={printRef} className="print-area rounded-lg border print:border-none print:shadow-none">
-                     <div className="p-4 print:block hidden">
+                     <div className="p-4 hidden print:block">
                         <h2 className="text-2xl font-bold text-center">Ledger Report</h2>
                         <p className="text-center text-sm text-muted-foreground">
                             {date?.from && format(date.from, "LLL dd, y")} - {date?.to && format(date.to, "LLL dd, y")}
@@ -183,7 +182,6 @@ export default function ReportsPage() {
 
     const handlePrint = useReactToPrint({
         content: () => printRef.current,
-        bodyClass: "print-body",
     });
     
     const dailyReportData = [
@@ -197,14 +195,14 @@ export default function ReportsPage() {
         title="Reports"
         description="Analyze your factory's financial performance."
       >
-        <Button variant="outline" onClick={handlePrint} className="print:hidden">
+        <Button variant="outline" onClick={handlePrint} className="print-hidden">
             <Printer className="mr-2 h-4 w-4" />
             Print Active Report
         </Button>
       </PageHeader>
 
        <Tabs defaultValue="monthly" value={activeTab} onValueChange={setActiveTab}>
-        <TabsList className="grid w-full grid-cols-2 md:grid-cols-4 md:w-[500px] print:hidden">
+        <TabsList className="grid w-full grid-cols-2 md:grid-cols-4 md:w-[500px] print-hidden">
           <TabsTrigger value="daily">Daily</TabsTrigger>
           <TabsTrigger value="monthly">Monthly</TabsTrigger>
           <TabsTrigger value="pl">Profit & Loss</TabsTrigger>

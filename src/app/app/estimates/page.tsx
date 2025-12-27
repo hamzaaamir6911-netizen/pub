@@ -53,21 +53,15 @@ function EstimatePrint({ estimate }: { estimate: Estimate }) {
     
     const handlePrint = useReactToPrint({
       content: () => printRef.current,
-      onBeforeGetContent: async () => {
-          document.body.classList.add('print-body');
-      },
-      onAfterPrint: () => {
-          document.body.classList.remove('print-body');
-      }
     });
 
     let runningTotal = 0;
 
     return (
         <DialogContent className="max-w-6xl">
-            <div ref={printRef} className="print-area">
+            <div ref={printRef} className="print-area p-6">
                 <DialogHeader>
-                    <div className="flex flex-col items-center justify-center pt-4">
+                    <div className="flex flex-col items-center justify-center pt-4 mb-8">
                         <h1 className="text-3xl font-bold font-headline">Arco aluminium</h1>
                         <DialogTitle>Estimate: {estimate.id}</DialogTitle>
                     </div>
@@ -134,7 +128,7 @@ function EstimatePrint({ estimate }: { estimate: Estimate }) {
                     </div>
                 </div>
             </div>
-            <DialogFooter className="mt-8 print:hidden">
+            <DialogFooter className="mt-8 print-hidden">
                 <Button variant="outline" onClick={handlePrint}>
                     <Printer className="mr-2 h-4 w-4" />
                     Print Estimate
@@ -541,5 +535,3 @@ export default function EstimatesPage() {
     </>
   );
 }
-
-    

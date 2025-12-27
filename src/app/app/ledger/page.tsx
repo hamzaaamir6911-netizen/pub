@@ -180,12 +180,6 @@ export default function LedgerPage() {
 
   const handlePrint = useReactToPrint({
       content: () => printRef.current,
-      onBeforeGetContent: async () => {
-          document.body.classList.add('print-body');
-      },
-      onAfterPrint: () => {
-          document.body.classList.remove('print-body');
-      }
   });
 
   const handleTransactionAdded = (newTransaction: Omit<Transaction, 'id' | 'date'>) => {
@@ -244,13 +238,13 @@ export default function LedgerPage() {
         description="A record of all financial transactions."
       >
         <div className="flex items-center gap-2">
-            <Button variant="outline" onClick={handlePrint} className="print:hidden">
+            <Button variant="outline" onClick={handlePrint} className="print-hidden">
                 <Printer className="mr-2 h-4 w-4" />
                 Print
             </Button>
             <Dialog open={isModalOpen} onOpenChange={setModalOpen}>
                 <DialogTrigger asChild>
-                    <Button className="print:hidden">
+                    <Button className="print-hidden">
                         <PlusCircle className="mr-2 h-4 w-4" />
                         Add Voucher
                     </Button>
@@ -260,7 +254,7 @@ export default function LedgerPage() {
         </div>
       </PageHeader>
 
-      <div className="flex flex-wrap items-center gap-4 mb-4 p-4 bg-muted/50 rounded-lg print:hidden">
+      <div className="flex flex-wrap items-center gap-4 mb-4 p-4 bg-muted/50 rounded-lg print-hidden">
         <h3 className="text-sm font-medium">Filters</h3>
         <div className="flex items-center gap-2">
             <Label htmlFor="customer-filter" className="text-sm">Customer</Label>
@@ -297,7 +291,7 @@ export default function LedgerPage() {
               <TableHead className="text-right">Debit</TableHead>
               <TableHead className="text-right">Credit</TableHead>
               {hasFilter && <TableHead className="text-right">Balance</TableHead>}
-              <TableHead className="print:hidden"><span className="sr-only">Actions</span></TableHead>
+              <TableHead className="print-hidden"><span className="sr-only">Actions</span></TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -322,7 +316,7 @@ export default function LedgerPage() {
                         {transaction.type === 'credit' ? formatCurrency(transaction.amount) : '-'}
                     </TableCell>
                     {hasFilter && <TableCell className="text-right font-mono">{formatCurrency(transaction.balance)}</TableCell>}
-                    <TableCell className="print:hidden">
+                    <TableCell className="print-hidden">
                       <DropdownMenu>
                         <DropdownMenuTrigger asChild>
                           <Button aria-haspopup="true" size="icon" variant="ghost">
@@ -353,7 +347,7 @@ export default function LedgerPage() {
                         <TableCell className={cn("text-right font-bold font-mono", runningBalance >= 0 ? "text-green-600" : "text-red-600")}>
                             {formatCurrency(runningBalance)}
                         </TableCell>
-                         <TableCell className="print:hidden"></TableCell>
+                         <TableCell className="print-hidden"></TableCell>
                     </TableRow>
                 </TableFooter>
            )}

@@ -1,11 +1,15 @@
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
 @media print {
+  /* Apply a standard light theme for all printouts for consistency */
   body {
     -webkit-print-color-adjust: exact !important;
     print-color-adjust: exact !important;
+    background-color: #fff !important;
+    color: #000 !important;
   }
 
   /* Hide everything by default */
@@ -15,6 +19,26 @@
   
   .print-area, .print-area * {
     visibility: visible;
+    color: #000 !important; /* Ensure all text is black */
+  }
+
+  .print-area .text-muted-foreground {
+    color: #555 !important;
+  }
+
+  .print-area .text-green-600, .print-area .text-green-700 {
+    color: #16a34a !important;
+  }
+  .print-area .text-red-600, .print-area .text-red-700 {
+    color: #dc2626 !important;
+  }
+
+  .print-area .border, .print-area .border-t, .print-area .border-b {
+    border-color: #e5e7eb !important;
+  }
+
+  .print-area table, .print-area tr, .print-area td, .print-area th {
+    border-color: #e5e7eb !important;
   }
   
   .print-area {
@@ -24,34 +48,12 @@
     width: 100%;
     margin: 0;
     padding: 0;
+    background-color: #fff !important;
   }
 
-  .dark {
-    color-scheme: dark;
-  }
-
-  .dark body {
-    background-color: hsl(var(--background)) !important;
-    color: hsl(var(--foreground)) !important;
-  }
-
-  .dark .print-area, .dark .print-area * {
-    color: hsl(var(--foreground)) !important;
-    font-weight: bold !important;
-  }
-
-  .dark .print-area .text-muted-foreground {
-    color: hsl(var(--muted-foreground)) !important;
-  }
-
-  .dark .print-area .text-green-600, .dark .print-area .text-green-700 {
-    color: #22c55e !important;
-  }
-  .dark .print-area .text-red-600, .dark .print-area .text-red-700 {
-    color: #ef4444 !important;
-  }
-  .dark .print-area .border, .dark .print-area .border-t {
-    border-color: hsl(var(--border)) !important;
+  /* Elements to hide specifically during print */
+  .print-hidden {
+    display: none !important;
   }
 }
 
