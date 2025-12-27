@@ -142,6 +142,10 @@ function SaleInvoice({ sale, onPost, onUnpost }: { sale: Sale, onPost: (saleId: 
                                 </div>
                             </div>
                         </div>
+
+                         <div className="mt-24 text-center text-xs text-gray-500 border-t pt-4">
+                            <p className="font-semibold">Industrial Estate, Hayatabad Road B-5 PLOT 59 PESHAWAR</p>
+                        </div>
                     </div>
                 </div>
             </div>
