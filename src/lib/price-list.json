@@ -312,7 +312,7 @@
         {"name": "L-26 (Pipe) (1.2mm)", "prices": [295, 297, 318, 333, 371]},
         {"name": "L-30 (Pipe) (1.2mm)", "prices": [259, 261, 279, 292, 326]}
     ],
-    "sliding_net_sections": [
+    "netting_sections": [
         {"name": "Neting Section 1 (Z-1)", "prices": [223, 225, 241, 252, 281]},
         {"name": "Neting Section 2 (Z-2)", "prices": [259, 261, 279, 292, 326]}
     ],
