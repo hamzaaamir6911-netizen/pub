@@ -64,7 +64,7 @@ function AddItemForm({ onItemAdded, existingItems }: { onItemAdded: (newItem: Om
         const newItem: Omit<Item, 'id' | 'createdAt'> = {
             name, category, unit, quantity, purchasePrice, salePrice, color, weight, thickness,
         };
-        onItemAdded(newItem as Omit<Item, 'id' | 'createdAt'>);
+        onItemAdded(newItem);
         toast({ title: "Item Added!", description: `${name} (${thickness}) has been added to inventory.` });
         // Reset form
         setName(''); setCategory('Aluminium'); setUnit('Feet'); setQuantity(0); setPurchasePrice(0); setSalePrice(0); setColor(''); setWeight(0); setThickness('');
