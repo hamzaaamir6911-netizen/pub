@@ -43,6 +43,10 @@ import { formatCurrency, formatDate } from "@/lib/utils";
 import type { Estimate, SaleItem, Customer, Item } from "@/lib/types";
 import { useToast } from "@/hooks/use-toast";
 import { useData } from "@/firebase/data/data-provider";
+import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Check, ChevronsUpDown } from "lucide-react"
+import { cn } from "@/lib/utils";
 
 
 function EstimatePrint({ estimate }: { estimate: Estimate }) {
@@ -224,6 +228,7 @@ function NewEstimateForm({ onEstimateAdded }: { onEstimateAdded: (newEstimate: O
     const [saleItems, setSaleItems] = useState<Partial<SaleItem>[]>([{itemId: "", quantity: 1, feet: 1, discount: 0, color: '', thickness: '' }]);
     const [overallDiscount, setOverallDiscount] = useState(0);
     const [isCustomerModalOpen, setCustomerModalOpen] = useState(false);
+    const [comboboxOpen, setComboboxOpen] = useState(false);
 
     const handleAddItem = () => {
         setSaleItems([...saleItems, {itemId: "", quantity: 1, feet: 1, discount: 0, color: '', thickness: '' }]);
@@ -378,14 +383,49 @@ function NewEstimateForm({ onEstimateAdded }: { onEstimateAdded: (newEstimate: O
                          <div key={index} className="grid grid-cols-1 md:grid-cols-7 gap-2 items-end p-3 border rounded-md">
                             <div className="md:col-span-2 space-y-2">
                                 <Label>Item</Label>
-                                <Select onValueChange={(value) => handleItemChange(index, "itemId", value)} value={saleItem.itemId}>
-                                    <SelectTrigger>
-                                        <SelectValue placeholder="Select an item" />
-                                    </SelectTrigger>
-                                    <SelectContent>
-                                        {allItems.map(i => <SelectItem key={i.id} value={i.id}>{i.name} {i.thickness ? `(${i.thickness})` : ''} - {i.color}</SelectItem>)}
-                                    </SelectContent>
-                                </Select>
+                                <Popover open={comboboxOpen} onOpenChange={setComboboxOpen}>
+                                    <PopoverTrigger asChild>
+                                        <Button
+                                        variant="outline"
+                                        role="combobox"
+                                        aria-expanded={comboboxOpen}
+                                        className="w-full justify-between"
+                                        >
+                                        {saleItem.itemId
+                                            ? allItems.find((item) => item.id === saleItem.itemId)?.name
+                                            : "Select an item"}
+                                        <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                                        </Button>
+                                    </PopoverTrigger>
+                                    <PopoverContent className="w-[300px] p-0">
+                                        <Command>
+                                        <CommandInput placeholder="Search item..." />
+                                        <CommandList>
+                                            <CommandEmpty>No item found.</CommandEmpty>
+                                            <CommandGroup>
+                                            {allItems.map((item) => (
+                                                <CommandItem
+                                                key={item.id}
+                                                value={item.id}
+                                                onSelect={(currentValue) => {
+                                                    handleItemChange(index, "itemId", currentValue === saleItem.itemId ? "" : currentValue)
+                                                    setComboboxOpen(false)
+                                                }}
+                                                >
+                                                <Check
+                                                    className={cn(
+                                                    "mr-2 h-4 w-4",
+                                                    saleItem.itemId === item.id ? "opacity-100" : "opacity-0"
+                                                    )}
+                                                />
+                                                {item.name} {item.thickness ? `(${item.thickness})` : ''} - {item.color}
+                                                </CommandItem>
+                                            ))}
+                                            </CommandGroup>
+                                        </CommandList>
+                                        </Command>
+                                    </PopoverContent>
+                                </Popover>
                             </div>
                             
                             <div className="space-y-2">
