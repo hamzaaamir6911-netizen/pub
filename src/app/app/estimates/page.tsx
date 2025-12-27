@@ -60,9 +60,10 @@ function EstimatePrint({ estimate }: { estimate: Estimate }) {
             </DialogHeader>
             <div id="printable-estimate" className="flex-grow overflow-y-auto">
                 <div className="p-6">
-                    <div className="flex flex-col items-center justify-center pt-4 mb-8">
-                        <h1 className="text-3xl font-bold font-headline">Arco aluminium</h1>
-                        <p>Estimate: {estimate.id}</p>
+                    <div className="text-center mb-8">
+                        <h1 className="text-5xl font-bold" style={{fontFamily: 'serif'}}>ARCO</h1>
+                        <p className="text-lg font-semibold tracking-widest">AR ALUMINIUM COMPANY</p>
+                        <p className="mt-4">Estimate: {estimate.id}</p>
                     </div>
                     <div className="p-6">
                         <div className="grid grid-cols-2 gap-4 mb-6">
@@ -70,7 +71,7 @@ function EstimatePrint({ estimate }: { estimate: Estimate }) {
                                 <p className="font-semibold">Customer:</p>
                                 <p>{estimate.customerName}</p>
                                 <p>{customer?.address}</p>
-                                <p>{customer?.phone}</p>
+                                <p>{customer?.phoneNumber}</p>
                             </div>
                             <div className="text-right">
                                 <p className="font-semibold">Date:</p>
@@ -138,25 +139,25 @@ function EstimatePrint({ estimate }: { estimate: Estimate }) {
 }
 
 function AddCustomerForm({ onCustomerAdded }: { onCustomerAdded: (newCustomer: Omit<Customer, 'id' | 'createdAt'>) => void }) {
-  const [name, setName] = useState('');
-  const [phone, setPhone] = useState('');
+  const [customerName, setCustomerName] = useState('');
+  const [phoneNumber, setPhoneNumber] = useState('');
   const [address, setAddress] = useState('');
   const { toast } = useToast();
 
   const handleSubmit = async () => {
-    if (!name || !phone || !address) {
+    if (!customerName || !phoneNumber || !address) {
       toast({ variant: 'destructive', title: 'Please fill all fields.' });
       return;
     }
     const newCustomer: Omit<Customer, 'id' | 'createdAt'> = {
-      name,
-      phone,
+      customerName,
+      phoneNumber,
       address,
     };
     await onCustomerAdded(newCustomer);
-    toast({ title: 'Customer Added!', description: `${name} has been added.` });
-    setName('');
-    setPhone('');
+    toast({ title: 'Customer Added!', description: `${customerName} has been added.` });
+    setCustomerName('');
+    setPhoneNumber('');
     setAddress('');
   };
 
@@ -168,11 +169,11 @@ function AddCustomerForm({ onCustomerAdded }: { onCustomerAdded: (newCustomer: O
       <div className="space-y-4 py-4">
         <div className="space-y-2">
           <Label htmlFor="name">Customer Name</Label>
-          <Input id="name" value={name} onChange={(e) => setName(e.target.value)} placeholder="John Doe" />
+          <Input id="name" value={customerName} onChange={(e) => setCustomerName(e.target.value)} placeholder="John Doe" />
         </div>
         <div className="space-y-2">
           <Label htmlFor="phone">Phone Number</Label>
-          <Input id="phone" value={phone} onChange={(e) => setPhone(e.target.value)} placeholder="0300-1234567" />
+          <Input id="phone" value={phoneNumber} onChange={(e) => setPhoneNumber(e.target.value)} placeholder="0300-1234567" />
         </div>
         <div className="space-y-2">
           <Label htmlFor="address">Address</Label>
@@ -280,7 +281,7 @@ function NewEstimateForm({ onEstimateAdded }: { onEstimateAdded: (newEstimate: O
 
         const newEstimate: Omit<Estimate, 'id' | 'date' | 'total'> = {
             customerId: selectedCustomer,
-            customerName: customer.name,
+            customerName: customer.customerName,
             items: finalSaleItems,
             discount: overallDiscount,
         };
@@ -318,7 +319,7 @@ function NewEstimateForm({ onEstimateAdded }: { onEstimateAdded: (newEstimate: O
                                 <SelectValue placeholder="Select a customer" />
                             </SelectTrigger>
                             <SelectContent>
-                                {customers.map(c => <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>)}
+                                {customers.map(c => <SelectItem key={c.id} value={c.id}>{c.customerName}</SelectItem>)}
                             </SelectContent>
                         </Select>
                         <Dialog open={isCustomerModalOpen} onOpenChange={setCustomerModalOpen}>
@@ -481,8 +482,7 @@ export default function EstimatesPage() {
                 ) : (
                   estimates.map((estimate) => (
                     <TableRow key={estimate.id}>
-                      <TableCell className="font-medium">{estimate.id}</TableCell>
-                      <TableCell>{estimate.customerName}</TableCell>
+                      <TableCell className="font-medium">{estimate.id}</TableCell>                      <TableCell>{estimate.customerName}</TableCell>
                       <TableCell>{formatDate(estimate.date)}</TableCell>
                       <TableCell className="text-right">
                         {formatCurrency(estimate.total)}
