@@ -9,7 +9,6 @@ import {
   CardDescription,
   CardHeader,
   CardTitle,
-  CardFooter
 } from "@/components/ui/card"
 import {
     Table,
@@ -30,7 +29,6 @@ import { Calendar as CalendarIcon, Printer } from "lucide-react"
 import { Calendar } from "@/components/ui/calendar"
 import { addDays, format } from "date-fns"
 import type { DateRange } from "react-day-picker"
-import type { Transaction } from "@/lib/types"
 import { Badge } from "@/components/ui/badge"
 import { cn } from "@/lib/utils"
 import { useReactToPrint } from "react-to-print";
@@ -56,6 +54,7 @@ function LedgerReport() {
 
     const handlePrint = useReactToPrint({
         content: () => printRef.current,
+        documentTitle: "Ledger Report",
     });
 
     const filteredTransactions = transactions.filter(t => {
@@ -74,18 +73,18 @@ function LedgerReport() {
     });
 
     return (
-        <Card className="mt-4">
-            <CardHeader className="flex flex-row items-center justify-between">
+        <Card className="mt-4 border-none shadow-none sm:border sm:shadow-sm">
+            <CardHeader className="flex flex-row items-center justify-between print-hidden">
                 <div>
                     <CardTitle>Ledger Report</CardTitle>
                     <CardDescription>View transactions within a specific date range.</CardDescription>
                 </div>
-                 <Button variant="outline" onClick={handlePrint} className="print-hidden">
+                 <Button variant="outline" onClick={handlePrint}>
                     <Printer className="mr-2 h-4 w-4" />
                     Print Report
                 </Button>
             </CardHeader>
-            <CardContent className="space-y-4">
+            <CardContent className="space-y-4 px-0 sm:px-6">
                 <div className="flex items-center gap-2 print-hidden">
                     <Popover>
                         <PopoverTrigger asChild>
@@ -124,49 +123,51 @@ function LedgerReport() {
                         </PopoverContent>
                     </Popover>
                 </div>
-                <div ref={printRef} className="print-area rounded-lg border print:border-none print:shadow-none">
-                     <div className="p-4 hidden print:block">
-                        <h2 className="text-2xl font-bold text-center">Ledger Report</h2>
-                        <p className="text-center text-sm text-muted-foreground">
+                <div ref={printRef} className="print-area">
+                     <div className="p-4 hidden print:block text-center mb-4">
+                        <h2 className="text-2xl font-bold">Ledger Report</h2>
+                        <p className="text-sm">
                             {date?.from && format(date.from, "LLL dd, y")} - {date?.to && format(date.to, "LLL dd, y")}
                         </p>
                     </div>
-                    <Table>
-                        <TableHeader>
-                            <TableRow>
-                                <TableHead>Date</TableHead>
-                                <TableHead>Description</TableHead>
-                                <TableHead>Category</TableHead>
-                                <TableHead className="text-right">Debit</TableHead>
-                                <TableHead className="text-right">Credit</TableHead>
-                                <TableHead className="text-right">Balance</TableHead>
-                            </TableRow>
-                        </TableHeader>
-                        <TableBody>
-                            {reportData.length === 0 ? (
+                    <div className="rounded-lg border">
+                        <Table>
+                            <TableHeader>
                                 <TableRow>
-                                    <TableCell colSpan={6} className="h-24 text-center">No transactions in selected range.</TableCell>
+                                    <TableHead>Date</TableHead>
+                                    <TableHead>Description</TableHead>
+                                    <TableHead>Category</TableHead>
+                                    <TableHead className="text-right">Debit</TableHead>
+                                    <TableHead className="text-right">Credit</TableHead>
+                                    <TableHead className="text-right">Balance</TableHead>
                                 </TableRow>
-                            ) : (
-                                reportData.map((transaction) => (
-                                    <TableRow key={transaction.id}>
-                                        <TableCell>{formatDate(transaction.date)}</TableCell>
-                                        <TableCell className="font-medium">{transaction.description}</TableCell>
-                                        <TableCell>
-                                            <Badge variant="outline">{transaction.category}</Badge>
-                                        </TableCell>
-                                        <TableCell className={cn("text-right font-mono", transaction.type === 'debit' && "font-semibold")}>
-                                            {transaction.type === 'debit' ? formatCurrency(transaction.amount) : '-'}
-                                        </TableCell>
-                                        <TableCell className={cn("text-right font-mono", transaction.type === 'credit' && "font-semibold")}>
-                                            {transaction.type === 'credit' ? formatCurrency(transaction.amount) : '-'}
-                                        </TableCell>
-                                         <TableCell className="text-right font-mono">{formatCurrency(transaction.balance)}</TableCell>
+                            </TableHeader>
+                            <TableBody>
+                                {reportData.length === 0 ? (
+                                    <TableRow>
+                                        <TableCell colSpan={6} className="h-24 text-center">No transactions in selected range.</TableCell>
                                     </TableRow>
-                                ))
-                            )}
-                        </TableBody>
-                    </Table>
+                                ) : (
+                                    reportData.map((transaction) => (
+                                        <TableRow key={transaction.id}>
+                                            <TableCell>{formatDate(transaction.date)}</TableCell>
+                                            <TableCell className="font-medium">{transaction.description}</TableCell>
+                                            <TableCell>
+                                                <Badge variant="outline">{transaction.category}</Badge>
+                                            </TableCell>
+                                            <TableCell className={cn("text-right font-mono", transaction.type === 'debit' && "font-semibold")}>
+                                                {transaction.type === 'debit' ? formatCurrency(transaction.amount) : '-'}
+                                            </TableCell>
+                                            <TableCell className={cn("text-right font-mono", transaction.type === 'credit' && "font-semibold")}>
+                                                {transaction.type === 'credit' ? formatCurrency(transaction.amount) : '-'}
+                                            </TableCell>
+                                            <TableCell className="text-right font-mono">{formatCurrency(transaction.balance)}</TableCell>
+                                        </TableRow>
+                                    ))
+                                )}
+                            </TableBody>
+                        </Table>
+                    </div>
                 </div>
             </CardContent>
         </Card>
@@ -177,16 +178,26 @@ export default function ReportsPage() {
     const { getDashboardStats, getMonthlySalesData } = useData();
     const stats = getDashboardStats();
     const monthlyData = getMonthlySalesData();
-    const printRef = useRef(null);
+    const dailyPrintRef = useRef(null);
+    const monthlyPrintRef = useRef(null);
+    const plPrintRef = useRef(null);
     const [activeTab, setActiveTab] = useState("monthly");
 
+    const printRefs: { [key: string]: React.RefObject<any> } = {
+        daily: dailyPrintRef,
+        monthly: monthlyPrintRef,
+        pl: plPrintRef,
+    };
+    
     const handlePrint = useReactToPrint({
-        content: () => printRef.current,
+        content: () => printRefs[activeTab]?.current,
+        documentTitle: `${activeTab.charAt(0).toUpperCase() + activeTab.slice(1)} Report`,
     });
     
     const dailyReportData = [
         { date: "Today", sales: stats.todaySummary.sales.reduce((acc, s) => acc + s.total, 0), expenses: stats.todaySummary.expenses.reduce((acc, e) => acc + e.amount, 0)},
-        { date: "Yesterday", sales: 34500, expenses: 12000 },
+        // Note: Yesterday's data is hardcoded as an example.
+        { date: "Yesterday", sales: 34500, expenses: 12000 }, 
     ]
 
   return (
@@ -195,10 +206,12 @@ export default function ReportsPage() {
         title="Reports"
         description="Analyze your factory's financial performance."
       >
-        <Button variant="outline" onClick={handlePrint} className="print-hidden">
-            <Printer className="mr-2 h-4 w-4" />
-            Print Active Report
-        </Button>
+        {activeTab !== 'ledger' && (
+            <Button variant="outline" onClick={handlePrint} className="print-hidden">
+                <Printer className="mr-2 h-4 w-4" />
+                Print Active Report
+            </Button>
+        )}
       </PageHeader>
 
        <Tabs defaultValue="monthly" value={activeTab} onValueChange={setActiveTab}>
@@ -209,8 +222,8 @@ export default function ReportsPage() {
           <TabsTrigger value="ledger">Ledger</TabsTrigger>
         </TabsList>
         <TabsContent value="daily">
-             <div ref={activeTab === 'daily' ? printRef : null}>
-                 <Card className="print-area mt-4">
+             <div ref={dailyPrintRef} className="print-area">
+                 <Card className="mt-4">
                     <CardHeader>
                         <CardTitle>Daily Report</CardTitle>
                         <CardDescription>{formatDate(new Date())}</CardDescription>
@@ -240,8 +253,8 @@ export default function ReportsPage() {
             </div>
         </TabsContent>
         <TabsContent value="monthly">
-             <div ref={activeTab === 'monthly' ? printRef : null}>
-                 <Card className="print-area mt-4">
+             <div ref={monthlyPrintRef} className="print-area">
+                 <Card className="mt-4">
                     <CardHeader>
                         <CardTitle>Monthly Performance</CardTitle>
                         <CardDescription>Comparison of revenue and expenses over the months.</CardDescription>
@@ -251,7 +264,7 @@ export default function ReportsPage() {
                             <BarChart accessibilityLayer data={monthlyData}>
                                 <CartesianGrid vertical={false} />
                                 <XAxis
-                                    dataKey="month"
+                                    dataKey="name"
                                     tickLine={false}
                                     tickMargin={10}
                                     axisLine={false}
@@ -272,8 +285,8 @@ export default function ReportsPage() {
             </div>
         </TabsContent>
         <TabsContent value="pl">
-            <div ref={activeTab === 'pl' ? printRef : null}>
-                 <Card className="print-area mt-4">
+            <div ref={plPrintRef} className="print-area">
+                 <Card className="mt-4">
                     <CardHeader>
                         <CardTitle>Profit & Loss Statement</CardTitle>
                         <CardDescription>A summary of revenues, costs, and expenses.</CardDescription>
