@@ -15,6 +15,10 @@ export function formatCurrency(amount: number) {
 }
 
 export function formatDate(date: Date) {
+  // Check if date is a valid Date object
+  if (!(date instanceof Date) || isNaN(date.getTime())) {
+    return 'Invalid Date';
+  }
   return date.toLocaleDateString('en-GB', {
     day: '2-digit',
     month: 'short',

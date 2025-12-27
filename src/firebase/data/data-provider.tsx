@@ -26,8 +26,8 @@ interface DataContextProps {
   deleteCustomer: (id: string) => Promise<void>;
   addVendor: (vendor: Omit<Vendor, 'id' | 'createdAt'>) => Promise<any>;
   deleteVendor: (id: string) => Promise<void>;
-  addSale: (sale: Omit<Sale, 'id' | 'date' | 'total' | 'status'>) => Promise<void>;
-  updateSale: (saleId: string, sale: Omit<Sale, 'id' | 'date' | 'total' | 'status'>) => Promise<void>;
+  addSale: (sale: Omit<Sale, 'id' | 'total' | 'status'>) => Promise<void>;
+  updateSale: (saleId: string, sale: Omit<Sale, 'id' | 'total' | 'status'>) => Promise<void>;
   postSale: (saleId: string) => Promise<void>;
   deleteSale: (id: string) => Promise<void>;
   addEstimate: (estimate: Omit<Estimate, 'id' | 'date' | 'total'>) => Promise<void>;
@@ -147,7 +147,7 @@ export const DataProvider = ({ children }: { children: ReactNode }) => {
         deleteDocumentNonBlocking(doc(firestore, 'transactions', id));
     };
 
-    const addSale = async (sale: Omit<Sale, 'id' | 'date' | 'total' | 'status'>) => {
+    const addSale = async (sale: Omit<Sale, 'id' | 'total' | 'status'>) => {
         if (!salesCol || !user) throw new Error("Sales collection not available or user not authenticated");
         
         await runTransaction(firestore, async (transaction) => {
@@ -173,14 +173,14 @@ export const DataProvider = ({ children }: { children: ReactNode }) => {
                 id: newSaleId,
                 total,
                 status: 'draft' as const,
-                date: serverTimestamp(),
+                date: sale.date || serverTimestamp(),
             };
 
             transaction.set(newSaleRef, newSaleData);
         });
     };
 
-    const updateSale = async (saleId: string, sale: Omit<Sale, 'id' | 'date' | 'total' | 'status'>) => {
+    const updateSale = async (saleId: string, sale: Omit<Sale, 'id' | 'total' | 'status'>) => {
         if (!user) throw new Error("User not authenticated");
         const saleRef = doc(firestore, 'sales', saleId);
 
@@ -195,6 +195,7 @@ export const DataProvider = ({ children }: { children: ReactNode }) => {
         const updatedSaleData = {
             ...sale,
             total,
+            date: sale.date
         };
 
         return updateDocumentNonBlocking(saleRef, updatedSaleData);
@@ -256,7 +257,7 @@ export const DataProvider = ({ children }: { children: ReactNode }) => {
             category: 'Sale',
             customerId: sale.customerId,
             customerName: sale.customerName,
-            date: serverTimestamp()
+            date: sale.date,
         };
         const transactionRef = doc(collection(firestore, 'transactions'));
         batch.set(transactionRef, transactionData);
