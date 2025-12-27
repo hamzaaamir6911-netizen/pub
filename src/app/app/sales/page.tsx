@@ -175,6 +175,8 @@ function AddCustomerForm({ onCustomerAdded }: { onCustomerAdded: (newCustomer: O
   const [customerName, setCustomerName] = useState('');
   const [phoneNumber, setPhoneNumber] = useState('');
   const [address, setAddress] = useState('');
+  const [openingBalance, setOpeningBalance] = useState(0);
+  const [balanceType, setBalanceType] = useState<'debit' | 'credit'>('debit');
   const { toast } = useToast();
 
   const handleSubmit = async () => {
@@ -186,12 +188,16 @@ function AddCustomerForm({ onCustomerAdded }: { onCustomerAdded: (newCustomer: O
       customerName,
       phoneNumber,
       address,
+      openingBalance,
+      balanceType
     };
     await onCustomerAdded(newCustomer);
     toast({ title: 'Customer Added!', description: `${customerName} has been added.` });
     setCustomerName('');
     setPhoneNumber('');
     setAddress('');
+    setOpeningBalance(0);
+    setBalanceType('debit');
   };
 
   return (
@@ -211,6 +217,24 @@ function AddCustomerForm({ onCustomerAdded }: { onCustomerAdded: (newCustomer: O
         <div className="space-y-2">
           <Label htmlFor="address">Address</Label>
           <Input id="address" value={address} onChange={(e) => setAddress(e.target.value)} placeholder="123, Main Street, City" />
+        </div>
+        <div className="grid grid-cols-2 gap-4">
+            <div className="space-y-2">
+                <Label htmlFor="openingBalance">Opening Balance</Label>
+                <Input id="openingBalance" type="number" value={openingBalance} onChange={(e) => setOpeningBalance(parseFloat(e.target.value) || 0)} placeholder="0" />
+            </div>
+            <div className="space-y-2">
+                <Label htmlFor="balanceType">Balance Type</Label>
+                <Select onValueChange={(v: 'debit' | 'credit') => setBalanceType(v)} value={balanceType}>
+                    <SelectTrigger id="balanceType">
+                        <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                        <SelectItem value="debit">Debit (Owed by Customer)</SelectItem>
+                        <SelectItem value="credit">Credit (Paid by Customer)</SelectItem>
+                    </SelectContent>
+                </Select>
+            </div>
         </div>
       </div>
       <DialogFooter>
@@ -440,7 +464,7 @@ function NewSaleForm({ onSaleAdded, onSaleUpdated, initialData }: { onSaleAdded:
                                         <SelectValue placeholder="Select an item" />
                                     </SelectTrigger>
                                     <SelectContent>
-                                        {allItems.map(i => <SelectItem key={i.id} value={i.id}>{i.name} ({i.color})</SelectItem>)}
+                                        {allItems.map(i => <SelectItem key={i.id} value={i.id}>{i.name} {i.thickness ? `(${i.thickness})` : ''} - {i.color}</SelectItem>)}
                                     </SelectContent>
                                 </Select>
                             </div>
@@ -668,5 +692,7 @@ export default function SalesPage() {
     </>
   );
 }
+
+    
 
     
