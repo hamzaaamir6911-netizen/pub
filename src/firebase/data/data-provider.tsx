@@ -1,10 +1,11 @@
 
 
 
+
 "use client";
 
 import React, { createContext, useContext, ReactNode, useEffect, useState } from 'react';
-import type { Item, Customer, Sale, Expense, Transaction, Vendor, Estimate } from '@/lib/types';
+import type { Item, Customer, Sale, Expense, Transaction, Vendor, Estimate, Labour } from '@/lib/types';
 import { useCollection, useFirestore, useMemoFirebase, useUser } from '@/firebase';
 import { collection, doc, writeBatch, serverTimestamp, Timestamp, orderBy, query, where, getDocs, runTransaction, increment, addDoc, getDoc } from 'firebase/firestore';
 import { addDocumentNonBlocking, deleteDocumentNonBlocking, updateDocumentNonBlocking } from '../non-blocking-updates';
@@ -19,6 +20,7 @@ interface DataContextProps {
   estimates: Estimate[];
   expenses: Expense[];
   transactions: Transaction[];
+  labour: Labour[];
   loading: boolean;
   addItem: (item: Omit<Item, 'id' | 'createdAt'>) => Promise<any>;
   deleteItem: (id: string) => Promise<void>;
@@ -28,6 +30,8 @@ interface DataContextProps {
   deleteCustomer: (id: string) => Promise<void>;
   addVendor: (vendor: Omit<Vendor, 'id' | 'createdAt'>) => Promise<any>;
   deleteVendor: (id: string) => Promise<void>;
+  addLabour: (labourer: Omit<Labour, 'id' | 'createdAt'>) => Promise<any>;
+  deleteLabour: (id: string) => Promise<void>;
   addSale: (sale: Omit<Sale, 'id' | 'total' | 'status'>) => Promise<void>;
   updateSale: (saleId: string, sale: Omit<Sale, 'id' | 'total' | 'status'>) => Promise<void>;
   postSale: (saleId: string) => Promise<void>;
@@ -242,6 +246,7 @@ export const DataProvider = ({ children }: { children: ReactNode }) => {
     const estimatesCol = useMemoFirebase(() => shouldFetch ? query(collection(firestore, 'estimates'), orderBy('date', 'desc')) : null, [firestore, shouldFetch]);
     const expensesCol = useMemoFirebase(() => shouldFetch ? query(collection(firestore, 'expenses'), orderBy('date', 'desc')) : null, [firestore, shouldFetch]);
     const transactionsCol = useMemoFirebase(() => shouldFetch ? query(collection(firestore, 'transactions'), orderBy('date', 'desc')) : null, [firestore, shouldFetch]);
+    const labourCol = useMemoFirebase(() => shouldFetch ? query(collection(firestore, 'labour'), orderBy('name', 'asc')) : null, [firestore, shouldFetch]);
 
     // Fetch data
     const { data: itemsData, isLoading: itemsLoading } = useCollection<Item>(itemsCol);
@@ -251,6 +256,7 @@ export const DataProvider = ({ children }: { children: ReactNode }) => {
     const { data: estimatesData, isLoading: estimatesLoading } = useCollection<Estimate>(estimatesCol);
     const { data: expensesData, isLoading: expensesLoading } = useCollection<Expense>(expensesCol);
     const { data: transactionsData, isLoading: transactionsLoading } = useCollection<Transaction>(transactionsCol);
+    const { data: labourData, isLoading: labourLoading } = useCollection<Labour>(labourCol);
     
     const items = itemsData?.map(item => ({ ...item, quantity: item.quantity ?? 0, createdAt: toDate(item.createdAt) })) || [];
     const customers = customersData?.map(customer => ({ ...customer, createdAt: toDate(customer.createdAt) })) || [];
@@ -259,8 +265,9 @@ export const DataProvider = ({ children }: { children: ReactNode }) => {
     const estimates = estimatesData?.map(estimate => ({ ...estimate, date: toDate(estimate.date) })) || [];
     const expenses = expensesData?.map(expense => ({ ...expense, date: toDate(expense.date) })) || [];
     const transactions = transactionsData?.map(transaction => ({ ...transaction, date: toDate(transaction.date) })) || [];
+    const labour = labourData?.map(l => ({...l, createdAt: toDate(l.createdAt)})) || [];
 
-    const loading = isUserLoading || itemsLoading || customersLoading || vendorsLoading || salesLoading || estimatesLoading || expensesLoading || transactionsLoading;
+    const loading = isUserLoading || itemsLoading || customersLoading || vendorsLoading || salesLoading || estimatesLoading || expensesLoading || transactionsLoading || labourLoading;
 
     // --- Write Operations ---
 
@@ -355,6 +362,46 @@ export const DataProvider = ({ children }: { children: ReactNode }) => {
         if (!user) throw new Error("User not authenticated");
         deleteDocumentNonBlocking(doc(firestore, 'vendors', id));
     };
+    
+    const addLabour = async (labourer: Omit<Labour, 'id' | 'createdAt'>) => {
+        if (!labourCol || !user) throw new Error("Labour collection not available or user not authenticated");
+        const batch = writeBatch(firestore);
+
+        // Add labourer
+        const newLabourRef = doc(collection(firestore, 'labour'));
+        const newLabourData = { ...labourer, createdAt: serverTimestamp() };
+        batch.set(newLabourRef, newLabourData);
+
+        // Add expense for salary
+        const expense: Omit<Expense, 'id' | 'date'> = {
+            title: `Salary for ${labourer.name} (${labourer.designation})`,
+            amount: labourer.salary,
+            category: 'Labour',
+        };
+        const newExpenseRef = doc(collection(firestore, 'expenses'));
+        batch.set(newExpenseRef, { ...expense, date: serverTimestamp() });
+        
+        // Add transaction for the expense
+        const transactionRef = doc(collection(firestore, 'transactions'));
+        const transactionData: Omit<Transaction, 'id' | 'date'> = {
+            description: `Salary for ${labourer.name}`,
+            amount: labourer.salary,
+            type: 'debit',
+            category: 'Labour',
+            date: serverTimestamp() as Timestamp,
+        };
+        batch.set(transactionRef, transactionData);
+
+        await batch.commit();
+        return { ...labourer, id: newLabourRef.id, createdAt: new Date() };
+    };
+
+    const deleteLabour = async (id: string) => {
+        if (!user) throw new Error("User not authenticated");
+        // Also need to handle deleting the associated expense/transaction if needed
+        deleteDocumentNonBlocking(doc(firestore, 'labour', id));
+    };
+
 
     const addTransaction = async (transaction: Omit<Transaction, 'id' | 'date'>) => {
         if (!transactionsCol) throw new Error("Transactions collection not available");
@@ -627,10 +674,11 @@ export const DataProvider = ({ children }: { children: ReactNode }) => {
     };
     
     const value = {
-        items, customers, vendors, sales, estimates, expenses, transactions, loading,
+        items, customers, vendors, sales, estimates, expenses, transactions, labour, loading,
         addItem, deleteItem, updateItemStock,
         addCustomer, updateCustomer, deleteCustomer,
         addVendor, deleteVendor,
+        addLabour, deleteLabour,
         addSale, updateSale, postSale, unpostSale, deleteSale,
         addEstimate, deleteEstimate,
         addExpense, deleteExpense,
@@ -652,10 +700,3 @@ export const useData = () => {
   }
   return context;
 };
-
-    
-
-    
-
-
-    

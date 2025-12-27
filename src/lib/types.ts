@@ -88,6 +88,12 @@ export type Transaction = {
   vendorId?: string;
   vendorName?: string;
 }
-    
 
+export type Labour = {
+  id: string;
+  name: string;
+  salary: number;
+  designation: string;
+  createdAt: Date;
+}
     
