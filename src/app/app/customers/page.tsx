@@ -121,6 +121,10 @@ function EditCustomerForm({ customer, onCustomerUpdated }: { customer: Customer;
   const [customerName, setCustomerName] = useState(customer.customerName);
   const [phoneNumber, setPhoneNumber] = useState(customer.phoneNumber);
   const [address, setAddress] = useState(customer.address);
+  // Opening balance is not directly editable to maintain ledger integrity.
+  // It should be adjusted via a ledger transaction.
+  const [openingBalance] = useState(customer.openingBalance || 0);
+  const [balanceType] = useState(customer.balanceType || 'debit');
   const { toast } = useToast();
 
   const handleSubmit = () => {
@@ -132,6 +136,9 @@ function EditCustomerForm({ customer, onCustomerUpdated }: { customer: Customer;
       customerName,
       phoneNumber,
       address,
+      // Pass the original opening balance values, even though they aren't edited here
+      openingBalance,
+      balanceType
     };
     onCustomerUpdated(customer.id, updatedCustomer);
     toast({ title: 'Customer Updated!', description: `${customerName} has been updated.` });
@@ -155,6 +162,27 @@ function EditCustomerForm({ customer, onCustomerUpdated }: { customer: Customer;
           <Label htmlFor="address">Address</Label>
           <Input id="address" value={address} onChange={(e) => setAddress(e.target.value)} placeholder="123, Main Street, City" />
         </div>
+        <div className="grid grid-cols-2 gap-4">
+            <div className="space-y-2">
+                <Label htmlFor="openingBalance">Opening Balance</Label>
+                <Input id="openingBalance" type="number" value={openingBalance} disabled placeholder="0" />
+            </div>
+            <div className="space-y-2">
+                <Label htmlFor="balanceType">Balance Type</Label>
+                <Select value={balanceType} disabled>
+                    <SelectTrigger id="balanceType">
+                        <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                        <SelectItem value="debit">Debit (Owed by Customer)</SelectItem>
+                        <SelectItem value="credit">Credit (Paid by Customer)</SelectItem>
+                    </SelectContent>
+                </Select>
+            </div>
+        </div>
+        <p className="text-xs text-muted-foreground">
+            Opening balance cannot be edited directly. To correct an opening balance, please reverse the original transaction in the Ledger and create a new one.
+        </p>
       </div>
       <DialogFooter>
         <Button onClick={handleSubmit}>Save Changes</Button>
@@ -258,4 +286,3 @@ export default function CustomersPage() {
     </>
   );
 }
-
