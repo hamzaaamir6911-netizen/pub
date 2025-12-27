@@ -27,6 +27,7 @@ interface DataContextProps {
   addVendor: (vendor: Omit<Vendor, 'id' | 'createdAt'>) => Promise<any>;
   deleteVendor: (id: string) => Promise<void>;
   addSale: (sale: Omit<Sale, 'id' | 'date' | 'total' | 'status'>) => Promise<void>;
+  updateSale: (saleId: string, sale: Omit<Sale, 'id' | 'date' | 'total' | 'status'>) => Promise<void>;
   postSale: (saleId: string) => Promise<void>;
   deleteSale: (id: string) => Promise<void>;
   addEstimate: (estimate: Omit<Estimate, 'id' | 'date' | 'total'>) => Promise<void>;
@@ -50,17 +51,14 @@ interface DataContextProps {
 const DataContext = createContext<DataContextProps | undefined>(undefined);
 
 const toDate = (timestamp: any): Date => {
-    if (!timestamp) {
-        return new Date(); // Return current date as a fallback
-    }
     if (timestamp instanceof Timestamp) {
       return timestamp.toDate();
     }
     if (timestamp instanceof Date) {
       return timestamp;
     }
-    // For string or number dates
-    return new Date(timestamp);
+    // For string or number dates, or if it's null/undefined
+    return new Date(timestamp || new Date());
 };
 
 export const DataProvider = ({ children }: { children: ReactNode }) => {
@@ -180,6 +178,26 @@ export const DataProvider = ({ children }: { children: ReactNode }) => {
 
             transaction.set(newSaleRef, newSaleData);
         });
+    };
+
+    const updateSale = async (saleId: string, sale: Omit<Sale, 'id' | 'date' | 'total' | 'status'>) => {
+        if (!user) throw new Error("User not authenticated");
+        const saleRef = doc(firestore, 'sales', saleId);
+
+        const subtotal = sale.items.reduce((total, currentItem) => {
+            const itemTotal = (currentItem.feet || 1) * currentItem.price * currentItem.quantity;
+            const discountAmount = itemTotal * ((currentItem.discount || 0) / 100);
+            return total + (itemTotal - discountAmount);
+        }, 0);
+        const overallDiscountAmount = (subtotal * sale.discount) / 100;
+        const total = subtotal - overallDiscountAmount;
+        
+        const updatedSaleData = {
+            ...sale,
+            total,
+        };
+
+        return updateDocumentNonBlocking(saleRef, updatedSaleData);
     };
     
     const addEstimate = async (estimate: Omit<Estimate, 'id' | 'date' | 'total'>) => {
@@ -365,7 +383,7 @@ export const DataProvider = ({ children }: { children: ReactNode }) => {
         addItem, deleteItem, updateItemStock,
         addCustomer, deleteCustomer,
         addVendor, deleteVendor,
-        addSale, postSale, deleteSale,
+        addSale, updateSale, postSale, deleteSale,
         addEstimate, deleteEstimate,
         addExpense, deleteExpense,
         addTransaction, deleteTransaction,

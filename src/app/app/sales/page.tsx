@@ -1,8 +1,8 @@
 
 "use client";
 
-import { useState, useRef } from "react";
-import { MoreHorizontal, PlusCircle, Trash2, RotateCcw, FileText, CheckCircle, Printer } from "lucide-react";
+import { useState, useRef, useEffect } from "react";
+import { MoreHorizontal, PlusCircle, Trash2, RotateCcw, FileText, CheckCircle, Printer, Edit } from "lucide-react";
 import {
   Table,
   TableBody,
@@ -213,13 +213,25 @@ function AddCustomerForm({ onCustomerAdded }: { onCustomerAdded: (newCustomer: O
 }
 
 
-function NewSaleForm({ onSaleAdded }: { onSaleAdded: (newSale: Omit<Sale, 'id' | 'date' | 'total' | 'status'>) => void }) {
+function NewSaleForm({ onSaleAdded, onSaleUpdated, initialData }: { onSaleAdded: (newSale: Omit<Sale, 'id' | 'date' | 'total' | 'status'>) => void, onSaleUpdated: (saleId: string, updatedSale: Omit<Sale, 'id' | 'date' | 'total' | 'status'>) => void, initialData?: Sale | null }) {
     const { toast } = useToast();
     const { customers, items: allItems, addCustomer } = useData();
+    
     const [selectedCustomer, setSelectedCustomer] = useState("");
     const [saleItems, setSaleItems] = useState<Partial<SaleItem>[]>([{itemId: "", quantity: 1, feet: 1, discount: 0, color: '', thickness: '' }]);
     const [overallDiscount, setOverallDiscount] = useState(0);
     const [isCustomerModalOpen, setCustomerModalOpen] = useState(false);
+
+    const isEditMode = !!initialData;
+
+    useEffect(() => {
+        if (initialData) {
+            setSelectedCustomer(initialData.customerId);
+            setSaleItems(initialData.items.map(item => ({ ...item })));
+            setOverallDiscount(initialData.discount || 0);
+        }
+    }, [initialData]);
+
 
     const handleAddItem = () => {
         setSaleItems([...saleItems, {itemId: "", quantity: 1, feet: 1, discount: 0, color: '', thickness: '' }]);
@@ -265,12 +277,13 @@ function NewSaleForm({ onSaleAdded }: { onSaleAdded: (newSale: Omit<Sale, 'id' |
     }
 
     const clearForm = () => {
+        if (isEditMode) return; // Don't clear in edit mode
         setSelectedCustomer("");
         setSaleItems([{itemId: "", quantity: 1, feet: 1, discount: 0, color: '', thickness: ''}]);
         setOverallDiscount(0);
     }
     
-    const handleSaveSale = async () => {
+    const handleSave = async () => {
         if (!selectedCustomer) {
             toast({ variant: "destructive", title: "Please select a customer." });
             return;
@@ -304,16 +317,21 @@ function NewSaleForm({ onSaleAdded }: { onSaleAdded: (newSale: Omit<Sale, 'id' |
             }
         }) as SaleItem[];
 
-        const newSale: Omit<Sale, 'id' | 'date' | 'total' | 'status'> = {
+        const saleData: Omit<Sale, 'id' | 'date' | 'total' | 'status'> = {
             customerId: selectedCustomer,
             customerName: customer.name,
             items: finalSaleItems,
             discount: overallDiscount,
         };
 
-        await onSaleAdded(newSale);
-        toast({ title: "Sale Draft Saved!", description: `Sale has been saved as a draft.` });
-        clearForm();
+        if (isEditMode && initialData) {
+            await onSaleUpdated(initialData.id, saleData);
+            toast({ title: "Sale Updated!", description: `Sale ${initialData.id} has been updated.` });
+        } else {
+            await onSaleAdded(saleData);
+            toast({ title: "Sale Draft Saved!", description: `Sale has been saved as a draft.` });
+            clearForm();
+        }
     }
     
     const handleCustomerAdded = async (newCustomer: Omit<Customer, 'id'| 'createdAt'>) => {
@@ -328,8 +346,8 @@ function NewSaleForm({ onSaleAdded }: { onSaleAdded: (newSale: Omit<Sale, 'id' |
         <>
          <Card>
             <CardHeader className="flex flex-row items-center justify-between">
-                <CardTitle>Create New Sale</CardTitle>
-                 <Button variant="ghost" size="icon" onClick={clearForm}>
+                <CardTitle>{isEditMode ? `Edit Sale ${initialData.id}` : 'Create New Sale'}</CardTitle>
+                 <Button variant="ghost" size="icon" onClick={clearForm} disabled={isEditMode}>
                     <RotateCcw className="h-4 w-4" />
                     <span className="sr-only">Clear Form</span>
                 </Button>
@@ -453,7 +471,7 @@ function NewSaleForm({ onSaleAdded }: { onSaleAdded: (newSale: Omit<Sale, 'id' |
                 <div className="text-xl font-bold">
                     Total: {formatCurrency(calculateTotal())}
                 </div>
-                <Button onClick={handleSaveSale}>Save Draft</Button>
+                <Button onClick={handleSave}>{isEditMode ? 'Update Sale' : 'Save Draft'}</Button>
             </CardFooter>
         </Card>
         </>
@@ -461,9 +479,10 @@ function NewSaleForm({ onSaleAdded }: { onSaleAdded: (newSale: Omit<Sale, 'id' |
 }
 
 export default function SalesPage() {
-  const { sales, addSale, deleteSale, postSale } = useData();
+  const { sales, addSale, updateSale, deleteSale, postSale } = useData();
   const [activeTab, setActiveTab] = useState("history");
   const [selectedSale, setSelectedSale] = useState<Sale | null>(null);
+  const [editingSale, setEditingSale] = useState<Sale | null>(null);
 
   const handleDelete = (id: string) => {
     deleteSale(id);
@@ -474,11 +493,29 @@ export default function SalesPage() {
     setActiveTab("history");
   }
 
+  const handleSaleUpdated = (saleId: string, updatedSale: Omit<Sale, 'id'|'date'|'total'|'status'>) => {
+    updateSale(saleId, updatedSale);
+    setActiveTab("history");
+    setEditingSale(null);
+  }
+
   const handlePostSale = (saleId: string) => {
       postSale(saleId);
       // Close the dialog by resetting the selected sale
       setSelectedSale(null);
   }
+
+  const handleEditClick = (sale: Sale) => {
+    setEditingSale(sale);
+    setActiveTab("new");
+  }
+  
+  useEffect(() => {
+      // If we switch away from the 'new' tab, clear any editing state.
+      if (activeTab !== 'new') {
+          setEditingSale(null);
+      }
+  }, [activeTab]);
 
   return (
     <>
@@ -489,7 +526,7 @@ export default function SalesPage() {
       <Tabs value={activeTab} onValueChange={setActiveTab}>
         <TabsList className="w-full sm:w-auto grid grid-cols-2">
           <TabsTrigger value="history">Sales History</TabsTrigger>
-          <TabsTrigger value="new">New Sale</TabsTrigger>
+          <TabsTrigger value="new">{editingSale ? 'Edit Sale' : 'New Sale'}</TabsTrigger>
         </TabsList>
         <TabsContent value="history">
           <div className="rounded-lg border shadow-sm mt-4 overflow-x-auto">
@@ -543,6 +580,13 @@ export default function SalesPage() {
                                 </DropdownMenuItem>
                               </DialogTrigger>
                               <DropdownMenuItem
+                                onSelect={() => handleEditClick(sale)}
+                                disabled={sale.status === 'posted'}
+                              >
+                                <Edit className="mr-2 h-4 w-4" />
+                                Edit
+                              </DropdownMenuItem>
+                              <DropdownMenuItem
                                 onSelect={() => handleDelete(sale.id)}
                                 className="text-red-500 focus:bg-red-500/10 focus:text-red-500"
                               >
@@ -565,7 +609,11 @@ export default function SalesPage() {
         </TabsContent>
         <TabsContent value="new">
             <div className="mt-4">
-                <NewSaleForm onSaleAdded={handleSaleAdded} />
+                <NewSaleForm 
+                    onSaleAdded={handleSaleAdded} 
+                    onSaleUpdated={handleSaleUpdated}
+                    initialData={editingSale} 
+                />
             </div>
         </TabsContent>
       </Tabs>
