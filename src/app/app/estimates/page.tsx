@@ -52,7 +52,7 @@ function EstimatePrint({ estimate }: { estimate: Estimate }) {
     let runningTotal = 0;
 
     return (
-        <DialogContent className="max-w-6xl">
+        <DialogContent className="max-w-6xl max-h-[90vh] flex flex-col">
              <DialogHeader className="flex-shrink-0 no-print">
                 <div className="flex flex-col items-center justify-center pt-4">
                     <DialogTitle>Estimate: {estimate.id}</DialogTitle>
@@ -562,7 +562,3 @@ export default function EstimatesPage() {
     </>
   );
 }
-
-    
-
-    
