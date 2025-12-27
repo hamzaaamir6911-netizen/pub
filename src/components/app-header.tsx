@@ -4,7 +4,7 @@
 import * as React from "react"
 import Link from "next/link"
 import { usePathname, useRouter } from "next/navigation"
-import { Factory, LayoutDashboard, Warehouse, ShoppingCart, Users, CreditCard, BarChart3, LogOut, BookUser, Settings, Truck, Menu, FileQuestion } from "lucide-react"
+import { Factory, LayoutDashboard, Warehouse, ShoppingCart, Users, CreditCard, BarChart3, LogOut, BookUser, Settings, Truck, Menu, FileQuestion, Database } from "lucide-react"
 
 import { cn } from "@/lib/utils"
 import { Button } from "./ui/button"
@@ -23,6 +23,7 @@ const navItems = [
   { href: "/app/expenses", icon: CreditCard, label: "Expenses" },
   { href: "/app/ledger", icon: BookUser, label: "Ledger" },
   { href: "/app/reports", icon: BarChart3, label: "Reports" },
+  { href: "/app/seed-prices", icon: Database, label: "Seed Prices" },
   { href: "/app/settings", icon: Settings, label: "Settings" },
 ]
 

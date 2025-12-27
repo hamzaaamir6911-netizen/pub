@@ -36,6 +36,10 @@ service cloud.firestore {
     match /estimates/{estimateId} {
         allow read, write: if isSignedIn();
     }
+
+    match /price_list/{priceListItemId} {
+        allow read, write: if isSignedIn();
+    }
     
     // Admin role check collection.
     match /roles_admin/{userId} {
