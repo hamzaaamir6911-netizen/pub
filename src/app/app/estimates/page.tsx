@@ -217,9 +217,8 @@ function NewEstimateForm({ onEstimateAdded }: { onEstimateAdded: (newEstimate: O
         if (key === 'itemId') {
             const itemDetails = allItems.find(i => i.id === value);
             if (itemDetails) {
-                const thicknessMatch = itemDetails.name.match(/\((.*?)\)/);
                 currentItem.color = itemDetails.color;
-                currentItem.thickness = thicknessMatch ? thicknessMatch[1] : '';
+                currentItem.thickness = itemDetails.thickness;
             }
         }
 
@@ -278,7 +277,7 @@ function NewEstimateForm({ onEstimateAdded }: { onEstimateAdded: (newEstimate: O
                 price: item.salePrice,
                 color: si.color || item.color,
                 weight: item.weight,
-                thickness: si.thickness,
+                thickness: si.thickness || '',
                 feet: feet,
                 discount: si.discount || 0,
             }
@@ -539,3 +538,5 @@ export default function EstimatesPage() {
     </>
   );
 }
+
+    
