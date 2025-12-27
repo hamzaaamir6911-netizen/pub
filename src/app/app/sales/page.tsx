@@ -2,7 +2,7 @@
 "use client";
 
 import { useState, useRef, useEffect } from "react";
-import { MoreHorizontal, PlusCircle, Trash2, RotateCcw, FileText, CheckCircle, Printer, Edit, Calendar as CalendarIcon } from "lucide-react";
+import { MoreHorizontal, PlusCircle, Trash2, RotateCcw, FileText, CheckCircle, Printer, Edit, Calendar as CalendarIcon, Undo2 } from "lucide-react";
 import {
   Table,
   TableBody,
@@ -50,7 +50,7 @@ import { useReactToPrint } from "react-to-print";
 import { format } from "date-fns";
 
 
-function SaleInvoice({ sale, onPost }: { sale: Sale, onPost: (saleId: string) => void }) {
+function SaleInvoice({ sale, onPost, onUnpost }: { sale: Sale, onPost: (saleId: string) => void, onUnpost: (saleId: string) => void }) {
     const { customers } = useData();
     const customer = customers.find(c => c.id === sale.customerId);
     const { toast } = useToast();
@@ -65,6 +65,11 @@ function SaleInvoice({ sale, onPost }: { sale: Sale, onPost: (saleId: string) =>
     const handlePost = () => {
         onPost(sale.id);
         toast({ title: 'Sale Posted!', description: `Sale ${sale.id} has been posted to the ledger.`});
+    }
+
+    const handleUnpost = () => {
+        onUnpost(sale.id);
+        toast({ variant: 'destructive', title: 'Sale Unposted!', description: `Sale ${sale.id} has been reverted to draft.`});
     }
 
     return (
@@ -153,9 +158,10 @@ function SaleInvoice({ sale, onPost }: { sale: Sale, onPost: (saleId: string) =>
                         Post to Ledger
                     </Button>
                 ) : (
-                    <p className="text-sm text-green-600 font-semibold flex items-center">
-                        <CheckCircle className="mr-2 h-4 w-4" /> Posted to Ledger
-                    </p>
+                    <Button variant="destructive" onClick={handleUnpost}>
+                        <Undo2 className="mr-2 h-4 w-4" />
+                        Unpost from Ledger
+                    </Button>
                 )}
             </DialogFooter>
         </DialogContent>
@@ -513,7 +519,7 @@ function NewSaleForm({ onSaleAdded, onSaleUpdated, initialData }: { onSaleAdded:
 }
 
 export default function SalesPage() {
-  const { sales, addSale, updateSale, deleteSale, postSale } = useData();
+  const { sales, addSale, updateSale, deleteSale, postSale, unpostSale } = useData();
   const [activeTab, setActiveTab] = useState("history");
   const [selectedSale, setSelectedSale] = useState<Sale | null>(null);
   const [editingSale, setEditingSale] = useState<Sale | null>(null);
@@ -536,6 +542,12 @@ export default function SalesPage() {
   const handlePostSale = (saleId: string) => {
       postSale(saleId);
       // Close the dialog by resetting the selected sale
+      setSelectedSale(null);
+  }
+
+   const handleUnpostSale = (saleId: string) => {
+      unpostSale(saleId);
+      // Close the dialog
       setSelectedSale(null);
   }
 
@@ -630,7 +642,7 @@ export default function SalesPage() {
                             </DropdownMenuContent>
                           </DropdownMenu>
                           {selectedSale && selectedSale.id === sale.id && (
-                              <SaleInvoice sale={selectedSale} onPost={handlePostSale} />
+                              <SaleInvoice sale={selectedSale} onPost={handlePostSale} onUnpost={handleUnpostSale} />
                           )}
                         </Dialog>
                       </TableCell>

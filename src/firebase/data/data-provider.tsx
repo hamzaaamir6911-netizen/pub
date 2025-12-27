@@ -29,6 +29,7 @@ interface DataContextProps {
   addSale: (sale: Omit<Sale, 'id' | 'total' | 'status'>) => Promise<void>;
   updateSale: (saleId: string, sale: Omit<Sale, 'id' | 'total' | 'status'>) => Promise<void>;
   postSale: (saleId: string) => Promise<void>;
+  unpostSale: (saleId: string) => Promise<void>;
   deleteSale: (id: string) => Promise<void>;
   addEstimate: (estimate: Omit<Estimate, 'id' | 'date' | 'total'>) => Promise<void>;
   deleteEstimate: (id: string) => Promise<void>;
@@ -265,6 +266,32 @@ export const DataProvider = ({ children }: { children: ReactNode }) => {
         await batch.commit();
     };
 
+    const unpostSale = async (saleId: string) => {
+        if (!user) throw new Error("User not authenticated");
+        const saleToUnpost = sales.find(s => s.id === saleId);
+        if (!saleToUnpost || saleToUnpost.status !== 'posted') return;
+    
+        const batch = writeBatch(firestore);
+        
+        // 1. Update sale status back to 'draft'
+        const saleRef = doc(firestore, 'sales', saleId);
+        batch.update(saleRef, { status: 'draft' });
+    
+        // 2. Find and delete the associated ledger transaction
+        const q = query(
+            collection(firestore, 'transactions'),
+            where("category", "==", "Sale"),
+            where("description", "==", `Sale to ${saleToUnpost.customerName} (Invoice: ${saleToUnpost.id})`),
+            where("customerId", "==", saleToUnpost.customerId)
+        );
+        const querySnapshot = await getDocs(q);
+        querySnapshot.forEach((doc) => {
+            batch.delete(doc.ref);
+        });
+    
+        await batch.commit();
+    };
+
     const deleteSale = async (id: string) => {
         if (!user) throw new Error("User not authenticated");
         const saleToDelete = sales.find(s => s.id === id);
@@ -384,7 +411,7 @@ export const DataProvider = ({ children }: { children: ReactNode }) => {
         addItem, deleteItem, updateItemStock,
         addCustomer, deleteCustomer,
         addVendor, deleteVendor,
-        addSale, updateSale, postSale, deleteSale,
+        addSale, updateSale, postSale, unpostSale, deleteSale,
         addEstimate, deleteEstimate,
         addExpense, deleteExpense,
         addTransaction, deleteTransaction,
