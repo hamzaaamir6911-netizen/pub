@@ -41,6 +41,7 @@ function AddItemForm({ onItemAdded }: { onItemAdded: (newItem: Omit<Item, 'id' |
     const [salePrice, setSalePrice] = useState(0);
     const [color, setColor] = useState('');
     const [weight, setWeight] = useState(0);
+    const [thickness, setThickness] = useState('');
     const { toast } = useToast();
 
     const handleSubmit = () => {
@@ -49,12 +50,12 @@ function AddItemForm({ onItemAdded }: { onItemAdded: (newItem: Omit<Item, 'id' |
             return;
         }
         const newItem: Omit<Item, 'id' | 'createdAt'> = {
-            name, category, unit, quantity, purchasePrice, salePrice, color, weight,
+            name, category, unit, quantity, purchasePrice, salePrice, color, weight, thickness,
         };
         onItemAdded(newItem as Omit<Item, 'id' | 'createdAt'>);
         toast({ title: "Item Added!", description: `${name} has been added to inventory.` });
         // Reset form
-        setName(''); setCategory('Aluminium'); setUnit('Feet'); setQuantity(0); setPurchasePrice(0); setSalePrice(0); setColor(''); setWeight(0);
+        setName(''); setCategory('Aluminium'); setUnit('Feet'); setQuantity(0); setPurchasePrice(0); setSalePrice(0); setColor(''); setWeight(0); setThickness('');
     };
 
     return (
@@ -107,6 +108,10 @@ function AddItemForm({ onItemAdded }: { onItemAdded: (newItem: Omit<Item, 'id' |
                     <Label>Weight (kg/ft)</Label>
                     <Input type="number" value={weight} onChange={(e) => setWeight(parseFloat(e.target.value) || 0)} />
                 </div>
+                <div className="space-y-2">
+                    <Label>Thickness</Label>
+                    <Input value={thickness} onChange={(e) => setThickness(e.target.value)} placeholder="e.g. 1.2mm" />
+                </div>
             </div>
             <DialogFooter>
                 <Button onClick={handleSubmit}>Add Item</Button>
@@ -157,6 +162,7 @@ export default function InventoryPage() {
               <TableHead>Item Name</TableHead>
               <TableHead>Category</TableHead>
               <TableHead>Color</TableHead>
+              <TableHead>Thickness</TableHead>
               <TableHead className="text-right">Purchase Price</TableHead>
               <TableHead className="text-right">Sale Price</TableHead>
               <TableHead>
@@ -175,6 +181,9 @@ export default function InventoryPage() {
                 </TableCell>
                 <TableCell>
                   {item.color}
+                </TableCell>
+                <TableCell>
+                  {item.thickness}
                 </TableCell>
                 <TableCell className="text-right">
                   {formatCurrency(item.purchasePrice)}

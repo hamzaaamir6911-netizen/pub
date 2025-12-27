@@ -1,3 +1,4 @@
+
 {
   "entities": {
     "Item": {
@@ -33,6 +34,10 @@
         "salePrice": {
           "type": "number",
           "description": "The sale price of the item."
+        },
+        "thickness": {
+          "type": "string",
+          "description": "The thickness of the item."
         }
       },
       "required": [
