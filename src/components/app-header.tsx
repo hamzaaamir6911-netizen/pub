@@ -4,7 +4,7 @@
 import * as React from "react"
 import Link from "next/link"
 import { usePathname, useRouter } from "next/navigation"
-import { Factory, LayoutDashboard, Warehouse, ShoppingCart, Users, CreditCard, BarChart3, LogOut, BookUser, Settings, Truck, Menu, FileQuestion, Database } from "lucide-react"
+import { Factory, LayoutDashboard, Warehouse, ShoppingCart, Users, CreditCard, BarChart3, LogOut, BookUser, Settings, Truck, Menu, FileQuestion, Database, Printer } from "lucide-react"
 
 import { cn } from "@/lib/utils"
 import { Button } from "./ui/button"
@@ -12,6 +12,7 @@ import { Sheet, SheetContent, SheetTrigger } from "./ui/sheet"
 import { useToast } from "@/hooks/use-toast"
 import { useAuth } from "@/firebase"
 import { signOut } from "firebase/auth"
+import { useReactToPrint } from "react-to-print"
 
 const navItems = [
   { href: "/app/dashboard", icon: LayoutDashboard, label: "Dashboard" },
@@ -45,7 +46,7 @@ export function AppHeader() {
   };
 
   return (
-    <header className="sticky top-0 z-50 w-full border-b border-border/40 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 print:hidden">
+    <header className="sticky top-0 z-50 w-full border-b border-border/40 bg-card backdrop-blur supports-[backdrop-filter]:bg-background/60 print:hidden">
       <div className="container flex h-14 items-center">
         <div className="mr-4 flex items-center">
           <Link href="/app/dashboard" className="flex items-center gap-2">
@@ -54,7 +55,7 @@ export function AppHeader() {
           </Link>
         </div>
 
-        <nav className="hidden items-center space-x-6 text-sm font-medium md:flex">
+        <nav className="hidden items-center space-x-6 text-sm font-semibold md:flex">
           {navItems.map((item) => (
             <Link
               key={item.href}
@@ -71,7 +72,7 @@ export function AppHeader() {
 
         <div className="flex flex-1 items-center justify-end space-x-4">
            <nav className="flex items-center space-x-2">
-              <Button variant="ghost" className="text-sm font-medium text-foreground/60 transition-colors hover:text-foreground/80" onClick={handleLogout}>
+              <Button variant="ghost" className="text-sm font-semibold text-foreground/60 transition-colors hover:text-foreground/80" onClick={handleLogout}>
                   <LogOut className="mr-2 h-4 w-4" />
                   Logout
               </Button>
@@ -103,7 +104,7 @@ export function AppHeader() {
                                 href={item.href}
                                 onClick={() => setMobileMenuOpen(false)}
                                 className={cn(
-                                    "text-muted-foreground transition-colors hover:text-foreground",
+                                    "text-muted-foreground transition-colors hover:text-foreground font-semibold",
                                     pathname?.startsWith(item.href) && "text-foreground"
                                 )}
                                 >
