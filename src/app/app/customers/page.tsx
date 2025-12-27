@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useState } from "react";
@@ -25,6 +26,13 @@ import {
   DropdownMenuLabel,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
 import { PageHeader } from "@/components/page-header";
 import type { Customer } from "@/lib/types";
@@ -37,6 +45,8 @@ function AddCustomerForm({ onCustomerAdded }: { onCustomerAdded: (newCustomer: O
   const [name, setName] = useState('');
   const [phone, setPhone] = useState('');
   const [address, setAddress] = useState('');
+  const [openingBalance, setOpeningBalance] = useState(0);
+  const [balanceType, setBalanceType] = useState<'debit' | 'credit'>('debit');
   const { toast } = useToast();
 
   const handleSubmit = () => {
@@ -48,16 +58,20 @@ function AddCustomerForm({ onCustomerAdded }: { onCustomerAdded: (newCustomer: O
       name,
       phone,
       address,
+      openingBalance,
+      balanceType,
     };
     onCustomerAdded(newCustomer);
     toast({ title: 'Customer Added!', description: `${name} has been added.` });
     setName('');
     setPhone('');
     setAddress('');
+    setOpeningBalance(0);
+    setBalanceType('debit');
   };
 
   return (
-    <DialogContent>
+    <DialogContent className="max-w-xl">
       <DialogHeader>
         <DialogTitle>Add New Customer</DialogTitle>
       </DialogHeader>
@@ -74,6 +88,27 @@ function AddCustomerForm({ onCustomerAdded }: { onCustomerAdded: (newCustomer: O
           <Label htmlFor="address">Address</Label>
           <Input id="address" value={address} onChange={(e) => setAddress(e.target.value)} placeholder="123, Main Street, City" />
         </div>
+        <div className="grid grid-cols-2 gap-4">
+            <div className="space-y-2">
+                <Label htmlFor="openingBalance">Opening Balance</Label>
+                <Input id="openingBalance" type="number" value={openingBalance} onChange={(e) => setOpeningBalance(parseFloat(e.target.value) || 0)} placeholder="0" />
+            </div>
+            <div className="space-y-2">
+                <Label htmlFor="balanceType">Balance Type</Label>
+                <Select onValueChange={(v: 'debit' | 'credit') => setBalanceType(v)} value={balanceType}>
+                    <SelectTrigger id="balanceType">
+                        <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                        <SelectItem value="debit">Debit (Owed by Customer)</SelectItem>
+                        <SelectItem value="credit">Credit (Paid by Customer)</SelectItem>
+                    </SelectContent>
+                </Select>
+            </div>
+        </div>
+        <p className="text-xs text-muted-foreground">
+            Opening balance creates an initial transaction. Debit means the customer owes you money. Credit means you owe the customer money (or they paid in advance).
+        </p>
       </div>
       <DialogFooter>
         <Button onClick={handleSubmit}>Add Customer</Button>

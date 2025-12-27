@@ -71,6 +71,15 @@
         "address": {
           "type": "string",
           "description": "The address of the customer."
+        },
+        "openingBalance": {
+          "type": "number",
+          "description": "The customer's opening balance."
+        },
+        "balanceType": {
+          "type": "string",
+          "enum": ["debit", "credit"],
+          "description": "The type of opening balance (debit or credit)."
         }
       },
       "required": [
@@ -79,6 +88,40 @@
         "phoneNumber",
         "address"
       ]
+    },
+    "Vendor": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "Vendor",
+      "type": "object",
+      "description": "Represents a vendor or supplier.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the vendor."
+        },
+        "name": {
+          "type": "string",
+          "description": "The name of the vendor."
+        },
+        "phone": {
+          "type": "string",
+          "description": "The phone number of the vendor."
+        },
+        "address": {
+          "type": "string",
+          "description": "The address of the vendor."
+        },
+        "openingBalance": {
+          "type": "number",
+          "description": "The vendor's opening balance."
+        },
+        "balanceType": {
+          "type": "string",
+          "enum": ["debit", "credit"],
+          "description": "The type of opening balance (debit or credit)."
+        }
+      },
+      "required": ["id", "name"]
     },
     "Sale": {
       "$schema": "http://json-schema.org/draft-07/schema#",
@@ -304,6 +347,22 @@
           ]
         }
       },
+       {
+        "path": "/vendors/{vendorId}",
+        "definition": {
+          "entityName": "vendor",
+          "schema": {
+            "$ref": "#/backend/entities/Vendor"
+          },
+          "description": "Stores vendor information.",
+          "params": [
+            {
+              "name": "vendorId",
+              "description": "Unique identifier for the vendor."
+            }
+          ]
+        }
+      },
       {
         "path": "/sales/{saleId}",
         "definition": {
@@ -353,7 +412,6 @@
         }
       }
     ],
-    "reasoning": "The Firestore structure is designed to manage an aluminium factory's stock, sales, expenses, and customer data securely and efficiently. It prioritizes authorization independence to ensure robust security rules and scalable operations. The structure includes separate collections for `items`, `customers`, `sales`, `expenses`, and `estimates`, each serving distinct functions within the application. To enforce admin-only access, a dedicated `/roles_admin/{uid}` collection is used; the existence of a document at this path grants admin privileges. This existence check is secure and efficient.\n\n**Authorization Independence and QAPs:**\n\n*   **Admin Role:** Authorization is handled via the existence of documents in the `/roles_admin/{uid}` collection. This avoids complex custom claims and enables straightforward security rules based solely on `request.auth.uid`.\n*   **Segregation:** The segregation of data into separate collections (`items`, `customers`, `sales`, `expenses`, `estimates`) ensures that each collection has a homogeneous security posture, simplifying security rule definitions.\n\nThis structure adheres to the principles of Authorization Independence, Clarity of Intent, DBAC, and QAPs, ensuring a secure, scalable, and debuggable Firestore design."
+    "reasoning": "The Firestore structure is designed to manage an aluminium factory's stock, sales, expenses, and customer data securely and efficiently. It prioritizes authorization independence to ensure robust security rules and scalable operations. The structure includes separate collections for `items`, `customers`, `vendors`, `sales`, `expenses`, and `estimates`, each serving distinct functions within the application. To enforce admin-only access, a dedicated `/roles_admin/{uid}` collection is used; the existence of a document at this path grants admin privileges. This existence check is secure and efficient.\n\n**Authorization Independence and QAPs:**\n\n*   **Admin Role:** Authorization is handled via the existence of documents in the `/roles_admin/{uid}` collection. This avoids complex custom claims and enables straightforward security rules based solely on `request.auth.uid`.\n*   **Segregation:** The segregation of data into separate collections ensures that each collection has a homogeneous security posture, simplifying security rule definitions.\n\nThis structure adheres to the principles of Authorization Independence, Clarity of Intent, DBAC, and QAPs, ensuring a secure, scalable, and debuggable Firestore design."
   }
 }
-    

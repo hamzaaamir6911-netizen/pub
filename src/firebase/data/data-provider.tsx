@@ -5,7 +5,7 @@
 import React, { createContext, useContext, ReactNode } from 'react';
 import type { Item, Customer, Sale, Expense, Transaction, Vendor, Estimate } from '@/lib/types';
 import { useCollection, useFirestore, useMemoFirebase, useUser } from '@/firebase';
-import { collection, doc, writeBatch, serverTimestamp, Timestamp, orderBy, query, where, getDocs, runTransaction, increment } from 'firebase/firestore';
+import { collection, doc, writeBatch, serverTimestamp, Timestamp, orderBy, query, where, getDocs, runTransaction, increment, addDoc } from 'firebase/firestore';
 import { addDocumentNonBlocking, deleteDocumentNonBlocking, updateDocumentNonBlocking } from '../non-blocking-updates';
 import { date } from 'zod';
 
@@ -117,19 +117,68 @@ export const DataProvider = ({ children }: { children: ReactNode }) => {
     };
 
     const addCustomer = async (customer: Omit<Customer, 'id' | 'createdAt'>) => {
-        if (!customersCol) throw new Error("Customers collection not available");
-        const newCustomer = { ...customer, createdAt: serverTimestamp() };
-        return addDocumentNonBlocking(customersCol, newCustomer);
+        if (!customersCol || !transactionsCol) throw new Error("A required collection is not available");
+
+        const batch = writeBatch(firestore);
+
+        // 1. Add the customer
+        const newCustomerRef = doc(customersCol);
+        const newCustomerData = { ...customer, createdAt: serverTimestamp() };
+        batch.set(newCustomerRef, newCustomerData);
+
+        // 2. Add opening balance transaction if it exists
+        if (customer.openingBalance && customer.openingBalance > 0) {
+            const transactionRef = doc(collection(firestore, 'transactions'));
+            const transactionData: Omit<Transaction, 'id'> = {
+                description: "Opening Balance",
+                amount: customer.openingBalance,
+                type: customer.balanceType === 'credit' ? 'credit' : 'debit',
+                category: 'Opening Balance',
+                customerId: newCustomerRef.id,
+                customerName: customer.name,
+                date: serverTimestamp() as Timestamp,
+            };
+            batch.set(transactionRef, transactionData);
+        }
+
+        await batch.commit();
+        return { ...customer, id: newCustomerRef.id, createdAt: new Date() };
     };
+    
     const deleteCustomer = async (id: string) => {
         if (!user) throw new Error("User not authenticated");
         deleteDocumentNonBlocking(doc(firestore, 'customers', id));
     };
     
     const addVendor = async (vendor: Omit<Vendor, 'id' | 'createdAt'>) => {
-       if (!vendorsCol) throw new Error("Vendors collection not available");
-        const newVendor = { ...vendor, createdAt: serverTimestamp() };
-        return addDocumentNonBlocking(vendorsCol, newVendor);
+       if (!vendorsCol || !transactionsCol) throw new Error("A required collection is not available");
+       
+       const batch = writeBatch(firestore);
+
+       // 1. Add the vendor
+       const newVendorRef = doc(vendorsCol);
+       const newVendorData = { ...vendor, createdAt: serverTimestamp() };
+       batch.set(newVendorRef, newVendorData);
+
+       // 2. Add opening balance transaction if it exists
+       if (vendor.openingBalance && vendor.openingBalance > 0) {
+            const transactionRef = doc(collection(firestore, 'transactions'));
+            const transactionData: Omit<Transaction, 'id'> = {
+                description: "Opening Balance",
+                amount: vendor.openingBalance,
+                // For vendors, credit means we owe them, debit means we paid in advance.
+                // This aligns with accounting principles.
+                type: vendor.balanceType === 'credit' ? 'credit' : 'debit', 
+                category: 'Opening Balance',
+                vendorId: newVendorRef.id,
+                vendorName: vendor.name,
+                date: serverTimestamp() as Timestamp,
+            };
+            batch.set(transactionRef, transactionData);
+       }
+       
+       await batch.commit();
+       return { ...vendor, id: newVendorRef.id, createdAt: new Date() };
     };
     const deleteVendor = async (id: string) => {
         if (!user) throw new Error("User not authenticated");

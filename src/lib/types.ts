@@ -20,6 +20,8 @@ export type Customer = {
   phone: string;
   address: string;
   createdAt: Date;
+  openingBalance?: number;
+  balanceType?: 'debit' | 'credit';
 };
 
 export type Vendor = {
@@ -28,6 +30,8 @@ export type Vendor = {
   phone: string;
   address: string;
   createdAt: Date;
+  openingBalance?: number;
+  balanceType?: 'debit' | 'credit';
 }
 
 export type SaleItem = {
@@ -84,6 +88,4 @@ export type Transaction = {
   vendorId?: string;
   vendorName?: string;
 }
-    
-
     

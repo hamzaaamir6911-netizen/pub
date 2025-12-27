@@ -26,6 +26,13 @@ import {
   DropdownMenuLabel,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
 import { PageHeader } from "@/components/page-header";
 import type { Vendor } from "@/lib/types";
@@ -38,6 +45,8 @@ function AddVendorForm({ onVendorAdded }: { onVendorAdded: (newVendor: Omit<Vend
   const [name, setName] = useState('');
   const [phone, setPhone] = useState('');
   const [address, setAddress] = useState('');
+  const [openingBalance, setOpeningBalance] = useState(0);
+  const [balanceType, setBalanceType] = useState<'credit' | 'debit'>('credit');
   const { toast } = useToast();
 
   const handleSubmit = () => {
@@ -49,16 +58,20 @@ function AddVendorForm({ onVendorAdded }: { onVendorAdded: (newVendor: Omit<Vend
       name,
       phone,
       address,
+      openingBalance,
+      balanceType,
     };
     onVendorAdded(newVendor);
     toast({ title: 'Vendor Added!', description: `${name} has been added.` });
     setName('');
     setPhone('');
     setAddress('');
+    setOpeningBalance(0);
+    setBalanceType('credit');
   };
 
   return (
-    <DialogContent>
+    <DialogContent className="max-w-xl">
       <DialogHeader>
         <DialogTitle>Add New Vendor</DialogTitle>
       </DialogHeader>
@@ -75,6 +88,27 @@ function AddVendorForm({ onVendorAdded }: { onVendorAdded: (newVendor: Omit<Vend
           <Label htmlFor="address">Address</Label>
           <Input id="address" value={address} onChange={(e) => setAddress(e.target.value)} placeholder="123, Main Street, City" />
         </div>
+        <div className="grid grid-cols-2 gap-4">
+            <div className="space-y-2">
+                <Label htmlFor="openingBalance">Opening Balance</Label>
+                <Input id="openingBalance" type="number" value={openingBalance} onChange={(e) => setOpeningBalance(parseFloat(e.target.value) || 0)} placeholder="0" />
+            </div>
+            <div className="space-y-2">
+                <Label htmlFor="balanceType">Balance Type</Label>
+                <Select onValueChange={(v: 'debit' | 'credit') => setBalanceType(v)} value={balanceType}>
+                    <SelectTrigger id="balanceType">
+                        <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                        <SelectItem value="credit">Credit (You Owe Vendor)</SelectItem>
+                        <SelectItem value="debit">Debit (Vendor Owes You)</SelectItem>
+                    </SelectContent>
+                </Select>
+            </div>
+        </div>
+        <p className="text-xs text-muted-foreground">
+            Opening balance creates an initial transaction. Credit means you owe the vendor money. Debit means the vendor owes you money (or you paid an advance).
+        </p>
       </div>
       <DialogFooter>
         <Button onClick={handleSubmit}>Add Vendor</Button>
