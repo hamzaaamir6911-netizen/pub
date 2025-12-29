@@ -145,7 +145,7 @@ function SalaryGenerationForm() {
         <Card>
             <CardHeader>
                 <CardTitle>Generate Monthly Salaries</CardTitle>
-                <CardDescription>Select the month and year, then enter the days worked and overtime for each labourer.</CardDescription>
+                <CardDescription>Select the month and year. You can filter by a specific labourer, then enter their days worked and overtime to generate salaries.</CardDescription>
             </CardHeader>
             <CardContent className="space-y-6">
                 <div className="grid md:grid-cols-4 gap-4">
