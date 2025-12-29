@@ -78,10 +78,8 @@ function SaleInvoice({ sale, onPost, onUnpost }: { sale: Sale, onPost: (saleId: 
             <div className="flex-grow overflow-y-auto" id="printable-invoice">
                  <div className="p-6">
                     <div className="text-center mb-8">
-                      <div className="flex justify-center mb-4">
-                        <Image src="/logo.png" alt="ARCO Aluminium Company" width={200} height={100} />
-                      </div>
-                      <p className="mt-4 font-bold">Sale Invoice: {sale.id}</p>
+                      <h1 className="text-3xl font-bold font-headline">ARCO Aluminium Company</h1>
+                      <p className="mt-2 font-bold">Sale Invoice: {sale.id}</p>
                     </div>
                     <div className="p-6">
                         <div className="grid grid-cols-2 gap-4 mb-6">
@@ -700,5 +698,3 @@ export default function SalesPage() {
     </>
   );
 }
-
-    

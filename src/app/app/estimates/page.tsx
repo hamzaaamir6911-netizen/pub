@@ -64,10 +64,8 @@ function EstimatePrint({ estimate }: { estimate: Estimate }) {
             <div id="printable-estimate" className="flex-grow overflow-y-auto">
                 <div className="p-6">
                     <div className="text-center mb-8">
-                       <div className="flex justify-center mb-4">
-                        <Image src="/logo.png" alt="ARCO Aluminium Company" width={200} height={100} />
-                      </div>
-                        <p className="mt-4 font-bold">Estimate: {estimate.id}</p>
+                       <h1 className="text-3xl font-bold font-headline">ARCO Aluminium Company</h1>
+                        <p className="mt-2 font-bold">Estimate: {estimate.id}</p>
                     </div>
                     <div className="p-6">
                         <div className="grid grid-cols-2 gap-4 mb-6">
@@ -569,5 +567,3 @@ export default function EstimatesPage() {
     </>
   );
 }
-
-    
