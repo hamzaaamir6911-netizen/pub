@@ -85,18 +85,18 @@ function SaleInvoice({ sale, onPost, onUnpost }: { sale: Sale, onPost: (saleId: 
                       <p className="mt-2 text-xl font-bold">Sale Invoice: {sale.id}</p>
                     </div>
                     <div className="p-6">
-                        <div className="grid grid-cols-2 gap-4 mb-6">
+                        <div className="grid grid-cols-2 gap-4 mb-6 font-bold">
                             <div>
-                                <p className="font-bold text-lg">Customer:</p>
+                                <p className="text-lg">Customer:</p>
                                 <p>{sale.customerName}</p>
                                 <p>{customer?.address}</p>
                                 <p>{customer?.phoneNumber}</p>
                             </div>
                             <div className="text-right">
-                                <p className="font-bold text-lg">Date:</p>
+                                <p className="text-lg">Date:</p>
                                 <p>{formatDate(sale.date)}</p>
-                                <p className="font-bold mt-2 text-lg">Status:</p>
-                                <Badge variant={sale.status === 'posted' ? 'default' : 'secondary'} className="text-base">{sale.status}</Badge>
+                                <p className="mt-2 text-lg">Status:</p>
+                                <Badge variant={sale.status === 'posted' ? 'default' : 'secondary'} className="text-base font-bold">{sale.status}</Badge>
                             </div>
                         </div>
 
@@ -122,8 +122,8 @@ function SaleInvoice({ sale, onPost, onUnpost }: { sale: Sale, onPost: (saleId: 
                                         runningTotal += finalAmount;
                                         
                                         return (
-                                            <TableRow key={index}>
-                                                <TableCell className="font-bold">{item.itemName}</TableCell>
+                                            <TableRow key={index} className="font-bold">
+                                                <TableCell>{item.itemName}</TableCell>
                                                 <TableCell>{item.color}</TableCell>
                                                 <TableCell>{item.thickness || '-'}</TableCell>
                                                 <TableCell className="text-right">{item.feet ? item.feet.toFixed(2) : '-'}</TableCell>
@@ -147,9 +147,9 @@ function SaleInvoice({ sale, onPost, onUnpost }: { sale: Sale, onPost: (saleId: 
                             </div>
                         </div>
 
-                         <div className="mt-24 text-center text-xs text-gray-500 border-t pt-4">
-                            <p className="font-semibold">Industrial Estate, Hayatabad Road B-5 PLOT 59 PESHAWAR</p>
-                            <p className="font-semibold">Phone: +923334646356</p>
+                         <div className="mt-24 text-center text-xs text-gray-500 border-t pt-4 font-bold">
+                            <p>Industrial Estate, Hayatabad Road B-5 PLOT 59 PESHAWAR</p>
+                            <p>Phone: +923334646356</p>
                         </div>
                     </div>
                 </div>
@@ -701,5 +701,7 @@ export default function SalesPage() {
     </>
   );
 }
+
+    
 
     

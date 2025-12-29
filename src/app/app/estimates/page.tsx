@@ -71,15 +71,15 @@ function EstimatePrint({ estimate }: { estimate: Estimate }) {
                         <p className="mt-2 text-xl font-bold">Estimate: {estimate.id}</p>
                     </div>
                     <div className="p-6">
-                        <div className="grid grid-cols-2 gap-4 mb-6">
+                        <div className="grid grid-cols-2 gap-4 mb-6 font-bold">
                             <div>
-                                <p className="font-bold text-lg">Customer:</p>
+                                <p className="text-lg">Customer:</p>
                                 <p>{estimate.customerName}</p>
                                 <p>{customer?.address}</p>
                                 <p>{customer?.phoneNumber}</p>
                             </div>
                             <div className="text-right">
-                                <p className="font-bold text-lg">Date:</p>
+                                <p className="text-lg">Date:</p>
                                 <p>{formatDate(estimate.date)}</p>
                             </div>
                         </div>
@@ -106,8 +106,8 @@ function EstimatePrint({ estimate }: { estimate: Estimate }) {
                                         runningTotal += finalAmount;
                                         
                                         return (
-                                            <TableRow key={index}>
-                                                <TableCell className="font-bold">{item.itemName}</TableCell>
+                                            <TableRow key={index} className="font-bold">
+                                                <TableCell>{item.itemName}</TableCell>
                                                 <TableCell>{item.color}</TableCell>
                                                 <TableCell>{item.thickness || '-'}</TableCell>
                                                 <TableCell className="text-right">{item.feet ? item.feet.toFixed(2) : '-'}</TableCell>
@@ -131,9 +131,9 @@ function EstimatePrint({ estimate }: { estimate: Estimate }) {
                             </div>
                         </div>
 
-                        <div className="mt-24 text-center text-xs text-gray-500 border-t pt-4">
-                            <p className="font-semibold">Industrial Estate, Hayatabad Road B-5 PLOT 59 PESHAWAR</p>
-                            <p className="font-semibold">Phone: +923334646356</p>
+                        <div className="mt-24 text-center text-xs text-gray-500 border-t pt-4 font-bold">
+                            <p>Industrial Estate, Hayatabad Road B-5 PLOT 59 PESHAWAR</p>
+                            <p>Phone: +923334646356</p>
                         </div>
                     </div>
                 </div>
@@ -570,5 +570,7 @@ export default function EstimatesPage() {
     </>
   );
 }
+
+    
 
     
