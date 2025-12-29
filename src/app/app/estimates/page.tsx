@@ -67,7 +67,7 @@ function EstimatePrint({ estimate }: { estimate: Estimate }) {
                        <div className="flex justify-center mb-4">
                         <Image src="/logo.png" alt="ARCO Aluminium Company" width={200} height={100} />
                       </div>
-                        <p className="mt-4">Estimate: {estimate.id}</p>
+                        <p className="mt-4 font-bold">Estimate: {estimate.id}</p>
                     </div>
                     <div className="p-6">
                         <div className="grid grid-cols-2 gap-4 mb-6">
@@ -569,7 +569,5 @@ export default function EstimatesPage() {
     </>
   );
 }
-
-    
 
     
