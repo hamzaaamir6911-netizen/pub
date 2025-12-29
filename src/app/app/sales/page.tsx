@@ -3,7 +3,6 @@
 
 import { useState, useRef, useEffect } from "react";
 import { MoreHorizontal, PlusCircle, Trash2, RotateCcw, FileText, CheckCircle, Edit, Calendar as CalendarIcon, Undo2, Printer } from "lucide-react";
-import Image from "next/image";
 import {
   Table,
   TableBody,
@@ -78,9 +77,6 @@ function SaleInvoice({ sale, onPost, onUnpost }: { sale: Sale, onPost: (saleId: 
             <div className="flex-grow overflow-y-auto" id="printable-invoice">
                  <div className="p-6">
                     <div className="text-center mb-8">
-                       <div className="flex justify-center mb-4">
-                          <Image src="/logo.png" alt="ARCO Logo" width={150} height={150} className="object-contain" />
-                      </div>
                       <h1 className="text-3xl font-bold font-headline">ARCO Aluminium Company</h1>
                       <p className="mt-2 text-xl font-bold">Sale Invoice: {sale.id}</p>
                     </div>
@@ -701,7 +697,3 @@ export default function SalesPage() {
     </>
   );
 }
-
-    
-
-    
