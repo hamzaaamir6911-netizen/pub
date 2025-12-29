@@ -78,22 +78,25 @@ function SaleInvoice({ sale, onPost, onUnpost }: { sale: Sale, onPost: (saleId: 
             <div className="flex-grow overflow-y-auto" id="printable-invoice">
                  <div className="p-6">
                     <div className="text-center mb-8">
+                       <div className="flex justify-center mb-4">
+                          <Image src="/logo.png" alt="ARCO Logo" width={150} height={150} className="object-contain" />
+                      </div>
                       <h1 className="text-3xl font-bold font-headline">ARCO Aluminium Company</h1>
-                      <p className="mt-2 font-bold">Sale Invoice: {sale.id}</p>
+                      <p className="mt-2 text-xl font-bold">Sale Invoice: {sale.id}</p>
                     </div>
                     <div className="p-6">
                         <div className="grid grid-cols-2 gap-4 mb-6">
                             <div>
-                                <p className="font-semibold">Customer:</p>
+                                <p className="font-bold text-lg">Customer:</p>
                                 <p>{sale.customerName}</p>
                                 <p>{customer?.address}</p>
                                 <p>{customer?.phoneNumber}</p>
                             </div>
                             <div className="text-right">
-                                <p className="font-semibold">Date:</p>
+                                <p className="font-bold text-lg">Date:</p>
                                 <p>{formatDate(sale.date)}</p>
-                                <p className="font-semibold mt-2">Status:</p>
-                                <Badge variant={sale.status === 'posted' ? 'default' : 'secondary'}>{sale.status}</Badge>
+                                <p className="font-bold mt-2 text-lg">Status:</p>
+                                <Badge variant={sale.status === 'posted' ? 'default' : 'secondary'} className="text-base">{sale.status}</Badge>
                             </div>
                         </div>
 
@@ -101,14 +104,14 @@ function SaleInvoice({ sale, onPost, onUnpost }: { sale: Sale, onPost: (saleId: 
                             <Table>
                                 <TableHeader>
                                     <TableRow>
-                                        <TableHead>Item</TableHead>
-                                        <TableHead>Colour</TableHead>
-                                        <TableHead>Thickness</TableHead>
-                                        <TableHead className="text-right">Feet</TableHead>
-                                        <TableHead className="text-right">Quantity</TableHead>
-                                        <TableHead className="text-right">Rate</TableHead>
-                                        <TableHead className="text-right">Discount</TableHead>
-                                        <TableHead className="text-right">Amount</TableHead>
+                                        <TableHead className="font-bold">Item</TableHead>
+                                        <TableHead className="font-bold">Colour</TableHead>
+                                        <TableHead className="font-bold">Thickness</TableHead>
+                                        <TableHead className="text-right font-bold">Feet</TableHead>
+                                        <TableHead className="text-right font-bold">Quantity</TableHead>
+                                        <TableHead className="text-right font-bold">Rate</TableHead>
+                                        <TableHead className="text-right font-bold">Discount</TableHead>
+                                        <TableHead className="text-right font-bold">Amount</TableHead>
                                     </TableRow>
                                 </TableHeader>
                                 <TableBody>
@@ -120,7 +123,7 @@ function SaleInvoice({ sale, onPost, onUnpost }: { sale: Sale, onPost: (saleId: 
                                         
                                         return (
                                             <TableRow key={index}>
-                                                <TableCell>{item.itemName}</TableCell>
+                                                <TableCell className="font-bold">{item.itemName}</TableCell>
                                                 <TableCell>{item.color}</TableCell>
                                                 <TableCell>{item.thickness || '-'}</TableCell>
                                                 <TableCell className="text-right">{item.feet ? item.feet.toFixed(2) : '-'}</TableCell>
@@ -137,7 +140,7 @@ function SaleInvoice({ sale, onPost, onUnpost }: { sale: Sale, onPost: (saleId: 
 
                         <div className="mt-6 flex justify-end">
                             <div className="w-80 space-y-2">
-                                <div className="flex justify-between font-bold text-lg border-t pt-2">
+                                <div className="flex justify-between font-bold text-xl border-t-2 border-black pt-2">
                                     <span>Total:</span>
                                     <span>{formatCurrency(sale.total)}</span>
                                 </div>
@@ -698,3 +701,5 @@ export default function SalesPage() {
     </>
   );
 }
+
+    
