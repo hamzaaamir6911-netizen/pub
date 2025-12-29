@@ -1,7 +1,7 @@
 
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import {
   Table,
   TableBody,
@@ -9,7 +9,6 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-  TableFooter,
 } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
 import { PageHeader } from "@/components/page-header";
@@ -23,6 +22,7 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
+import { Checkbox } from "@/components/ui/checkbox";
 
 type SalaryInput = {
     labourId: string;
@@ -49,28 +49,42 @@ function SalaryGenerationForm() {
     const [year, setYear] = useState(new Date().getFullYear());
     const [workingDays, setWorkingDays] = useState(30);
     const [salaryInputs, setSalaryInputs] = useState<Record<string, SalaryInput>>({});
+    const [selectedLabourIds, setSelectedLabourIds] = useState<string[]>([]);
 
     const alreadyPaidLabourIds = useMemo(() => {
         return salaryPayments
             .filter(p => p.month === month && p.year === year)
             .map(p => p.labourId);
     }, [salaryPayments, month, year]);
+    
+    const unpaidLabour = labour.filter(l => !alreadyPaidLabourIds.includes(l.id));
+
+    useEffect(() => {
+        // When month/year changes, reset selections
+        setSelectedLabourIds([]);
+        setSalaryInputs({});
+    }, [month, year]);
 
     const handleInputChange = (labourId: string, field: 'daysWorked' | 'overtimeAmount', value: string) => {
         const numValue = parseFloat(value) || 0;
         setSalaryInputs(prev => ({
             ...prev,
             [labourId]: {
-                ...prev[labourId],
-                labourId,
-                [field]: numValue
+                labourId: labourId,
+                daysWorked: field === 'daysWorked' ? numValue : (prev[labourId]?.daysWorked ?? workingDays),
+                overtimeAmount: field === 'overtimeAmount' ? numValue : (prev[labourId]?.overtimeAmount ?? 0),
             }
         }));
     };
 
     const handleGenerate = async () => {
+        if (selectedLabourIds.length === 0) {
+            toast({ variant: 'destructive', title: "No labourers selected." });
+            return;
+        }
+
         const salariesToGenerate = labour
-            .filter(l => !alreadyPaidLabourIds.includes(l.id))
+            .filter(l => selectedLabourIds.includes(l.id))
             .map(l => {
                 const input = salaryInputs[l.id] || { daysWorked: workingDays, overtimeAmount: 0 };
                 const perDaySalary = l.salary / workingDays;
@@ -89,20 +103,30 @@ function SalaryGenerationForm() {
                 };
             });
         
-        if (salariesToGenerate.length === 0) {
-            toast({ variant: 'destructive', title: "No salaries to generate." });
-            return;
-        }
-
         try {
             await generateSalaries(salariesToGenerate);
-            toast({ title: "Salaries Generated!", description: `Salaries for ${MONTHS.find(m=>m.value === month)?.label} ${year} have been processed.` });
+            toast({ title: "Salaries Generated!", description: `Salaries for selected labourers for ${MONTHS.find(m=>m.value === month)?.label} ${year} have been processed.` });
+            setSelectedLabourIds([]); // Reset selection after generation
         } catch (error: any) {
             toast({ variant: 'destructive', title: "Error", description: error.message });
         }
     };
     
-    const unpaidLabour = labour.filter(l => !alreadyPaidLabourIds.includes(l.id));
+    const handleSelectAll = (checked: boolean) => {
+        if (checked) {
+            setSelectedLabourIds(unpaidLabour.map(l => l.id));
+        } else {
+            setSelectedLabourIds([]);
+        }
+    }
+
+    const handleSelectLabourer = (labourId: string, checked: boolean) => {
+        if (checked) {
+            setSelectedLabourIds(prev => [...prev, labourId]);
+        } else {
+            setSelectedLabourIds(prev => prev.filter(id => id !== labourId));
+        }
+    }
 
     return (
         <Card>
@@ -140,6 +164,13 @@ function SalaryGenerationForm() {
                     <Table>
                         <TableHeader>
                             <TableRow>
+                                <TableHead className="w-[50px]">
+                                     <Checkbox
+                                        onCheckedChange={handleSelectAll}
+                                        checked={unpaidLabour.length > 0 && selectedLabourIds.length === unpaidLabour.length}
+                                        aria-label="Select all"
+                                    />
+                                </TableHead>
                                 <TableHead>Labourer</TableHead>
                                 <TableHead>Base Salary</TableHead>
                                 <TableHead>Days Worked</TableHead>
@@ -150,7 +181,7 @@ function SalaryGenerationForm() {
                         <TableBody>
                             {unpaidLabour.length === 0 ? (
                                 <TableRow>
-                                    <TableCell colSpan={5} className="text-center h-24">
+                                    <TableCell colSpan={6} className="text-center h-24">
                                         {labour.length === 0 ? "No labourers found. Please add labourers first." : "All salaries for this month have been paid."}
                                     </TableCell>
                                 </TableRow>
@@ -162,7 +193,14 @@ function SalaryGenerationForm() {
                                     const totalPayable = calculatedSalary + input.overtimeAmount;
 
                                     return (
-                                        <TableRow key={l.id}>
+                                        <TableRow key={l.id} data-state={selectedLabourIds.includes(l.id) && "selected"}>
+                                            <TableCell>
+                                                <Checkbox
+                                                    onCheckedChange={(checked) => handleSelectLabourer(l.id, !!checked)}
+                                                    checked={selectedLabourIds.includes(l.id)}
+                                                    aria-label={`Select ${l.name}`}
+                                                />
+                                            </TableCell>
                                             <TableCell className="font-medium">{l.name}</TableCell>
                                             <TableCell>{formatCurrency(l.salary)}</TableCell>
                                             <TableCell>
@@ -191,7 +229,7 @@ function SalaryGenerationForm() {
                 </div>
             </CardContent>
             <CardFooter className="flex justify-end">
-                <Button onClick={handleGenerate} disabled={unpaidLabour.length === 0}>Generate & Pay Salaries</Button>
+                <Button onClick={handleGenerate} disabled={selectedLabourIds.length === 0}>Generate & Pay Selected Salaries</Button>
             </CardFooter>
         </Card>
     )
