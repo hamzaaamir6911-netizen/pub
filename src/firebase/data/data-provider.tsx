@@ -5,7 +5,7 @@
 import React, { createContext, useContext, ReactNode, useEffect, useState } from 'react';
 import type { Item, Customer, Sale, Expense, Transaction, Vendor, Estimate, Labour, SalaryPayment } from '@/lib/types';
 import { useCollection, useFirestore, useMemoFirebase, useUser } from '@/firebase';
-import { collection, doc, writeBatch, serverTimestamp, Timestamp, orderBy, query, where, getDocs, runTransaction, increment, addDoc, getDoc } from 'firebase/firestore';
+import { collection, doc, writeBatch, serverTimestamp, Timestamp, orderBy, query, where, getDocs, runTransaction, increment, addDoc, getDoc, deleteDoc } from 'firebase/firestore';
 import { addDocumentNonBlocking, deleteDocumentNonBlocking, updateDocumentNonBlocking } from '../non-blocking-updates';
 import { date } from 'zod';
 
@@ -44,6 +44,7 @@ interface DataContextProps {
   addTransaction: (transaction: Omit<Transaction, 'id' | 'date'>) => Promise<void>;
   deleteTransaction: (id: string) => Promise<void>;
   addSalaryPayment: (payment: Omit<SalaryPayment, 'id' | 'date'>) => Promise<void>;
+  deleteSalaryPayment: (paymentId: string) => Promise<void>;
   getDashboardStats: () => {
     totalSales: number;
     totalExpenses: number;
@@ -640,6 +641,31 @@ export const DataProvider = ({ children }: { children: ReactNode }) => {
         await batch.commit();
     };
 
+    const deleteSalaryPayment = async (paymentId: string) => {
+        if (!user) throw new Error("User not authenticated");
+        const paymentToDelete = salaryPayments.find(p => p.id === paymentId);
+        if (!paymentToDelete) return;
+    
+        const batch = writeBatch(firestore);
+        
+        // 1. Delete the salary payment document
+        const paymentRef = doc(firestore, 'salaryPayments', paymentId);
+        batch.delete(paymentRef);
+    
+        // 2. Find and delete the associated ledger transaction
+        const q = query(
+            collection(firestore, 'transactions'),
+            where("category", "==", "Salary"),
+            where("description", "==", `Salary payment for ${paymentToDelete.month} ${paymentToDelete.year}`)
+        );
+        const querySnapshot = await getDocs(q);
+        querySnapshot.forEach((doc) => {
+            batch.delete(doc.ref);
+        });
+    
+        await batch.commit();
+    };
+
 
     const getDashboardStats = () => {
         const totalSales = sales.filter(s => s.status === 'posted').reduce((sum, sale) => sum + sale.total, 0);
@@ -692,7 +718,7 @@ export const DataProvider = ({ children }: { children: ReactNode }) => {
         addEstimate, deleteEstimate,
         addExpense, deleteExpense,
         addTransaction, deleteTransaction,
-        addSalaryPayment,
+        addSalaryPayment, deleteSalaryPayment,
         getDashboardStats, getMonthlySalesData,
     };
 

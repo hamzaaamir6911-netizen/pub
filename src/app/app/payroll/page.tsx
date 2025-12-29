@@ -2,7 +2,7 @@
 "use client";
 
 import { useState, useMemo } from "react";
-import { PlusCircle, Trash2, DollarSign, FileText, Printer } from "lucide-react";
+import { PlusCircle, Trash2, DollarSign, FileText, Printer, MoreHorizontal } from "lucide-react";
 import {
   Table,
   TableBody,
@@ -19,6 +19,24 @@ import {
   DialogTrigger,
   DialogFooter,
 } from "@/components/ui/dialog"
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog"
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle, CardFooter, CardDescription } from "@/components/ui/card";
@@ -299,12 +317,18 @@ function NewPayslipForm({ onPayslipGenerated }: { onPayslipGenerated: () => void
 }
 
 export default function PayrollPage() {
-  const { salaryPayments } = useData();
+  const { salaryPayments, deleteSalaryPayment } = useData();
+  const { toast } = useToast();
   const [activeTab, setActiveTab] = useState("new");
   const [selectedPayment, setSelectedPayment] = useState<SalaryPayment | null>(null);
 
   const handlePayslipGenerated = () => {
       setActiveTab("history");
+  }
+
+  const handleDelete = (paymentId: string) => {
+    deleteSalaryPayment(paymentId);
+    toast({ title: "Payslip Deleted", description: "The salary payment has been removed." });
   }
 
   return (
@@ -338,7 +362,7 @@ export default function PayrollPage() {
                                     <TableHead>Year</TableHead>
                                     <TableHead>Payment Date</TableHead>
                                     <TableHead className="text-right">Total Amount Paid</TableHead>
-                                    <TableHead className="no-print"><span className="sr-only">Actions</span></TableHead>
+                                    <TableHead className="text-right no-print">Actions</TableHead>
                                 </TableRow>
                             </TableHeader>
                             <TableBody>
@@ -353,14 +377,46 @@ export default function PayrollPage() {
                                             <TableCell className="text-right font-medium">{formatCurrency(payment.totalAmountPaid)}</TableCell>
                                             <TableCell className="text-right no-print">
                                                 <Dialog onOpenChange={(open) => !open && setSelectedPayment(null)}>
-                                                    <DialogTrigger asChild>
-                                                        <Button variant="ghost" size="sm" onClick={() => setSelectedPayment(payment)}>
-                                                            <FileText className="mr-2 h-4 w-4" /> View Details
+                                                  <AlertDialog>
+                                                    <DropdownMenu>
+                                                      <DropdownMenuTrigger asChild>
+                                                        <Button aria-haspopup="true" size="icon" variant="ghost">
+                                                          <MoreHorizontal className="h-4 w-4" />
+                                                          <span className="sr-only">Toggle menu</span>
                                                         </Button>
-                                                    </DialogTrigger>
-                                                    {selectedPayment && selectedPayment.id === payment.id && (
-                                                        <SalaryPayslip payment={selectedPayment} />
-                                                    )}
+                                                      </DropdownMenuTrigger>
+                                                      <DropdownMenuContent align="end">
+                                                        <DropdownMenuLabel>Actions</DropdownMenuLabel>
+                                                          <DialogTrigger asChild>
+                                                            <DropdownMenuItem onSelect={() => setSelectedPayment(payment)}>
+                                                                <FileText className="mr-2 h-4 w-4"/>
+                                                                View Details
+                                                            </DropdownMenuItem>
+                                                          </DialogTrigger>
+                                                          <AlertDialogTrigger asChild>
+                                                              <DropdownMenuItem className="text-red-500 focus:bg-red-500/10 focus:text-red-500">
+                                                                  <Trash2 className="mr-2 h-4 w-4"/>
+                                                                  Delete
+                                                              </DropdownMenuItem>
+                                                          </AlertDialogTrigger>
+                                                      </DropdownMenuContent>
+                                                    </DropdownMenu>
+                                                     {selectedPayment && selectedPayment.id === payment.id && (
+                                                          <SalaryPayslip payment={selectedPayment} />
+                                                     )}
+                                                    <AlertDialogContent>
+                                                      <AlertDialogHeader>
+                                                        <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+                                                        <AlertDialogDescription>
+                                                          This action cannot be undone. This will permanently delete the payslip for {payment.month} {payment.year} and its associated ledger entry.
+                                                        </AlertDialogDescription>
+                                                      </AlertDialogHeader>
+                                                      <AlertDialogFooter>
+                                                        <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                                        <AlertDialogAction onClick={() => handleDelete(payment.id)}>Delete</AlertDialogAction>
+                                                      </AlertDialogFooter>
+                                                    </AlertDialogContent>
+                                                  </AlertDialog>
                                                 </Dialog>
                                             </TableCell>
                                         </TableRow>
