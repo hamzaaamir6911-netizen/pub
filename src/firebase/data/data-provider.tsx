@@ -366,7 +366,8 @@ export const DataProvider = ({ children }: { children: ReactNode }) => {
     
     const addLabour = async (labourer: Omit<Labour, 'id' | 'createdAt'>) => {
         if (!labourCol || !user) throw new Error("Labour collection not available or user not authenticated");
-        return await addDocumentNonBlocking(labourCol, { ...labourer, createdAt: serverTimestamp() });
+        const newLabourer = { ...labourer, createdAt: serverTimestamp() };
+        return addDocumentNonBlocking(labourCol, newLabourer);
     };
 
     const deleteLabour = async (id: string) => {
