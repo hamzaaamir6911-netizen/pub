@@ -298,101 +298,6 @@
         "color",
         "thickness"
       ]
-    },
-    "Labour": {
-      "$schema": "http://json-schema.org/draft-07/schema#",
-      "title": "Labour",
-      "type": "object",
-      "description": "Represents a labourer or employee. The salary is the base monthly salary.",
-      "properties": {
-        "id": {
-          "type": "string",
-          "description": "Unique identifier for the labourer."
-        },
-        "name": {
-          "type": "string",
-          "description": "The name of the labourer."
-        },
-        "designation": {
-          "type": "string",
-          "description": "The designation or role of the labourer."
-        },
-        "salary": {
-          "type": "number",
-          "description": "The base monthly salary of the labourer."
-        }
-      },
-      "required": [
-        "id",
-        "name",
-        "salary",
-        "designation"
-      ]
-    },
-    "SalaryPayment": {
-      "$schema": "http://json-schema.org/draft-07/schema#",
-      "title": "Salary Payment",
-      "type": "object",
-      "description": "Represents a monthly salary payment record for a labourer.",
-      "properties": {
-        "id": {
-          "type": "string",
-          "description": "Unique identifier for the salary payment."
-        },
-        "labourId": {
-          "type": "string",
-          "description": "Reference to the Labourer."
-        },
-        "labourName": {
-          "type": "string",
-          "description": "Name of the labourer."
-        },
-        "month": {
-          "type": "number",
-          "description": "The month of the salary (1-12)."
-        },
-        "year": {
-          "type": "number",
-          "description": "The year of the salary."
-        },
-        "baseSalary": {
-          "type": "number",
-          "description": "The base salary for that month."
-        },
-        "daysWorked": {
-          "type": "number",
-          "description": "Number of days the labourer worked in that month."
-        },
-        "overtimeAmount": {
-          "type": "number",
-          "description": "Total overtime amount for the month."
-        },
-        "totalPayable": {
-          "type": "number",
-          "description": "The final calculated salary to be paid."
-        },
-        "paymentDate": {
-          "type": "string",
-          "format": "date-time",
-          "description": "The date the salary was paid."
-        },
-        "transactionId": {
-            "type": "string",
-            "description": "ID of the corresponding transaction in the ledger."
-        }
-      },
-      "required": [
-        "id",
-        "labourId",
-        "labourName",
-        "month",
-        "year",
-        "baseSalary",
-        "daysWorked",
-        "totalPayable",
-        "paymentDate",
-        "transactionId"
-      ]
     }
   },
   "auth": {
@@ -514,40 +419,8 @@
             }
           ]
         }
-      },
-      {
-        "path": "/labour/{labourId}",
-        "definition": {
-          "entityName": "labour",
-          "schema": {
-            "$ref": "#/backend/entities/Labour"
-          },
-          "description": "Stores labourer/employee information.",
-          "params": [
-            {
-              "name": "labourId",
-              "description": "Unique identifier for the labourer."
-            }
-          ]
-        }
-      },
-      {
-        "path": "/salary_payments/{paymentId}",
-        "definition": {
-          "entityName": "salary_payment",
-          "schema": {
-            "$ref": "#/backend/entities/SalaryPayment"
-          },
-          "description": "Stores monthly salary payment records.",
-          "params": [
-            {
-              "name": "paymentId",
-              "description": "Unique identifier for the salary payment."
-            }
-          ]
-        }
       }
     ],
-    "reasoning": "The Firestore structure is designed to manage an aluminium factory's stock, sales, expenses, and customer data securely and efficiently. It prioritizes authorization independence to ensure robust security rules and scalable operations. The structure includes separate collections for `items`, `customers`, `vendors`, `sales`, `expenses`, `estimates`, `labour`, and `salary_payments`, each serving distinct functions. To enforce admin-only access, a dedicated `/roles_admin/{uid}` collection is used; the existence of a document at this path grants admin privileges. This existence check is secure and efficient.\n\n**Authorization Independence and QAPs:**\n\n*   **Admin Role:** Authorization is handled via the existence of documents in the `/roles_admin/{uid}` collection. This avoids complex custom claims and enables straightforward security rules based solely on `request.auth.uid`.\n*   **Segregation:** The segregation of data into separate collections ensures that each collection has a homogeneous security posture, simplifying security rule definitions.\n\nThis structure adheres to the principles of Authorization Independence, Clarity of Intent, DBAC, and QAPs, ensuring a secure, scalable, and debuggable Firestore design."
+    "reasoning": "The Firestore structure is designed to manage an aluminium factory's stock, sales, expenses, and customer data securely and efficiently. It prioritizes authorization independence to ensure robust security rules and scalable operations. The structure includes separate collections for `items`, `customers`, `vendors`, `sales`, `expenses`, and `estimates`, each serving distinct functions. To enforce admin-only access, a dedicated `/roles_admin/{uid}` collection is used; the existence of a document at this path grants admin privileges. This existence check is secure and efficient.\n\n**Authorization Independence and QAPs:**\n\n*   **Admin Role:** Authorization is handled via the existence of documents in the `/roles_admin/{uid}` collection. This avoids complex custom claims and enables straightforward security rules based solely on `request.auth.uid`.\n*   **Segregation:** The segregation of data into separate collections ensures that each collection has a homogeneous security posture, simplifying security rule definitions.\n\nThis structure adheres to the principles of Authorization Independence, Clarity of Intent, DBAC, and QAPs, ensuring a secure, scalable, and debuggable Firestore design."
   }
 }
