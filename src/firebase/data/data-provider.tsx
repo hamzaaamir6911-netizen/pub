@@ -3,11 +3,11 @@
 "use client";
 
 import React, { createContext, useContext, ReactNode, useEffect, useState } from 'react';
-import type { Item, Customer, Sale, Expense, Transaction, Vendor, Estimate, Labour, SalaryPayment } from '@/lib/types';
-import { useCollection, useFirestore, useMemoFirebase, useUser } from '@/firebase';
-import { collection, doc, writeBatch, serverTimestamp, Timestamp, orderBy, query, where, getDocs, runTransaction, increment, addDoc, getDoc, deleteDoc } from 'firebase/firestore';
+import type { Item, Customer, Sale, Expense, Transaction, Vendor, Estimate, Labour, SalaryPayment, AppUser, UserPermissions } from '@/lib/types';
+import { useCollection, useFirestore, useMemoFirebase, useUser, useDoc } from '@/firebase';
+import { collection, doc, writeBatch, serverTimestamp, Timestamp, orderBy, query, where, getDocs, runTransaction, increment, addDoc, getDoc, deleteDoc, setDoc } from 'firebase/firestore';
 import { addDocumentNonBlocking, deleteDocumentNonBlocking, updateDocumentNonBlocking } from '../non-blocking-updates';
-import { date } from 'zod';
+import { getAuth, createUserWithEmailAndPassword } from 'firebase/auth';
 
 
 interface DataContextProps {
@@ -20,6 +20,7 @@ interface DataContextProps {
   expenses: Expense[];
   transactions: Transaction[];
   salaryPayments: SalaryPayment[];
+  appUser: AppUser | null;
   loading: boolean;
   addItem: (item: Omit<Item, 'id' | 'createdAt'>) => Promise<any>;
   deleteItem: (id: string) => Promise<void>;
@@ -45,6 +46,7 @@ interface DataContextProps {
   deleteTransaction: (id: string) => Promise<void>;
   addSalaryPayment: (payment: Omit<SalaryPayment, 'id' | 'date'>) => Promise<void>;
   deleteSalaryPayment: (paymentId: string) => Promise<void>;
+  addEmployee: (email: string, password: string, permissions: UserPermissions) => Promise<void>;
   getDashboardStats: () => {
     totalSales: number;
     totalExpenses: number;
@@ -240,6 +242,14 @@ export const DataProvider = ({ children }: { children: ReactNode }) => {
     // Fetch data only if the user is logged in.
     const shouldFetch = !!user;
 
+    const userDocRef = useMemoFirebase(() => {
+        if (!user) return null;
+        return doc(firestore, 'users', user.uid);
+    }, [firestore, user]);
+
+    const { data: appUser, isLoading: isAppUserLoading } = useDoc<AppUser>(userDocRef);
+
+
     // Memoize collection references
     const itemsCol = useMemoFirebase(() => shouldFetch ? collection(firestore, 'items') : null, [firestore, shouldFetch]);
     const customersCol = useMemoFirebase(() => shouldFetch ? collection(firestore, 'customers') : null, [firestore, shouldFetch]);
@@ -275,7 +285,7 @@ export const DataProvider = ({ children }: { children: ReactNode }) => {
     const salaryPayments = salaryPaymentsData?.map(payment => ({ ...payment, date: toDate(payment.date) })) || [];
 
 
-    const loading = isUserLoading || itemsLoading || customersLoading || vendorsLoading || labourLoading || salesLoading || estimatesLoading || expensesLoading || transactionsLoading || salaryPaymentsLoading;
+    const loading = isUserLoading || isAppUserLoading || itemsLoading || customersLoading || vendorsLoading || labourLoading || salesLoading || estimatesLoading || expensesLoading || transactionsLoading || salaryPaymentsLoading;
 
     // --- Write Operations ---
 
@@ -665,6 +675,21 @@ export const DataProvider = ({ children }: { children: ReactNode }) => {
     
         await batch.commit();
     };
+    
+    const addEmployee = async (email: string, password: string, permissions: UserPermissions) => {
+        const auth = getAuth();
+        const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+        const user = userCredential.user;
+
+        const userProfileRef = doc(firestore, 'users', user.uid);
+        await setDoc(userProfileRef, {
+            id: user.uid,
+            email: user.email,
+            role: 'employee',
+            permissions,
+            createdAt: serverTimestamp()
+        });
+    };
 
 
     const getDashboardStats = () => {
@@ -709,7 +734,7 @@ export const DataProvider = ({ children }: { children: ReactNode }) => {
     };
     
     const value = {
-        items, customers, vendors, labourers, sales, estimates, expenses, transactions, salaryPayments, loading,
+        items, customers, vendors, labourers, sales, estimates, expenses, transactions, salaryPayments, appUser, loading,
         addItem, deleteItem, updateItemStock,
         addCustomer, updateCustomer, deleteCustomer,
         addVendor, deleteVendor,
@@ -719,6 +744,7 @@ export const DataProvider = ({ children }: { children: ReactNode }) => {
         addExpense, deleteExpense,
         addTransaction, deleteTransaction,
         addSalaryPayment, deleteSalaryPayment,
+        addEmployee,
         getDashboardStats, getMonthlySalesData,
     };
 
@@ -736,6 +762,8 @@ export const useData = () => {
   }
   return context;
 };
+
+    
 
     
 
