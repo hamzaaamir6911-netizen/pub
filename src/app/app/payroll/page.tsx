@@ -2,7 +2,7 @@
 "use client";
 
 import { useState, useMemo } from "react";
-import { PlusCircle, Trash2, DollarSign } from "lucide-react";
+import { PlusCircle, Trash2, DollarSign, FileText, Printer } from "lucide-react";
 import {
   Table,
   TableBody,
@@ -11,24 +11,84 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+  DialogFooter,
+} from "@/components/ui/dialog"
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import { PageHeader } from "@/components/page-header";
-import { formatCurrency } from "@/lib/utils";
-import type { SalaryLabourer } from "@/lib/types";
+import { formatCurrency, formatDate } from "@/lib/utils";
+import type { SalaryLabourer, SalaryPayment } from "@/lib/types";
 import { useToast } from "@/hooks/use-toast";
 import { useData } from "@/firebase/data/data-provider";
 import { Combobox } from "@/components/ui/combobox";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 
 const months = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
 const currentYear = new Date().getFullYear();
 const years = Array.from({ length: 5 }, (_, i) => currentYear - i);
 
-export default function PayrollPage() {
+function SalaryPayslip({ payment }: { payment: SalaryPayment }) {
+    return (
+        <DialogContent className="max-w-4xl max-h-[90vh] flex flex-col">
+            <DialogHeader className="flex-shrink-0 no-print">
+                <DialogTitle>Payslip for {payment.month} {payment.year}</DialogTitle>
+            </DialogHeader>
+            <div className="flex-grow overflow-y-auto" id="printable-payslip">
+                <div className="p-6">
+                    <div className="text-center mb-8">
+                        <h1 className="text-2xl font-bold">Salary Payslip</h1>
+                        <p className="text-lg font-semibold">{payment.month} {payment.year}</p>
+                    </div>
+                    <Table>
+                        <TableHeader>
+                            <TableRow>
+                                <TableHead>Labourer</TableHead>
+                                <TableHead className="text-right">Monthly Salary</TableHead>
+                                <TableHead className="text-right">Days Worked</TableHead>
+                                <TableHead className="text-right">Overtime (hrs)</TableHead>
+                                <TableHead className="text-right">Deductions</TableHead>
+                                <TableHead className="text-right font-bold">Total Payable</TableHead>
+                            </TableRow>
+                        </TableHeader>
+                        <TableBody>
+                            {payment.labourers.map(l => (
+                                <TableRow key={l.labourerId}>
+                                    <TableCell className="font-medium">{l.labourerName}</TableCell>
+                                    <TableCell className="text-right">{formatCurrency(l.monthlySalary)}</TableCell>
+                                    <TableCell className="text-right">{l.daysWorked}</TableCell>
+                                    <TableCell className="text-right">{l.overtimeHours}</TableCell>
+                                    <TableCell className="text-right text-red-500">{formatCurrency(l.deductions)}</TableCell>
+                                    <TableCell className="text-right font-bold">{formatCurrency(l.totalPayable)}</TableCell>
+                                </TableRow>
+                            ))}
+                        </TableBody>
+                         <TableRow className="bg-muted/50 font-bold">
+                            <TableCell colSpan={5} className="text-right">Grand Total Paid</TableCell>
+                            <TableCell className="text-right">{formatCurrency(payment.totalAmountPaid)}</TableCell>
+                        </TableRow>
+                    </Table>
+                </div>
+            </div>
+            <DialogFooter className="mt-4 flex-shrink-0 no-print">
+                <Button variant="outline" onClick={() => window.print()}>
+                    <Printer className="mr-2 h-4 w-4" /> Print / Save PDF
+                </Button>
+            </DialogFooter>
+        </DialogContent>
+    );
+}
+
+function NewPayslipForm({ onPayslipGenerated }: { onPayslipGenerated: () => void }) {
   const { toast } = useToast();
   const { labourers, addSalaryPayment } = useData();
 
@@ -119,15 +179,11 @@ export default function PayrollPage() {
 
     toast({ title: "Payslip Generated!", description: `Salary for ${selectedMonth} ${selectedYear} has been processed.` });
     setSalaryItems([]);
+    onPayslipGenerated();
   };
-
+  
   return (
-    <>
-      <PageHeader
-        title="Monthly Salary"
-        description="Create and manage monthly salaries for your workforce."
-      />
-      <Card>
+       <Card>
         <CardHeader>
           <CardTitle>Generate Monthly Salaries</CardTitle>
         </CardHeader>
@@ -239,6 +295,86 @@ export default function PayrollPage() {
           </Button>
         </CardFooter>
       </Card>
+  )
+}
+
+export default function PayrollPage() {
+  const { salaryPayments } = useData();
+  const [activeTab, setActiveTab] = useState("new");
+  const [selectedPayment, setSelectedPayment] = useState<SalaryPayment | null>(null);
+
+  const handlePayslipGenerated = () => {
+      setActiveTab("history");
+  }
+
+  return (
+    <>
+      <PageHeader
+        title="Monthly Salary"
+        description="Create new payslips and view payment history."
+      />
+      <Tabs value={activeTab} onValueChange={setActiveTab} className="printable-area">
+        <TabsList className="grid w-full grid-cols-2 no-print">
+            <TabsTrigger value="new">New Payslip</TabsTrigger>
+            <TabsTrigger value="history">Payslip History</TabsTrigger>
+        </TabsList>
+        <TabsContent value="new">
+            <div className="mt-4">
+              <NewPayslipForm onPayslipGenerated={handlePayslipGenerated} />
+            </div>
+        </TabsContent>
+        <TabsContent value="history">
+             <Card className="mt-4">
+                <CardHeader>
+                    <CardTitle>Salary Payment History</CardTitle>
+                    <CardDescription>Review all past salary payments.</CardDescription>
+                </CardHeader>
+                <CardContent>
+                    <div className="rounded-lg border">
+                        <Table>
+                            <TableHeader>
+                                <TableRow>
+                                    <TableHead>Month</TableHead>
+                                    <TableHead>Year</TableHead>
+                                    <TableHead>Payment Date</TableHead>
+                                    <TableHead className="text-right">Total Amount Paid</TableHead>
+                                    <TableHead className="no-print"><span className="sr-only">Actions</span></TableHead>
+                                </TableRow>
+                            </TableHeader>
+                            <TableBody>
+                                {salaryPayments.length === 0 ? (
+                                    <TableRow><TableCell colSpan={5} className="h-24 text-center">No salary payments found.</TableCell></TableRow>
+                                ) : (
+                                    salaryPayments.map(payment => (
+                                        <TableRow key={payment.id}>
+                                            <TableCell>{payment.month}</TableCell>
+                                            <TableCell>{payment.year}</TableCell>
+                                            <TableCell>{formatDate(payment.date)}</TableCell>
+                                            <TableCell className="text-right font-medium">{formatCurrency(payment.totalAmountPaid)}</TableCell>
+                                            <TableCell className="text-right no-print">
+                                                <Dialog onOpenChange={(open) => !open && setSelectedPayment(null)}>
+                                                    <DialogTrigger asChild>
+                                                        <Button variant="ghost" size="sm" onClick={() => setSelectedPayment(payment)}>
+                                                            <FileText className="mr-2 h-4 w-4" /> View Details
+                                                        </Button>
+                                                    </DialogTrigger>
+                                                    {selectedPayment && selectedPayment.id === payment.id && (
+                                                        <SalaryPayslip payment={selectedPayment} />
+                                                    )}
+                                                </Dialog>
+                                            </TableCell>
+                                        </TableRow>
+                                    ))
+                                )}
+                            </TableBody>
+                        </Table>
+                    </div>
+                </CardContent>
+            </Card>
+        </TabsContent>
+      </Tabs>
     </>
   );
 }
+
+    
