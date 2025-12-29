@@ -37,6 +37,14 @@ service cloud.firestore {
     match /estimates/{estimateId} {
         allow read, write: if isSignedIn();
     }
+    
+    match /labour/{labourId} {
+        allow read, write: if isSignedIn();
+    }
+
+    match /salaryPayments/{paymentId} {
+        allow read, write: if isSignedIn();
+    }
 
     // Admin role check collection.
     match /roles_admin/{userId} {

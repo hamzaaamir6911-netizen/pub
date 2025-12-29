@@ -298,6 +298,122 @@
         "color",
         "thickness"
       ]
+    },
+    "Labour": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "Labour",
+      "type": "object",
+      "description": "Represents a labourer or employee.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the labourer."
+        },
+        "name": {
+          "type": "string",
+          "description": "The name of the labourer."
+        },
+        "phone": {
+          "type": "string",
+          "description": "The phone number of the labourer."
+        },
+        "address": {
+          "type": "string",
+          "description": "The address of the labourer."
+        },
+        "dailyWage": {
+          "type": "number",
+          "description": "The daily wage of the labourer."
+        }
+      },
+      "required": [
+        "id",
+        "name",
+        "dailyWage"
+      ]
+    },
+    "SalaryPayment": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "Salary Payment",
+      "type": "object",
+      "description": "Represents a salary payment record for a specific month.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the salary payment."
+        },
+        "month": {
+          "type": "string",
+          "description": "The month for which the salary is paid (e.g., 'January')."
+        },
+        "year": {
+          "type": "number",
+          "description": "The year for which the salary is paid (e.g., 2024)."
+        },
+        "date": {
+          "type": "string",
+          "description": "The date the payment was made.",
+          "format": "date-time"
+        },
+        "labourers": {
+          "type": "array",
+          "description": "List of labourers included in this payment batch.",
+          "items": {
+            "$ref": "#/backend/entities/SalaryLabourer"
+          }
+        },
+        "totalAmountPaid": {
+          "type": "number",
+          "description": "The total amount paid in this salary batch."
+        }
+      },
+      "required": [
+        "id",
+        "month",
+        "year",
+        "date",
+        "labourers",
+        "totalAmountPaid"
+      ]
+    },
+    "SalaryLabourer": {
+      "title": "Salary Labourer",
+      "type": "object",
+      "description": "Represents the salary details for a single labourer within a payment.",
+      "properties": {
+        "labourerId": {
+          "type": "string"
+        },
+        "labourerName": {
+          "type": "string"
+        },
+        "daysWorked": {
+          "type": "number"
+        },
+        "dailyWage": {
+          "type": "number"
+        },
+        "overtimeHours": {
+          "type": "number"
+        },
+        "overtimeRate": {
+          "type": "number",
+          "description": "The hourly rate for overtime work."
+        },
+        "deductions": {
+          "type": "number"
+        },
+        "totalPayable": {
+          "type": "number"
+        }
+      },
+      "required": [
+        "labourerId",
+        "labourerName",
+        "daysWorked",
+        "dailyWage",
+        "totalPayable"
+      ]
     }
   },
   "auth": {
@@ -416,6 +532,38 @@
             {
               "name": "estimateId",
               "description": "Unique identifier for the estimate."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/labour/{labourId}",
+        "definition": {
+          "entityName": "labour",
+          "schema": {
+            "$ref": "#/backend/entities/Labour"
+          },
+          "description": "Stores labourer information.",
+          "params": [
+            {
+              "name": "labourId",
+              "description": "Unique identifier for the labourer."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/salaryPayments/{paymentId}",
+        "definition": {
+          "entityName": "salaryPayment",
+          "schema": {
+            "$ref": "#/backend/entities/SalaryPayment"
+          },
+          "description": "Stores salary payment records.",
+          "params": [
+            {
+              "name": "paymentId",
+              "description": "Unique identifier for the salary payment."
             }
           ]
         }

@@ -88,4 +88,32 @@ export type Transaction = {
   vendorId?: string;
   vendorName?: string;
 }
-    
+
+export type Labour = {
+    id: string;
+    name: string;
+    phone: string;
+    address: string;
+    dailyWage: number;
+    createdAt: Date;
+};
+
+export type SalaryLabourer = {
+    labourerId: string;
+    labourerName: string;
+    daysWorked: number;
+    dailyWage: number;
+    overtimeHours: number;
+    overtimeRate: number;
+    deductions: number;
+    totalPayable: number;
+}
+
+export type SalaryPayment = {
+    id: string;
+    month: string;
+    year: number;
+    date: Date;
+    labourers: SalaryLabourer[];
+    totalAmountPaid: number;
+};
