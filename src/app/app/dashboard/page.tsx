@@ -2,7 +2,7 @@
 
 "use client"
 
-import { DollarSign, TrendingUp, TrendingDown, ArrowUpRight, ArrowDownRight } from "lucide-react"
+import { DollarSign, TrendingUp, TrendingDown, ArrowUpRight, ArrowDownRight, Library } from "lucide-react"
 import { Bar, BarChart, XAxis, YAxis } from "recharts"
 
 import {
@@ -20,6 +20,14 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table"
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog"
+import { Button } from "@/components/ui/button"
 import { PageHeader } from "@/components/page-header"
 import { formatCurrency, formatDate } from "@/lib/utils"
 import { ChartContainer, ChartTooltip, ChartTooltipContent, ChartConfig, ChartLegend, ChartLegendContent } from "@/components/ui/chart"
@@ -36,6 +44,54 @@ const chartConfig = {
   },
 } satisfies ChartConfig
 
+
+function ChartOfAccounts() {
+  return (
+    <DialogContent className="max-w-2xl">
+      <DialogHeader>
+        <DialogTitle>Chart of Accounts</DialogTitle>
+        <CardDescription>
+          This chart shows how different transaction categories map to the main financial accounts.
+        </CardDescription>
+      </DialogHeader>
+      <div className="space-y-4 py-4 text-sm">
+        <div className="flex flex-col space-y-2">
+          <div className="font-bold text-base">Core Accounts</div>
+          <div className="pl-4 border-l-2">
+            
+            <div className="font-semibold mt-2">Revenue (Aamdani)</div>
+            <div className="pl-4 border-l-2 text-muted-foreground">
+              <p>&#x2514;&#x2500; Sales (From Invoices)</p>
+            </div>
+
+            <div className="font-semibold mt-2">Expenses (Akhrajaat)</div>
+            <div className="pl-4 border-l-2 text-muted-foreground">
+              <p>&#x2514;&#x2500; Labour</p>
+              <p>&#x2514;&#x2500; Transport</p>
+              <p>&#x2514;&#x2500; Electricity</p>
+              <p>&#x2514;&#x2500; Vendor Payment</p>
+              <p>&#x2514;&#x2500; Salary</p>
+              <p>&#x2514;&#x2500; Other</p>
+            </div>
+
+            <div className="font-semibold mt-2">Assets (Wasooliyan)</div>
+             <div className="pl-4 border-l-2 text-muted-foreground">
+               <p>&#x2514;&#x2500; Cash / Bank (Transactions you record)</p>
+               <p>&#x2514;&#x2500; Accounts Receivable (Customer Balances)</p>
+            </div>
+
+            <div className="font-semibold mt-2">Liabilities (Adaiygiyan)</div>
+             <div className="pl-4 border-l-2 text-muted-foreground">
+              <p>&#x2514;&#x2500; Accounts Payable (Vendor Balances)</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </DialogContent>
+  );
+}
+
+
 export default function DashboardPage() {
   const { getDashboardStats, getMonthlySalesData, sales } = useData();
   const stats = getDashboardStats();
@@ -46,7 +102,17 @@ export default function DashboardPage() {
       <PageHeader
         title="Dashboard"
         description="A real-time overview of your factory's performance."
-      />
+      >
+        <Dialog>
+          <DialogTrigger asChild>
+            <Button variant="outline">
+              <Library className="mr-2 h-4 w-4" />
+              Chart of Accounts
+            </Button>
+          </DialogTrigger>
+          <ChartOfAccounts />
+        </Dialog>
+      </PageHeader>
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
@@ -179,7 +245,3 @@ export default function DashboardPage() {
     </>
   );
 }
-
-      
-
-    
