@@ -114,7 +114,6 @@ function NewPayslipForm({ onPayslipGenerated }: { onPayslipGenerated: () => void
   const [selectedYear, setSelectedYear] = useState<number>(currentYear);
   const [salaryItems, setSalaryItems] = useState<Partial<SalaryLabourer>[]>([]);
   const [selectedLabourer, setSelectedLabourer] = useState("");
-  const [overtimeRate, setOvertimeRate] = useState(200);
 
   const labourerOptions = useMemo(() => 
     labourers.map(l => ({
@@ -134,13 +133,16 @@ function NewPayslipForm({ onPayslipGenerated }: { onPayslipGenerated: () => void
     
     const labourerDetails = labourers.find(l => l.id === selectedLabourer);
     if (labourerDetails) {
+        // Calculate overtime rate based on monthly salary for a 12-hour shift
+        const hourlyRate = labourerDetails.monthlySalary / 30 / 12;
+
         setSalaryItems([...salaryItems, {
             labourerId: labourerDetails.id,
             labourerName: labourerDetails.name,
             monthlySalary: labourerDetails.monthlySalary,
-            daysWorked: 26, // Default working days
+            daysWorked: 30, // Default working days
             overtimeHours: 0,
-            overtimeRate: overtimeRate,
+            overtimeRate: hourlyRate,
             deductions: 0,
         }]);
         setSelectedLabourer(""); // Reset selector
@@ -160,7 +162,7 @@ function NewPayslipForm({ onPayslipGenerated }: { onPayslipGenerated: () => void
   }
 
   const calculateTotalPayable = (item: Partial<SalaryLabourer>): number => {
-      const perDaySalary = (item.monthlySalary || 0) / 26; // Assuming 26 working days
+      const perDaySalary = (item.monthlySalary || 0) / 30; // Based on a 30-day month
       const baseSalary = (item.daysWorked || 0) * perDaySalary;
       const overtimePay = (item.overtimeHours || 0) * (item.overtimeRate || 0);
       const totalDeductions = item.deductions || 0;
@@ -206,7 +208,7 @@ function NewPayslipForm({ onPayslipGenerated }: { onPayslipGenerated: () => void
           <CardTitle>Generate Monthly Salaries</CardTitle>
         </CardHeader>
         <CardContent className="space-y-6">
-          <div className="grid md:grid-cols-4 gap-4">
+          <div className="grid md:grid-cols-3 gap-4">
             <div className="space-y-2">
               <Label>Month</Label>
               <Select value={selectedMonth} onValueChange={setSelectedMonth}>
@@ -224,14 +226,6 @@ function NewPayslipForm({ onPayslipGenerated }: { onPayslipGenerated: () => void
                   {years.map(y => <SelectItem key={y} value={String(y)}>{y}</SelectItem>)}
                 </SelectContent>
               </Select>
-            </div>
-            <div className="space-y-2">
-              <Label>Overtime Rate (per hour)</Label>
-              <Input
-                type="number"
-                value={overtimeRate}
-                onChange={(e) => setOvertimeRate(Number(e.target.value))}
-              />
             </div>
           </div>
 
