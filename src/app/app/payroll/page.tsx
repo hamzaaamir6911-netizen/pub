@@ -41,7 +41,7 @@ export default function PayrollPage() {
   const labourerOptions = useMemo(() => 
     labourers.map(l => ({
         value: l.id,
-        label: `${l.name} - Wage: ${formatCurrency(l.dailyWage)}`
+        label: `${l.name} - Salary: ${formatCurrency(l.monthlySalary)}`
     })), [labourers]);
 
   const handleAddLabourer = () => {
@@ -59,8 +59,8 @@ export default function PayrollPage() {
         setSalaryItems([...salaryItems, {
             labourerId: labourerDetails.id,
             labourerName: labourerDetails.name,
-            dailyWage: labourerDetails.dailyWage,
-            daysWorked: 26, // Default working days
+            monthlySalary: labourerDetails.monthlySalary,
+            daysWorked: 30, // Default working days
             overtimeHours: 0,
             overtimeRate: overtimeRate,
             deductions: 0,
@@ -82,7 +82,8 @@ export default function PayrollPage() {
   }
 
   const calculateTotalPayable = (item: Partial<SalaryLabourer>): number => {
-      const baseSalary = (item.daysWorked || 0) * (item.dailyWage || 0);
+      const perDaySalary = (item.monthlySalary || 0) / 30;
+      const baseSalary = (item.daysWorked || 0) * perDaySalary;
       const overtimePay = (item.overtimeHours || 0) * (item.overtimeRate || 0);
       const totalDeductions = item.deductions || 0;
       return baseSalary + overtimePay - totalDeductions;
@@ -201,7 +202,7 @@ export default function PayrollPage() {
                       <TableRow key={item.labourerId}>
                         <TableCell className="font-medium">
                           {item.labourerName}<br/>
-                          <span className="text-xs text-muted-foreground">Wage: {formatCurrency(item.dailyWage || 0)}/day</span>
+                          <span className="text-xs text-muted-foreground">Salary: {formatCurrency(item.monthlySalary || 0)}/month</span>
                         </TableCell>
                         <TableCell>
                           <Input type="number" value={item.daysWorked} onChange={(e) => handleItemChange(index, 'daysWorked', Number(e.target.value))} />

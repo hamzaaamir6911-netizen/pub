@@ -18,6 +18,14 @@ import {
     TableHeader,
     TableRow,
 } from "@/components/ui/table"
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+  DialogFooter,
+} from "@/components/ui/dialog"
 import { PageHeader } from "@/components/page-header"
 import { formatCurrency, formatDate } from "@/lib/utils"
 import { ChartConfig, ChartContainer, ChartTooltipContent } from "@/components/ui/chart"
@@ -25,12 +33,13 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { useData } from "@/firebase/data/data-provider"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
 import { Button } from "@/components/ui/button"
-import { Calendar as CalendarIcon, Printer } from "lucide-react"
+import { Calendar as CalendarIcon, Printer, FileText } from "lucide-react"
 import { Calendar } from "@/components/ui/calendar"
 import { addDays, format } from "date-fns"
 import type { DateRange } from "react-day-picker"
 import { Badge } from "@/components/ui/badge"
 import { cn } from "@/lib/utils"
+import type { SalaryPayment } from "@/lib/types"
 
 const chartConfig = {
   sales: {
@@ -157,6 +166,112 @@ function LedgerReport() {
     );
 }
 
+function SalaryPayslip({ payment }: { payment: SalaryPayment }) {
+    return (
+        <DialogContent className="max-w-4xl max-h-[90vh] flex flex-col">
+            <DialogHeader className="flex-shrink-0 no-print">
+                <DialogTitle>Payslip for {payment.month} {payment.year}</DialogTitle>
+            </DialogHeader>
+            <div className="flex-grow overflow-y-auto" id="printable-payslip">
+                <div className="p-6">
+                    <div className="text-center mb-8">
+                        <h1 className="text-2xl font-bold">Salary Payslip</h1>
+                        <p className="text-lg font-semibold">{payment.month} {payment.year}</p>
+                    </div>
+                    <Table>
+                        <TableHeader>
+                            <TableRow>
+                                <TableHead>Labourer</TableHead>
+                                <TableHead className="text-right">Monthly Salary</TableHead>
+                                <TableHead className="text-right">Days Worked</TableHead>
+                                <TableHead className="text-right">Overtime (hrs)</TableHead>
+                                <TableHead className="text-right">Deductions</TableHead>
+                                <TableHead className="text-right font-bold">Total Payable</TableHead>
+                            </TableRow>
+                        </TableHeader>
+                        <TableBody>
+                            {payment.labourers.map(l => (
+                                <TableRow key={l.labourerId}>
+                                    <TableCell className="font-medium">{l.labourerName}</TableCell>
+                                    <TableCell className="text-right">{formatCurrency(l.monthlySalary)}</TableCell>
+                                    <TableCell className="text-right">{l.daysWorked}</TableCell>
+                                    <TableCell className="text-right">{l.overtimeHours}</TableCell>
+                                    <TableCell className="text-right text-red-500">{formatCurrency(l.deductions)}</TableCell>
+                                    <TableCell className="text-right font-bold">{formatCurrency(l.totalPayable)}</TableCell>
+                                </TableRow>
+                            ))}
+                        </TableBody>
+                         <TableRow className="bg-muted/50 font-bold">
+                            <TableCell colSpan={5} className="text-right">Grand Total Paid</TableCell>
+                            <TableCell className="text-right">{formatCurrency(payment.totalAmountPaid)}</TableCell>
+                        </TableRow>
+                    </Table>
+                </div>
+            </div>
+            <DialogFooter className="mt-4 flex-shrink-0 no-print">
+                <Button variant="outline" onClick={() => window.print()}>
+                    <Printer className="mr-2 h-4 w-4" /> Print / Save PDF
+                </Button>
+            </DialogFooter>
+        </DialogContent>
+    );
+}
+
+function SalaryReport() {
+    const { salaryPayments } = useData();
+    const [selectedPayment, setSelectedPayment] = useState<SalaryPayment | null>(null);
+
+    return (
+        <Card className="mt-4 border-none shadow-none sm:border sm:shadow-sm">
+            <CardHeader>
+                <CardTitle>Salary Payment History</CardTitle>
+                <CardDescription>Review all past salary payments.</CardDescription>
+            </CardHeader>
+            <CardContent>
+                <div className="rounded-lg border">
+                    <Table>
+                        <TableHeader>
+                            <TableRow>
+                                <TableHead>Month</TableHead>
+                                <TableHead>Year</TableHead>
+                                <TableHead>Payment Date</TableHead>
+                                <TableHead className="text-right">Total Amount Paid</TableHead>
+                                <TableHead className="no-print"><span className="sr-only">Actions</span></TableHead>
+                            </TableRow>
+                        </TableHeader>
+                        <TableBody>
+                            {salaryPayments.length === 0 ? (
+                                <TableRow><TableCell colSpan={5} className="h-24 text-center">No salary payments found.</TableCell></TableRow>
+                            ) : (
+                                salaryPayments.map(payment => (
+                                    <TableRow key={payment.id}>
+                                        <TableCell>{payment.month}</TableCell>
+                                        <TableCell>{payment.year}</TableCell>
+                                        <TableCell>{formatDate(payment.date)}</TableCell>
+                                        <TableCell className="text-right font-medium">{formatCurrency(payment.totalAmountPaid)}</TableCell>
+                                        <TableCell className="text-right no-print">
+                                            <Dialog onOpenChange={(open) => !open && setSelectedPayment(null)}>
+                                                <DialogTrigger asChild>
+                                                    <Button variant="ghost" size="sm" onClick={() => setSelectedPayment(payment)}>
+                                                        <FileText className="mr-2 h-4 w-4" /> View Details
+                                                    </Button>
+                                                </DialogTrigger>
+                                                {selectedPayment && selectedPayment.id === payment.id && (
+                                                    <SalaryPayslip payment={selectedPayment} />
+                                                )}
+                                            </Dialog>
+                                        </TableCell>
+                                    </TableRow>
+                                ))
+                            )}
+                        </TableBody>
+                    </Table>
+                </div>
+            </CardContent>
+        </Card>
+    );
+}
+
 export default function ReportsPage() {
     const { getDashboardStats, getMonthlySalesData } = useData();
     const stats = getDashboardStats();
@@ -182,11 +297,12 @@ export default function ReportsPage() {
 
       <div className="printable-area">
        <Tabs defaultValue="monthly" value={activeTab} onValueChange={setActiveTab}>
-        <TabsList className="grid w-full grid-cols-2 md:grid-cols-4 md:w-[500px] no-print">
+        <TabsList className="grid w-full grid-cols-3 md:grid-cols-5 md:w-auto no-print">
           <TabsTrigger value="daily">Daily</TabsTrigger>
           <TabsTrigger value="monthly">Monthly</TabsTrigger>
           <TabsTrigger value="pl">Profit & Loss</TabsTrigger>
           <TabsTrigger value="ledger">Ledger</TabsTrigger>
+          <TabsTrigger value="salary">Salary Report</TabsTrigger>
         </TabsList>
         <TabsContent value="daily">
              <div>
@@ -279,6 +395,9 @@ export default function ReportsPage() {
         </TabsContent>
         <TabsContent value="ledger">
             <LedgerReport />
+        </TabsContent>
+        <TabsContent value="salary">
+            <SalaryReport />
         </TabsContent>
       </Tabs>
       </div>

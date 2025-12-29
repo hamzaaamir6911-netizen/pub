@@ -321,15 +321,15 @@
           "type": "string",
           "description": "The address of the labourer."
         },
-        "dailyWage": {
+        "monthlySalary": {
           "type": "number",
-          "description": "The daily wage of the labourer."
+          "description": "The monthly salary of the labourer."
         }
       },
       "required": [
         "id",
         "name",
-        "dailyWage"
+        "monthlySalary"
       ]
     },
     "SalaryPayment": {
@@ -390,7 +390,7 @@
         "daysWorked": {
           "type": "number"
         },
-        "dailyWage": {
+        "monthlySalary": {
           "type": "number"
         },
         "overtimeHours": {
@@ -411,7 +411,7 @@
         "labourerId",
         "labourerName",
         "daysWorked",
-        "dailyWage",
+        "monthlySalary",
         "totalPayable"
       ]
     }

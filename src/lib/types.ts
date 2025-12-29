@@ -94,7 +94,7 @@ export type Labour = {
     name: string;
     phone: string;
     address: string;
-    dailyWage: number;
+    monthlySalary: number;
     createdAt: Date;
 };
 
@@ -102,7 +102,7 @@ export type SalaryLabourer = {
     labourerId: string;
     labourerName: string;
     daysWorked: number;
-    dailyWage: number;
+    monthlySalary: number;
     overtimeHours: number;
     overtimeRate: number;
     deductions: number;

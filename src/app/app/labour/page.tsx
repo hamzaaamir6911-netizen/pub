@@ -39,14 +39,14 @@ function AddLabourForm({ onLabourAdded, onLabourUpdated, existingLabourer }: { o
   const [name, setName] = useState(existingLabourer?.name || '');
   const [phone, setPhone] = useState(existingLabourer?.phone || '');
   const [address, setAddress] = useState(existingLabourer?.address || '');
-  const [dailyWage, setDailyWage] = useState(existingLabourer?.dailyWage || 0);
+  const [monthlySalary, setMonthlySalary] = useState(existingLabourer?.monthlySalary || 0);
   const { toast } = useToast();
   
   const isEditMode = !!existingLabourer;
 
   const handleSubmit = () => {
-    if (!name || dailyWage <= 0) {
-      toast({ variant: 'destructive', title: 'Please fill name and daily wage.' });
+    if (!name || monthlySalary <= 0) {
+      toast({ variant: 'destructive', title: 'Please fill name and monthly salary.' });
       return;
     }
     
@@ -54,7 +54,7 @@ function AddLabourForm({ onLabourAdded, onLabourUpdated, existingLabourer }: { o
       name,
       phone,
       address,
-      dailyWage,
+      monthlySalary,
     };
 
     if (isEditMode) {
@@ -66,7 +66,7 @@ function AddLabourForm({ onLabourAdded, onLabourUpdated, existingLabourer }: { o
         setName('');
         setPhone('');
         setAddress('');
-        setDailyWage(0);
+        setMonthlySalary(0);
     }
   };
 
@@ -89,8 +89,8 @@ function AddLabourForm({ onLabourAdded, onLabourUpdated, existingLabourer }: { o
           <Input id="address" value={address} onChange={(e) => setAddress(e.target.value)} placeholder="123, Main Street, City" />
         </div>
         <div className="space-y-2">
-          <Label htmlFor="dailyWage">Daily Wage (PKR)</Label>
-          <Input id="dailyWage" type="number" value={dailyWage} onChange={(e) => setDailyWage(parseFloat(e.target.value) || 0)} placeholder="e.g. 1500" />
+          <Label htmlFor="monthlySalary">Monthly Salary (PKR)</Label>
+          <Input id="monthlySalary" type="number" value={monthlySalary} onChange={(e) => setMonthlySalary(parseFloat(e.target.value) || 0)} placeholder="e.g. 30000" />
         </div>
       </div>
       <DialogFooter>
@@ -115,8 +115,8 @@ export default function LabourPage() {
     deleteLabour(id);
   };
 
-  const handleLabourAdded = (newLabourer: Omit<Labour, 'id' | 'createdAt'>) => {
-    addLabour(newLabourer);
+  const handleLabourAdded = async (newLabourer: Omit<Labour, 'id' | 'createdAt'>) => {
+    await addLabour(newLabourer);
     setModalOpen(false);
   }
   
@@ -152,7 +152,7 @@ export default function LabourPage() {
             <TableRow>
               <TableHead>Labourer Name</TableHead>
               <TableHead>Phone Number</TableHead>
-              <TableHead>Daily Wage</TableHead>
+              <TableHead>Monthly Salary</TableHead>
               <TableHead>
                 <span className="sr-only">Actions</span>
               </TableHead>
@@ -163,7 +163,7 @@ export default function LabourPage() {
               <TableRow key={labourer.id}>
                 <TableCell className="font-medium">{labourer.name}</TableCell>
                 <TableCell>{labourer.phone}</TableCell>
-                <TableCell>{formatCurrency(labourer.dailyWage)}</TableCell>
+                <TableCell>{formatCurrency(labourer.monthlySalary)}</TableCell>
                 <TableCell>
                   <DropdownMenu>
                     <DropdownMenuTrigger asChild>
