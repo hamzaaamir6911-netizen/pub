@@ -23,6 +23,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { Checkbox } from "@/components/ui/checkbox";
+import { Combobox } from "@/components/ui/combobox";
+import { X } from "lucide-react";
 
 type SalaryInput = {
     labourId: string;
@@ -50,6 +52,7 @@ function SalaryGenerationForm() {
     const [workingDays, setWorkingDays] = useState(30);
     const [salaryInputs, setSalaryInputs] = useState<Record<string, SalaryInput>>({});
     const [selectedLabourIds, setSelectedLabourIds] = useState<string[]>([]);
+    const [selectedLabourer, setSelectedLabourer] = useState<string | null>(null);
 
     const alreadyPaidLabourIds = useMemo(() => {
         return salaryPayments
@@ -57,13 +60,19 @@ function SalaryGenerationForm() {
             .map(p => p.labourId);
     }, [salaryPayments, month, year]);
     
-    const unpaidLabour = labour.filter(l => !alreadyPaidLabourIds.includes(l.id));
+    const unpaidLabour = useMemo(() => {
+        const allUnpaid = labour.filter(l => !alreadyPaidLabourIds.includes(l.id));
+        if (selectedLabourer) {
+            return allUnpaid.filter(l => l.id === selectedLabourer);
+        }
+        return allUnpaid;
+    }, [labour, alreadyPaidLabourIds, selectedLabourer]);
 
     useEffect(() => {
-        // When month/year changes, reset selections
+        // When month/year/filter changes, reset selections
         setSelectedLabourIds([]);
         setSalaryInputs({});
-    }, [month, year]);
+    }, [month, year, selectedLabourer]);
 
     const handleInputChange = (labourId: string, field: 'daysWorked' | 'overtimeAmount', value: string) => {
         const numValue = parseFloat(value) || 0;
@@ -128,6 +137,10 @@ function SalaryGenerationForm() {
         }
     }
 
+    const labourerOptions = labour
+        .filter(l => !alreadyPaidLabourIds.includes(l.id))
+        .map(l => ({ value: l.id, label: l.name }));
+
     return (
         <Card>
             <CardHeader>
@@ -135,7 +148,7 @@ function SalaryGenerationForm() {
                 <CardDescription>Select the month and year, then enter the days worked and overtime for each labourer.</CardDescription>
             </CardHeader>
             <CardContent className="space-y-6">
-                <div className="grid md:grid-cols-3 gap-4">
+                <div className="grid md:grid-cols-4 gap-4">
                     <div className="space-y-2">
                         <Label>Month</Label>
                         <Select onValueChange={(v) => setMonth(parseInt(v))} value={String(month)}>
@@ -157,6 +170,22 @@ function SalaryGenerationForm() {
                     <div className="space-y-2">
                         <Label>Working Days in Month</Label>
                         <Input type="number" value={workingDays} onChange={(e) => setWorkingDays(parseInt(e.target.value) || 30)} />
+                    </div>
+                     <div className="space-y-2">
+                        <Label>Filter by Labourer</Label>
+                        <div className="flex gap-2 items-center">
+                            <Combobox
+                                options={labourerOptions}
+                                value={selectedLabourer || ''}
+                                onValueChange={(value) => setSelectedLabourer(value || null)}
+                                placeholder="Select a labourer..."
+                            />
+                            {selectedLabourer && (
+                                <Button variant="ghost" size="icon" onClick={() => setSelectedLabourer(null)}>
+                                    <X className="h-4 w-4" />
+                                </Button>
+                            )}
+                        </div>
                     </div>
                 </div>
 
@@ -182,7 +211,7 @@ function SalaryGenerationForm() {
                             {unpaidLabour.length === 0 ? (
                                 <TableRow>
                                     <TableCell colSpan={6} className="text-center h-24">
-                                        {labour.length === 0 ? "No labourers found. Please add labourers first." : "All salaries for this month have been paid."}
+                                        {labour.length === 0 ? "No labourers found. Please add labourers first." : "All salaries for this month have been paid or no labourer matches filter."}
                                     </TableCell>
                                 </TableRow>
                             ) : (
@@ -304,5 +333,3 @@ export default function PayrollPage() {
         </>
     );
 }
-
-    
