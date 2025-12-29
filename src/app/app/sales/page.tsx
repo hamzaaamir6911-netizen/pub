@@ -555,6 +555,12 @@ export default function SalesPage() {
   const [selectedSale, setSelectedSale] = useState<Sale | null>(null);
   const [editingSale, setEditingSale] = useState<Sale | null>(null);
 
+  const sortedSales = [...sales].sort((a, b) => {
+    const numA = parseInt(a.id.split('-')[1], 10);
+    const numB = parseInt(b.id.split('-')[1], 10);
+    return numA - numB;
+  });
+
   const handleDelete = (id: string) => {
     deleteSale(id);
   };
@@ -621,12 +627,12 @@ export default function SalesPage() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {sales.length === 0 ? (
+                {sortedSales.length === 0 ? (
                   <TableRow>
                     <TableCell colSpan={6} className="text-center h-24">No sales recorded yet.</TableCell>
                   </TableRow>
                 ) : (
-                  sales.map((sale) => (
+                  sortedSales.map((sale) => (
                     <TableRow key={sale.id}>
                       <TableCell className="font-medium">{sale.id}</TableCell>
                       <TableCell>{sale.customerName}</TableCell>
