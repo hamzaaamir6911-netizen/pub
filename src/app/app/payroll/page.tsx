@@ -60,7 +60,7 @@ export default function PayrollPage() {
             labourerId: labourerDetails.id,
             labourerName: labourerDetails.name,
             monthlySalary: labourerDetails.monthlySalary,
-            daysWorked: 30, // Default working days
+            daysWorked: 26, // Default working days
             overtimeHours: 0,
             overtimeRate: overtimeRate,
             deductions: 0,
@@ -82,7 +82,7 @@ export default function PayrollPage() {
   }
 
   const calculateTotalPayable = (item: Partial<SalaryLabourer>): number => {
-      const perDaySalary = (item.monthlySalary || 0) / 30;
+      const perDaySalary = (item.monthlySalary || 0) / 26; // Assuming 26 working days
       const baseSalary = (item.daysWorked || 0) * perDaySalary;
       const overtimePay = (item.overtimeHours || 0) * (item.overtimeRate || 0);
       const totalDeductions = item.deductions || 0;
