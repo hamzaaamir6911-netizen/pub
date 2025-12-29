@@ -3,6 +3,7 @@
 
 import { useState } from "react";
 import { MoreHorizontal, PlusCircle, Trash2, RotateCcw, FileText, Printer } from "lucide-react";
+import Image from "next/image";
 import {
   Table,
   TableBody,
@@ -63,8 +64,9 @@ function EstimatePrint({ estimate }: { estimate: Estimate }) {
             <div id="printable-estimate" className="flex-grow overflow-y-auto">
                 <div className="p-6">
                     <div className="text-center mb-8">
-                        <h1 className="text-5xl font-bold" style={{fontFamily: 'serif'}}>ARCO</h1>
-                        <p className="text-lg font-semibold tracking-widest">AR ALUMINIUM COMPANY</p>
+                       <div className="flex justify-center mb-4">
+                        <Image src="/logo.png" alt="ARCO Aluminium Company" width={200} height={100} />
+                      </div>
                         <p className="mt-4">Estimate: {estimate.id}</p>
                     </div>
                     <div className="p-6">
