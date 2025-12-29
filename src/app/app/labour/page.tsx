@@ -152,6 +152,10 @@ export default function LabourPage() {
         </div>
       </PageHeader>
       <div className="rounded-lg border shadow-sm printable-area">
+        <div className="hidden print:block text-center my-6">
+            <h1 className="text-2xl font-bold font-headline">ARCO Aluminium Company</h1>
+            <p className="text-lg font-semibold mt-1">Labour Report</p>
+        </div>
         <Table>
           <TableHeader>
             <TableRow>
