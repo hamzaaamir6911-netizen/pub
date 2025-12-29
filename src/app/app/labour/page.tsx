@@ -73,7 +73,7 @@ function AddLabourForm({ onLabourAdded }: { onLabourAdded: (newLabour: Omit<Labo
           <Input id="designation" value={designation} onChange={(e) => setDesignation(e.target.value)} placeholder="e.g. Welder, Helper" />
         </div>
         <div className="space-y-2">
-          <Label htmlFor="salary">Monthly Salary</Label>
+          <Label htmlFor="salary">Base Monthly Salary</Label>
           <Input id="salary" type="number" value={salary} onChange={(e) => setSalary(parseFloat(e.target.value) || 0)} placeholder="e.g. 25000" />
         </div>
       </div>
@@ -102,7 +102,7 @@ export default function LabourPage() {
     <>
       <PageHeader
         title="Labour Management"
-        description="Manage your employees and labourers."
+        description="Manage your employees and labourers' information."
       >
         <div className="flex items-center gap-2">
             <Button variant="outline" onClick={() => window.print()} className="no-print">
@@ -125,7 +125,7 @@ export default function LabourPage() {
             <TableRow>
               <TableHead>Labourer Name</TableHead>
               <TableHead>Designation</TableHead>
-              <TableHead className="text-right">Salary</TableHead>
+              <TableHead className="text-right">Base Salary</TableHead>
               <TableHead className="no-print">
                 <span className="sr-only">Actions</span>
               </TableHead>

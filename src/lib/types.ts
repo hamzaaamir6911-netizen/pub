@@ -92,8 +92,22 @@ export type Transaction = {
 export type Labour = {
   id: string;
   name: string;
-  salary: number;
+  salary: number; // Represents base monthly salary
   designation: string;
   createdAt: Date;
+}
+
+export type SalaryPayment = {
+    id: string;
+    labourId: string;
+    labourName: string;
+    month: number; // 1-12
+    year: number;
+    baseSalary: number;
+    daysWorked: number;
+    overtimeAmount: number;
+    totalPayable: number;
+    paymentDate: Date;
+    transactionId: string; // To link with the ledger transaction
 }
     

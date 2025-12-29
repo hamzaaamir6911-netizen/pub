@@ -1,11 +1,9 @@
 
 
-
-
 "use client";
 
 import React, { createContext, useContext, ReactNode, useEffect, useState } from 'react';
-import type { Item, Customer, Sale, Expense, Transaction, Vendor, Estimate, Labour } from '@/lib/types';
+import type { Item, Customer, Sale, Expense, Transaction, Vendor, Estimate, Labour, SalaryPayment } from '@/lib/types';
 import { useCollection, useFirestore, useMemoFirebase, useUser } from '@/firebase';
 import { collection, doc, writeBatch, serverTimestamp, Timestamp, orderBy, query, where, getDocs, runTransaction, increment, addDoc, getDoc } from 'firebase/firestore';
 import { addDocumentNonBlocking, deleteDocumentNonBlocking, updateDocumentNonBlocking } from '../non-blocking-updates';
@@ -21,6 +19,7 @@ interface DataContextProps {
   expenses: Expense[];
   transactions: Transaction[];
   labour: Labour[];
+  salaryPayments: SalaryPayment[];
   loading: boolean;
   addItem: (item: Omit<Item, 'id' | 'createdAt'>) => Promise<any>;
   deleteItem: (id: string) => Promise<void>;
@@ -32,6 +31,7 @@ interface DataContextProps {
   deleteVendor: (id: string) => Promise<void>;
   addLabour: (labourer: Omit<Labour, 'id' | 'createdAt'>) => Promise<any>;
   deleteLabour: (id: string) => Promise<void>;
+  generateSalaries: (salaries: Omit<SalaryPayment, 'id' | 'paymentDate' | 'transactionId'>[]) => Promise<void>;
   addSale: (sale: Omit<Sale, 'id' | 'total' | 'status'>) => Promise<void>;
   updateSale: (saleId: string, sale: Omit<Sale, 'id' | 'total' | 'status'>) => Promise<void>;
   postSale: (saleId: string) => Promise<void>;
@@ -247,6 +247,7 @@ export const DataProvider = ({ children }: { children: ReactNode }) => {
     const expensesCol = useMemoFirebase(() => shouldFetch ? query(collection(firestore, 'expenses'), orderBy('date', 'desc')) : null, [firestore, shouldFetch]);
     const transactionsCol = useMemoFirebase(() => shouldFetch ? query(collection(firestore, 'transactions'), orderBy('date', 'desc')) : null, [firestore, shouldFetch]);
     const labourCol = useMemoFirebase(() => shouldFetch ? query(collection(firestore, 'labour'), orderBy('name', 'asc')) : null, [firestore, shouldFetch]);
+    const salaryPaymentsCol = useMemoFirebase(() => shouldFetch ? query(collection(firestore, 'salary_payments'), orderBy('paymentDate', 'desc')) : null, [firestore, shouldFetch]);
 
     // Fetch data
     const { data: itemsData, isLoading: itemsLoading } = useCollection<Item>(itemsCol);
@@ -257,6 +258,7 @@ export const DataProvider = ({ children }: { children: ReactNode }) => {
     const { data: expensesData, isLoading: expensesLoading } = useCollection<Expense>(expensesCol);
     const { data: transactionsData, isLoading: transactionsLoading } = useCollection<Transaction>(transactionsCol);
     const { data: labourData, isLoading: labourLoading } = useCollection<Labour>(labourCol);
+    const { data: salaryPaymentsData, isLoading: salaryPaymentsLoading } = useCollection<SalaryPayment>(salaryPaymentsCol);
     
     const items = itemsData?.map(item => ({ ...item, quantity: item.quantity ?? 0, createdAt: toDate(item.createdAt) })) || [];
     const customers = customersData?.map(customer => ({ ...customer, createdAt: toDate(customer.createdAt) })) || [];
@@ -266,8 +268,9 @@ export const DataProvider = ({ children }: { children: ReactNode }) => {
     const expenses = expensesData?.map(expense => ({ ...expense, date: toDate(expense.date) })) || [];
     const transactions = transactionsData?.map(transaction => ({ ...transaction, date: toDate(transaction.date) })) || [];
     const labour = labourData?.map(l => ({...l, createdAt: toDate(l.createdAt)})) || [];
+    const salaryPayments = salaryPaymentsData?.map(p => ({...p, paymentDate: toDate(p.paymentDate)})) || [];
 
-    const loading = isUserLoading || itemsLoading || customersLoading || vendorsLoading || salesLoading || estimatesLoading || expensesLoading || transactionsLoading || labourLoading;
+    const loading = isUserLoading || itemsLoading || customersLoading || vendorsLoading || salesLoading || estimatesLoading || expensesLoading || transactionsLoading || labourLoading || salaryPaymentsLoading;
 
     // --- Write Operations ---
 
@@ -344,8 +347,6 @@ export const DataProvider = ({ children }: { children: ReactNode }) => {
             const transactionData: Omit<Transaction, 'id'> = {
                 description: "Opening Balance",
                 amount: vendor.openingBalance,
-                // For vendors, credit means we owe them, debit means we paid in advance.
-                // This aligns with accounting principles.
                 type: vendor.balanceType === 'credit' ? 'credit' : 'debit', 
                 category: 'Opening Balance',
                 vendorId: newVendorRef.id,
@@ -365,48 +366,57 @@ export const DataProvider = ({ children }: { children: ReactNode }) => {
     
     const addLabour = async (labourer: Omit<Labour, 'id' | 'createdAt'>) => {
         if (!labourCol || !user) throw new Error("Labour collection not available or user not authenticated");
-        const batch = writeBatch(firestore);
-
-        // Add labourer
-        const newLabourRef = doc(collection(firestore, 'labour'));
-        const newLabourData = { ...labourer, createdAt: serverTimestamp() };
-        batch.set(newLabourRef, newLabourData);
-
-        // Add expense for salary
-        const expense: Omit<Expense, 'id' | 'date'> = {
-            title: `Salary for ${labourer.name} (${labourer.designation})`,
-            amount: labourer.salary,
-            category: 'Labour',
-        };
-        const newExpenseRef = doc(collection(firestore, 'expenses'));
-        batch.set(newExpenseRef, { ...expense, date: serverTimestamp() });
-        
-        // Add transaction for the expense
-        const transactionRef = doc(collection(firestore, 'transactions'));
-        const transactionData: Omit<Transaction, 'id' | 'date'> = {
-            description: `Salary for ${labourer.name}`,
-            amount: labourer.salary,
-            type: 'debit',
-            category: 'Labour',
-            date: serverTimestamp() as Timestamp,
-        };
-        batch.set(transactionRef, transactionData);
-
-        await batch.commit();
-        return { ...labourer, id: newLabourRef.id, createdAt: new Date() };
+        return await addDocumentNonBlocking(labourCol, { ...labourer, createdAt: serverTimestamp() });
     };
 
     const deleteLabour = async (id: string) => {
         if (!user) throw new Error("User not authenticated");
-        // Also need to handle deleting the associated expense/transaction if needed
         deleteDocumentNonBlocking(doc(firestore, 'labour', id));
     };
 
+    const generateSalaries = async (salaries: Omit<SalaryPayment, 'id' | 'paymentDate' | 'transactionId'>[]) => {
+        if (!user) throw new Error("User not authenticated");
+        const batch = writeBatch(firestore);
+        const paymentDate = serverTimestamp();
+
+        salaries.forEach(salary => {
+            // 1. Create transaction record
+            const transactionRef = doc(collection(firestore, 'transactions'));
+            const transactionData: Omit<Transaction, 'id'> = {
+                description: `Salary for ${salary.labourName} - ${salary.month}/${salary.year}`,
+                amount: salary.totalPayable,
+                type: 'debit',
+                category: 'Labour',
+                date: paymentDate as Timestamp,
+            };
+            batch.set(transactionRef, transactionData);
+
+            // 2. Create expense record
+            const expenseRef = doc(collection(firestore, 'expenses'));
+            const expenseData: Omit<Expense, 'id'> = {
+                title: `Salary for ${salary.labourName} - ${salary.month}/${salary.year}`,
+                amount: salary.totalPayable,
+                category: 'Labour',
+                date: paymentDate as Timestamp,
+            }
+            batch.set(expenseRef, expenseData);
+
+            // 3. Create salary payment record
+            const salaryPaymentRef = doc(collection(firestore, 'salary_payments'));
+            const salaryPaymentData: Omit<SalaryPayment, 'id'> = {
+                ...salary,
+                paymentDate: paymentDate as Timestamp,
+                transactionId: transactionRef.id,
+            };
+            batch.set(salaryPaymentRef, salaryPaymentData);
+        });
+
+        await batch.commit();
+    };
 
     const addTransaction = async (transaction: Omit<Transaction, 'id' | 'date'>) => {
         if (!transactionsCol) throw new Error("Transactions collection not available");
         const newTransaction = { ...transaction, date: serverTimestamp() };
-        // We can't use the non-blocking helper here because it doesn't handle query objects
         const colRef = collection(firestore, 'transactions');
         return addDocumentNonBlocking(colRef, newTransaction);
     };
@@ -674,11 +684,11 @@ export const DataProvider = ({ children }: { children: ReactNode }) => {
     };
     
     const value = {
-        items, customers, vendors, sales, estimates, expenses, transactions, labour, loading,
+        items, customers, vendors, sales, estimates, expenses, transactions, labour, salaryPayments, loading,
         addItem, deleteItem, updateItemStock,
         addCustomer, updateCustomer, deleteCustomer,
         addVendor, deleteVendor,
-        addLabour, deleteLabour,
+        addLabour, deleteLabour, generateSalaries,
         addSale, updateSale, postSale, unpostSale, deleteSale,
         addEstimate, deleteEstimate,
         addExpense, deleteExpense,
