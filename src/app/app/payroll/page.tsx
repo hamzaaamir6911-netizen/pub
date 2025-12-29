@@ -123,8 +123,8 @@ export default function PayrollPage() {
   return (
     <>
       <PageHeader
-        title="Payroll Management"
-        description="Generate monthly salaries and manage payslips for your workforce."
+        title="Monthly Salary"
+        description="Create and manage monthly salaries for your workforce."
       />
       <Card>
         <CardHeader>
