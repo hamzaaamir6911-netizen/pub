@@ -299,121 +299,33 @@
         "thickness"
       ]
     },
-    "Labour": {
-      "$schema": "http://json-schema.org/draft-07/schema#",
-      "title": "Labour",
-      "type": "object",
-      "description": "Represents a labourer or employee.",
-      "properties": {
-        "id": {
-          "type": "string",
-          "description": "Unique identifier for the labourer."
+    "AppUser": {
+        "title": "App User",
+        "type": "object",
+        "description": "Represents a user of the application, storing their role and permissions.",
+        "properties": {
+            "id": { "type": "string" },
+            "email": { "type": "string", "format": "email" },
+            "role": { "type": "string", "enum": ["admin", "employee"] },
+            "permissions": {
+                "type": "object",
+                "properties": {
+                    "dashboard": { "type": "boolean" },
+                    "inventory": { "type": "boolean" },
+                    "estimates": { "type": "boolean" },
+                    "sales": { "type": "boolean" },
+                    "customers": { "type": "boolean" },
+                    "vendors": { "type": "boolean" },
+                    "labour": { "type": "boolean" },
+                    "payroll": { "type": "boolean" },
+                    "expenses": { "type": "boolean" },
+                    "ledger": { "type": "boolean" },
+                    "reports": { "type": "boolean" },
+                    "settings": { "type": "boolean" }
+                }
+            }
         },
-        "name": {
-          "type": "string",
-          "description": "The name of the labourer."
-        },
-        "phone": {
-          "type": "string",
-          "description": "The phone number of the labourer."
-        },
-        "address": {
-          "type": "string",
-          "description": "The address of the labourer."
-        },
-        "monthlySalary": {
-          "type": "number",
-          "description": "The monthly salary of the labourer."
-        }
-      },
-      "required": [
-        "id",
-        "name",
-        "monthlySalary"
-      ]
-    },
-    "SalaryPayment": {
-      "$schema": "http://json-schema.org/draft-07/schema#",
-      "title": "Salary Payment",
-      "type": "object",
-      "description": "Represents a salary payment record for a specific month.",
-      "properties": {
-        "id": {
-          "type": "string",
-          "description": "Unique identifier for the salary payment."
-        },
-        "month": {
-          "type": "string",
-          "description": "The month for which the salary is paid (e.g., 'January')."
-        },
-        "year": {
-          "type": "number",
-          "description": "The year for which the salary is paid (e.g., 2024)."
-        },
-        "date": {
-          "type": "string",
-          "description": "The date the payment was made.",
-          "format": "date-time"
-        },
-        "labourers": {
-          "type": "array",
-          "description": "List of labourers included in this payment batch.",
-          "items": {
-            "$ref": "#/backend/entities/SalaryLabourer"
-          }
-        },
-        "totalAmountPaid": {
-          "type": "number",
-          "description": "The total amount paid in this salary batch."
-        }
-      },
-      "required": [
-        "id",
-        "month",
-        "year",
-        "date",
-        "labourers",
-        "totalAmountPaid"
-      ]
-    },
-    "SalaryLabourer": {
-      "title": "Salary Labourer",
-      "type": "object",
-      "description": "Represents the salary details for a single labourer within a payment.",
-      "properties": {
-        "labourerId": {
-          "type": "string"
-        },
-        "labourerName": {
-          "type": "string"
-        },
-        "daysWorked": {
-          "type": "number"
-        },
-        "monthlySalary": {
-          "type": "number"
-        },
-        "overtimeHours": {
-          "type": "number"
-        },
-        "overtimeRate": {
-          "type": "number",
-          "description": "The hourly rate for overtime work."
-        },
-        "deductions": {
-          "type": "number"
-        },
-        "totalPayable": {
-          "type": "number"
-        }
-      },
-      "required": [
-        "labourerId",
-        "labourerName",
-        "daysWorked",
-        "monthlySalary",
-        "totalPayable"
-      ]
+        "required": ["id", "email", "role", "permissions"]
     }
   },
   "auth": {
@@ -425,19 +337,11 @@
   "firestore": {
     "structure": [
       {
-        "path": "/roles_admin/{userId}",
+        "path": "/users/{userId}",
         "definition": {
-          "entityName": "role_admin",
-          "schema": {
-            "$ref": "#/backend/entities/role_admin"
-          },
-          "description": "Grants admin access to the user. The existence of a document indicates admin role.",
-          "params": [
-            {
-              "name": "userId",
-              "description": "The Firebase Auth UID of the administrator."
-            }
-          ]
+            "entityName": "AppUser",
+            "schema": { "$ref": "#/backend/entities/AppUser" },
+            "description": "Stores user profile information, including roles and permissions."
         }
       },
       {
@@ -447,13 +351,7 @@
           "schema": {
             "$ref": "#/backend/entities/Item"
           },
-          "description": "Stores item information.",
-          "params": [
-            {
-              "name": "itemId",
-              "description": "Unique identifier for the item."
-            }
-          ]
+          "description": "Stores item information."
         }
       },
       {
@@ -463,13 +361,7 @@
           "schema": {
             "$ref": "#/backend/entities/Customer"
           },
-          "description": "Stores customer information.",
-          "params": [
-            {
-              "name": "customerId",
-              "description": "Unique identifier for the customer."
-            }
-          ]
+          "description": "Stores customer information."
         }
       },
       {
@@ -479,13 +371,7 @@
           "schema": {
             "$ref": "#/backend/entities/Vendor"
           },
-          "description": "Stores vendor information.",
-          "params": [
-            {
-              "name": "vendorId",
-              "description": "Unique identifier for the vendor."
-            }
-          ]
+          "description": "Stores vendor information."
         }
       },
       {
@@ -495,13 +381,7 @@
           "schema": {
             "$ref": "#/backend/entities/Sale"
           },
-          "description": "Stores sales transaction information.",
-          "params": [
-            {
-              "name": "saleId",
-              "description": "Unique identifier for the sale."
-            }
-          ]
+          "description": "Stores sales transaction information."
         }
       },
       {
@@ -511,13 +391,7 @@
           "schema": {
             "$ref": "#/backend/entities/Expense"
           },
-          "description": "Stores expense information.",
-          "params": [
-            {
-              "name": "expenseId",
-              "description": "Unique identifier for the expense."
-            }
-          ]
+          "description": "Stores expense information."
         }
       },
       {
@@ -527,48 +401,9 @@
           "schema": {
             "$ref": "#/backend/entities/Estimate"
           },
-          "description": "Stores estimate/quotation information.",
-          "params": [
-            {
-              "name": "estimateId",
-              "description": "Unique identifier for the estimate."
-            }
-          ]
-        }
-      },
-      {
-        "path": "/labour/{labourId}",
-        "definition": {
-          "entityName": "labour",
-          "schema": {
-            "$ref": "#/backend/entities/Labour"
-          },
-          "description": "Stores labourer information.",
-          "params": [
-            {
-              "name": "labourId",
-              "description": "Unique identifier for the labourer."
-            }
-          ]
-        }
-      },
-      {
-        "path": "/salaryPayments/{paymentId}",
-        "definition": {
-          "entityName": "salaryPayment",
-          "schema": {
-            "$ref": "#/backend/entities/SalaryPayment"
-          },
-          "description": "Stores salary payment records.",
-          "params": [
-            {
-              "name": "paymentId",
-              "description": "Unique identifier for the salary payment."
-            }
-          ]
+          "description": "Stores estimate/quotation information."
         }
       }
-    ],
-    "reasoning": "The Firestore structure is designed to manage an aluminium factory's stock, sales, expenses, and customer data securely and efficiently. It prioritizes authorization independence to ensure robust security rules and scalable operations. The structure includes separate collections for `items`, `customers`, `vendors`, `sales`, `expenses`, and `estimates`, each serving distinct functions. To enforce admin-only access, a dedicated `/roles_admin/{uid}` collection is used; the existence of a document at this path grants admin privileges. This existence check is secure and efficient.\n\n**Authorization Independence and QAPs:**\n\n*   **Admin Role:** Authorization is handled via the existence of documents in the `/roles_admin/{uid}` collection. This avoids complex custom claims and enables straightforward security rules based solely on `request.auth.uid`.\n*   **Segregation:** The segregation of data into separate collections ensures that each collection has a homogeneous security posture, simplifying security rule definitions.\n\nThis structure adheres to the principles of Authorization Independence, Clarity of Intent, DBAC, and QAPs, ensuring a secure, scalable, and debuggable Firestore design."
+    ]
   }
 }

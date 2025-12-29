@@ -117,3 +117,28 @@ export type SalaryPayment = {
     labourers: SalaryLabourer[];
     totalAmountPaid: number;
 };
+
+export type UserRole = 'admin' | 'employee';
+
+export type UserPermissions = {
+  dashboard: boolean;
+  inventory: boolean;
+  estimates: boolean;
+  sales: boolean;
+  customers: boolean;
+  vendors: boolean;
+  labour: boolean;
+  payroll: boolean;
+  expenses: boolean;
+  ledger: boolean;
+  reports: boolean;
+  settings: boolean;
+};
+
+export type AppUser = {
+    id: string;
+    email: string;
+    role: UserRole;
+    permissions: UserPermissions;
+    createdAt: Date;
+}
