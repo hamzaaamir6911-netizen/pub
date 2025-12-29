@@ -298,34 +298,6 @@
         "color",
         "thickness"
       ]
-    },
-    "AppUser": {
-        "title": "App User",
-        "type": "object",
-        "description": "Represents a user of the application, storing their role and permissions.",
-        "properties": {
-            "id": { "type": "string" },
-            "email": { "type": "string", "format": "email" },
-            "role": { "type": "string", "enum": ["admin", "employee"] },
-            "permissions": {
-                "type": "object",
-                "properties": {
-                    "dashboard": { "type": "boolean" },
-                    "inventory": { "type": "boolean" },
-                    "estimates": { "type": "boolean" },
-                    "sales": { "type": "boolean" },
-                    "customers": { "type": "boolean" },
-                    "vendors": { "type": "boolean" },
-                    "labour": { "type": "boolean" },
-                    "payroll": { "type": "boolean" },
-                    "expenses": { "type": "boolean" },
-                    "ledger": { "type": "boolean" },
-                    "reports": { "type": "boolean" },
-                    "settings": { "type": "boolean" }
-                }
-            }
-        },
-        "required": ["id", "email", "role", "permissions"]
     }
   },
   "auth": {
@@ -336,14 +308,6 @@
   },
   "firestore": {
     "structure": [
-      {
-        "path": "/users/{userId}",
-        "definition": {
-            "entityName": "AppUser",
-            "schema": { "$ref": "#/backend/entities/AppUser" },
-            "description": "Stores user profile information, including roles and permissions."
-        }
-      },
       {
         "path": "/items/{itemId}",
         "definition": {

@@ -10,16 +10,13 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/firebase";
-import { signInWithEmailAndPassword, createUserWithEmailAndPassword } from "firebase/auth";
-import { doc, setDoc, getDoc, serverTimestamp } from "firebase/firestore";
-import { useFirestore } from "@/firebase/provider";
+import { signInWithEmailAndPassword } from "firebase/auth";
 
 
 export default function LoginPage() {
   const router = useRouter();
   const { toast } = useToast();
   const auth = useAuth();
-  const firestore = useFirestore();
   const [email, setEmail] = useState("admin@arco.com");
   const [password, setPassword] = useState("password");
   const [isLoading, setIsLoading] = useState(false);
@@ -29,7 +26,6 @@ export default function LoginPage() {
     setIsLoading(true);
 
     try {
-      // First, try to sign in
       await signInWithEmailAndPassword(auth, email, password);
       toast({
         title: "Login Successful",
@@ -38,50 +34,11 @@ export default function LoginPage() {
       // Use window location to force a full reload and ensure all contexts are reset
       window.location.href = "/app/dashboard";
     } catch (error: any) {
-        // If user not found, and it's the admin email, create the first admin user
-        if ((error.code === 'auth/user-not-found' || error.code === 'auth/invalid-credential') && email === 'admin@arco.com') {
-            try {
-                const adminUserRef = doc(firestore, 'users', 'admin_user_placeholder'); // Check if any user exists
-                const userDocs = await getDoc(adminUserRef); // Simplified check
-                
-                // This logic is simplified: in a real app, you'd check for an `admin` collection or a `users` collection count.
-                // For this project, we assume if admin@arco.com fails to log in, it's the first run.
-                const userCredential = await createUserWithEmailAndPassword(auth, email, password);
-                const user = userCredential.user;
-
-                // Create the admin user profile in Firestore
-                const userProfileRef = doc(firestore, 'users', user.uid);
-                await setDoc(userProfileRef, {
-                    id: user.uid,
-                    email: user.email,
-                    role: 'admin',
-                    permissions: { // Admins have all permissions
-                        dashboard: true, inventory: true, estimates: true, sales: true,
-                        customers: true, vendors: true, labour: true, payroll: true,
-                        expenses: true, ledger: true, reports: true, settings: true,
-                    },
-                    createdAt: serverTimestamp()
-                });
-
-                toast({
-                    title: "Admin Account Created",
-                    description: "Logged in successfully. Redirecting...",
-                });
-                window.location.href = "/app/dashboard";
-            } catch (creationError: any) {
-                 toast({
-                    variant: "destructive",
-                    title: "Setup Failed",
-                    description: creationError.message || "An unknown error occurred during admin setup.",
-                });
-            }
-        } else {
-             toast({
-                variant: "destructive",
-                title: "Login Failed",
-                description: error.message || "Invalid credentials or another error occurred.",
-            });
-        }
+        toast({
+            variant: "destructive",
+            title: "Login Failed",
+            description: error.message || "Invalid credentials or another error occurred.",
+        });
     } finally {
       setIsLoading(false);
     }

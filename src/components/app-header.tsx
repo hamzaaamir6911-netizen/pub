@@ -10,36 +10,23 @@ import { cn } from "@/lib/utils"
 import { Button } from "./ui/button"
 import { Sheet, SheetContent, SheetTrigger } from "./ui/sheet"
 import { useToast } from "@/hooks/use-toast"
-import { useAuth, useUser } from "@/firebase"
+import { useAuth } from "@/firebase"
 import { signOut } from "firebase/auth"
-import type { UserPermissions } from "@/lib/types"
-import { useData } from "@/firebase/data/data-provider"
 
-const allNavItems = [
-  { href: "/app/dashboard", icon: LayoutDashboard, label: "Dashboard", id: 'dashboard' },
-  { href: "/app/inventory", icon: Warehouse, label: "Inventory", id: 'inventory' },
-  { href: "/app/estimates", icon: FileQuestion, label: "Estimates", id: 'estimates' },
-  { href: "/app/sales", icon: ShoppingCart, label: "Sales", id: 'sales' },
-  { href: "/app/customers", icon: Users, label: "Customers", id: 'customers' },
-  { href: "/app/vendors", icon: Truck, label: "Vendors", id: 'vendors' },
-  { href: "/app/labour", icon: HardHat, label: "Labour", id: 'labour' },
-  { href: "/app/payroll", icon: DollarSign, label: "Payroll", id: 'payroll' },
-  { href: "/app/expenses", icon: CreditCard, label: "Expenses", id: 'expenses' },
-  { href: "/app/ledger", icon: BookUser, label: "Ledger", id: 'ledger' },
-  { href: "/app/reports", icon: BarChart3, label: "Reports", id: 'reports' },
-  { href: "/app/settings", icon: Settings, label: "Settings", id: 'settings' },
-] as const;
-
-function getVisibleNavItems(permissions?: UserPermissions) {
-    if (!permissions) {
-        // Default to all items if permissions are not loaded yet
-        return allNavItems;
-    }
-    if (permissions.settings) { // Admin has all access
-        return allNavItems;
-    }
-    return allNavItems.filter(item => permissions[item.id as keyof UserPermissions]);
-}
+const navItems = [
+  { href: "/app/dashboard", icon: LayoutDashboard, label: "Dashboard" },
+  { href: "/app/inventory", icon: Warehouse, label: "Inventory" },
+  { href: "/app/estimates", icon: FileQuestion, label: "Estimates" },
+  { href: "/app/sales", icon: ShoppingCart, label: "Sales" },
+  { href: "/app/customers", icon: Users, label: "Customers" },
+  { href: "/app/vendors", icon: Truck, label: "Vendors" },
+  { href: "/app/labour", icon: HardHat, label: "Labour" },
+  { href: "/app/payroll", icon: DollarSign, label: "Payroll" },
+  { href: "/app/expenses", icon: CreditCard, label: "Expenses" },
+  { href: "/app/ledger", icon: BookUser, label: "Ledger" },
+  { href: "/app/reports", icon: BarChart3, label: "Reports" },
+  { href: "/app/settings", icon: Settings, label: "Settings" },
+];
 
 
 export function AppHeader() {
@@ -47,10 +34,7 @@ export function AppHeader() {
   const router = useRouter()
   const { toast } = useToast()
   const auth = useAuth();
-  const { appUser } = useData();
   const [mobileMenuOpen, setMobileMenuOpen] = React.useState(false);
-
-  const navItems = React.useMemo(() => getVisibleNavItems(appUser?.permissions), [appUser]);
 
   const handleLogout = async () => {
     try {

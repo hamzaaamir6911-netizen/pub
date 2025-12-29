@@ -8,68 +8,11 @@ service cloud.firestore {
     function isSignedIn() {
       return request.auth != null;
     }
-
-    // Helper function to check if a user is an admin.
-    // Admin role is determined by a custom claim.
-    function isAdmin() {
-      return request.auth.token.role == 'admin';
-    }
-
-    // User profiles can be read by their owner or any admin.
-    // User profiles can only be created by an admin (in a batch with auth creation).
-    // Users can't update their own roles or permissions.
-    match /users/{userId} {
-      allow read: if isSignedIn() && (request.auth.uid == userId || isAdmin());
-      allow write: if isAdmin(); // Only admins can create/update user roles.
-    }
     
-    // Admins have full read/write access to all business data.
-    // Authenticated users (employees) can read data as per UI restrictions.
-    // Write access for employees should be handled by specific rules if needed,
-    // but for now, we assume most writes are admin-only or handled via specific logic.
-    match /items/{itemId} {
-      allow read: if isSignedIn();
-      allow write: if isAdmin();
-    }
-
-    match /customers/{customerId} {
-      allow read: if isSignedIn();
-      allow write: if isAdmin();
-    }
-    
-    match /vendors/{vendorId} {
-      allow read: if isSignedIn();
-      allow write: if isAdmin();
-    }
-
-    match /sales/{saleId} {
-      allow read: if isSignedIn();
-      allow write: if isAdmin();
-    }
-
-    match /expenses/{expenseId} {
-      allow read: if isSignedIn();
-      allow write: if isAdmin();
-    }
-    
-    match /transactions/{transactionId} {
-        allow read: if isSignedIn();
-        allow write: if isAdmin();
-    }
-
-    match /estimates/{estimateId} {
-        allow read: if isSignedIn();
-        allow write: if isAdmin();
-    }
-    
-    match /labour/{labourId} {
-        allow read: if isSignedIn();
-        allow write: if isAdmin();
-    }
-
-    match /salaryPayments/{paymentId} {
-        allow read: if isSignedIn();
-        allow write: if isAdmin();
+    // For this simplified app, we'll allow any authenticated user to read/write.
+    // In a real app, you would have more granular rules.
+    match /{document=**} {
+      allow read, write: if isSignedIn();
     }
   }
 }

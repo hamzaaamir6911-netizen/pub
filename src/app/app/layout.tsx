@@ -3,15 +3,13 @@
 
 import { AppHeader } from "@/components/app-header";
 import { useUser } from "@/firebase";
-import { DataProvider, useData } from "@/firebase/data/data-provider";
-import { useRouter, usePathname } from "next/navigation";
+import { DataProvider } from "@/firebase/data/data-provider";
+import { useRouter } from "next/navigation";
 import { useEffect } from "react";
 
 function AppContent({ children }: { children: React.ReactNode }) {
   const { user, isUserLoading } = useUser();
-  const { appUser } = useData();
   const router = useRouter();
-  const pathname = usePathname();
 
   useEffect(() => {
     // If the user check is done and there's no user, redirect to login.
@@ -20,22 +18,8 @@ function AppContent({ children }: { children: React.ReactNode }) {
     }
   }, [user, isUserLoading, router]);
 
-   useEffect(() => {
-    if (appUser) {
-      const pageId = pathname.split('/app/')[1];
-      if (!pageId) return;
-
-      if (appUser.role !== 'admin' && appUser.permissions && pageId in appUser.permissions) {
-        const hasAccess = appUser.permissions[pageId as keyof typeof appUser.permissions];
-        if (!hasAccess) {
-          router.replace('/app/dashboard');
-        }
-      }
-    }
-  }, [appUser, pathname, router]);
-
   // While checking for the user, or if there's no user yet, show a loading screen.
-  if (isUserLoading || !user || !appUser) {
+  if (isUserLoading || !user) {
     return (
        <div className="flex h-screen items-center justify-center">
         <div className="text-center">
