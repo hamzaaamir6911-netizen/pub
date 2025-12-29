@@ -627,7 +627,17 @@ export const DataProvider = ({ children }: { children: ReactNode }) => {
         const newPaymentData = { ...payment, date: serverTimestamp() };
         batch.set(newPaymentRef, newPaymentData);
 
-        // 2. Add a single consolidated transaction to the ledger
+        // 2. Add a corresponding entry to the expenses collection
+        const expenseRef = doc(collection(firestore, 'expenses'));
+        const expenseData: Omit<Expense, 'id'> = {
+            title: `Salary for ${payment.month} ${payment.year}`,
+            amount: payment.totalAmountPaid,
+            category: 'Salary',
+            date: serverTimestamp() as Timestamp,
+        };
+        batch.set(expenseRef, expenseData);
+        
+        // 3. Add a single consolidated transaction to the ledger
         const transactionRef = doc(collection(firestore, 'transactions'));
         const transactionData: Omit<Transaction, 'id' | 'date'> = {
             description: `Salary payment for ${payment.month} ${payment.year}`,
@@ -652,14 +662,28 @@ export const DataProvider = ({ children }: { children: ReactNode }) => {
         const paymentRef = doc(firestore, 'salaryPayments', paymentId);
         batch.delete(paymentRef);
     
-        // 2. Find and delete the associated ledger transaction
-        const q = query(
+        const searchDescription = `Salary for ${paymentToDelete.month} ${paymentToDelete.year}`;
+        const searchDescriptionLedger = `Salary payment for ${paymentToDelete.month} ${paymentToDelete.year}`;
+
+        // 2. Find and delete the associated expense entry
+        const expenseQuery = query(
+            collection(firestore, 'expenses'),
+            where("category", "==", "Salary"),
+            where("title", "==", searchDescription)
+        );
+        const expenseSnapshot = await getDocs(expenseQuery);
+        expenseSnapshot.forEach((doc) => {
+            batch.delete(doc.ref);
+        });
+
+        // 3. Find and delete the associated ledger transaction
+        const transactionQuery = query(
             collection(firestore, 'transactions'),
             where("category", "==", "Salary"),
-            where("description", "==", `Salary payment for ${paymentToDelete.month} ${paymentToDelete.year}`)
+            where("description", "==", searchDescriptionLedger)
         );
-        const querySnapshot = await getDocs(q);
-        querySnapshot.forEach((doc) => {
+        const transactionSnapshot = await getDocs(transactionQuery);
+        transactionSnapshot.forEach((doc) => {
             batch.delete(doc.ref);
         });
     
@@ -735,3 +759,5 @@ export const useData = () => {
   }
   return context;
 };
+
+    

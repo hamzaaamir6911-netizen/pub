@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useState } from "react";
@@ -33,7 +34,7 @@ function AddExpenseForm({ onExpenseAdded }: { onExpenseAdded: (newExpense: Omit<
     const { vendors } = useData();
     const [title, setTitle] = useState('');
     const [amount, setAmount] = useState(0);
-    const [category, setCategory] = useState<'Labour' | 'Transport' | 'Electricity' | 'Vendor Payment' | 'Other'>('Other');
+    const [category, setCategory] = useState<'Labour' | 'Transport' | 'Electricity' | 'Vendor Payment' | 'Salary' | 'Other'>('Other');
     const [vendorId, setVendorId] = useState<string | undefined>(undefined);
     const { toast } = useToast();
 
@@ -78,6 +79,7 @@ function AddExpenseForm({ onExpenseAdded }: { onExpenseAdded: (newExpense: Omit<
                             <SelectItem value="Transport">Transport</SelectItem>
                             <SelectItem value="Electricity">Electricity</SelectItem>
                             <SelectItem value="Vendor Payment">Vendor Payment</SelectItem>
+                            <SelectItem value="Salary">Salary</SelectItem>
                             <SelectItem value="Other">Other</SelectItem>
                         </SelectContent>
                     </Select>
@@ -182,3 +184,5 @@ export default function ExpensesPage() {
     </>
   );
 }
+
+    

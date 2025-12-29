@@ -71,7 +71,7 @@ export type Expense = {
   id: string;
   title: string;
   amount: number;
-  category: 'Labour' | 'Transport' | 'Electricity' | 'Vendor Payment' | 'Other';
+  category: 'Labour' | 'Transport' | 'Electricity' | 'Vendor Payment' | 'Salary' | 'Other';
   date: Date;
   vendorId?: string;
 };
@@ -117,3 +117,5 @@ export type SalaryPayment = {
     labourers: SalaryLabourer[];
     totalAmountPaid: number;
 };
+
+    
