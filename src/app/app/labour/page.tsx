@@ -2,7 +2,7 @@
 "use client";
 
 import { useState } from "react";
-import { MoreHorizontal, PlusCircle } from "lucide-react";
+import { MoreHorizontal, PlusCircle, Printer } from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -104,24 +104,29 @@ export default function LabourPage() {
         title="Labour Management"
         description="Manage your employees and labourers."
       >
-        <Dialog open={isModalOpen} onOpenChange={setModalOpen}>
-            <DialogTrigger asChild>
-                <Button>
-                    <PlusCircle className="mr-2 h-4 w-4" />
-                    Add Labourer
-                </Button>
-            </DialogTrigger>
-            <AddLabourForm onLabourAdded={handleLabourAdded} />
-        </Dialog>
+        <div className="flex items-center gap-2">
+            <Button variant="outline" onClick={() => window.print()} className="no-print">
+                <Printer className="mr-2 h-4 w-4" /> Print List
+            </Button>
+            <Dialog open={isModalOpen} onOpenChange={setModalOpen}>
+                <DialogTrigger asChild>
+                    <Button>
+                        <PlusCircle className="mr-2 h-4 w-4" />
+                        Add Labourer
+                    </Button>
+                </DialogTrigger>
+                <AddLabourForm onLabourAdded={handleLabourAdded} />
+            </Dialog>
+        </div>
       </PageHeader>
-      <div className="rounded-lg border shadow-sm">
+      <div className="rounded-lg border shadow-sm printable-area">
         <Table>
           <TableHeader>
             <TableRow>
               <TableHead>Labourer Name</TableHead>
               <TableHead>Designation</TableHead>
               <TableHead className="text-right">Salary</TableHead>
-              <TableHead>
+              <TableHead className="no-print">
                 <span className="sr-only">Actions</span>
               </TableHead>
             </TableRow>
@@ -132,7 +137,7 @@ export default function LabourPage() {
                 <TableCell className="font-medium">{person.name}</TableCell>
                 <TableCell>{person.designation}</TableCell>
                 <TableCell className="text-right">{formatCurrency(person.salary)}</TableCell>
-                <TableCell>
+                <TableCell className="no-print">
                   <DropdownMenu>
                     <DropdownMenuTrigger asChild>
                       <Button aria-haspopup="true" size="icon" variant="ghost">
