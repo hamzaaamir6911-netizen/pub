@@ -59,7 +59,7 @@ h1, h2, h3, h4, h5, h6 {
     display: none !important;
   }
   
-  body, .printable-area, #printable-invoice, #printable-estimate, .dialog-content {
+  body, .printable-area, #printable-invoice, #printable-estimate, #printable-payslip, .dialog-content {
       background: #fff !important;
       color: #000 !important;
       padding: 0;
@@ -76,7 +76,8 @@ h1, h2, h3, h4, h5, h6 {
 
   .dialog-content,
   #printable-invoice, 
-  #printable-estimate {
+  #printable-estimate,
+  #printable-payslip {
     display: block !important;
     position: static;
     border: none !important;
@@ -88,7 +89,7 @@ h1, h2, h3, h4, h5, h6 {
     overflow: visible !important;
   }
 
-  body *, .printable-area *, #printable-invoice *, #printable-estimate * {
+  body *, .printable-area *, #printable-invoice *, #printable-estimate *, #printable-payslip * {
     color: #000 !important;
     border-color: #ccc !important;
   }
