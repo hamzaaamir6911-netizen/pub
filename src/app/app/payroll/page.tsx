@@ -166,7 +166,7 @@ function SalaryGenerationForm() {
                             <TableRow>
                                 <TableHead className="w-[50px]">
                                      <Checkbox
-                                        onCheckedChange={handleSelectAll}
+                                        onCheckedChange={(checked) => handleSelectAll(!!checked)}
                                         checked={unpaidLabour.length > 0 && selectedLabourIds.length === unpaidLabour.length}
                                         aria-label="Select all"
                                     />
@@ -304,3 +304,5 @@ export default function PayrollPage() {
         </>
     );
 }
+
+    
