@@ -2,7 +2,7 @@
 "use client";
 
 import { useState } from "react";
-import { MoreHorizontal, PlusCircle } from "lucide-react";
+import { MoreHorizontal, PlusCircle, Printer } from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -132,28 +132,33 @@ export default function LabourPage() {
         title="Labour Management"
         description="Manage your workforce information."
       >
-        <Dialog open={isModalOpen} onOpenChange={setModalOpen}>
-            <DialogTrigger asChild>
-                <Button onClick={() => handleOpenModal()}>
-                    <PlusCircle className="mr-2 h-4 w-4" />
-                    Add Labourer
-                </Button>
-            </DialogTrigger>
-             <AddLabourForm 
-                onLabourAdded={handleLabourAdded} 
-                onLabourUpdated={handleLabourUpdated}
-                existingLabourer={editingLabourer} 
-             />
-        </Dialog>
+        <div className="flex items-center gap-2">
+            <Button variant="outline" onClick={() => window.print()} className="no-print">
+                <Printer className="mr-2 h-4 w-4" /> Print
+            </Button>
+            <Dialog open={isModalOpen} onOpenChange={setModalOpen}>
+                <DialogTrigger asChild>
+                    <Button onClick={() => handleOpenModal()}>
+                        <PlusCircle className="mr-2 h-4 w-4" />
+                        Add Labourer
+                    </Button>
+                </DialogTrigger>
+                <AddLabourForm 
+                    onLabourAdded={handleLabourAdded} 
+                    onLabourUpdated={handleLabourUpdated}
+                    existingLabourer={editingLabourer} 
+                />
+            </Dialog>
+        </div>
       </PageHeader>
-      <div className="rounded-lg border shadow-sm">
+      <div className="rounded-lg border shadow-sm printable-area">
         <Table>
           <TableHeader>
             <TableRow>
               <TableHead>Labourer Name</TableHead>
               <TableHead>Phone Number</TableHead>
               <TableHead>Monthly Salary</TableHead>
-              <TableHead>
+              <TableHead className="no-print">
                 <span className="sr-only">Actions</span>
               </TableHead>
             </TableRow>
@@ -164,7 +169,7 @@ export default function LabourPage() {
                 <TableCell className="font-medium">{labourer.name}</TableCell>
                 <TableCell>{labourer.phone}</TableCell>
                 <TableCell>{formatCurrency(labourer.monthlySalary)}</TableCell>
-                <TableCell>
+                <TableCell className="no-print">
                   <DropdownMenu>
                     <DropdownMenuTrigger asChild>
                       <Button aria-haspopup="true" size="icon" variant="ghost">
