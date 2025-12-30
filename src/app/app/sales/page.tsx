@@ -50,7 +50,7 @@ import { format } from "date-fns";
 import { Combobox } from "@/components/ui/combobox";
 
 
-function GatePassPrint({ sale, onClose }: { sale: Sale, onClose: () => void }) {
+function GatePassPrint({ sale }: { sale: Sale }) {
     const [vehicleNumber, setVehicleNumber] = useState('');
     return (
         <DialogContent className="max-w-4xl max-h-[90vh] flex flex-col">
@@ -116,7 +116,6 @@ function GatePassPrint({ sale, onClose }: { sale: Sale, onClose: () => void }) {
                 <Button variant="outline" onClick={() => window.print()}>
                     <Printer className="mr-2 h-4 w-4" /> Print Gate Pass
                 </Button>
-                <Button variant="ghost" onClick={onClose}>Close</Button>
             </DialogFooter>
         </DialogContent>
     )
@@ -230,10 +229,12 @@ function SaleInvoice({ sale, onPost, onUnpost }: { sale: Sale, onPost: (saleId: 
                     <Printer className="mr-2 h-4 w-4" />
                     Print Invoice
                 </Button>
-                <Button variant="secondary" onClick={() => setGatePassOpen(true)}>
-                    <ArrowRight className="mr-2 h-4 w-4" />
-                    Generate Gate Pass
-                </Button>
+                <DialogTrigger asChild>
+                    <Button variant="secondary" onClick={() => setGatePassOpen(true)}>
+                        <ArrowRight className="mr-2 h-4 w-4" />
+                        Generate Gate Pass
+                    </Button>
+                </DialogTrigger>
                 {sale.status === 'draft' ? (
                     <Button onClick={handlePost}>
                         <CheckCircle className="mr-2 h-4 w-4" />
@@ -249,7 +250,7 @@ function SaleInvoice({ sale, onPost, onUnpost }: { sale: Sale, onPost: (saleId: 
         </DialogContent>
         {isGatePassOpen && (
              <Dialog open={isGatePassOpen} onOpenChange={setGatePassOpen}>
-                <GatePassPrint sale={sale} onClose={() => setGatePassOpen(false)} />
+                <GatePassPrint sale={sale} />
              </Dialog>
         )}
         </>
@@ -788,7 +789,3 @@ export default function SalesPage() {
     </>
   );
 }
-
-    
-
-    
