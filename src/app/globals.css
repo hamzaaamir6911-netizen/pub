@@ -48,7 +48,33 @@ h1, h2, h3, h4, h5, h6 {
   }
 }
 
+
 @media print {
+  body * {
+    visibility: hidden;
+  }
+
+  .printable-area, .printable-area * {
+    visibility: visible;
+  }
+  
+  #printable-invoice, #printable-invoice *,
+  #printable-estimate, #printable-estimate *,
+  #printable-payslip, #printable-payslip *,
+  [id^="printable-gatepass-"], [id^="printable-gatepass-"] * {
+    visibility: visible;
+  }
+
+  #printable-invoice, 
+  #printable-estimate, 
+  #printable-payslip,
+  [id^="printable-gatepass-"] {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 100%;
+  }
+
   .no-print, 
   .no-print * {
     display: none !important;
@@ -77,10 +103,10 @@ h1, h2, h3, h4, h5, h6 {
     max-width: 100% !important;
     height: auto !important;
     max-height: none !important;
-    overflow: visible !important;
-    border: none !important;
     box-shadow: none !important;
     padding: 0 !important;
+    border: none !important;
+    overflow: visible !important;
   }
 
   /* This is the key rule to remove the inner scrollbar */
@@ -89,3 +115,4 @@ h1, h2, h3, h4, h5, h6 {
   }
 }
 
+    

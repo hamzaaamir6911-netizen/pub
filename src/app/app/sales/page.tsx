@@ -2,7 +2,7 @@
 "use client";
 
 import { useState, useRef, useEffect } from "react";
-import { MoreHorizontal, PlusCircle, Trash2, RotateCcw, FileText, CheckCircle, Edit, Calendar as CalendarIcon, Undo2, Printer } from "lucide-react";
+import { MoreHorizontal, PlusCircle, Trash2, RotateCcw, FileText, CheckCircle, Edit, Calendar as CalendarIcon, Undo2, Printer, ArrowRight } from "lucide-react";
 import {
   Table,
   TableBody,
@@ -50,10 +50,84 @@ import { format } from "date-fns";
 import { Combobox } from "@/components/ui/combobox";
 
 
+function GatePassPrint({ sale, onClose }: { sale: Sale, onClose: () => void }) {
+    const [vehicleNumber, setVehicleNumber] = useState('');
+    return (
+        <DialogContent className="max-w-4xl max-h-[90vh] flex flex-col">
+            <DialogHeader className="flex-shrink-0 no-print">
+                <DialogTitle>Gate Pass for Invoice: {sale.id}</DialogTitle>
+            </DialogHeader>
+            <div className="flex-grow overflow-y-auto" id={`printable-gatepass-${sale.id}`}>
+                <div className="p-6">
+                    <div className="text-center mb-8">
+                        <h1 className="text-2xl font-bold font-headline">ARCO Aluminium Company</h1>
+                        <p className="font-bold text-lg mt-1">GATE PASS</p>
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-4 mb-6 font-bold">
+                        <div>
+                            <p>Customer: {sale.customerName}</p>
+                            <p>Invoice No: {sale.id}</p>
+                        </div>
+                        <div className="text-right">
+                             <p>Date: {formatDate(sale.date)}</p>
+                             <div className="flex items-center justify-end gap-2 mt-1">
+                                <Label htmlFor="vehicle-no" className="no-print">Vehicle No:</Label>
+                                <Input 
+                                    id="vehicle-no"
+                                    value={vehicleNumber} 
+                                    onChange={(e) => setVehicleNumber(e.target.value)} 
+                                    className="w-40 no-print" 
+                                    placeholder="LES-1234"
+                                />
+                                <span className="print:block hidden">Vehicle No: {vehicleNumber || 'N/A'}</span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <Table>
+                        <TableHeader>
+                            <TableRow className="font-bold">
+                                <TableHead>Item</TableHead>
+                                <TableHead>Colour</TableHead>
+                                <TableHead>Thickness</TableHead>
+                                <TableHead className="text-right">Quantity</TableHead>
+                            </TableRow>
+                        </TableHeader>
+                        <TableBody>
+                            {sale.items.map((item, index) => (
+                                <TableRow key={index} className="font-bold">
+                                    <TableCell>{item.itemName}</TableCell>
+                                    <TableCell>{item.color}</TableCell>
+                                    <TableCell>{item.thickness || '-'}</TableCell>
+                                    <TableCell className="text-right">{item.quantity}</TableCell>
+                                </TableRow>
+                            ))}
+                        </TableBody>
+                    </Table>
+                    
+                    <div className="mt-24 pt-4 border-t text-center">
+                        <p className="font-bold">Goods checked and verified.</p>
+                    </div>
+
+                </div>
+            </div>
+             <DialogFooter className="mt-4 flex-shrink-0 no-print">
+                <Button variant="outline" onClick={() => window.print()}>
+                    <Printer className="mr-2 h-4 w-4" /> Print Gate Pass
+                </Button>
+                <Button variant="ghost" onClick={onClose}>Close</Button>
+            </DialogFooter>
+        </DialogContent>
+    )
+}
+
+
 function SaleInvoice({ sale, onPost, onUnpost }: { sale: Sale, onPost: (saleId: string) => void, onUnpost: (saleId: string) => void }) {
     const { customers } = useData();
     const customer = customers.find(c => c.id === sale.customerId);
     const { toast } = useToast();
+    const [isGatePassOpen, setGatePassOpen] = useState(false);
     
     let runningTotal = 0;
 
@@ -68,6 +142,7 @@ function SaleInvoice({ sale, onPost, onUnpost }: { sale: Sale, onPost: (saleId: 
     }
 
     return (
+        <>
         <DialogContent className="max-w-6xl max-h-[90vh] flex flex-col">
             <DialogHeader className="flex-shrink-0 no-print">
                 <div className="flex flex-col items-center justify-center pt-4">
@@ -153,7 +228,11 @@ function SaleInvoice({ sale, onPost, onUnpost }: { sale: Sale, onPost: (saleId: 
             <DialogFooter className="mt-4 flex-shrink-0 no-print">
                  <Button variant="outline" onClick={() => window.print()}>
                     <Printer className="mr-2 h-4 w-4" />
-                    Print / Save PDF
+                    Print Invoice
+                </Button>
+                <Button variant="secondary" onClick={() => setGatePassOpen(true)}>
+                    <ArrowRight className="mr-2 h-4 w-4" />
+                    Generate Gate Pass
                 </Button>
                 {sale.status === 'draft' ? (
                     <Button onClick={handlePost}>
@@ -168,6 +247,12 @@ function SaleInvoice({ sale, onPost, onUnpost }: { sale: Sale, onPost: (saleId: 
                 )}
             </DialogFooter>
         </DialogContent>
+        {isGatePassOpen && (
+             <Dialog open={isGatePassOpen} onOpenChange={setGatePassOpen}>
+                <GatePassPrint sale={sale} onClose={() => setGatePassOpen(false)} />
+             </Dialog>
+        )}
+        </>
     )
 }
 
@@ -703,3 +788,5 @@ export default function SalesPage() {
     </>
   );
 }
+
+    
