@@ -55,7 +55,8 @@ h1, h2, h3, h4, h5, h6 {
   }
 
   .no-print, 
-  .no-print * {
+  .no-print *,
+  [data-radix-dialog-overlay] {
     display: none !important;
   }
   
