@@ -54,9 +54,9 @@ h1, h2, h3, h4, h5, h6 {
     display: none !important;
   }
   
-  .printable-area {
-    background: #fff;
-    color: #000;
+  body, .printable-area {
+    background: #fff !important;
+    color: #000 !important;
   }
 
   .printable-area * {
@@ -71,10 +71,21 @@ h1, h2, h3, h4, h5, h6 {
     color: #22c55e !important;
   }
   
-  /* Target only the DialogContent that contains the printable area */
   [data-radix-dialog-content] {
-    overflow-y: visible !important;
+    position: static;
+    width: 100% !important;
+    max-width: 100% !important;
     height: auto !important;
     max-height: none !important;
+    overflow: visible !important;
+    border: none !important;
+    box-shadow: none !important;
+    padding: 0 !important;
+  }
+
+  /* This is the key rule to remove the inner scrollbar */
+  [data-radix-dialog-content] .overflow-y-auto {
+    overflow-y: visible !important;
   }
 }
+
