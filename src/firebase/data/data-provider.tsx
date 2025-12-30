@@ -5,7 +5,7 @@
 import React, { createContext, useContext, ReactNode, useEffect, useState } from 'react';
 import type { Item, Customer, Sale, Expense, Transaction, Vendor, Estimate, Labour, SalaryPayment } from '@/lib/types';
 import { useCollection, useFirestore, useMemoFirebase, useUser } from '@/firebase';
-import { collection, doc, writeBatch, serverTimestamp, Timestamp, orderBy, query, where, getDocs, runTransaction, increment, addDoc, getDoc, deleteDoc, setDoc } from 'firebase/firestore';
+import { collection, doc, writeBatch, serverTimestamp, Timestamp, orderBy, query, where, getDocs, runTransaction, increment, addDoc, getDoc, deleteDoc, setDoc, updateDoc } from 'firebase/firestore';
 import { addDocumentNonBlocking, deleteDocumentNonBlocking, updateDocumentNonBlocking } from '../non-blocking-updates';
 
 
@@ -40,7 +40,8 @@ interface DataContextProps {
   deleteEstimate: (id: string) => Promise<void>;
   addExpense: (expense: Omit<Expense, 'id' | 'date'>) => Promise<void>;
   deleteExpense: (id:string) => Promise<void>;
-  addTransaction: (transaction: Omit<Transaction, 'id' | 'date'>) => Promise<void>;
+  addTransaction: (transaction: Omit<Transaction, 'id' | 'date'>) => Promise<any>;
+  updateTransaction: (id: string, transaction: Partial<Omit<Transaction, 'id' | 'date'>>) => Promise<void>;
   deleteTransaction: (id: string) => Promise<void>;
   addSalaryPayment: (payment: Omit<SalaryPayment, 'id' | 'date'>) => Promise<void>;
   deleteSalaryPayment: (paymentId: string) => Promise<void>;
@@ -395,6 +396,13 @@ export const DataProvider = ({ children }: { children: ReactNode }) => {
         const colRef = collection(firestore, 'transactions');
         return addDocumentNonBlocking(colRef, newTransaction);
     };
+    
+    const updateTransaction = async (id: string, transaction: Partial<Omit<Transaction, 'id' | 'date'>>) => {
+        if (!user) throw new Error("User not authenticated");
+        const transactionRef = doc(firestore, 'transactions', id);
+        return updateDocumentNonBlocking(transactionRef, transaction);
+    };
+
     const deleteTransaction = async (id: string) => {
         if (!user) throw new Error("User not authenticated");
         deleteDocumentNonBlocking(doc(firestore, 'transactions', id));
@@ -740,7 +748,7 @@ export const DataProvider = ({ children }: { children: ReactNode }) => {
         addSale, updateSale, postSale, unpostSale, deleteSale,
         addEstimate, deleteEstimate,
         addExpense, deleteExpense,
-        addTransaction, deleteTransaction,
+        addTransaction, updateTransaction, deleteTransaction,
         addSalaryPayment, deleteSalaryPayment,
         getDashboardStats, getMonthlySalesData,
     };
@@ -759,5 +767,3 @@ export const useData = () => {
   }
   return context;
 };
-
-    

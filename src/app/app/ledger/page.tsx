@@ -2,7 +2,7 @@
 "use client";
 
 import { useState, useEffect, useMemo } from "react";
-import { PlusCircle, X, MoreHorizontal, Printer } from "lucide-react";
+import { PlusCircle, X, MoreHorizontal, Printer, Edit } from "lucide-react";
 import {
   Table,
   TableBody,
@@ -167,17 +167,98 @@ function AddTransactionForm({ onTransactionAdded }: { onTransactionAdded: (newTr
   );
 }
 
+function EditTransactionForm({ transaction, onTransactionUpdated }: { transaction: Transaction, onTransactionUpdated: (id: string, updatedTransaction: Partial<Omit<Transaction, 'id' | 'date'>>) => void }) {
+  const [description, setDescription] = useState(transaction.description);
+  const [amount, setAmount] = useState(transaction.amount);
+  const { toast } = useToast();
+
+  const handleSubmit = () => {
+    if (!description || amount <= 0) {
+      toast({ variant: 'destructive', title: 'Please fill all fields.' });
+      return;
+    }
+
+    // Only allow editing description and amount to keep things simple and prevent accounting issues.
+    // Type, category, and links to customer/vendor should not be changed.
+    const updatedTransaction: Partial<Omit<Transaction, 'id' | 'date'>> = {
+      description,
+      amount,
+    };
+    onTransactionUpdated(transaction.id, updatedTransaction);
+    toast({ title: 'Transaction Updated!', description: `Transaction has been updated.` });
+  };
+
+  return (
+    <DialogContent>
+      <DialogHeader>
+        <DialogTitle>Edit Voucher</DialogTitle>
+      </DialogHeader>
+      <div className="space-y-4 py-4">
+        <div className="space-y-2">
+          <Label>Transaction Type</Label>
+          <Input value={transaction.type} disabled />
+        </div>
+        <div className="space-y-2">
+          <Label>Category</Label>
+          <Input value={transaction.category} disabled />
+        </div>
+         <div className="space-y-2">
+          <Label htmlFor="description">Description</Label>
+          <Input 
+            id="description" 
+            value={description} 
+            onChange={(e) => setDescription(e.target.value)}
+            disabled={transaction.category === 'Sale' || transaction.category === 'Salary'}
+          />
+           {(transaction.category === 'Sale' || transaction.category === 'Salary') && (
+            <p className="text-xs text-muted-foreground">Description for sale or salary transactions cannot be edited.</p>
+           )}
+        </div>
+        <div className="space-y-2">
+          <Label htmlFor="amount">Amount</Label>
+          <Input 
+            id="amount" 
+            type="number" 
+            value={amount} 
+            onChange={(e) => setAmount(parseFloat(e.target.value) || 0)}
+            disabled={transaction.category === 'Sale' || transaction.category === 'Salary'}
+          />
+           {(transaction.category === 'Sale' || transaction.category === 'Salary') && (
+            <p className="text-xs text-muted-foreground">Amount for sale or salary transactions cannot be edited directly. Please modify the original sale or payslip.</p>
+           )}
+        </div>
+      </div>
+      <DialogFooter>
+        <Button onClick={handleSubmit} disabled={transaction.category === 'Sale' || transaction.category === 'Salary'}>Save Changes</Button>
+      </DialogFooter>
+    </DialogContent>
+  );
+}
+
 
 export default function LedgerPage() {
-  const { transactions, addTransaction, deleteTransaction, customers, vendors } = useData();
-  const [isModalOpen, setModalOpen] = useState(false);
+  const { transactions, addTransaction, updateTransaction, deleteTransaction, customers, vendors } = useData();
+  const [isAddModalOpen, setAddModalOpen] = useState(false);
+  const [isEditModalOpen, setEditModalOpen] = useState(false);
+  const [editingTransaction, setEditingTransaction] = useState<Transaction | null>(null);
   const [selectedCustomerId, setSelectedCustomerId] = useState<string | null>(null);
   const [selectedVendorId, setSelectedVendorId] = useState<string | null>(null);
   const { toast } = useToast();
 
   const handleTransactionAdded = (newTransaction: Omit<Transaction, 'id' | 'date'>) => {
     addTransaction(newTransaction);
-    setModalOpen(false);
+    setAddModalOpen(false);
+  }
+
+  const handleTransactionUpdated = (id: string, updatedTransaction: Partial<Omit<Transaction, 'id' | 'date'>>) => {
+    updateTransaction(id, updatedTransaction);
+    setEditModalOpen(false);
+    setEditingTransaction(null);
+  }
+
+  const handleEditClick = (transaction: Transaction) => {
+    setEditingTransaction(transaction);
+    setEditModalOpen(true);
   }
 
   const handleDelete = (id: string) => {
@@ -234,7 +315,7 @@ export default function LedgerPage() {
             <Button variant="outline" onClick={() => window.print()}>
                 <Printer className="mr-2 h-4 w-4" /> Print Page
             </Button>
-            <Dialog open={isModalOpen} onOpenChange={setModalOpen}>
+            <Dialog open={isAddModalOpen} onOpenChange={setAddModalOpen}>
                 <DialogTrigger asChild>
                     <Button>
                         <PlusCircle className="mr-2 h-4 w-4" />
@@ -324,10 +405,14 @@ export default function LedgerPage() {
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end">
                           <DropdownMenuLabel>Actions</DropdownMenuLabel>
+                           <DropdownMenuItem onSelect={() => handleEditClick(transaction)}>
+                              <Edit className="mr-2 h-4 w-4" />
+                              Edit
+                          </DropdownMenuItem>
                           <DropdownMenuItem
                             onSelect={() => handleDelete(transaction.id)}
                             className="text-red-500 focus:bg-red-500/10 focus:text-red-500"
-                            disabled={transaction.category === 'Sale'} // Prevent deleting sale-linked transactions from here
+                            disabled={['Sale', 'Opening Balance', 'Salary'].includes(transaction.category)}
                           >
                             Delete
                           </DropdownMenuItem>
@@ -352,6 +437,12 @@ export default function LedgerPage() {
         </Table>
       </div>
     </div>
+    
+    {editingTransaction && (
+        <Dialog open={isEditModalOpen} onOpenChange={setEditModalOpen}>
+            <EditTransactionForm transaction={editingTransaction} onTransactionUpdated={handleTransactionUpdated} />
+        </Dialog>
+    )}
     </>
   );
 }

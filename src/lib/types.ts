@@ -117,5 +117,3 @@ export type SalaryPayment = {
     labourers: SalaryLabourer[];
     totalAmountPaid: number;
 };
-
-    
