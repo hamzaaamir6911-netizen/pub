@@ -60,7 +60,7 @@ h1, h2, h3, h4, h5, h6 {
     display: none !important;
   }
   
-  body, .printable-area, #printable-invoice, #printable-estimate, #printable-payslip {
+  body, .printable-area {
       background: #fff !important;
       color: #000 !important;
       padding: 0;
@@ -69,15 +69,13 @@ h1, h2, h3, h4, h5, h6 {
   
   .printable-area {
       display: block !important;
-      position: static;
       width: 100%;
+      height: auto;
   }
 
+  /* Reset dialog content for printing */
   [data-radix-dialog-content] {
-    display: block !important;
     position: static !important;
-    border: none !important;
-    box-shadow: none !important;
     width: 100% !important;
     max-width: 100% !important;
     height: auto !important;
@@ -85,7 +83,17 @@ h1, h2, h3, h4, h5, h6 {
     overflow: visible !important;
     padding: 0 !important;
     margin: 0 !important;
+    border: none !important;
+    box-shadow: none !important;
     transform: none !important;
+    background: #fff !important;
+  }
+  
+  /* Ensure content inside the printable area is visible and styled for print */
+  #printable-invoice, #printable-estimate, #printable-payslip {
+    display: block !important;
+    height: auto !important;
+    overflow: visible !important;
   }
 
   body *, .printable-area *, #printable-invoice *, #printable-estimate *, #printable-payslip * {
@@ -100,4 +108,3 @@ h1, h2, h3, h4, h5, h6 {
     color: #22c55e !important;
   }
 }
-
