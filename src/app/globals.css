@@ -70,4 +70,11 @@ h1, h2, h3, h4, h5, h6 {
   .text-green-500, .text-green-600, .text-green-700 {
     color: #22c55e !important;
   }
+  
+  /* Target only the DialogContent that contains the printable area */
+  [data-radix-dialog-content] {
+    overflow-y: visible !important;
+    height: auto !important;
+    max-height: none !important;
+  }
 }
