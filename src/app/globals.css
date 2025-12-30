@@ -49,59 +49,17 @@ h1, h2, h3, h4, h5, h6 {
 }
 
 @media print {
-  body {
-    -webkit-print-color-adjust: exact !important;
-    print-color-adjust: exact !important;
-  }
-
   .no-print, 
   .no-print * {
     display: none !important;
   }
   
-  /* Hide all elements in the body by default */
-  body * {
-    visibility: hidden;
-  }
-
-  /* Make only the printable area and its children visible */
-  .printable-area, .printable-area * {
-    visibility: visible;
-  }
-
-  /* Position the printable area to take up the whole screen */
   .printable-area {
-    position: absolute;
-    left: 0;
-    top: 0;
-    width: 100%;
-    height: auto;
-    overflow: visible;
     background: #fff;
-    padding: 1.5rem; /* Add some padding for better layout on paper */
+    color: #000;
   }
 
-  /* Reset dialog-specific styles */
-  [data-radix-dialog-overlay], [data-radix-dialog-content] {
-    display: none !important;
-  }
-
-  /* Styles for content within the printable dialogs */
-  #printable-invoice, #printable-estimate, #printable-payslip {
-    display: block !important;
-    height: auto !important;
-    overflow: visible !important;
-    padding: 0 !important;
-    margin: 0 !important;
-    width: 100% !important;
-    max-width: 100% !important;
-    border: none !important;
-    box-shadow: none !important;
-    background: #fff !important;
-    color: #000 !important;
-  }
-
-  #printable-invoice *, #printable-estimate *, #printable-payslip * {
+  .printable-area * {
     color: #000 !important;
     border-color: #ccc !important;
   }
