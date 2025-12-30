@@ -114,7 +114,15 @@ function AddItemForm({ onItemAdded, existingItems }: { onItemAdded: (newItem: Om
                 </div>
                  <div className="space-y-2">
                     <Label>Color</Label>
-                    <Input value={color} onChange={(e) => setColor(e.target.value)} placeholder="e.g. Silver" />
+                    <Select onValueChange={setColor} value={color}>
+                        <SelectTrigger>
+                            <SelectValue placeholder="Select a color" />
+                        </SelectTrigger>
+                        <SelectContent>
+                            <SelectItem value="9016">9016</SelectItem>
+                            <SelectItem value="Black">Black</SelectItem>
+                        </SelectContent>
+                    </Select>
                 </div>
                  <div className="space-y-2">
                     <Label>Weight (kg/ft)</Label>

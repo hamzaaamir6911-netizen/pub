@@ -1,4 +1,5 @@
 
+
 "use client";
 
 import { useState } from "react";
@@ -394,11 +395,15 @@ function NewEstimateForm({ onEstimateAdded }: { onEstimateAdded: (newEstimate: O
                             
                             <div className="space-y-2">
                                 <Label>Colour</Label>
-                                <Input 
-                                    placeholder="e.g. White" 
-                                    value={saleItem.color}
-                                    onChange={(e) => handleItemChange(index, "color", e.target.value)}
-                                />
+                                <Select onValueChange={(value) => handleItemChange(index, "color", value)} value={saleItem.color}>
+                                    <SelectTrigger>
+                                        <SelectValue placeholder="Select a color" />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        <SelectItem value="9016">9016</SelectItem>
+                                        <SelectItem value="Black">Black</SelectItem>
+                                    </SelectContent>
+                                </Select>
                             </div>
 
                              <div className="space-y-2">
