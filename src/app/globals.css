@@ -54,21 +54,17 @@ h1, h2, h3, h4, h5, h6 {
     visibility: hidden;
   }
 
-  .printable-area, .printable-area * {
-    visibility: visible;
-  }
-  
   #printable-invoice, #printable-invoice *,
   #printable-estimate, #printable-estimate *,
   #printable-payslip, #printable-payslip *,
-  [id^="printable-gatepass-"], [id^="printable-gatepass-"] * {
+  #printable-gatepass, #printable-gatepass * {
     visibility: visible;
   }
 
   #printable-invoice, 
   #printable-estimate, 
   #printable-payslip,
-  [id^="printable-gatepass-"] {
+  #printable-gatepass {
     position: absolute;
     left: 0;
     top: 0;
@@ -109,10 +105,11 @@ h1, h2, h3, h4, h5, h6 {
     overflow: visible !important;
   }
 
-  /* This is the key rule to remove the inner scrollbar */
   [data-radix-dialog-content] .overflow-y-auto {
     overflow-y: visible !important;
   }
 }
+
+    
 
     

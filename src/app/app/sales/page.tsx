@@ -57,7 +57,7 @@ function GatePassPrint({ sale, onClose }: { sale: Sale, onClose: () => void }) {
             <DialogHeader className="flex-shrink-0 no-print">
                 <DialogTitle>Gate Pass for Invoice: {sale.id}</DialogTitle>
             </DialogHeader>
-            <div className="flex-grow overflow-y-auto" id={`printable-gatepass-${sale.id}`}>
+            <div className="flex-grow overflow-y-auto" id="printable-gatepass">
                 <div className="p-6">
                     <div className="text-center mb-8">
                         <h1 className="text-2xl font-bold font-headline">ARCO Aluminium Company</h1>
@@ -788,5 +788,7 @@ export default function SalesPage() {
     </>
   );
 }
+
+    
 
     
