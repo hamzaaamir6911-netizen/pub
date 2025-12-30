@@ -2,7 +2,7 @@
 "use client";
 
 import { useState, useRef, useEffect } from "react";
-import { MoreHorizontal, PlusCircle, Trash2, RotateCcw, FileText, CheckCircle, Edit, Calendar as CalendarIcon, Undo2, Printer } from "lucide-react";
+import { MoreHorizontal, PlusCircle, Trash2, RotateCcw, FileText, CheckCircle, Edit, Calendar as CalendarIcon, Undo2, Printer, Truck } from "lucide-react";
 import {
   Table,
   TableBody,
@@ -47,7 +47,83 @@ import { useToast } from "@/hooks/use-toast";
 import { useData } from "@/firebase/data/data-provider";
 import { Badge } from "@/components/ui/badge";
 import { format } from "date-fns";
+import { Combobox } from "@/components/ui/combobox";
 
+
+function GatePassPrint({ sale }: { sale: Sale }) {
+    const { customers } = useData();
+    const customer = customers.find(c => c.id === sale.customerId);
+    const [vehicleNumber, setVehicleNumber] = useState('');
+
+    return (
+        <DialogContent className="max-w-4xl max-h-[90vh] flex flex-col">
+            <DialogHeader className="flex-shrink-0 no-print">
+                <DialogTitle>Gate Pass for Invoice: {sale.id}</DialogTitle>
+            </DialogHeader>
+            <div id="printable-gatepass" className="flex-grow overflow-y-auto">
+                 <div className="p-6">
+                    <div className="text-center mb-8">
+                        <h1 className="text-3xl font-bold font-headline">ARCO Aluminium Company</h1>
+                        <p className="mt-2 text-xl font-bold">Gate Pass</p>
+                    </div>
+                    <div className="p-6">
+                        <div className="grid grid-cols-2 gap-4 mb-6 font-bold">
+                            <div>
+                                <p className="text-lg">Customer:</p>
+                                <p>{sale.customerName}</p>
+                            </div>
+                            <div className="text-right">
+                                <p className="text-lg">Date:</p>
+                                <p>{formatDate(sale.date)}</p>
+                            </div>
+                            <div className="col-span-2">
+                                <p className="text-lg">Vehicle Number:</p>
+                                <p className="border-b-2 border-dashed border-black pb-1">{vehicleNumber || '________________'}</p>
+                            </div>
+                        </div>
+
+                        <div className="overflow-x-auto mt-8">
+                            <Table>
+                                <TableHeader>
+                                    <TableRow>
+                                        <TableHead className="font-bold">Item</TableHead>
+                                        <TableHead className="font-bold">Colour</TableHead>
+                                        <TableHead className="font-bold">Thickness</TableHead>
+                                        <TableHead className="text-right font-bold">Quantity</TableHead>
+                                    </TableRow>
+                                </TableHeader>
+                                <TableBody>
+                                    {sale.items.map((item, index) => (
+                                        <TableRow key={index} className="font-bold">
+                                            <TableCell>{item.itemName}</TableCell>
+                                            <TableCell>{item.color}</TableCell>
+                                            <TableCell>{item.thickness || '-'}</TableCell>
+                                            <TableCell className="text-right">{item.quantity}</TableCell>
+                                        </TableRow>
+                                    ))}
+                                </TableBody>
+                            </Table>
+                        </div>
+                         <div className="mt-24 text-center text-xs text-gray-500 border-t pt-4 font-bold">
+                            <p>Industrial Estate, Hayatabad Road B-5 PLOT 59 PESHAWAR</p>
+                            <p>Phone: +923334646356</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <DialogFooter className="mt-4 flex-shrink-0 no-print">
+                <div className="w-full flex items-center gap-4">
+                    <Label htmlFor="vehicle-no" className="shrink-0">Vehicle No:</Label>
+                    <Input id="vehicle-no" value={vehicleNumber} onChange={(e) => setVehicleNumber(e.target.value)} placeholder="e.g. RWP-1234"/>
+                    <Button variant="outline" onClick={() => window.print()}>
+                        <Printer className="mr-2 h-4 w-4" />
+                        Print Gate Pass
+                    </Button>
+                </div>
+            </DialogFooter>
+        </DialogContent>
+    );
+}
 
 function SaleInvoice({ sale, onPost, onUnpost }: { sale: Sale, onPost: (saleId: string) => void, onUnpost: (saleId: string) => void }) {
     const { customers } = useData();
@@ -75,23 +151,23 @@ function SaleInvoice({ sale, onPost, onUnpost }: { sale: Sale, onPost: (saleId: 
             </DialogHeader>
             <div className="flex-grow overflow-y-auto" id="printable-invoice">
                  <div className="p-6">
-                    <div className="flex flex-col items-center justify-center pt-4 mb-8">
-                        <h1 className="text-3xl font-bold font-headline">Arco aluminium</h1>
-                        <p>Sale Invoice: {sale.id}</p>
+                    <div className="text-center mb-8">
+                      <h1 className="text-3xl font-bold font-headline">ARCO Aluminium Company</h1>
+                      <p className="mt-2 text-xl font-bold">Sale Invoice: {sale.id}</p>
                     </div>
                     <div className="p-6">
-                        <div className="grid grid-cols-2 gap-4 mb-6">
+                        <div className="grid grid-cols-2 gap-4 mb-6 font-bold">
                             <div>
-                                <p className="font-semibold">Customer:</p>
+                                <p className="text-lg">Customer:</p>
                                 <p>{sale.customerName}</p>
                                 <p>{customer?.address}</p>
-                                <p>{customer?.phone}</p>
+                                <p>{customer?.phoneNumber}</p>
                             </div>
                             <div className="text-right">
-                                <p className="font-semibold">Date:</p>
+                                <p className="text-lg">Date:</p>
                                 <p>{formatDate(sale.date)}</p>
-                                <p className="font-semibold mt-2">Status:</p>
-                                <Badge variant={sale.status === 'posted' ? 'default' : 'secondary'}>{sale.status}</Badge>
+                                <p className="mt-2 text-lg">Status:</p>
+                                <Badge variant={sale.status === 'posted' ? 'default' : 'secondary'} className="text-base font-bold">{sale.status}</Badge>
                             </div>
                         </div>
 
@@ -99,14 +175,14 @@ function SaleInvoice({ sale, onPost, onUnpost }: { sale: Sale, onPost: (saleId: 
                             <Table>
                                 <TableHeader>
                                     <TableRow>
-                                        <TableHead>Item</TableHead>
-                                        <TableHead>Colour</TableHead>
-                                        <TableHead>Thickness</TableHead>
-                                        <TableHead className="text-right">Feet</TableHead>
-                                        <TableHead className="text-right">Quantity</TableHead>
-                                        <TableHead className="text-right">Rate</TableHead>
-                                        <TableHead className="text-right">Discount</TableHead>
-                                        <TableHead className="text-right">Amount</TableHead>
+                                        <TableHead className="font-bold">Item</TableHead>
+                                        <TableHead className="font-bold">Colour</TableHead>
+                                        <TableHead className="font-bold">Thickness</TableHead>
+                                        <TableHead className="text-right font-bold">Feet</TableHead>
+                                        <TableHead className="text-right font-bold">Quantity</TableHead>
+                                        <TableHead className="text-right font-bold">Rate</TableHead>
+                                        <TableHead className="text-right font-bold">Discount</TableHead>
+                                        <TableHead className="text-right font-bold">Amount</TableHead>
                                     </TableRow>
                                 </TableHeader>
                                 <TableBody>
@@ -117,7 +193,7 @@ function SaleInvoice({ sale, onPost, onUnpost }: { sale: Sale, onPost: (saleId: 
                                         runningTotal += finalAmount;
                                         
                                         return (
-                                            <TableRow key={index}>
+                                            <TableRow key={index} className="font-bold">
                                                 <TableCell>{item.itemName}</TableCell>
                                                 <TableCell>{item.color}</TableCell>
                                                 <TableCell>{item.thickness || '-'}</TableCell>
@@ -135,11 +211,16 @@ function SaleInvoice({ sale, onPost, onUnpost }: { sale: Sale, onPost: (saleId: 
 
                         <div className="mt-6 flex justify-end">
                             <div className="w-80 space-y-2">
-                                <div className="flex justify-between font-bold text-lg border-t pt-2">
+                                <div className="flex justify-between font-bold text-xl border-t-2 border-black pt-2">
                                     <span>Total:</span>
                                     <span>{formatCurrency(sale.total)}</span>
                                 </div>
                             </div>
+                        </div>
+
+                         <div className="mt-24 text-center text-xs text-gray-500 border-t pt-4 font-bold">
+                            <p>Industrial Estate, Hayatabad Road B-5 PLOT 59 PESHAWAR</p>
+                            <p>Phone: +923334646356</p>
                         </div>
                     </div>
                 </div>
@@ -147,7 +228,7 @@ function SaleInvoice({ sale, onPost, onUnpost }: { sale: Sale, onPost: (saleId: 
             <DialogFooter className="mt-4 flex-shrink-0 no-print">
                  <Button variant="outline" onClick={() => window.print()}>
                     <Printer className="mr-2 h-4 w-4" />
-                    Print / Save PDF
+                    Print Invoice
                 </Button>
                 {sale.status === 'draft' ? (
                     <Button onClick={handlePost}>
@@ -166,26 +247,32 @@ function SaleInvoice({ sale, onPost, onUnpost }: { sale: Sale, onPost: (saleId: 
 }
 
 function AddCustomerForm({ onCustomerAdded }: { onCustomerAdded: (newCustomer: Omit<Customer, 'id' | 'createdAt'>) => void }) {
-  const [name, setName] = useState('');
-  const [phone, setPhone] = useState('');
+  const [customerName, setCustomerName] = useState('');
+  const [phoneNumber, setPhoneNumber] = useState('');
   const [address, setAddress] = useState('');
+  const [openingBalance, setOpeningBalance] = useState(0);
+  const [balanceType, setBalanceType] = useState<'debit' | 'credit'>('debit');
   const { toast } = useToast();
 
   const handleSubmit = async () => {
-    if (!name || !phone || !address) {
+    if (!customerName || !phoneNumber || !address) {
       toast({ variant: 'destructive', title: 'Please fill all fields.' });
       return;
     }
     const newCustomer: Omit<Customer, 'id' | 'createdAt'> = {
-      name,
-      phone,
+      customerName,
+      phoneNumber,
       address,
+      openingBalance,
+      balanceType
     };
     await onCustomerAdded(newCustomer);
-    toast({ title: 'Customer Added!', description: `${name} has been added.` });
-    setName('');
-    setPhone('');
+    toast({ title: 'Customer Added!', description: `${customerName} has been added.` });
+    setCustomerName('');
+    setPhoneNumber('');
     setAddress('');
+    setOpeningBalance(0);
+    setBalanceType('debit');
   };
 
   return (
@@ -196,15 +283,33 @@ function AddCustomerForm({ onCustomerAdded }: { onCustomerAdded: (newCustomer: O
       <div className="space-y-4 py-4">
         <div className="space-y-2">
           <Label htmlFor="name">Customer Name</Label>
-          <Input id="name" value={name} onChange={(e) => setName(e.target.value)} placeholder="John Doe" />
+          <Input id="name" value={customerName} onChange={(e) => setCustomerName(e.target.value)} placeholder="John Doe" />
         </div>
         <div className="space-y-2">
           <Label htmlFor="phone">Phone Number</Label>
-          <Input id="phone" value={phone} onChange={(e) => setPhone(e.target.value)} placeholder="0300-1234567" />
+          <Input id="phone" value={phoneNumber} onChange={(e) => setPhoneNumber(e.target.value)} placeholder="0300-1234567" />
         </div>
         <div className="space-y-2">
           <Label htmlFor="address">Address</Label>
           <Input id="address" value={address} onChange={(e) => setAddress(e.target.value)} placeholder="123, Main Street, City" />
+        </div>
+        <div className="grid grid-cols-2 gap-4">
+            <div className="space-y-2">
+                <Label htmlFor="openingBalance">Opening Balance</Label>
+                <Input id="openingBalance" type="number" value={openingBalance} onChange={(e) => setOpeningBalance(parseFloat(e.target.value) || 0)} placeholder="0" />
+            </div>
+            <div className="space-y-2">
+                <Label htmlFor="balanceType">Balance Type</Label>
+                <Select onValueChange={(v: 'debit' | 'credit') => setBalanceType(v)} value={balanceType}>
+                    <SelectTrigger id="balanceType">
+                        <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                        <SelectItem value="debit">Debit (Owed by Customer)</SelectItem>
+                        <SelectItem value="credit">Credit (Paid by Customer)</SelectItem>
+                    </SelectContent>
+                </Select>
+            </div>
         </div>
       </div>
       <DialogFooter>
@@ -255,9 +360,8 @@ function NewSaleForm({ onSaleAdded, onSaleUpdated, initialData }: { onSaleAdded:
         if (key === 'itemId') {
             const itemDetails = allItems.find(i => i.id === value);
             if (itemDetails) {
-                const thicknessMatch = itemDetails.name.match(/\((.*?)\)/);
                 currentItem.color = itemDetails.color;
-                currentItem.thickness = thicknessMatch ? thicknessMatch[1] : '';
+                currentItem.thickness = itemDetails.thickness;
             }
         }
 
@@ -322,7 +426,7 @@ function NewSaleForm({ onSaleAdded, onSaleUpdated, initialData }: { onSaleAdded:
                 price: item.salePrice,
                 color: si.color || item.color,
                 weight: item.weight,
-                thickness: si.thickness,
+                thickness: si.thickness || '',
                 feet: feet,
                 discount: si.discount || 0,
             }
@@ -330,7 +434,7 @@ function NewSaleForm({ onSaleAdded, onSaleUpdated, initialData }: { onSaleAdded:
 
         const saleData: Omit<Sale, 'id' | 'total' | 'status'> = {
             customerId: selectedCustomer,
-            customerName: customer.name,
+            customerName: customer.customerName,
             items: finalSaleItems,
             discount: overallDiscount,
             date: saleDate,
@@ -353,6 +457,11 @@ function NewSaleForm({ onSaleAdded, onSaleUpdated, initialData }: { onSaleAdded:
         }
         setCustomerModalOpen(false);
     }
+    
+    const itemOptions = allItems.map(item => ({
+        value: item.id,
+        label: `${item.name} ${item.thickness ? `(${item.thickness})` : ''} - ${item.color}`
+    }));
 
     return (
         <>
@@ -374,7 +483,7 @@ function NewSaleForm({ onSaleAdded, onSaleUpdated, initialData }: { onSaleAdded:
                                 <SelectValue placeholder="Select a customer" />
                             </SelectTrigger>
                             <SelectContent>
-                                {customers.map(c => <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>)}
+                                {customers.map(c => <SelectItem key={c.id} value={c.id}>{c.customerName}</SelectItem>)}
                             </SelectContent>
                         </Select>
                         <Dialog open={isCustomerModalOpen} onOpenChange={setCustomerModalOpen}>
@@ -435,7 +544,7 @@ function NewSaleForm({ onSaleAdded, onSaleUpdated, initialData }: { onSaleAdded:
                                         <SelectValue placeholder="Select an item" />
                                     </SelectTrigger>
                                     <SelectContent>
-                                        {allItems.map(i => <SelectItem key={i.id} value={i.id}>{i.name} ({i.color})</SelectItem>)}
+                                        {itemOptions.map(i => <SelectItem key={i.value} value={i.value}>{i.label}</SelectItem>)}
                                     </SelectContent>
                                 </Select>
                             </div>
@@ -519,7 +628,14 @@ export default function SalesPage() {
   const { sales, addSale, updateSale, deleteSale, postSale, unpostSale } = useData();
   const [activeTab, setActiveTab] = useState("history");
   const [selectedSale, setSelectedSale] = useState<Sale | null>(null);
+  const [gatePassSale, setGatePassSale] = useState<Sale | null>(null);
   const [editingSale, setEditingSale] = useState<Sale | null>(null);
+
+  const sortedSales = [...sales].sort((a, b) => {
+    const numA = parseInt(a.id.split('-')[1], 10);
+    const numB = parseInt(b.id.split('-')[1], 10);
+    return numA - numB;
+  });
 
   const handleDelete = (id: string) => {
     deleteSale(id);
@@ -587,12 +703,12 @@ export default function SalesPage() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {sales.length === 0 ? (
+                {sortedSales.length === 0 ? (
                   <TableRow>
                     <TableCell colSpan={6} className="text-center h-24">No sales recorded yet.</TableCell>
                   </TableRow>
                 ) : (
-                  sales.map((sale) => (
+                  sortedSales.map((sale) => (
                     <TableRow key={sale.id}>
                       <TableCell className="font-medium">{sale.id}</TableCell>
                       <TableCell>{sale.customerName}</TableCell>
@@ -606,42 +722,39 @@ export default function SalesPage() {
                         {formatCurrency(sale.total)}
                       </TableCell>
                       <TableCell className="no-print">
-                        <Dialog onOpenChange={(open) => !open && setSelectedSale(null)}>
-                          <DropdownMenu>
-                            <DropdownMenuTrigger asChild>
-                              <Button aria-haspopup="true" size="icon" variant="ghost">
-                                <MoreHorizontal className="h-4 w-4" />
-                                <span className="sr-only">Toggle menu</span>
-                              </Button>
-                            </DropdownMenuTrigger>
-                            <DropdownMenuContent align="end">
-                              <DropdownMenuLabel>Actions</DropdownMenuLabel>
-                               <DialogTrigger asChild>
-                                <DropdownMenuItem onSelect={() => setSelectedSale(sale)}>
-                                    <FileText className="mr-2 h-4 w-4"/>
-                                    View Details
-                                </DropdownMenuItem>
-                              </DialogTrigger>
-                              <DropdownMenuItem
-                                onSelect={() => handleEditClick(sale)}
-                                disabled={sale.status === 'posted'}
-                              >
-                                <Edit className="mr-2 h-4 w-4" />
-                                Edit
-                              </DropdownMenuItem>
-                              <DropdownMenuItem
-                                onSelect={() => handleDelete(sale.id)}
-                                className="text-red-500 focus:bg-red-500/10 focus:text-red-500"
-                              >
-                                <Trash2 className="mr-2 h-4 w-4"/>
-                                Delete
-                              </DropdownMenuItem>
-                            </DropdownMenuContent>
-                          </DropdownMenu>
-                          {selectedSale && selectedSale.id === sale.id && (
-                              <SaleInvoice sale={selectedSale} onPost={handlePostSale} onUnpost={handleUnpostSale} />
-                          )}
-                        </Dialog>
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild>
+                            <Button aria-haspopup="true" size="icon" variant="ghost">
+                              <MoreHorizontal className="h-4 w-4" />
+                              <span className="sr-only">Toggle menu</span>
+                            </Button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent align="end">
+                            <DropdownMenuLabel>Actions</DropdownMenuLabel>
+                            <DropdownMenuItem onSelect={() => setSelectedSale(sale)}>
+                                <FileText className="mr-2 h-4 w-4"/>
+                                View Details
+                            </DropdownMenuItem>
+                            <DropdownMenuItem onSelect={() => setGatePassSale(sale)}>
+                                <Truck className="mr-2 h-4 w-4"/>
+                                Generate Gate Pass
+                            </DropdownMenuItem>
+                            <DropdownMenuItem
+                              onSelect={() => handleEditClick(sale)}
+                              disabled={sale.status === 'posted'}
+                            >
+                              <Edit className="mr-2 h-4 w-4" />
+                              Edit
+                            </DropdownMenuItem>
+                            <DropdownMenuItem
+                              onSelect={() => handleDelete(sale.id)}
+                              className="text-red-500 focus:bg-red-500/10 focus:text-red-500"
+                            >
+                              <Trash2 className="mr-2 h-4 w-4"/>
+                              Delete
+                            </DropdownMenuItem>
+                          </DropdownMenuContent>
+                        </DropdownMenu>
                       </TableCell>
                     </TableRow>
                   ))
@@ -660,6 +773,14 @@ export default function SalesPage() {
             </div>
         </TabsContent>
       </Tabs>
+
+      <Dialog open={!!selectedSale} onOpenChange={(open) => !open && setSelectedSale(null)}>
+        {selectedSale && <SaleInvoice sale={selectedSale} onPost={handlePostSale} onUnpost={handleUnpostSale} />}
+      </Dialog>
+      
+      <Dialog open={!!gatePassSale} onOpenChange={(open) => !open && setGatePassSale(null)}>
+          {gatePassSale && <GatePassPrint sale={gatePassSale} />}
+      </Dialog>
     </>
   );
 }

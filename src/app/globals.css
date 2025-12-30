@@ -55,7 +55,23 @@ h1, h2, h3, h4, h5, h6 {
     display: none !important;
   }
   
-  body, .printable-area {
+  body {
+    background: #fff !important;
+  }
+  
+  #printable-invoice, #printable-estimate, #printable-gatepass {
+      display: block !important;
+      position: absolute;
+      left: 0;
+      top: 0;
+      width: 100%;
+  }
+
+  body > *:not(#printable-invoice):not(#printable-estimate):not(#printable-gatepass) {
+    display: none;
+  }
+
+  .printable-area, body {
     background: #fff !important;
     color: #000 !important;
   }
@@ -83,7 +99,7 @@ h1, h2, h3, h4, h5, h6 {
   }
 
   [data-radix-dialog-content] .overflow-y-auto {
-    overflow-y: visible !important;
+      overflow-y: visible !important;
   }
 
   .text-red-500, .text-red-600 {
@@ -92,9 +108,20 @@ h1, h2, h3, h4, h5, h6 {
   .text-green-500, .text-green-600, .text-green-700 {
     color: #22c55e !important;
   }
+
+  /* Hide-all-show-one approach for specific print areas */
+  body.printing-gatepass #printable-gatepass,
+  body.printing-invoice #printable-invoice {
+    visibility: visible;
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 100%;
+  }
+  
+  body.printing-gatepass > *:not(#printable-gatepass),
+  body.printing-invoice > *:not(#printable-invoice) {
+    visibility: hidden;
+  }
   
 }
-
-    
-
-    
