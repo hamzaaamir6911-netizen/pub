@@ -50,27 +50,6 @@ h1, h2, h3, h4, h5, h6 {
 
 
 @media print {
-  body * {
-    visibility: hidden;
-  }
-
-  #printable-invoice, #printable-invoice *,
-  #printable-estimate, #printable-estimate *,
-  #printable-payslip, #printable-payslip *,
-  #printable-gatepass, #printable-gatepass * {
-    visibility: visible;
-  }
-
-  #printable-invoice, 
-  #printable-estimate, 
-  #printable-payslip,
-  #printable-gatepass {
-    position: absolute;
-    left: 0;
-    top: 0;
-    width: 100%;
-  }
-
   .no-print, 
   .no-print * {
     display: none !important;
@@ -86,15 +65,12 @@ h1, h2, h3, h4, h5, h6 {
     border-color: #ccc !important;
   }
 
-  .text-red-500, .text-red-600 {
-    color: #ef4444 !important;
+  [data-radix-dialog-overlay] {
+    display: none !important;
   }
-  .text-green-500, .text-green-600, .text-green-700 {
-    color: #22c55e !important;
-  }
-  
+
   [data-radix-dialog-content] {
-    position: static;
+    position: static !important;
     width: 100% !important;
     max-width: 100% !important;
     height: auto !important;
@@ -103,11 +79,20 @@ h1, h2, h3, h4, h5, h6 {
     padding: 0 !important;
     border: none !important;
     overflow: visible !important;
+    background: white !important;
   }
 
   [data-radix-dialog-content] .overflow-y-auto {
     overflow-y: visible !important;
   }
+
+  .text-red-500, .text-red-600 {
+    color: #ef4444 !important;
+  }
+  .text-green-500, .text-green-600, .text-green-700 {
+    color: #22c55e !important;
+  }
+  
 }
 
     
