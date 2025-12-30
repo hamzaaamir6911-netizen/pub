@@ -58,18 +58,6 @@ h1, h2, h3, h4, h5, h6 {
   body {
     background: #fff !important;
   }
-  
-  #printable-invoice, #printable-estimate, #printable-gatepass {
-      display: block !important;
-      position: absolute;
-      left: 0;
-      top: 0;
-      width: 100%;
-  }
-
-  body > *:not(#printable-invoice):not(#printable-estimate):not(#printable-gatepass) {
-    display: none;
-  }
 
   .printable-area, body {
     background: #fff !important;
@@ -110,8 +98,8 @@ h1, h2, h3, h4, h5, h6 {
   }
 
   /* Hide-all-show-one approach for specific print areas */
-  body.printing-gatepass #printable-gatepass,
-  body.printing-invoice #printable-invoice {
+  body.printing-invoice #printable-invoice,
+  body.printing-estimate #printable-estimate {
     visibility: visible;
     position: absolute;
     left: 0;
@@ -119,9 +107,11 @@ h1, h2, h3, h4, h5, h6 {
     width: 100%;
   }
   
-  body.printing-gatepass > *:not(#printable-gatepass),
-  body.printing-invoice > *:not(#printable-invoice) {
+  body.printing-invoice > *:not(#printable-invoice),
+  body.printing-estimate > *:not(#printable-estimate) {
     visibility: hidden;
   }
   
 }
+
+    

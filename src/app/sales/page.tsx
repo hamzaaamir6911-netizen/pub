@@ -2,7 +2,7 @@
 "use client";
 
 import { useState, useRef, useEffect } from "react";
-import { MoreHorizontal, PlusCircle, Trash2, RotateCcw, FileText, CheckCircle, Edit, Calendar as CalendarIcon, Undo2, Printer, Truck } from "lucide-react";
+import { MoreHorizontal, PlusCircle, Trash2, RotateCcw, FileText, CheckCircle, Edit, Calendar as CalendarIcon, Undo2, Printer } from "lucide-react";
 import {
   Table,
   TableBody,
@@ -49,81 +49,6 @@ import { Badge } from "@/components/ui/badge";
 import { format } from "date-fns";
 import { Combobox } from "@/components/ui/combobox";
 
-
-function GatePassPrint({ sale }: { sale: Sale }) {
-    const { customers } = useData();
-    const customer = customers.find(c => c.id === sale.customerId);
-    const [vehicleNumber, setVehicleNumber] = useState('');
-
-    return (
-        <DialogContent className="max-w-4xl max-h-[90vh] flex flex-col">
-            <DialogHeader className="flex-shrink-0 no-print">
-                <DialogTitle>Gate Pass for Invoice: {sale.id}</DialogTitle>
-            </DialogHeader>
-            <div id="printable-gatepass" className="flex-grow overflow-y-auto">
-                 <div className="p-6">
-                    <div className="text-center mb-8">
-                        <h1 className="text-3xl font-bold font-headline">ARCO Aluminium Company</h1>
-                        <p className="mt-2 text-xl font-bold">Gate Pass</p>
-                    </div>
-                    <div className="p-6">
-                        <div className="grid grid-cols-2 gap-4 mb-6 font-bold">
-                            <div>
-                                <p className="text-lg">Customer:</p>
-                                <p>{sale.customerName}</p>
-                            </div>
-                            <div className="text-right">
-                                <p className="text-lg">Date:</p>
-                                <p>{formatDate(sale.date)}</p>
-                            </div>
-                            <div className="col-span-2">
-                                <p className="text-lg">Vehicle Number:</p>
-                                <p className="border-b-2 border-dashed border-black pb-1">{vehicleNumber || '________________'}</p>
-                            </div>
-                        </div>
-
-                        <div className="overflow-x-auto mt-8">
-                            <Table>
-                                <TableHeader>
-                                    <TableRow>
-                                        <TableHead className="font-bold">Item</TableHead>
-                                        <TableHead className="font-bold">Colour</TableHead>
-                                        <TableHead className="font-bold">Thickness</TableHead>
-                                        <TableHead className="text-right font-bold">Quantity</TableHead>
-                                    </TableRow>
-                                </TableHeader>
-                                <TableBody>
-                                    {sale.items.map((item, index) => (
-                                        <TableRow key={index} className="font-bold">
-                                            <TableCell>{item.itemName}</TableCell>
-                                            <TableCell>{item.color}</TableCell>
-                                            <TableCell>{item.thickness || '-'}</TableCell>
-                                            <TableCell className="text-right">{item.quantity}</TableCell>
-                                        </TableRow>
-                                    ))}
-                                </TableBody>
-                            </Table>
-                        </div>
-                         <div className="mt-24 text-center text-xs text-gray-500 border-t pt-4 font-bold">
-                            <p>Industrial Estate, Hayatabad Road B-5 PLOT 59 PESHAWAR</p>
-                            <p>Phone: +923334646356</p>
-                        </div>
-                    </div>
-                </div>
-            </div>
-            <DialogFooter className="mt-4 flex-shrink-0 no-print">
-                <div className="w-full flex items-center gap-4">
-                    <Label htmlFor="vehicle-no" className="shrink-0">Vehicle No:</Label>
-                    <Input id="vehicle-no" value={vehicleNumber} onChange={(e) => setVehicleNumber(e.target.value)} placeholder="e.g. RWP-1234"/>
-                    <Button variant="outline" onClick={() => window.print()}>
-                        <Printer className="mr-2 h-4 w-4" />
-                        Print Gate Pass
-                    </Button>
-                </div>
-            </DialogFooter>
-        </DialogContent>
-    );
-}
 
 function SaleInvoice({ sale, onPost, onUnpost }: { sale: Sale, onPost: (saleId: string) => void, onUnpost: (saleId: string) => void }) {
     const { customers } = useData();
@@ -628,7 +553,6 @@ export default function SalesPage() {
   const { sales, addSale, updateSale, deleteSale, postSale, unpostSale } = useData();
   const [activeTab, setActiveTab] = useState("history");
   const [selectedSale, setSelectedSale] = useState<Sale | null>(null);
-  const [gatePassSale, setGatePassSale] = useState<Sale | null>(null);
   const [editingSale, setEditingSale] = useState<Sale | null>(null);
 
   const sortedSales = [...sales].sort((a, b) => {
@@ -722,39 +646,42 @@ export default function SalesPage() {
                         {formatCurrency(sale.total)}
                       </TableCell>
                       <TableCell className="no-print">
-                        <DropdownMenu>
-                          <DropdownMenuTrigger asChild>
-                            <Button aria-haspopup="true" size="icon" variant="ghost">
-                              <MoreHorizontal className="h-4 w-4" />
-                              <span className="sr-only">Toggle menu</span>
-                            </Button>
-                          </DropdownMenuTrigger>
-                          <DropdownMenuContent align="end">
-                            <DropdownMenuLabel>Actions</DropdownMenuLabel>
-                            <DropdownMenuItem onSelect={() => setSelectedSale(sale)}>
-                                <FileText className="mr-2 h-4 w-4"/>
-                                View Details
-                            </DropdownMenuItem>
-                            <DropdownMenuItem onSelect={() => setGatePassSale(sale)}>
-                                <Truck className="mr-2 h-4 w-4"/>
-                                Generate Gate Pass
-                            </DropdownMenuItem>
-                            <DropdownMenuItem
-                              onSelect={() => handleEditClick(sale)}
-                              disabled={sale.status === 'posted'}
-                            >
-                              <Edit className="mr-2 h-4 w-4" />
-                              Edit
-                            </DropdownMenuItem>
-                            <DropdownMenuItem
-                              onSelect={() => handleDelete(sale.id)}
-                              className="text-red-500 focus:bg-red-500/10 focus:text-red-500"
-                            >
-                              <Trash2 className="mr-2 h-4 w-4"/>
-                              Delete
-                            </DropdownMenuItem>
-                          </DropdownMenuContent>
-                        </DropdownMenu>
+                        <Dialog onOpenChange={(open) => !open && setSelectedSale(null)}>
+                          <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                              <Button aria-haspopup="true" size="icon" variant="ghost">
+                                <MoreHorizontal className="h-4 w-4" />
+                                <span className="sr-only">Toggle menu</span>
+                              </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="end">
+                              <DropdownMenuLabel>Actions</DropdownMenuLabel>
+                               <DialogTrigger asChild>
+                                <DropdownMenuItem onSelect={() => setSelectedSale(sale)}>
+                                    <FileText className="mr-2 h-4 w-4"/>
+                                    View Details
+                                </DropdownMenuItem>
+                              </DialogTrigger>
+                              <DropdownMenuItem
+                                onSelect={() => handleEditClick(sale)}
+                                disabled={sale.status === 'posted'}
+                              >
+                                <Edit className="mr-2 h-4 w-4" />
+                                Edit
+                              </DropdownMenuItem>
+                              <DropdownMenuItem
+                                onSelect={() => handleDelete(sale.id)}
+                                className="text-red-500 focus:bg-red-500/10 focus:text-red-500"
+                              >
+                                <Trash2 className="mr-2 h-4 w-4"/>
+                                Delete
+                              </DropdownMenuItem>
+                            </DropdownMenuContent>
+                          </DropdownMenu>
+                          {selectedSale && selectedSale.id === sale.id && (
+                              <SaleInvoice sale={selectedSale} onPost={handlePostSale} onUnpost={handleUnpostSale} />
+                          )}
+                        </Dialog>
                       </TableCell>
                     </TableRow>
                   ))
@@ -773,14 +700,8 @@ export default function SalesPage() {
             </div>
         </TabsContent>
       </Tabs>
-
-      <Dialog open={!!selectedSale} onOpenChange={(open) => !open && setSelectedSale(null)}>
-        {selectedSale && <SaleInvoice sale={selectedSale} onPost={handlePostSale} onUnpost={handleUnpostSale} />}
-      </Dialog>
-      
-      <Dialog open={!!gatePassSale} onOpenChange={(open) => !open && setGatePassSale(null)}>
-          {gatePassSale && <GatePassPrint sale={gatePassSale} />}
-      </Dialog>
     </>
   );
 }
+
+    
