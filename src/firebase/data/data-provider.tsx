@@ -392,9 +392,8 @@ export const DataProvider = ({ children }: { children: ReactNode }) => {
 
     const addTransaction = async (transaction: Omit<Transaction, 'id'>) => {
         if (!transactionsCol) throw new Error("Transactions collection not available");
-        const newTransaction = { ...transaction, date: transaction.date };
         const colRef = collection(firestore, 'transactions');
-        return addDocumentNonBlocking(colRef, newTransaction);
+        return addDocumentNonBlocking(colRef, transaction);
     };
     
     const updateTransaction = async (id: string, transaction: Partial<Omit<Transaction, 'id'>>) => {
