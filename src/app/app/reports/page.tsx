@@ -1,7 +1,7 @@
 
 "use client"
 
-import React, { useState } from "react"
+import React, { useState, useMemo } from "react"
 import { Bar, BarChart, XAxis, YAxis, Tooltip, CartesianGrid, Legend } from "recharts"
 import {
   Card,
@@ -17,6 +17,7 @@ import {
     TableHead,
     TableHeader,
     TableRow,
+    TableFooter,
 } from "@/components/ui/table"
 import {
   Dialog,
@@ -33,13 +34,15 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { useData } from "@/firebase/data/data-provider"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
 import { Button } from "@/components/ui/button"
-import { Calendar as CalendarIcon, Printer, FileText } from "lucide-react"
+import { Calendar as CalendarIcon, Printer, FileText, X } from "lucide-react"
 import { Calendar } from "@/components/ui/calendar"
 import { addDays, format } from "date-fns"
 import type { DateRange } from "react-day-picker"
 import { Badge } from "@/components/ui/badge"
 import { cn } from "@/lib/utils"
 import type { SalaryPayment } from "@/lib/types"
+import { Label } from "@/components/ui/label"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 
 const chartConfig = {
   sales: {
@@ -53,26 +56,52 @@ const chartConfig = {
 } satisfies ChartConfig
 
 function LedgerReport() {
-    const { transactions } = useData();
+    const { transactions, customers, vendors } = useData();
     const [date, setDate] = React.useState<DateRange | undefined>({
         from: addDays(new Date(), -30),
         to: new Date(),
     });
+    const [selectedCustomerId, setSelectedCustomerId] = useState<string | null>(null);
+    const [selectedVendorId, setSelectedVendorId] = useState<string | null>(null);
 
-    const filteredTransactions = transactions.filter(t => {
-        const transactionDate = new Date(t.date);
-        return (!date?.from || transactionDate >= date.from) && (!date?.to || transactionDate <= date.to);
-    });
+    const filteredTransactions = useMemo(() => {
+        let filtered = transactions;
+        
+        // Date filtering
+        filtered = filtered.filter(t => {
+            const transactionDate = new Date(t.date);
+            return (!date?.from || transactionDate >= date.from) && (!date?.to || transactionDate <= date.to);
+        });
 
-    let balance = 0;
-    const reportData = filteredTransactions.sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime()).map(t => {
-        if(t.type === 'credit') {
-            balance += t.amount;
-        } else {
-            balance -= t.amount;
+        // Customer or Vendor filtering
+        if (selectedCustomerId) {
+            filtered = filtered.filter(t => t.customerId === selectedCustomerId);
+        } else if (selectedVendorId) {
+            filtered = filtered.filter(t => t.vendorId === selectedVendorId);
         }
-        return {...t, balance};
+        
+        return filtered.sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
+
+    }, [transactions, date, selectedCustomerId, selectedVendorId]);
+
+    let runningBalance = 0;
+    const reportData = filteredTransactions.map(t => {
+        if (selectedCustomerId) {
+            runningBalance += (t.type === 'debit' ? t.amount : -t.amount);
+        } else if (selectedVendorId) {
+            runningBalance += (t.type === 'credit' ? t.amount : -t.amount);
+        } else {
+            runningBalance += (t.type === 'credit' ? t.amount : -t.amount);
+        }
+        return { ...t, balance: runningBalance };
     });
+    
+    const clearFilters = () => {
+        setSelectedCustomerId(null);
+        setSelectedVendorId(null);
+    }
+
+    const hasFilter = selectedCustomerId || selectedVendorId;
 
     return (
         <Card className="mt-4 border-none shadow-none sm:border sm:shadow-sm">
@@ -83,14 +112,14 @@ function LedgerReport() {
                 </div>
             </CardHeader>
             <CardContent className="space-y-4 px-0 sm:px-6">
-                <div className="flex items-center gap-2 no-print">
-                    <Popover>
+                <div className="flex flex-wrap items-center gap-4 no-print p-4 bg-muted/50 rounded-lg">
+                     <Popover>
                         <PopoverTrigger asChild>
                             <Button
                                 id="date"
                                 variant={"outline"}
                                 className={cn(
-                                    "w-[300px] justify-start text-left font-normal",
+                                    "w-full sm:w-[300px] justify-start text-left font-normal bg-background",
                                     !date && "text-muted-foreground"
                                 )}
                             >
@@ -120,7 +149,41 @@ function LedgerReport() {
                             />
                         </PopoverContent>
                     </Popover>
+                    <div className="flex items-center gap-2">
+                        <Label htmlFor="customer-filter" className="text-sm shrink-0">Customer</Label>
+                        <Select onValueChange={(value) => { setSelectedCustomerId(value || null); setSelectedVendorId(null); }} value={selectedCustomerId || ''}>
+                            <SelectTrigger id="customer-filter" className="w-full sm:w-[200px] bg-background"><SelectValue placeholder="Select Customer" /></SelectTrigger>
+                            <SelectContent>
+                                {customers.map(c => <SelectItem key={c.id} value={c.id}>{c.customerName}</SelectItem>)}
+                            </SelectContent>
+                        </Select>
+                    </div>
+                     <div className="flex items-center gap-2">
+                        <Label htmlFor="vendor-filter" className="text-sm shrink-0">Vendor</Label>
+                        <Select onValueChange={(value) => { setSelectedVendorId(value || null); setSelectedCustomerId(null); }} value={selectedVendorId || ''}>
+                            <SelectTrigger id="vendor-filter" className="w-full sm:w-[200px] bg-background"><SelectValue placeholder="Select Vendor" /></SelectTrigger>
+                            <SelectContent>
+                                {vendors.map(v => <SelectItem key={v.id} value={v.id}>{v.name}</SelectItem>)}
+                            </SelectContent>
+                        </Select>
+                    </div>
+                     {hasFilter && (
+                        <Button variant="ghost" size="sm" onClick={clearFilters}>
+                            <X className="mr-2 h-4 w-4" /> Clear Filter
+                        </Button>
+                    )}
                 </div>
+
+                 <div className="hidden print:block text-center my-6">
+                    <h1 className="text-2xl font-bold font-headline">ARCO Aluminium Company</h1>
+                    <p className="text-lg font-semibold mt-1">
+                        Account Statement for {selectedCustomerId ? customers.find(c => c.id === selectedCustomerId)?.customerName : selectedVendorId ? vendors.find(v => v.id === selectedVendorId)?.name : 'General Ledger'}
+                    </p>
+                     {date?.from && date?.to && (
+                        <p className="text-sm text-muted-foreground">{format(date.from, "LLL dd, y")} to {format(date.to, "LLL dd, y")}</p>
+                    )}
+                </div>
+
                 <div>
                     <div className="rounded-lg border">
                         <Table>
@@ -158,6 +221,16 @@ function LedgerReport() {
                                     ))
                                 )}
                             </TableBody>
+                              {hasFilter && reportData.length > 0 && (
+                                <TableFooter>
+                                    <TableRow>
+                                        <TableCell colSpan={5} className="text-right font-bold">Final Balance</TableCell>
+                                        <TableCell className={cn("text-right font-bold font-mono", runningBalance >= 0 ? "text-green-600" : "text-red-600")}>
+                                            {formatCurrency(runningBalance)}
+                                        </TableCell>
+                                    </TableRow>
+                                </TableFooter>
+                           )}
                         </Table>
                     </div>
                 </div>
