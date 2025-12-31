@@ -31,8 +31,8 @@ interface DataContextProps {
   addLabour: (labour: Omit<Labour, 'id' | 'createdAt'>) => Promise<any>;
   updateLabour: (id: string, labour: Partial<Omit<Labour, 'id' | 'createdAt'>>) => Promise<void>;
   deleteLabour: (id: string) => Promise<void>;
-  addSale: (sale: Omit<Sale, 'id' | 'total' | 'status' | 'date'>) => Promise<void>;
-  updateSale: (saleId: string, sale: Omit<Sale, 'id' | 'total' | 'status' | 'date'>) => Promise<void>;
+  addSale: (sale: Omit<Sale, 'id' | 'total' | 'status'>) => Promise<void>;
+  updateSale: (saleId: string, sale: Omit<Sale, 'id' | 'total' | 'status'>) => Promise<void>;
   postSale: (saleId: string) => Promise<void>;
   unpostSale: (saleId: string) => Promise<void>;
   deleteSale: (id: string) => Promise<void>;
@@ -317,7 +317,7 @@ export const DataProvider = ({ children }: { children: ReactNode }) => {
                 category: 'Opening Balance',
                 customerId: newCustomerRef.id,
                 customerName: customer.customerName,
-                date: serverTimestamp() as Timestamp,
+                date: new Date(),
             };
             batch.set(transactionRef, transactionData);
         }
@@ -357,7 +357,7 @@ export const DataProvider = ({ children }: { children: ReactNode }) => {
                 category: 'Opening Balance',
                 vendorId: newVendorRef.id,
                 vendorName: vendor.name,
-                date: serverTimestamp() as Timestamp,
+                date: new Date(),
             };
             batch.set(transactionRef, transactionData);
        }
@@ -392,8 +392,9 @@ export const DataProvider = ({ children }: { children: ReactNode }) => {
 
     const addTransaction = async (transaction: Omit<Transaction, 'id'>) => {
         if (!transactionsCol) throw new Error("Transactions collection not available");
+        const newTransaction = { ...transaction, date: transaction.date || serverTimestamp() };
         const colRef = collection(firestore, 'transactions');
-        return addDocumentNonBlocking(colRef, transaction);
+        return addDocumentNonBlocking(colRef, newTransaction);
     };
     
     const updateTransaction = async (id: string, transaction: Partial<Omit<Transaction, 'id'>>) => {
@@ -407,7 +408,7 @@ export const DataProvider = ({ children }: { children: ReactNode }) => {
         deleteDocumentNonBlocking(doc(firestore, 'transactions', id));
     };
 
-    const addSale = async (sale: Omit<Sale, 'id' | 'total' | 'status' | 'date'>) => {
+    const addSale = async (sale: Omit<Sale, 'id' | 'total' | 'status'>) => {
         if (!salesCol || !user) throw new Error("Sales collection not available or user not authenticated");
         
         await runTransaction(firestore, async (transaction) => {
@@ -433,14 +434,14 @@ export const DataProvider = ({ children }: { children: ReactNode }) => {
                 id: newSaleId,
                 total,
                 status: 'draft' as const,
-                date: serverTimestamp(),
+                date: sale.date || serverTimestamp(),
             };
 
             transaction.set(newSaleRef, newSaleData);
         });
     };
 
-    const updateSale = async (saleId: string, sale: Omit<Sale, 'id' | 'total' | 'status' | 'date'>) => {
+    const updateSale = async (saleId: string, sale: Omit<Sale, 'id' | 'total' | 'status'>) => {
         if (!user) throw new Error("User not authenticated");
         const saleRef = doc(firestore, 'sales', saleId);
 
@@ -455,7 +456,7 @@ export const DataProvider = ({ children }: { children: ReactNode }) => {
         const updatedSaleData = {
             ...sale,
             total,
-            date: serverTimestamp()
+            date: sale.date || serverTimestamp()
         };
 
         return updateDocumentNonBlocking(saleRef, updatedSaleData);
@@ -532,23 +533,30 @@ export const DataProvider = ({ children }: { children: ReactNode }) => {
     
         const batch = writeBatch(firestore);
         
-        // 1. Update sale status back to 'draft'
         const saleRef = doc(firestore, 'sales', saleId);
         batch.update(saleRef, { status: 'draft' });
     
-        // 2. Find and delete the associated ledger transaction
         const q = query(
             collection(firestore, 'transactions'),
             where("category", "==", "Sale"),
             where("description", "==", `Sale to ${saleToUnpost.customerName} (Invoice: ${saleToUnpost.id})`),
             where("customerId", "==", saleToUnpost.customerId)
         );
-        const querySnapshot = await getDocs(q);
-        querySnapshot.forEach((doc) => {
-            batch.delete(doc.ref);
-        });
-    
-        await batch.commit();
+        
+        try {
+            const querySnapshot = await getDocs(q);
+            querySnapshot.forEach((doc) => {
+                // Ensure transaction date matches the sale date before deleting
+                const transactionDate = toDate(doc.data().date);
+                const saleDate = toDate(saleToUnpost.date);
+                if (transactionDate.getTime() === saleDate.getTime()) {
+                    batch.delete(doc.ref);
+                }
+            });
+            await batch.commit();
+        } catch (error) {
+            console.error("Error during unpost operation: ", error);
+        }
     };
 
     const deleteSale = async (id: string) => {
@@ -766,3 +774,5 @@ export const useData = () => {
   }
   return context;
 };
+
+    
