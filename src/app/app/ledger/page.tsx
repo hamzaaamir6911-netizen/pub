@@ -1,9 +1,8 @@
 
-
 "use client";
 
 import { useState, useEffect, useMemo } from "react";
-import { PlusCircle, X, MoreHorizontal, Printer, Edit, Calendar as CalendarIcon } from "lucide-react";
+import { PlusCircle, X, MoreHorizontal, Printer, Edit } from "lucide-react";
 import {
   Table,
   TableBody,
@@ -39,9 +38,6 @@ import { formatCurrency, formatDate } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { cn } from "@/lib/utils";
-import { Popover, PopoverTrigger, PopoverContent } from "@/components/ui/popover";
-import { Calendar } from "@/components/ui/calendar";
-import { format } from "date-fns";
 
 
 function AddTransactionForm({ onTransactionAdded }: { onTransactionAdded: (newTransaction: Omit<Transaction, 'id'>) => void }) {
@@ -52,7 +48,7 @@ function AddTransactionForm({ onTransactionAdded }: { onTransactionAdded: (newTr
   const [category, setCategory] = useState('');
   const [customerId, setCustomerId] = useState<string | undefined>(undefined);
   const [vendorId, setVendorId] = useState<string | undefined>(undefined);
-  const [date, setDate] = useState<Date | undefined>(new Date());
+  const [date, setDate] = useState<string>(new Date().toISOString().split('T')[0]); // YYYY-MM-DD
   const { toast } = useToast();
 
   useEffect(() => {
@@ -93,7 +89,7 @@ function AddTransactionForm({ onTransactionAdded }: { onTransactionAdded: (newTr
       customerName: customer?.customerName,
       vendorId: vendorId,
       vendorName: vendor?.name,
-      date: date
+      date: new Date(date), // Convert string to Date object
     };
     onTransactionAdded(newTransaction);
     toast({ title: 'Transaction Added!', description: `A transaction of ${formatCurrency(amount)} has been recorded.` });
@@ -102,7 +98,7 @@ function AddTransactionForm({ onTransactionAdded }: { onTransactionAdded: (newTr
     setCategory('');
     setCustomerId(undefined);
     setVendorId(undefined);
-    setDate(new Date());
+    setDate(new Date().toISOString().split('T')[0]);
   };
 
   return (
@@ -113,28 +109,12 @@ function AddTransactionForm({ onTransactionAdded }: { onTransactionAdded: (newTr
       <div className="space-y-4 py-4">
         <div className="space-y-2">
             <Label htmlFor="date">Transaction Date</Label>
-             <Popover>
-                <PopoverTrigger asChild>
-                    <Button
-                        variant={"outline"}
-                        className={cn(
-                            "w-full justify-start text-left font-normal",
-                            !date && "text-muted-foreground"
-                        )}
-                    >
-                        <CalendarIcon className="mr-2 h-4 w-4" />
-                        {date ? format(date, "PPP") : <span>Pick a date</span>}
-                    </Button>
-                </PopoverTrigger>
-                <PopoverContent className="w-auto p-0">
-                    <Calendar
-                        mode="single"
-                        selected={date}
-                        onSelect={setDate}
-                        initialFocus
-                    />
-                </PopoverContent>
-            </Popover>
+            <Input
+                id="date"
+                type="date"
+                value={date}
+                onChange={(e) => setDate(e.target.value)}
+            />
         </div>
         <div className="space-y-2">
             <Label htmlFor="type">Transaction Type</Label>
@@ -202,7 +182,7 @@ function AddTransactionForm({ onTransactionAdded }: { onTransactionAdded: (newTr
 function EditTransactionForm({ transaction, onTransactionUpdated }: { transaction: Transaction, onTransactionUpdated: (id: string, updatedTransaction: Partial<Omit<Transaction, 'id'>>) => void }) {
   const [description, setDescription] = useState(transaction.description);
   const [amount, setAmount] = useState(transaction.amount);
-  const [date, setDate] = useState<Date | undefined>(new Date(transaction.date));
+  const [date, setDate] = useState<string>(new Date(transaction.date).toISOString().split('T')[0]);
   const { toast } = useToast();
   
   const isLinkedTransaction = useMemo(() => ['Sale', 'Salary', 'Opening Balance'].includes(transaction.category), [transaction.category]);
@@ -216,7 +196,7 @@ function EditTransactionForm({ transaction, onTransactionUpdated }: { transactio
     const updatedTransaction: Partial<Omit<Transaction, 'id'>> = {
       description,
       amount,
-      date,
+      date: new Date(date),
     };
     onTransactionUpdated(transaction.id, updatedTransaction);
     toast({ title: 'Transaction Updated!', description: `Transaction has been updated.` });
@@ -230,29 +210,13 @@ function EditTransactionForm({ transaction, onTransactionUpdated }: { transactio
       <div className="space-y-4 py-4">
         <div className="space-y-2">
             <Label>Transaction Date</Label>
-             <Popover>
-                <PopoverTrigger asChild>
-                    <Button
-                        variant={"outline"}
-                        className={cn(
-                            "w-full justify-start text-left font-normal",
-                            !date && "text-muted-foreground"
-                        )}
-                        disabled={isLinkedTransaction}
-                    >
-                        <CalendarIcon className="mr-2 h-4 w-4" />
-                        {date ? format(date, "PPP") : <span>Pick a date</span>}
-                    </Button>
-                </PopoverTrigger>
-                <PopoverContent className="w-auto p-0">
-                    <Calendar
-                        mode="single"
-                        selected={date}
-                        onSelect={setDate}
-                        initialFocus
-                    />
-                </PopoverContent>
-            </Popover>
+            <Input
+                id="date"
+                type="date"
+                value={date}
+                onChange={(e) => setDate(e.target.value)}
+                disabled={isLinkedTransaction}
+            />
             {isLinkedTransaction && (
              <p className="text-xs text-muted-foreground">Date for system-generated transactions cannot be edited.</p>
            )}
