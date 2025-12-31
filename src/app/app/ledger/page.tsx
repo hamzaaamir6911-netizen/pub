@@ -205,6 +205,8 @@ function EditTransactionForm({ transaction, onTransactionUpdated }: { transactio
   const [amount, setAmount] = useState(transaction.amount);
   const [date, setDate] = useState<Date | undefined>(new Date(transaction.date));
   const { toast } = useToast();
+  
+  const isLinkedTransaction = ['Sale', 'Salary', 'Opening Balance'].includes(transaction.category);
 
   const handleSubmit = () => {
     if (!description || amount <= 0 || !date) {
@@ -243,10 +245,10 @@ function EditTransactionForm({ transaction, onTransactionUpdated }: { transactio
             id="description" 
             value={description} 
             onChange={(e) => setDescription(e.target.value)}
-            disabled={transaction.category === 'Sale' || transaction.category === 'Salary'}
+            disabled={isLinkedTransaction}
           />
-           {(transaction.category === 'Sale' || transaction.category === 'Salary') && (
-            <p className="text-xs text-muted-foreground">Description for sale or salary transactions cannot be edited.</p>
+           {isLinkedTransaction && (
+            <p className="text-xs text-muted-foreground">Description for system-generated transactions (Sale, Salary, Opening Balance) cannot be edited.</p>
            )}
         </div>
         <div className="grid grid-cols-2 gap-4">
@@ -257,10 +259,10 @@ function EditTransactionForm({ transaction, onTransactionUpdated }: { transactio
                 type="number" 
                 value={amount} 
                 onChange={(e) => setAmount(parseFloat(e.target.value) || 0)}
-                disabled={transaction.category === 'Sale' || transaction.category === 'Salary'}
+                disabled={isLinkedTransaction}
             />
-            {(transaction.category === 'Sale' || transaction.category === 'Salary') && (
-                <p className="text-xs text-muted-foreground">Amount for sale or salary transactions cannot be edited directly. Please modify the original sale or payslip.</p>
+            {isLinkedTransaction && (
+                <p className="text-xs text-muted-foreground">Amount for system-generated transactions cannot be edited directly.</p>
             )}
             </div>
              <div className="space-y-2">
@@ -273,7 +275,7 @@ function EditTransactionForm({ transaction, onTransactionUpdated }: { transactio
                               "w-full justify-start text-left font-normal",
                               !date && "text-muted-foreground"
                           )}
-                          disabled={transaction.category === 'Sale' || transaction.category === 'Salary'}
+                          disabled={isLinkedTransaction}
                       >
                           <CalendarIcon className="mr-2 h-4 w-4" />
                           {date ? format(date, "PPP") : <span>Pick a date</span>}
@@ -285,14 +287,18 @@ function EditTransactionForm({ transaction, onTransactionUpdated }: { transactio
                           selected={date}
                           onSelect={setDate}
                           initialFocus
+                          disabled={isLinkedTransaction}
                       />
                   </PopoverContent>
               </Popover>
+               {isLinkedTransaction && (
+                <p className="text-xs text-muted-foreground">Date for system-generated transactions cannot be edited.</p>
+            )}
           </div>
         </div>
       </div>
       <DialogFooter>
-        <Button onClick={handleSubmit} disabled={transaction.category === 'Sale' || transaction.category === 'Salary'}>Save Changes</Button>
+        <Button onClick={handleSubmit} disabled={isLinkedTransaction}>Save Changes</Button>
       </DialogFooter>
     </DialogContent>
   );
