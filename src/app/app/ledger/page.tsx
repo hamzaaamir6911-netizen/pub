@@ -206,7 +206,7 @@ function EditTransactionForm({ transaction, onTransactionUpdated }: { transactio
   const [date, setDate] = useState<Date | undefined>(new Date(transaction.date));
   const { toast } = useToast();
   
-  const isLinkedTransaction = ['Sale', 'Salary', 'Opening Balance'].includes(transaction.category);
+  const isLinkedTransaction = useMemo(() => ['Sale', 'Salary', 'Opening Balance'].includes(transaction.category), [transaction.category]);
 
   const handleSubmit = () => {
     if (!description || amount <= 0 || !date) {
@@ -214,8 +214,6 @@ function EditTransactionForm({ transaction, onTransactionUpdated }: { transactio
       return;
     }
 
-    // Only allow editing description and amount to keep things simple and prevent accounting issues.
-    // Type, category, and links to customer/vendor should not be changed.
     const updatedTransaction: Partial<Omit<Transaction, 'id'>> = {
       description,
       amount,
@@ -285,7 +283,7 @@ function EditTransactionForm({ transaction, onTransactionUpdated }: { transactio
                       <Calendar
                           mode="single"
                           selected={date}
-                          onSelect={setDate}
+                          onSelect={(newDate) => setDate(newDate)}
                           initialFocus
                           disabled={isLinkedTransaction}
                       />
