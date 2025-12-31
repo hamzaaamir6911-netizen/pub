@@ -518,7 +518,7 @@ export const DataProvider = ({ children }: { children: ReactNode }) => {
             category: 'Sale',
             customerId: sale.customerId,
             customerName: sale.customerName,
-            date: sale.date,
+            date: sale.date, // Use the original sale date
         };
         const transactionRef = doc(collection(firestore, 'transactions'));
         batch.set(transactionRef, transactionData);
@@ -536,6 +536,8 @@ export const DataProvider = ({ children }: { children: ReactNode }) => {
         const saleRef = doc(firestore, 'sales', saleId);
         batch.update(saleRef, { status: 'draft' });
     
+        const saleDate = toDate(saleToUnpost.date);
+
         const q = query(
             collection(firestore, 'transactions'),
             where("category", "==", "Sale"),
@@ -546,10 +548,9 @@ export const DataProvider = ({ children }: { children: ReactNode }) => {
         try {
             const querySnapshot = await getDocs(q);
             querySnapshot.forEach((doc) => {
-                // Ensure transaction date matches the sale date before deleting
                 const transactionDate = toDate(doc.data().date);
-                const saleDate = toDate(saleToUnpost.date);
-                if (transactionDate.getTime() === saleDate.getTime()) {
+                // Check if dates match (ignoring time)
+                if (transactionDate.toDateString() === saleDate.toDateString()) {
                     batch.delete(doc.ref);
                 }
             });
