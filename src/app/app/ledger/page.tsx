@@ -2,7 +2,7 @@
 "use client";
 
 import { useState, useEffect, useMemo } from "react";
-import { PlusCircle, X, MoreHorizontal, Printer, Edit, Calendar as CalendarIcon } from "lucide-react";
+import { PlusCircle, X, MoreHorizontal, Printer, Edit } from "lucide-react";
 import {
   Table,
   TableBody,
@@ -27,7 +27,6 @@ import {
   DropdownMenuLabel,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Button } from "@/components/ui/button";
 import { PageHeader } from "@/components/page-header";
 import type { Transaction } from "@/lib/types";
@@ -39,11 +38,9 @@ import { formatCurrency, formatDate } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { cn } from "@/lib/utils";
-import { Calendar } from "@/components/ui/calendar";
-import { format } from "date-fns";
 
 
-function AddTransactionForm({ onTransactionAdded }: { onTransactionAdded: (newTransaction: Omit<Transaction, 'id'>) => void }) {
+function AddTransactionForm({ onTransactionAdded }: { onTransactionAdded: (newTransaction: Omit<Transaction, 'id' | 'date'>) => void }) {
   const { customers, vendors } = useData();
   const [description, setDescription] = useState('');
   const [amount, setAmount] = useState(0);
@@ -51,7 +48,6 @@ function AddTransactionForm({ onTransactionAdded }: { onTransactionAdded: (newTr
   const [category, setCategory] = useState('');
   const [customerId, setCustomerId] = useState<string | undefined>(undefined);
   const [vendorId, setVendorId] = useState<string | undefined>(undefined);
-  const [date, setDate] = useState<Date | undefined>(new Date());
   const { toast } = useToast();
 
   useEffect(() => {
@@ -76,14 +72,14 @@ function AddTransactionForm({ onTransactionAdded }: { onTransactionAdded: (newTr
   }, [type, customerId, vendorId, customers, vendors]);
 
   const handleSubmit = () => {
-    if (!description || amount <= 0 || !date) {
+    if (!description || amount <= 0) {
       toast({ variant: 'destructive', title: 'Please fill all fields.' });
       return;
     }
     const customer = customers.find(c => c.id === customerId);
     const vendor = vendors.find(v => v.id === vendorId);
 
-    const newTransaction: Omit<Transaction, 'id'> = {
+    const newTransaction: Omit<Transaction, 'id' | 'date'> = {
       description,
       amount,
       type,
@@ -92,7 +88,6 @@ function AddTransactionForm({ onTransactionAdded }: { onTransactionAdded: (newTr
       customerName: customer?.customerName,
       vendorId: vendorId,
       vendorName: vendor?.name,
-      date: date,
     };
     onTransactionAdded(newTransaction);
     toast({ title: 'Transaction Added!', description: `A transaction of ${formatCurrency(amount)} has been recorded.` });
@@ -101,7 +96,6 @@ function AddTransactionForm({ onTransactionAdded }: { onTransactionAdded: (newTr
     setCategory('');
     setCustomerId(undefined);
     setVendorId(undefined);
-    setDate(new Date());
   };
 
   return (
@@ -161,36 +155,9 @@ function AddTransactionForm({ onTransactionAdded }: { onTransactionAdded: (newTr
             disabled={ (type === 'credit' && !!customerId) || (type === 'debit' && !!vendorId) }
           />
         </div>
-        <div className="grid grid-cols-2 gap-4">
-          <div className="space-y-2">
+        <div className="space-y-2">
             <Label htmlFor="amount">Amount</Label>
             <Input id="amount" type="number" value={amount} onChange={(e) => setAmount(parseFloat(e.target.value) || 0)} placeholder="Amount in PKR"/>
-          </div>
-           <div className="space-y-2">
-              <Label htmlFor="date">Voucher Date</Label>
-              <Popover>
-                  <PopoverTrigger asChild>
-                      <Button
-                          variant={"outline"}
-                          className={cn(
-                              "w-full justify-start text-left font-normal",
-                              !date && "text-muted-foreground"
-                          )}
-                      >
-                          <CalendarIcon className="mr-2 h-4 w-4" />
-                          {date ? format(date, "PPP") : <span>Pick a date</span>}
-                      </Button>
-                  </PopoverTrigger>
-                  <PopoverContent className="w-auto p-0">
-                      <Calendar
-                          mode="single"
-                          selected={date}
-                          onSelect={setDate}
-                          initialFocus
-                      />
-                  </PopoverContent>
-              </Popover>
-          </div>
         </div>
       </div>
       <DialogFooter>
@@ -200,24 +167,22 @@ function AddTransactionForm({ onTransactionAdded }: { onTransactionAdded: (newTr
   );
 }
 
-function EditTransactionForm({ transaction, onTransactionUpdated }: { transaction: Transaction, onTransactionUpdated: (id: string, updatedTransaction: Partial<Omit<Transaction, 'id'>>) => void }) {
+function EditTransactionForm({ transaction, onTransactionUpdated }: { transaction: Transaction, onTransactionUpdated: (id: string, updatedTransaction: Partial<Omit<Transaction, 'id' | 'date'>>) => void }) {
   const [description, setDescription] = useState(transaction.description);
   const [amount, setAmount] = useState(transaction.amount);
-  const [date, setDate] = useState<Date | undefined>(new Date(transaction.date));
   const { toast } = useToast();
   
   const isLinkedTransaction = useMemo(() => ['Sale', 'Salary', 'Opening Balance'].includes(transaction.category), [transaction.category]);
 
   const handleSubmit = () => {
-    if (!description || amount <= 0 || !date) {
+    if (!description || amount <= 0) {
       toast({ variant: 'destructive', title: 'Please fill all fields.' });
       return;
     }
 
-    const updatedTransaction: Partial<Omit<Transaction, 'id'>> = {
+    const updatedTransaction: Partial<Omit<Transaction, 'id' | 'date'>> = {
       description,
       amount,
-      date,
     };
     onTransactionUpdated(transaction.id, updatedTransaction);
     toast({ title: 'Transaction Updated!', description: `Transaction has been updated.` });
@@ -249,8 +214,7 @@ function EditTransactionForm({ transaction, onTransactionUpdated }: { transactio
             <p className="text-xs text-muted-foreground">Description for system-generated transactions (Sale, Salary, Opening Balance) cannot be edited.</p>
            )}
         </div>
-        <div className="grid grid-cols-2 gap-4">
-            <div className="space-y-2">
+        <div className="space-y-2">
             <Label htmlFor="amount">Amount</Label>
             <Input 
                 id="amount" 
@@ -262,37 +226,6 @@ function EditTransactionForm({ transaction, onTransactionUpdated }: { transactio
             {isLinkedTransaction && (
                 <p className="text-xs text-muted-foreground">Amount for system-generated transactions cannot be edited directly.</p>
             )}
-            </div>
-             <div className="space-y-2">
-              <Label htmlFor="date">Voucher Date</Label>
-              <Popover>
-                  <PopoverTrigger asChild>
-                      <Button
-                          variant={"outline"}
-                          className={cn(
-                              "w-full justify-start text-left font-normal",
-                              !date && "text-muted-foreground"
-                          )}
-                          disabled={isLinkedTransaction}
-                      >
-                          <CalendarIcon className="mr-2 h-4 w-4" />
-                          {date ? format(date, "PPP") : <span>Pick a date</span>}
-                      </Button>
-                  </PopoverTrigger>
-                  <PopoverContent className="w-auto p-0">
-                      <Calendar
-                          mode="single"
-                          selected={date}
-                          onSelect={setDate}
-                          initialFocus
-                          disabled={isLinkedTransaction}
-                      />
-                  </PopoverContent>
-              </Popover>
-               {isLinkedTransaction && (
-                <p className="text-xs text-muted-foreground">Date for system-generated transactions cannot be edited.</p>
-            )}
-          </div>
         </div>
       </div>
       <DialogFooter>
@@ -312,12 +245,12 @@ export default function LedgerPage() {
   const [selectedVendorId, setSelectedVendorId] = useState<string | null>(null);
   const { toast } = useToast();
 
-  const handleTransactionAdded = (newTransaction: Omit<Transaction, 'id'>) => {
+  const handleTransactionAdded = (newTransaction: Omit<Transaction, 'id' | 'date'>) => {
     addTransaction(newTransaction);
     setAddModalOpen(false);
   }
 
-  const handleTransactionUpdated = (id: string, updatedTransaction: Partial<Omit<Transaction, 'id'>>) => {
+  const handleTransactionUpdated = (id: string, updatedTransaction: Partial<Omit<Transaction, 'id' | 'date'>>) => {
     updateTransaction(id, updatedTransaction);
     setEditModalOpen(false);
     setEditingTransaction(null);

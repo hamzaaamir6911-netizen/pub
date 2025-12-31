@@ -34,19 +34,16 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
-import { Calendar } from "@/components/ui/calendar";
 import { PageHeader } from "@/components/page-header";
 import { formatCurrency, formatDate, cn } from "@/lib/utils";
 import type { Sale, SaleItem, Customer, Item } from "@/lib/types";
 import { useToast } from "@/hooks/use-toast";
 import { useData } from "@/firebase/data/data-provider";
 import { Badge } from "@/components/ui/badge";
-import { format } from "date-fns";
 import { Combobox } from "@/components/ui/combobox";
 
 
@@ -245,7 +242,7 @@ function AddCustomerForm({ onCustomerAdded }: { onCustomerAdded: (newCustomer: O
 }
 
 
-function NewSaleForm({ onSaleAdded, onSaleUpdated, initialData }: { onSaleAdded: (newSale: Omit<Sale, 'id' | 'total' | 'status'>) => void, onSaleUpdated: (saleId: string, updatedSale: Omit<Sale, 'id' | 'total' | 'status'>) => void, initialData?: Sale | null }) {
+function NewSaleForm({ onSaleAdded, onSaleUpdated, initialData }: { onSaleAdded: (newSale: Omit<Sale, 'id' | 'total' | 'status' | 'date'>) => void, onSaleUpdated: (saleId: string, updatedSale: Omit<Sale, 'id' | 'total' | 'status' | 'date'>) => void, initialData?: Sale | null }) {
     const { toast } = useToast();
     const { customers, items: allItems, addCustomer } = useData();
     
@@ -253,7 +250,6 @@ function NewSaleForm({ onSaleAdded, onSaleUpdated, initialData }: { onSaleAdded:
     const [saleItems, setSaleItems] = useState<Partial<SaleItem>[]>([{itemId: "", quantity: 1, feet: 1, discount: 0, color: '', thickness: '' }]);
     const [overallDiscount, setOverallDiscount] = useState(0);
     const [isCustomerModalOpen, setCustomerModalOpen] = useState(false);
-    const [saleDate, setSaleDate] = useState<Date | undefined>(new Date());
 
     const isEditMode = !!initialData;
 
@@ -262,7 +258,6 @@ function NewSaleForm({ onSaleAdded, onSaleUpdated, initialData }: { onSaleAdded:
             setSelectedCustomer(initialData.customerId);
             setSaleItems(initialData.items.map(item => ({ ...item })));
             setOverallDiscount(initialData.discount || 0);
-            setSaleDate(new Date(initialData.date));
         } else {
             clearForm();
         }
@@ -316,16 +311,11 @@ function NewSaleForm({ onSaleAdded, onSaleUpdated, initialData }: { onSaleAdded:
         setSelectedCustomer("");
         setSaleItems([{itemId: "", quantity: 1, feet: 1, discount: 0, color: '', thickness: ''}]);
         setOverallDiscount(0);
-        setSaleDate(new Date());
     }
     
     const handleSave = async () => {
         if (!selectedCustomer) {
             toast({ variant: "destructive", title: "Please select a customer." });
-            return;
-        }
-        if (!saleDate) {
-            toast({ variant: "destructive", title: "Please select a sale date." });
             return;
         }
         if (saleItems.some(item => !item.itemId || (item.quantity || 0) <= 0)) {
@@ -357,12 +347,11 @@ function NewSaleForm({ onSaleAdded, onSaleUpdated, initialData }: { onSaleAdded:
             }
         }) as SaleItem[];
 
-        const saleData: Omit<Sale, 'id' | 'total' | 'status'> = {
+        const saleData: Omit<Sale, 'id' | 'total' | 'status' | 'date'> = {
             customerId: selectedCustomer,
             customerName: customer.customerName,
             items: finalSaleItems,
             discount: overallDiscount,
-            date: saleDate,
         };
 
         if (isEditMode && initialData) {
@@ -399,7 +388,7 @@ function NewSaleForm({ onSaleAdded, onSaleUpdated, initialData }: { onSaleAdded:
                 </Button>
             </CardHeader>
             <CardContent className="space-y-6">
-                <div className="grid md:grid-cols-3 gap-4">
+                <div className="grid md:grid-cols-2 gap-4">
                     <div className="space-y-2">
                         <Label htmlFor="customer">Customer</Label>
                         <div className="flex gap-2">
@@ -418,31 +407,6 @@ function NewSaleForm({ onSaleAdded, onSaleUpdated, initialData }: { onSaleAdded:
                             <AddCustomerForm onCustomerAdded={handleCustomerAdded} />
                         </Dialog>
                         </div>
-                    </div>
-                     <div className="space-y-2">
-                        <Label htmlFor="date">Sale Date</Label>
-                        <Popover>
-                            <PopoverTrigger asChild>
-                                <Button
-                                    variant={"outline"}
-                                    className={cn(
-                                        "w-full justify-start text-left font-normal",
-                                        !saleDate && "text-muted-foreground"
-                                    )}
-                                >
-                                    <CalendarIcon className="mr-2 h-4 w-4" />
-                                    {saleDate ? format(saleDate, "PPP") : <span>Pick a date</span>}
-                                </Button>
-                            </PopoverTrigger>
-                            <PopoverContent className="w-auto p-0">
-                                <Calendar
-                                    mode="single"
-                                    selected={saleDate}
-                                    onSelect={setSaleDate}
-                                    initialFocus
-                                />
-                            </PopoverContent>
-                        </Popover>
                     </div>
                     <div className="space-y-2">
                         <Label htmlFor="discount">Overall Discount (%)</Label>
@@ -569,12 +533,12 @@ export default function SalesPage() {
     deleteSale(id);
   };
   
-  const handleSaleAdded = (newSale: Omit<Sale, 'id' |'total'|'status'>) => {
+  const handleSaleAdded = (newSale: Omit<Sale, 'id' |'total'|'status' | 'date'>) => {
     addSale(newSale);
     setActiveTab("history");
   }
 
-  const handleSaleUpdated = (saleId: string, updatedSale: Omit<Sale, 'id'|'total'|'status'>) => {
+  const handleSaleUpdated = (saleId: string, updatedSale: Omit<Sale, 'id'|'total'|'status' | 'date'>) => {
     updateSale(saleId, updatedSale);
     setActiveTab("history");
     setEditingSale(null);

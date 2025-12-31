@@ -31,8 +31,8 @@ interface DataContextProps {
   addLabour: (labour: Omit<Labour, 'id' | 'createdAt'>) => Promise<any>;
   updateLabour: (id: string, labour: Partial<Omit<Labour, 'id' | 'createdAt'>>) => Promise<void>;
   deleteLabour: (id: string) => Promise<void>;
-  addSale: (sale: Omit<Sale, 'id' | 'total' | 'status'>) => Promise<void>;
-  updateSale: (saleId: string, sale: Omit<Sale, 'id' | 'total' | 'status'>) => Promise<void>;
+  addSale: (sale: Omit<Sale, 'id' | 'total' | 'status' | 'date'>) => Promise<void>;
+  updateSale: (saleId: string, sale: Omit<Sale, 'id' | 'total' | 'status' | 'date'>) => Promise<void>;
   postSale: (saleId: string) => Promise<void>;
   unpostSale: (saleId: string) => Promise<void>;
   deleteSale: (id: string) => Promise<void>;
@@ -40,8 +40,8 @@ interface DataContextProps {
   deleteEstimate: (id: string) => Promise<void>;
   addExpense: (expense: Omit<Expense, 'id' | 'date'>) => Promise<void>;
   deleteExpense: (id:string) => Promise<void>;
-  addTransaction: (transaction: Omit<Transaction, 'id'>) => Promise<any>;
-  updateTransaction: (id: string, transaction: Partial<Omit<Transaction, 'id'>>) => Promise<void>;
+  addTransaction: (transaction: Omit<Transaction, 'id' | 'date'>) => Promise<any>;
+  updateTransaction: (id: string, transaction: Partial<Omit<Transaction, 'id' | 'date'>>) => Promise<void>;
   deleteTransaction: (id: string) => Promise<void>;
   addSalaryPayment: (payment: Omit<SalaryPayment, 'id' | 'date'>) => Promise<void>;
   deleteSalaryPayment: (paymentId: string) => Promise<void>;
@@ -390,14 +390,14 @@ export const DataProvider = ({ children }: { children: ReactNode }) => {
     };
 
 
-    const addTransaction = async (transaction: Omit<Transaction, 'id'>) => {
+    const addTransaction = async (transaction: Omit<Transaction, 'id' | 'date'>) => {
         if (!transactionsCol) throw new Error("Transactions collection not available");
-        const newTransaction = { ...transaction, date: transaction.date || serverTimestamp() };
+        const newTransaction = { ...transaction, date: serverTimestamp() };
         const colRef = collection(firestore, 'transactions');
         return addDocumentNonBlocking(colRef, newTransaction);
     };
     
-    const updateTransaction = async (id: string, transaction: Partial<Omit<Transaction, 'id'>>) => {
+    const updateTransaction = async (id: string, transaction: Partial<Omit<Transaction, 'id' | 'date'>>) => {
         if (!user) throw new Error("User not authenticated");
         const transactionRef = doc(firestore, 'transactions', id);
         return updateDocumentNonBlocking(transactionRef, transaction);
@@ -408,7 +408,7 @@ export const DataProvider = ({ children }: { children: ReactNode }) => {
         deleteDocumentNonBlocking(doc(firestore, 'transactions', id));
     };
 
-    const addSale = async (sale: Omit<Sale, 'id' | 'total' | 'status'>) => {
+    const addSale = async (sale: Omit<Sale, 'id' | 'total' | 'status' | 'date'>) => {
         if (!salesCol || !user) throw new Error("Sales collection not available or user not authenticated");
         
         await runTransaction(firestore, async (transaction) => {
@@ -434,14 +434,14 @@ export const DataProvider = ({ children }: { children: ReactNode }) => {
                 id: newSaleId,
                 total,
                 status: 'draft' as const,
-                date: sale.date || serverTimestamp(),
+                date: serverTimestamp(),
             };
 
             transaction.set(newSaleRef, newSaleData);
         });
     };
 
-    const updateSale = async (saleId: string, sale: Omit<Sale, 'id' | 'total' | 'status'>) => {
+    const updateSale = async (saleId: string, sale: Omit<Sale, 'id' | 'total' | 'status' | 'date'>) => {
         if (!user) throw new Error("User not authenticated");
         const saleRef = doc(firestore, 'sales', saleId);
 
@@ -456,7 +456,7 @@ export const DataProvider = ({ children }: { children: ReactNode }) => {
         const updatedSaleData = {
             ...sale,
             total,
-            date: sale.date
+            date: serverTimestamp()
         };
 
         return updateDocumentNonBlocking(saleRef, updatedSaleData);
