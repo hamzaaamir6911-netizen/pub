@@ -2,7 +2,7 @@
 "use client";
 
 import { useState, useEffect, useMemo } from "react";
-import { PlusCircle, X, MoreHorizontal, Printer, Edit } from "lucide-react";
+import { PlusCircle, X, MoreHorizontal, Printer, Edit, Calendar as CalendarIcon } from "lucide-react";
 import {
   Table,
   TableBody,
@@ -38,9 +38,12 @@ import { formatCurrency, formatDate } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { cn } from "@/lib/utils";
+import { Popover, PopoverTrigger, PopoverContent } from "@/components/ui/popover";
+import { Calendar } from "@/components/ui/calendar";
+import { format } from "date-fns";
 
 
-function AddTransactionForm({ onTransactionAdded }: { onTransactionAdded: (newTransaction: Omit<Transaction, 'id' | 'date'>) => void }) {
+function AddTransactionForm({ onTransactionAdded }: { onTransactionAdded: (newTransaction: Omit<Transaction, 'id'>) => void }) {
   const { customers, vendors } = useData();
   const [description, setDescription] = useState('');
   const [amount, setAmount] = useState(0);
@@ -48,6 +51,7 @@ function AddTransactionForm({ onTransactionAdded }: { onTransactionAdded: (newTr
   const [category, setCategory] = useState('');
   const [customerId, setCustomerId] = useState<string | undefined>(undefined);
   const [vendorId, setVendorId] = useState<string | undefined>(undefined);
+  const [date, setDate] = useState<Date | undefined>(new Date());
   const { toast } = useToast();
 
   useEffect(() => {
@@ -72,14 +76,14 @@ function AddTransactionForm({ onTransactionAdded }: { onTransactionAdded: (newTr
   }, [type, customerId, vendorId, customers, vendors]);
 
   const handleSubmit = () => {
-    if (!description || amount <= 0) {
-      toast({ variant: 'destructive', title: 'Please fill all fields.' });
+    if (!description || amount <= 0 || !date) {
+      toast({ variant: 'destructive', title: 'Please fill all fields, including date.' });
       return;
     }
     const customer = customers.find(c => c.id === customerId);
     const vendor = vendors.find(v => v.id === vendorId);
 
-    const newTransaction: Omit<Transaction, 'id' | 'date'> = {
+    const newTransaction: Omit<Transaction, 'id'> = {
       description,
       amount,
       type,
@@ -88,6 +92,7 @@ function AddTransactionForm({ onTransactionAdded }: { onTransactionAdded: (newTr
       customerName: customer?.customerName,
       vendorId: vendorId,
       vendorName: vendor?.name,
+      date: date
     };
     onTransactionAdded(newTransaction);
     toast({ title: 'Transaction Added!', description: `A transaction of ${formatCurrency(amount)} has been recorded.` });
@@ -96,6 +101,7 @@ function AddTransactionForm({ onTransactionAdded }: { onTransactionAdded: (newTr
     setCategory('');
     setCustomerId(undefined);
     setVendorId(undefined);
+    setDate(new Date());
   };
 
   return (
@@ -104,6 +110,31 @@ function AddTransactionForm({ onTransactionAdded }: { onTransactionAdded: (newTr
         <DialogTitle>Add New Voucher</DialogTitle>
       </DialogHeader>
       <div className="space-y-4 py-4">
+        <div className="space-y-2">
+            <Label htmlFor="date">Transaction Date</Label>
+             <Popover>
+                <PopoverTrigger asChild>
+                    <Button
+                        variant={"outline"}
+                        className={cn(
+                            "w-full justify-start text-left font-normal",
+                            !date && "text-muted-foreground"
+                        )}
+                    >
+                        <CalendarIcon className="mr-2 h-4 w-4" />
+                        {date ? format(date, "PPP") : <span>Pick a date</span>}
+                    </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-auto p-0">
+                    <Calendar
+                        mode="single"
+                        selected={date}
+                        onSelect={setDate}
+                        initialFocus
+                    />
+                </PopoverContent>
+            </Popover>
+        </div>
         <div className="space-y-2">
             <Label htmlFor="type">Transaction Type</Label>
             <Select onValueChange={(v: any) => setType(v)} value={type}>
@@ -167,22 +198,24 @@ function AddTransactionForm({ onTransactionAdded }: { onTransactionAdded: (newTr
   );
 }
 
-function EditTransactionForm({ transaction, onTransactionUpdated }: { transaction: Transaction, onTransactionUpdated: (id: string, updatedTransaction: Partial<Omit<Transaction, 'id' | 'date'>>) => void }) {
+function EditTransactionForm({ transaction, onTransactionUpdated }: { transaction: Transaction, onTransactionUpdated: (id: string, updatedTransaction: Partial<Omit<Transaction, 'id'>>) => void }) {
   const [description, setDescription] = useState(transaction.description);
   const [amount, setAmount] = useState(transaction.amount);
+  const [date, setDate] = useState<Date | undefined>(new Date(transaction.date));
   const { toast } = useToast();
   
   const isLinkedTransaction = useMemo(() => ['Sale', 'Salary', 'Opening Balance'].includes(transaction.category), [transaction.category]);
 
   const handleSubmit = () => {
-    if (!description || amount <= 0) {
+    if (!description || amount <= 0 || !date) {
       toast({ variant: 'destructive', title: 'Please fill all fields.' });
       return;
     }
 
-    const updatedTransaction: Partial<Omit<Transaction, 'id' | 'date'>> = {
+    const updatedTransaction: Partial<Omit<Transaction, 'id'>> = {
       description,
       amount,
+      date,
     };
     onTransactionUpdated(transaction.id, updatedTransaction);
     toast({ title: 'Transaction Updated!', description: `Transaction has been updated.` });
@@ -194,6 +227,35 @@ function EditTransactionForm({ transaction, onTransactionUpdated }: { transactio
         <DialogTitle>Edit Voucher</DialogTitle>
       </DialogHeader>
       <div className="space-y-4 py-4">
+        <div className="space-y-2">
+            <Label>Transaction Date</Label>
+             <Popover>
+                <PopoverTrigger asChild>
+                    <Button
+                        variant={"outline"}
+                        className={cn(
+                            "w-full justify-start text-left font-normal",
+                            !date && "text-muted-foreground"
+                        )}
+                        disabled={isLinkedTransaction}
+                    >
+                        <CalendarIcon className="mr-2 h-4 w-4" />
+                        {date ? format(date, "PPP") : <span>Pick a date</span>}
+                    </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-auto p-0">
+                    <Calendar
+                        mode="single"
+                        selected={date}
+                        onSelect={setDate}
+                        initialFocus
+                    />
+                </PopoverContent>
+            </Popover>
+            {isLinkedTransaction && (
+             <p className="text-xs text-muted-foreground">Date for system-generated transactions cannot be edited.</p>
+           )}
+        </div>
         <div className="space-y-2">
           <Label>Transaction Type</Label>
           <Input value={transaction.type} disabled />
@@ -245,12 +307,12 @@ export default function LedgerPage() {
   const [selectedVendorId, setSelectedVendorId] = useState<string | null>(null);
   const { toast } = useToast();
 
-  const handleTransactionAdded = (newTransaction: Omit<Transaction, 'id' | 'date'>) => {
+  const handleTransactionAdded = (newTransaction: Omit<Transaction, 'id'>) => {
     addTransaction(newTransaction);
     setAddModalOpen(false);
   }
 
-  const handleTransactionUpdated = (id: string, updatedTransaction: Partial<Omit<Transaction, 'id' | 'date'>>) => {
+  const handleTransactionUpdated = (id: string, updatedTransaction: Partial<Omit<Transaction, 'id'>>) => {
     updateTransaction(id, updatedTransaction);
     setEditModalOpen(false);
     setEditingTransaction(null);
