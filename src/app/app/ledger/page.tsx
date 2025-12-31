@@ -283,7 +283,7 @@ function EditTransactionForm({ transaction, onTransactionUpdated }: { transactio
                       <Calendar
                           mode="single"
                           selected={date}
-                          onSelect={(newDate) => setDate(newDate)}
+                          onSelect={setDate}
                           initialFocus
                           disabled={isLinkedTransaction}
                       />
