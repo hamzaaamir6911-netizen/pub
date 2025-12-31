@@ -40,8 +40,8 @@ interface DataContextProps {
   deleteEstimate: (id: string) => Promise<void>;
   addExpense: (expense: Omit<Expense, 'id' | 'date'>) => Promise<void>;
   deleteExpense: (id:string) => Promise<void>;
-  addTransaction: (transaction: Omit<Transaction, 'id' | 'date'>) => Promise<any>;
-  updateTransaction: (id: string, transaction: Partial<Omit<Transaction, 'id' | 'date'>>) => Promise<void>;
+  addTransaction: (transaction: Omit<Transaction, 'id'>) => Promise<any>;
+  updateTransaction: (id: string, transaction: Partial<Omit<Transaction, 'id'>>) => Promise<void>;
   deleteTransaction: (id: string) => Promise<void>;
   addSalaryPayment: (payment: Omit<SalaryPayment, 'id' | 'date'>) => Promise<void>;
   deleteSalaryPayment: (paymentId: string) => Promise<void>;
@@ -390,14 +390,14 @@ export const DataProvider = ({ children }: { children: ReactNode }) => {
     };
 
 
-    const addTransaction = async (transaction: Omit<Transaction, 'id' | 'date'>) => {
+    const addTransaction = async (transaction: Omit<Transaction, 'id'>) => {
         if (!transactionsCol) throw new Error("Transactions collection not available");
-        const newTransaction = { ...transaction, date: serverTimestamp() };
+        const newTransaction = { ...transaction, date: transaction.date || serverTimestamp() };
         const colRef = collection(firestore, 'transactions');
         return addDocumentNonBlocking(colRef, newTransaction);
     };
     
-    const updateTransaction = async (id: string, transaction: Partial<Omit<Transaction, 'id' | 'date'>>) => {
+    const updateTransaction = async (id: string, transaction: Partial<Omit<Transaction, 'id'>>) => {
         if (!user) throw new Error("User not authenticated");
         const transactionRef = doc(firestore, 'transactions', id);
         return updateDocumentNonBlocking(transactionRef, transaction);
