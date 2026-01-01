@@ -241,7 +241,7 @@ function AddCustomerForm({ onCustomerAdded }: { onCustomerAdded: (newCustomer: O
 }
 
 
-function NewSaleForm({ onSaleAdded, onSaleUpdated, initialData }: { onSaleAdded: (newSale: Omit<Sale, 'id' | 'total' | 'status' | 'date'>) => void, onSaleUpdated: (saleId: string, updatedSale: Omit<Sale, 'id' | 'total' | 'status' | 'date'>) => void, initialData?: Sale | null }) {
+function NewSaleForm({ onSaleAdded, onSaleUpdated, initialData }: { onSaleAdded: (newSale: Omit<Sale, 'id' | 'total' | 'status'>) => void, onSaleUpdated: (saleId: string, updatedSale: Omit<Sale, 'id' | 'total' | 'status'>) => void, initialData?: Sale | null }) {
     const { toast } = useToast();
     const { customers, items: allItems, addCustomer } = useData();
     
@@ -249,7 +249,7 @@ function NewSaleForm({ onSaleAdded, onSaleUpdated, initialData }: { onSaleAdded:
     const [saleItems, setSaleItems] = useState<Partial<SaleItem>[]>([{itemId: "", quantity: 1, feet: 1, discount: 0, color: '', thickness: '' }]);
     const [overallDiscount, setOverallDiscount] = useState(0);
     const [isCustomerModalOpen, setCustomerModalOpen] = useState(false);
-    const [saleDate, setSaleDate] = useState<string>(new Date().toISOString().split('T')[0]); // YYYY-MM-DD
+    const [saleDate, setSaleDate] = useState<Date>(new Date());
 
     const isEditMode = !!initialData;
 
@@ -258,7 +258,7 @@ function NewSaleForm({ onSaleAdded, onSaleUpdated, initialData }: { onSaleAdded:
             setSelectedCustomer(initialData.customerId);
             setSaleItems(initialData.items.map(item => ({ ...item })));
             setOverallDiscount(initialData.discount || 0);
-            setSaleDate(new Date(initialData.date).toISOString().split('T')[0]);
+            setSaleDate(new Date(initialData.date));
         } else {
             clearForm();
         }
@@ -312,7 +312,7 @@ function NewSaleForm({ onSaleAdded, onSaleUpdated, initialData }: { onSaleAdded:
         setSelectedCustomer("");
         setSaleItems([{itemId: "", quantity: 1, feet: 1, discount: 0, color: '', thickness: ''}]);
         setOverallDiscount(0);
-        setSaleDate(new Date().toISOString().split('T')[0]);
+        setSaleDate(new Date());
     }
     
     const handleSave = async () => {
@@ -353,11 +353,12 @@ function NewSaleForm({ onSaleAdded, onSaleUpdated, initialData }: { onSaleAdded:
             }
         }) as SaleItem[];
 
-        const saleData: Omit<Sale, 'id' | 'total' | 'status' | 'date'> = {
+        const saleData: Omit<Sale, 'id' | 'total' | 'status'> = {
             customerId: selectedCustomer,
             customerName: customer.customerName,
             items: finalSaleItems,
             discount: overallDiscount,
+            date: saleDate,
         };
 
         if (isEditMode && initialData) {
@@ -414,8 +415,8 @@ function NewSaleForm({ onSaleAdded, onSaleUpdated, initialData }: { onSaleAdded:
                         <Input
                             id="date"
                             type="date"
-                            value={saleDate}
-                            onChange={(e) => setSaleDate(e.target.value)}
+                            value={saleDate.toISOString().split('T')[0]}
+                            onChange={(e) => setSaleDate(new Date(e.target.value))}
                         />
                     </div>
                     <div className="space-y-2">
@@ -543,12 +544,12 @@ export default function SalesPage() {
     deleteSale(id);
   };
   
-  const handleSaleAdded = (newSale: Omit<Sale, 'id' |'total'|'status' | 'date'>) => {
+  const handleSaleAdded = (newSale: Omit<Sale, 'id' |'total'|'status'>) => {
     addSale(newSale);
     setActiveTab("history");
   }
 
-  const handleSaleUpdated = (saleId: string, updatedSale: Omit<Sale, 'id'|'total'|'status' | 'date'>) => {
+  const handleSaleUpdated = (saleId: string, updatedSale: Omit<Sale, 'id'|'total'|'status'>) => {
     updateSale(saleId, updatedSale);
     setActiveTab("history");
     setEditingSale(null);

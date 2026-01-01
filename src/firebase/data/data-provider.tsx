@@ -444,7 +444,7 @@ export const DataProvider = ({ children }: { children: ReactNode }) => {
                 id: newSaleId,
                 total,
                 status: 'draft' as const,
-                date: new Date(sale.date),
+                date: toDate(sale.date),
             };
 
             transaction.set(newSaleRef, newSaleData);
@@ -528,7 +528,7 @@ export const DataProvider = ({ children }: { children: ReactNode }) => {
         batch.update(saleRef, { status: 'posted' });
 
         // 2. Add transaction to ledger
-        const transactionData = {
+        const transactionData: Omit<Transaction, 'id'> = {
             description: `Sale to ${sale.customerName} (Invoice: ${sale.id})`,
             amount: sale.total,
             type: 'debit' as const,
@@ -794,6 +794,8 @@ export const useData = () => {
 };
 
     
+    
+
     
 
     
