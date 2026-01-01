@@ -55,25 +55,21 @@ h1, h2, h3, h4, h5, h6 {
     display: none !important;
   }
 
-  html, body {
-    width: 100%;
-    height: auto;
+  body {
     background: #fff !important;
-    color: #000 !important;
-    font-size: 10pt; /* Adjust base font size for print */
   }
 
-  .printable-area {
-    background: #fff !important;
-    color: #000 !important;
+  .printable-area, .printable-area * {
+      visibility: visible;
+  }
+
+  #printable-invoice, #printable-challan, #printable-estimate, #printable-payslip {
+      position: absolute;
+      left: 0;
+      top: 0;
+      width: 100%;
   }
   
-  .printable-area * {
-      color: #000 !important;
-      border-color: #ccc !important;
-  }
-
-  /* Hide overlays and make dialog content the main focus */
   [data-radix-dialog-overlay] {
     display: none !important;
   }
@@ -96,34 +92,6 @@ h1, h2, h3, h4, h5, h6 {
   [data-radix-dialog-content] .overflow-y-auto {
       overflow-y: visible !important;
       height: auto !important;
-  }
-  
-  /* Ensure the content inside the dialog is the only thing visible */
-  body > *:not([data-radix-dialog-portal]) {
-    display: none;
-  }
-  body > [data-radix-dialog-portal] {
-    display: block !important;
-    position: static !important;
-  }
-  
-  /* Handle page breaks gracefully */
-  h1, h2, h3, h4, h5, h6 {
-    page-break-after: avoid;
-  }
-  table, tr, td, th {
-    page-break-inside: avoid;
-  }
-  thead {
-    display: table-header-group; /* Repeat table headers on each page */
-  }
-
-  /* Color overrides for better printing */
-  .text-red-500, .text-red-600 {
-    color: #ef4444 !important;
-  }
-  .text-green-500, .text-green-600, .text-green-700 {
-    color: #22c55e !important;
   }
 }
     
