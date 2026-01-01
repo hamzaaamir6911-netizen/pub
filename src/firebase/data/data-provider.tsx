@@ -415,41 +415,35 @@ export const DataProvider = ({ children }: { children: ReactNode }) => {
 
     const addSale = async (sale: Omit<Sale, 'id' | 'total' | 'status'>) => {
         if (!salesCol || !user) throw new Error("Sales collection not available or user not authenticated");
-        
-        await runTransaction(firestore, async (transaction) => {
-            const counterRef = doc(firestore, 'counters', 'salesCounter');
-            const counterDoc = await transaction.get(counterRef);
-
-            let newSaleNumber = 1;
-            if (counterDoc.exists()) {
-                newSaleNumber = counterDoc.data().currentNumber + 1;
-            } else {
-                // If counter doesn't exist, create it.
-                transaction.set(counterRef, { currentNumber: 0 });
-            }
-
-            const newSaleId = `INV-${String(newSaleNumber).padStart(3, '0')}`;
-            const newSaleRef = doc(collection(firestore, 'sales'), newSaleId);
-
-            const subtotal = sale.items.reduce((total, currentItem) => {
-                const itemTotal = (currentItem.feet || 1) * currentItem.price * currentItem.quantity;
-                const discountAmount = itemTotal * ((currentItem.discount || 0) / 100);
-                return total + (itemTotal - discountAmount);
-            }, 0);
-            const overallDiscountAmount = (subtotal * sale.discount) / 100;
-            const total = subtotal - overallDiscountAmount;
-
-            const newSaleData = {
-                ...sale,
-                id: newSaleId,
-                total,
-                status: 'draft' as const,
-                date: toDate(sale.date),
-            };
-
-            transaction.set(newSaleRef, newSaleData);
-            transaction.update(counterRef, { currentNumber: newSaleNumber });
-        });
+    
+        const q = query(collection(firestore, 'sales'), orderBy('id', 'desc'));
+        const querySnapshot = await getDocs(q);
+        let lastIdNum = 0;
+        if (!querySnapshot.empty) {
+            const lastSale = querySnapshot.docs[0].data() as Sale;
+            lastIdNum = parseInt(lastSale.id.split('-')[1], 10) || 0;
+        }
+        const newIdNum = lastIdNum + 1;
+        const newSaleId = `INV-${String(newIdNum).padStart(3, '0')}`;
+    
+        const subtotal = sale.items.reduce((total, currentItem) => {
+            const itemTotal = (currentItem.feet || 1) * currentItem.price * currentItem.quantity;
+            const discountAmount = itemTotal * ((currentItem.discount || 0) / 100);
+            return total + (itemTotal - discountAmount);
+        }, 0);
+        const overallDiscountAmount = (subtotal * sale.discount) / 100;
+        const total = subtotal - overallDiscountAmount;
+    
+        const newSale: Sale = {
+            ...sale,
+            id: newSaleId,
+            total,
+            status: 'draft',
+            date: new Date(sale.date)
+        };
+    
+        const saleRef = doc(firestore, 'sales', newSaleId);
+        await setDoc(saleRef, newSale);
     };
 
     const updateSale = async (saleId: string, sale: Omit<Sale, 'id' | 'total' | 'status'>) => {
@@ -475,40 +469,34 @@ export const DataProvider = ({ children }: { children: ReactNode }) => {
     
     const addEstimate = async (estimate: Omit<Estimate, 'id' | 'date' | 'total'>) => {
         if (!estimatesCol || !user) throw new Error("Estimates collection not available or user not authenticated");
-        
-        await runTransaction(firestore, async (transaction) => {
-            const counterRef = doc(firestore, 'counters', 'estimatesCounter');
-            const counterDoc = await transaction.get(counterRef);
-
-            let newEstimateNumber = 1;
-            if (counterDoc.exists()) {
-                newEstimateNumber = counterDoc.data().currentNumber + 1;
-            } else {
-                // If counter doesn't exist, create it.
-                transaction.set(counterRef, { currentNumber: 0 });
-            }
-            
-            const newEstimateId = `EST-${String(newEstimateNumber).padStart(3, '0')}`;
-            const newEstimateRef = doc(collection(firestore, 'estimates'), newEstimateId);
-
-            const subtotal = estimate.items.reduce((total, currentItem) => {
-                const itemTotal = (currentItem.feet || 1) * currentItem.price * currentItem.quantity;
-                const discountAmount = itemTotal * ((currentItem.discount || 0) / 100);
-                return total + (itemTotal - discountAmount);
-            }, 0);
-            const overallDiscountAmount = (subtotal * estimate.discount) / 100;
-            const total = subtotal - overallDiscountAmount;
-
-            const newEstimateData = {
-                ...estimate,
-                id: newEstimateId,
-                total,
-                date: serverTimestamp(),
-            };
-
-            transaction.set(newEstimateRef, newEstimateData);
-            transaction.update(counterRef, { currentNumber: newEstimateNumber });
-        });
+    
+        const q = query(collection(firestore, 'estimates'), orderBy('id', 'desc'));
+        const querySnapshot = await getDocs(q);
+        let lastIdNum = 0;
+        if (!querySnapshot.empty) {
+            const lastEstimate = querySnapshot.docs[0].data() as Estimate;
+            lastIdNum = parseInt(lastEstimate.id.split('-')[1], 10) || 0;
+        }
+        const newIdNum = lastIdNum + 1;
+        const newEstimateId = `EST-${String(newIdNum).padStart(3, '0')}`;
+    
+        const subtotal = estimate.items.reduce((total, currentItem) => {
+            const itemTotal = (currentItem.feet || 1) * currentItem.price * currentItem.quantity;
+            const discountAmount = itemTotal * ((currentItem.discount || 0) / 100);
+            return total + (itemTotal - discountAmount);
+        }, 0);
+        const overallDiscountAmount = (subtotal * estimate.discount) / 100;
+        const total = subtotal - overallDiscountAmount;
+    
+        const newEstimate: Estimate = {
+            ...estimate,
+            id: newEstimateId,
+            total,
+            date: new Date(),
+        };
+    
+        const estimateRef = doc(firestore, 'estimates', newEstimateId);
+        await setDoc(estimateRef, newEstimate);
     };
     
     const deleteEstimate = async (id: string) => {
