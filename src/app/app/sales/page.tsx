@@ -3,7 +3,7 @@
 "use client";
 
 import { useState, useRef, useEffect } from "react";
-import { MoreHorizontal, PlusCircle, Trash2, RotateCcw, FileText, CheckCircle, Edit, Calendar as CalendarIcon, Undo2, Printer } from "lucide-react";
+import { MoreHorizontal, PlusCircle, Trash2, RotateCcw, FileText, CheckCircle, Edit, Calendar as CalendarIcon, Undo2, Printer, Truck } from "lucide-react";
 import {
   Table,
   TableBody,
@@ -46,6 +46,90 @@ import { useToast } from "@/hooks/use-toast";
 import { useData } from "@/firebase/data/data-provider";
 import { Badge } from "@/components/ui/badge";
 
+
+function DeliveryChallan({ sale }: { sale: Sale }) {
+    const { customers } = useData();
+    const customer = customers.find(c => c.id === sale.customerId);
+
+    return (
+        <DialogContent className="max-w-6xl max-h-[90vh] flex flex-col">
+            <DialogHeader className="flex-shrink-0 no-print">
+                <div className="flex flex-col items-center justify-center pt-4">
+                    <DialogTitle>Delivery Challan: {sale.id}</DialogTitle>
+                </div>
+            </DialogHeader>
+            <div className="flex-grow overflow-y-auto" id="printable-challan">
+                 <div className="p-6">
+                    <div className="text-center mb-8">
+                      <h1 className="text-3xl font-bold font-headline">ARCO Aluminium Company</h1>
+                      <p className="mt-2 text-xl font-bold">Delivery Challan</p>
+                    </div>
+                    <div className="p-6">
+                        <div className="grid grid-cols-2 gap-4 mb-6 font-bold">
+                            <div>
+                                <p className="text-lg">Customer:</p>
+                                <p>{sale.customerName}</p>
+                                <p>{customer?.address}</p>
+                                <p>{customer?.phoneNumber}</p>
+                            </div>
+                            <div className="text-right">
+                                <p className="text-lg">Challan No:</p>
+                                <p>{sale.id}</p>
+                                <p className="mt-2 text-lg">Date:</p>
+                                <p>{formatDate(sale.date)}</p>
+                            </div>
+                        </div>
+
+                        <div className="overflow-x-auto">
+                            <Table>
+                                <TableHeader>
+                                    <TableRow>
+                                        <TableHead className="font-bold">Item</TableHead>
+                                        <TableHead className="font-bold">Colour</TableHead>
+                                        <TableHead className="font-bold">Thickness</TableHead>
+                                        <TableHead className="text-right font-bold">Feet</TableHead>
+                                        <TableHead className="text-right font-bold">Quantity</TableHead>
+                                    </TableRow>
+                                </TableHeader>
+                                <TableBody>
+                                    {sale.items.map((item, index) => (
+                                        <TableRow key={index} className="font-bold">
+                                            <TableCell>{item.itemName}</TableCell>
+                                            <TableCell>{item.color}</TableCell>
+                                            <TableCell>{item.thickness || '-'}</TableCell>
+                                            <TableCell className="text-right">{item.feet ? item.feet.toFixed(2) : '-'}</TableCell>
+                                            <TableCell className="text-right">{item.quantity}</TableCell>
+                                        </TableRow>
+                                    ))}
+                                </TableBody>
+                            </Table>
+                        </div>
+
+                        <div className="mt-24 grid grid-cols-2 gap-4 text-center font-bold">
+                            <div className="border-t pt-2">
+                                <p>Receiver's Signature</p>
+                            </div>
+                            <div className="border-t pt-2">
+                                <p>Driver's Signature</p>
+                            </div>
+                        </div>
+
+                         <div className="mt-24 text-center text-xs text-gray-500 border-t pt-4 font-bold">
+                            <p>Industrial Estate, Hayatabad Road B-5 PLOT 59 PESHAWAR</p>
+                            <p>Phone: +923334646356</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <DialogFooter className="mt-4 flex-shrink-0 no-print">
+                 <Button variant="outline" onClick={() => window.print()}>
+                    <Printer className="mr-2 h-4 w-4" />
+                    Print Challan
+                </Button>
+            </DialogFooter>
+        </DialogContent>
+    );
+}
 
 function SaleInvoice({ sale, onPost, onUnpost }: { sale: Sale, onPost: (saleId: string) => void, onUnpost: (saleId: string) => void }) {
     const { customers } = useData();
@@ -533,6 +617,7 @@ export default function SalesPage() {
   const { sales, addSale, updateSale, deleteSale, postSale, unpostSale } = useData();
   const [activeTab, setActiveTab] = useState("history");
   const [selectedSale, setSelectedSale] = useState<Sale | null>(null);
+  const [selectedChallan, setSelectedChallan] = useState<Sale | null>(null);
   const [editingSale, setEditingSale] = useState<Sale | null>(null);
 
   const sortedSales = [...sales].sort((a, b) => {
@@ -634,7 +719,7 @@ export default function SalesPage() {
                         {formatCurrency(sale.total)}
                       </TableCell>
                       <TableCell className="no-print">
-                        <Dialog onOpenChange={(open) => !open && setSelectedSale(null)}>
+                        <Dialog onOpenChange={(open) => !open && (setSelectedSale(null), setSelectedChallan(null))}>
                           <DropdownMenu>
                             <DropdownMenuTrigger asChild>
                               <Button aria-haspopup="true" size="icon" variant="ghost">
@@ -647,7 +732,13 @@ export default function SalesPage() {
                                <DialogTrigger asChild>
                                 <DropdownMenuItem onSelect={() => setSelectedSale(sale)}>
                                     <FileText className="mr-2 h-4 w-4"/>
-                                    View Details
+                                    View Invoice
+                                </DropdownMenuItem>
+                              </DialogTrigger>
+                              <DialogTrigger asChild>
+                                <DropdownMenuItem onSelect={() => setSelectedChallan(sale)}>
+                                    <Truck className="mr-2 h-4 w-4"/>
+                                    Delivery Challan
                                 </DropdownMenuItem>
                               </DialogTrigger>
                               <DropdownMenuItem
@@ -668,6 +759,9 @@ export default function SalesPage() {
                           </DropdownMenu>
                           {selectedSale && selectedSale.id === sale.id && (
                               <SaleInvoice sale={selectedSale} onPost={handlePostSale} onUnpost={handleUnpostSale} />
+                          )}
+                          {selectedChallan && selectedChallan.id === sale.id && (
+                              <DeliveryChallan sale={selectedChallan} />
                           )}
                         </Dialog>
                       </TableCell>
