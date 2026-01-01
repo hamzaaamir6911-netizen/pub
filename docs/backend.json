@@ -298,6 +298,18 @@
         "color",
         "thickness"
       ]
+    },
+    "Counter": {
+        "title": "Counter",
+        "type": "object",
+        "description": "A generic counter for sequential IDs.",
+        "properties": {
+            "currentNumber": {
+                "type": "number",
+                "description": "The last used number for a sequence."
+            }
+        },
+        "required": ["currentNumber"]
     }
   },
   "auth": {
@@ -366,6 +378,16 @@
             "$ref": "#/backend/entities/Estimate"
           },
           "description": "Stores estimate/quotation information."
+        }
+      },
+      {
+        "path": "/counters/{counterId}",
+        "definition": {
+          "entityName": "counter",
+          "schema": {
+            "$ref": "#/backend/entities/Counter"
+          },
+          "description": "Stores counters for sequential IDs."
         }
       }
     ]

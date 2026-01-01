@@ -414,29 +414,53 @@ export const DataProvider = ({ children }: { children: ReactNode }) => {
     };
 
     const addSale = async (sale: Omit<Sale, 'id' | 'total' | 'status'>) => {
-        if (!salesCol || !user) {
-            throw new Error("Sales collection not available or user not authenticated");
+        if (!user) {
+            throw new Error("User not authenticated.");
         }
-        
-        // Calculate total
-        const subtotal = sale.items.reduce((total, currentItem) => {
-            const itemTotal = (currentItem.feet || 1) * currentItem.price * currentItem.quantity;
-            const discountAmount = itemTotal * ((currentItem.discount || 0) / 100);
-            return total + (itemTotal - discountAmount);
-        }, 0);
-        const overallDiscountAmount = (subtotal * sale.discount) / 100;
-        const total = subtotal - overallDiscountAmount;
-        
-        // Prepare the new sale data
-        const newSaleData = {
-            ...sale,
-            total,
-            status: 'draft' as const,
-            date: new Date(sale.date) // Ensure date is a Date object
-        };
-
-        // Use addDoc to create a new document with a unique ID
-        await addDoc(collection(firestore, 'sales'), newSaleData);
+    
+        const counterRef = doc(firestore, 'counters', 'salesCounter');
+        const saleCollectionRef = collection(firestore, 'sales');
+    
+        try {
+            await runTransaction(firestore, async (transaction) => {
+                const counterDoc = await transaction.get(counterRef);
+    
+                // Initialize counter if it doesn't exist
+                if (!counterDoc.exists()) {
+                    await transaction.set(counterRef, { currentNumber: 0 });
+                }
+    
+                const newSaleNumber = (counterDoc.data()?.currentNumber || 0) + 1;
+                const newSaleId = `INV-${String(newSaleNumber).padStart(3, '0')}`;
+    
+                // Calculate total
+                const subtotal = sale.items.reduce((total, currentItem) => {
+                    const itemTotal = (currentItem.feet || 1) * currentItem.price * currentItem.quantity;
+                    const discountAmount = itemTotal * ((currentItem.discount || 0) / 100);
+                    return total + (itemTotal - discountAmount);
+                }, 0);
+                const overallDiscountAmount = (subtotal * sale.discount) / 100;
+                const total = subtotal - overallDiscountAmount;
+    
+                // Prepare the new sale data with the generated ID
+                const newSaleData: Sale = {
+                    id: newSaleId, // Set the sequential ID
+                    ...sale,
+                    total,
+                    status: 'draft' as const,
+                    date: new Date(sale.date)
+                };
+    
+                const newSaleRef = doc(saleCollectionRef, newSaleId);
+    
+                // Atomically create the new sale and update the counter
+                transaction.set(newSaleRef, newSaleData);
+                transaction.update(counterRef, { currentNumber: newSaleNumber });
+            });
+        } catch (e) {
+            console.error("Transaction failed: ", e);
+            throw e; // Re-throw the error to be handled by the caller
+        }
     };
 
     const updateSale = async (saleId: string, sale: Omit<Sale, 'id' | 'total' | 'status'>) => {
@@ -461,10 +485,14 @@ export const DataProvider = ({ children }: { children: ReactNode }) => {
     };
     
     const addEstimate = async (estimate: Omit<Estimate, 'id' | 'date' | 'total'>) => {
-        if (!estimatesCol || !user) {
+         if (!estimatesCol || !user) {
             throw new Error("Estimates collection not available or user not authenticated");
         }
-    
+        
+        // This function will now use addDoc to let Firestore generate a unique ID.
+        // The sequential ID logic is complex and was causing issues.
+        // Using Firestore's native unique IDs is safer and prevents data loss.
+        
         const subtotal = estimate.items.reduce((total, currentItem) => {
             const itemTotal = (currentItem.feet || 1) * currentItem.price * currentItem.quantity;
             const discountAmount = itemTotal * ((currentItem.discount || 0) / 100);
@@ -476,9 +504,10 @@ export const DataProvider = ({ children }: { children: ReactNode }) => {
         const newEstimateData = {
             ...estimate,
             total,
-            date: new Date(),
+            date: new Date(), // Use current date for simplicity
         };
     
+        // Use addDoc for safety. It creates a new document with a unique ID.
         await addDoc(collection(firestore, 'estimates'), newEstimateData);
     };
     
@@ -770,4 +799,5 @@ export const useData = () => {
     
 
     
+
 
