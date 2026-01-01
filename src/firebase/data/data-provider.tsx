@@ -414,18 +414,11 @@ export const DataProvider = ({ children }: { children: ReactNode }) => {
     };
 
     const addSale = async (sale: Omit<Sale, 'id' | 'total' | 'status'>) => {
-        if (!salesCol || !user) throw new Error("Sales collection not available or user not authenticated");
-    
-        const q = query(collection(firestore, 'sales'), orderBy('id', 'desc'));
-        const querySnapshot = await getDocs(q);
-        let lastIdNum = 0;
-        if (!querySnapshot.empty) {
-            const lastSale = querySnapshot.docs[0].data() as Sale;
-            lastIdNum = parseInt(lastSale.id.split('-')[1], 10) || 0;
+        if (!salesCol || !user) {
+            throw new Error("Sales collection not available or user not authenticated");
         }
-        const newIdNum = lastIdNum + 1;
-        const newSaleId = `INV-${String(newIdNum).padStart(3, '0')}`;
-    
+        
+        // Calculate total
         const subtotal = sale.items.reduce((total, currentItem) => {
             const itemTotal = (currentItem.feet || 1) * currentItem.price * currentItem.quantity;
             const discountAmount = itemTotal * ((currentItem.discount || 0) / 100);
@@ -433,17 +426,17 @@ export const DataProvider = ({ children }: { children: ReactNode }) => {
         }, 0);
         const overallDiscountAmount = (subtotal * sale.discount) / 100;
         const total = subtotal - overallDiscountAmount;
-    
-        const newSale: Sale = {
+        
+        // Prepare the new sale data
+        const newSaleData = {
             ...sale,
-            id: newSaleId,
             total,
-            status: 'draft',
-            date: new Date(sale.date)
+            status: 'draft' as const,
+            date: new Date(sale.date) // Ensure date is a Date object
         };
-    
-        const saleRef = doc(firestore, 'sales', newSaleId);
-        await setDoc(saleRef, newSale);
+
+        // Use addDoc to create a new document with a unique ID
+        await addDoc(collection(firestore, 'sales'), newSaleData);
     };
 
     const updateSale = async (saleId: string, sale: Omit<Sale, 'id' | 'total' | 'status'>) => {
@@ -468,17 +461,9 @@ export const DataProvider = ({ children }: { children: ReactNode }) => {
     };
     
     const addEstimate = async (estimate: Omit<Estimate, 'id' | 'date' | 'total'>) => {
-        if (!estimatesCol || !user) throw new Error("Estimates collection not available or user not authenticated");
-    
-        const q = query(collection(firestore, 'estimates'), orderBy('id', 'desc'));
-        const querySnapshot = await getDocs(q);
-        let lastIdNum = 0;
-        if (!querySnapshot.empty) {
-            const lastEstimate = querySnapshot.docs[0].data() as Estimate;
-            lastIdNum = parseInt(lastEstimate.id.split('-')[1], 10) || 0;
+        if (!estimatesCol || !user) {
+            throw new Error("Estimates collection not available or user not authenticated");
         }
-        const newIdNum = lastIdNum + 1;
-        const newEstimateId = `EST-${String(newIdNum).padStart(3, '0')}`;
     
         const subtotal = estimate.items.reduce((total, currentItem) => {
             const itemTotal = (currentItem.feet || 1) * currentItem.price * currentItem.quantity;
@@ -488,15 +473,13 @@ export const DataProvider = ({ children }: { children: ReactNode }) => {
         const overallDiscountAmount = (subtotal * estimate.discount) / 100;
         const total = subtotal - overallDiscountAmount;
     
-        const newEstimate: Estimate = {
+        const newEstimateData = {
             ...estimate,
-            id: newEstimateId,
             total,
             date: new Date(),
         };
     
-        const estimateRef = doc(firestore, 'estimates', newEstimateId);
-        await setDoc(estimateRef, newEstimate);
+        await addDoc(collection(firestore, 'estimates'), newEstimateData);
     };
     
     const deleteEstimate = async (id: string) => {
@@ -787,3 +770,4 @@ export const useData = () => {
     
 
     
+

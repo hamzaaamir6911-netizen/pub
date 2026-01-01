@@ -1,4 +1,5 @@
 
+
 "use client";
 
 import { useState, useRef, useEffect } from "react";
@@ -535,9 +536,17 @@ export default function SalesPage() {
   const [editingSale, setEditingSale] = useState<Sale | null>(null);
 
   const sortedSales = [...sales].sort((a, b) => {
-    const numA = parseInt(a.id.split('-')[1], 10);
-    const numB = parseInt(b.id.split('-')[1], 10);
-    return numA - numB;
+    // Attempt to parse number from ID, default to 0 if fails
+    const numA = parseInt(a.id.split('-')[1] || '0', 10);
+    const numB = parseInt(b.id.split('-')[1] || '0', 10);
+    
+    // If both have numeric parts, sort by number
+    if (!isNaN(numA) && !isNaN(numB) && numA !== numB) {
+        return numA - numB;
+    }
+    
+    // Fallback to sorting by date if IDs are not numeric or are equal
+    return new Date(b.date).getTime() - new Date(a.date).getTime();
   });
 
   const handleDelete = (id: string) => {
