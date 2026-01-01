@@ -55,6 +55,7 @@ export type Sale = {
   date: Date;
   discount: number; // Overall discount percentage
   status: 'draft' | 'posted';
+  estimateId?: string; // Link to the original estimate
 };
 
 export type Estimate = {
@@ -117,5 +118,3 @@ export type SalaryPayment = {
     labourers: SalaryLabourer[];
     totalAmountPaid: number;
 };
-
-    

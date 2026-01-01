@@ -2,7 +2,7 @@
 "use client";
 
 import { useState } from "react";
-import { MoreHorizontal, PlusCircle, Trash2, RotateCcw, FileText, Printer } from "lucide-react";
+import { MoreHorizontal, PlusCircle, Trash2, RotateCcw, FileText, Printer, ShoppingCart } from "lucide-react";
 import {
   Table,
   TableBody,
@@ -468,9 +468,10 @@ function NewEstimateForm({ onEstimateAdded }: { onEstimateAdded: (newEstimate: O
 }
 
 export default function EstimatesPage() {
-  const { estimates, addEstimate, deleteEstimate } = useData();
+  const { estimates, addEstimate, deleteEstimate, createSaleFromEstimate } = useData();
   const [activeTab, setActiveTab] = useState("history");
   const [selectedEstimate, setSelectedEstimate] = useState<Estimate | null>(null);
+  const { toast } = useToast();
 
   const handleDelete = (id: string) => {
     deleteEstimate(id);
@@ -479,6 +480,11 @@ export default function EstimatesPage() {
   const handleEstimateAdded = (newEstimate: Omit<Estimate, 'id'|'date'|'total'>) => {
     addEstimate(newEstimate);
     setActiveTab("history");
+  }
+
+  const handleCreateSale = (estimate: Estimate) => {
+    createSaleFromEstimate(estimate);
+    toast({ title: "Sale Created", description: `A new sale draft has been created from estimate ${estimate.id}.` });
   }
 
   return (
@@ -536,6 +542,10 @@ export default function EstimatesPage() {
                                     View Details
                                 </DropdownMenuItem>
                               </DialogTrigger>
+                              <DropdownMenuItem onSelect={() => handleCreateSale(estimate)}>
+                                <ShoppingCart className="mr-2 h-4 w-4" />
+                                Create Sale Order
+                              </DropdownMenuItem>
                               <DropdownMenuItem
                                 onSelect={() => handleDelete(estimate.id)}
                                 className="text-red-500 focus:bg-red-500/10 focus:text-red-500"
@@ -566,5 +576,3 @@ export default function EstimatesPage() {
     </>
   );
 }
-
-    

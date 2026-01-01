@@ -38,6 +38,7 @@ interface DataContextProps {
   deleteSale: (id: string) => Promise<void>;
   addEstimate: (estimate: Omit<Estimate, 'id' | 'date' | 'total'>) => Promise<void>;
   deleteEstimate: (id: string) => Promise<void>;
+  createSaleFromEstimate: (estimate: Estimate) => Promise<void>;
   addExpense: (expense: Omit<Expense, 'id' | 'date'>) => Promise<void>;
   deleteExpense: (id:string) => Promise<void>;
   addTransaction: (transaction: Omit<Transaction, 'id'>) => Promise<any>;
@@ -391,10 +392,8 @@ export const DataProvider = ({ children }: { children: ReactNode }) => {
 
 
     const addTransaction = async (transaction: Omit<Transaction, 'id'>) => {
-        if (!transactionsCol) throw new Error("Transactions collection not available");
-        const newTransaction = { ...transaction, date: new Date(transaction.date) };
         const colRef = collection(firestore, 'transactions');
-        return addDocumentNonBlocking(colRef, newTransaction);
+        return await addDoc(colRef, transaction);
     };
     
     const updateTransaction = async (id: string, transaction: Partial<Omit<Transaction, 'id'>>) => {
@@ -485,7 +484,7 @@ export const DataProvider = ({ children }: { children: ReactNode }) => {
     };
     
     const addEstimate = async (estimate: Omit<Estimate, 'id' | 'date' | 'total'>) => {
-         if (!estimatesCol || !user) {
+        if (!estimatesCol || !user) {
             throw new Error("Estimates collection not available or user not authenticated");
         }
     
@@ -509,6 +508,21 @@ export const DataProvider = ({ children }: { children: ReactNode }) => {
     const deleteEstimate = async (id: string) => {
         if (!user) throw new Error("User not authenticated");
         deleteDocumentNonBlocking(doc(firestore, 'estimates', id));
+    };
+
+     const createSaleFromEstimate = async (estimate: Estimate) => {
+        if (!user) throw new Error("User not authenticated");
+
+        const saleData: Omit<Sale, 'id' | 'total' | 'status'> = {
+            customerId: estimate.customerId,
+            customerName: estimate.customerName,
+            items: estimate.items,
+            discount: estimate.discount,
+            date: new Date(), // Use current date for the new sale
+            estimateId: estimate.id, // Link to the original estimate
+        };
+        
+        await addSale(saleData);
     };
 
     const postSale = async (saleId: string) => {
@@ -766,7 +780,7 @@ export const DataProvider = ({ children }: { children: ReactNode }) => {
         addVendor, deleteVendor,
         addLabour, updateLabour, deleteLabour,
         addSale, updateSale, postSale, unpostSale, deleteSale,
-        addEstimate, deleteEstimate,
+        addEstimate, deleteEstimate, createSaleFromEstimate,
         addExpense, deleteExpense,
         addTransaction, updateTransaction, deleteTransaction,
         addSalaryPayment, deleteSalaryPayment,
@@ -787,15 +801,3 @@ export const useData = () => {
   }
   return context;
 };
-
-    
-    
-
-    
-
-    
-
-
-
-
-    
