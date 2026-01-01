@@ -298,6 +298,19 @@
         "color",
         "thickness"
       ]
+    },
+    "Counter": {
+        "$schema": "http://json-schema.org/draft-07/schema#",
+        "title": "Counter",
+        "type": "object",
+        "description": "A distributed counter for generating sequential IDs.",
+        "properties": {
+            "currentNumber": {
+                "type": "number",
+                "description": "The last used number for the sequence."
+            }
+        },
+        "required": ["currentNumber"]
     }
   },
   "auth": {
@@ -367,7 +380,19 @@
           },
           "description": "Stores estimate/quotation information."
         }
+      },
+      {
+        "path": "/counters/{counterId}",
+        "definition": {
+          "entityName": "counter",
+          "schema": {
+            "$ref": "#/backend/entities/Counter"
+          },
+          "description": "Stores distributed counters for sequential IDs."
+        }
       }
     ]
   }
 }
+
+    

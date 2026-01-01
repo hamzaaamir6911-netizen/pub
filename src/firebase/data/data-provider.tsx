@@ -392,7 +392,7 @@ export const DataProvider = ({ children }: { children: ReactNode }) => {
 
     const addTransaction = async (transaction: Omit<Transaction, 'id'>) => {
         if (!transactionsCol) throw new Error("Transactions collection not available");
-        const newTransaction = { ...transaction, date: transaction.date || serverTimestamp() };
+        const newTransaction = { ...transaction, date: transaction.date };
         const colRef = collection(firestore, 'transactions');
         return addDocumentNonBlocking(colRef, newTransaction);
     };
@@ -412,14 +412,19 @@ export const DataProvider = ({ children }: { children: ReactNode }) => {
         if (!salesCol || !user) throw new Error("Sales collection not available or user not authenticated");
         
         await runTransaction(firestore, async (transaction) => {
-            const salesCollectionRef = collection(firestore, 'sales');
-            const salesSnapshot = await getDocs(salesCollectionRef);
-            const latestSaleNumber = salesSnapshot.docs.reduce((max, s) => {
-                const num = parseInt(s.id.split('-')[1]);
-                return isNaN(num) ? max : Math.max(max, num);
-            }, 0);
-            const newSaleId = `INV-${String(latestSaleNumber + 1).padStart(3, '0')}`;
-            const newSaleRef = doc(salesCollectionRef, newSaleId);
+            const counterRef = doc(firestore, 'counters', 'salesCounter');
+            const counterDoc = await transaction.get(counterRef);
+
+            let newSaleNumber = 1;
+            if (counterDoc.exists()) {
+                newSaleNumber = counterDoc.data().currentNumber + 1;
+            } else {
+                // If counter doesn't exist, create it.
+                transaction.set(counterRef, { currentNumber: 0 });
+            }
+
+            const newSaleId = `INV-${String(newSaleNumber).padStart(3, '0')}`;
+            const newSaleRef = doc(collection(firestore, 'sales'), newSaleId);
 
             const subtotal = sale.items.reduce((total, currentItem) => {
                 const itemTotal = (currentItem.feet || 1) * currentItem.price * currentItem.quantity;
@@ -438,6 +443,7 @@ export const DataProvider = ({ children }: { children: ReactNode }) => {
             };
 
             transaction.set(newSaleRef, newSaleData);
+            transaction.update(counterRef, { currentNumber: newSaleNumber });
         });
     };
 
@@ -466,14 +472,19 @@ export const DataProvider = ({ children }: { children: ReactNode }) => {
         if (!estimatesCol || !user) throw new Error("Estimates collection not available or user not authenticated");
         
         await runTransaction(firestore, async (transaction) => {
-            const estimatesCollectionRef = collection(firestore, 'estimates');
-            const estimatesSnapshot = await getDocs(estimatesCollectionRef);
-            const latestEstimateNumber = estimatesSnapshot.docs.reduce((max, s) => {
-                const num = parseInt(s.id.split('-')[1]);
-                return isNaN(num) ? max : Math.max(max, num);
-            }, 0);
-            const newEstimateId = `EST-${String(latestEstimateNumber + 1).padStart(3, '0')}`;
-            const newEstimateRef = doc(estimatesCollectionRef, newEstimateId);
+            const counterRef = doc(firestore, 'counters', 'estimatesCounter');
+            const counterDoc = await transaction.get(counterRef);
+
+            let newEstimateNumber = 1;
+            if (counterDoc.exists()) {
+                newEstimateNumber = counterDoc.data().currentNumber + 1;
+            } else {
+                // If counter doesn't exist, create it.
+                transaction.set(counterRef, { currentNumber: 0 });
+            }
+            
+            const newEstimateId = `EST-${String(newEstimateNumber).padStart(3, '0')}`;
+            const newEstimateRef = doc(collection(firestore, 'estimates'), newEstimateId);
 
             const subtotal = estimate.items.reduce((total, currentItem) => {
                 const itemTotal = (currentItem.feet || 1) * currentItem.price * currentItem.quantity;
@@ -491,6 +502,7 @@ export const DataProvider = ({ children }: { children: ReactNode }) => {
             };
 
             transaction.set(newEstimateRef, newEstimateData);
+            transaction.update(counterRef, { currentNumber: newEstimateNumber });
         });
     };
     
@@ -501,7 +513,6 @@ export const DataProvider = ({ children }: { children: ReactNode }) => {
 
     const postSale = async (saleId: string) => {
         if (!user) throw new Error("User not authenticated");
-        const saleRef = doc(firestore, 'sales', saleId);
         const sale = sales.find(s => s.id === saleId);
         if (!sale || sale.status === 'posted') return;
 
@@ -590,7 +601,7 @@ export const DataProvider = ({ children }: { children: ReactNode }) => {
         
         const batch = writeBatch(firestore);
 
-        const newExpense = { ...expense, date: serverTimestamp() };
+        const newExpense = { ...expense, date: expense.date || serverTimestamp() };
         const expenseRef = doc(collection(firestore, 'expenses'));
         batch.set(expenseRef, newExpense);
 
@@ -601,7 +612,7 @@ export const DataProvider = ({ children }: { children: ReactNode }) => {
             category: expense.category,
             vendorId: expense.vendorId,
             vendorName: vendor?.name,
-            date: serverTimestamp()
+            date: expense.date || serverTimestamp()
         };
         const transactionRef = doc(collection(firestore, 'transactions'));
         batch.set(transactionRef, transactionData);
@@ -776,4 +787,5 @@ export const useData = () => {
   return context;
 };
 
+    
     
