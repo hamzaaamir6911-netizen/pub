@@ -44,7 +44,6 @@ import type { Sale, SaleItem, Customer, Item } from "@/lib/types";
 import { useToast } from "@/hooks/use-toast";
 import { useData } from "@/firebase/data/data-provider";
 import { Badge } from "@/components/ui/badge";
-import { Combobox } from "@/components/ui/combobox";
 
 
 function SaleInvoice({ sale, onPost, onUnpost }: { sale: Sale, onPost: (saleId: string) => void, onUnpost: (saleId: string) => void }) {
@@ -250,6 +249,7 @@ function NewSaleForm({ onSaleAdded, onSaleUpdated, initialData }: { onSaleAdded:
     const [saleItems, setSaleItems] = useState<Partial<SaleItem>[]>([{itemId: "", quantity: 1, feet: 1, discount: 0, color: '', thickness: '' }]);
     const [overallDiscount, setOverallDiscount] = useState(0);
     const [isCustomerModalOpen, setCustomerModalOpen] = useState(false);
+    const [saleDate, setSaleDate] = useState<string>(new Date().toISOString().split('T')[0]); // YYYY-MM-DD
 
     const isEditMode = !!initialData;
 
@@ -258,6 +258,7 @@ function NewSaleForm({ onSaleAdded, onSaleUpdated, initialData }: { onSaleAdded:
             setSelectedCustomer(initialData.customerId);
             setSaleItems(initialData.items.map(item => ({ ...item })));
             setOverallDiscount(initialData.discount || 0);
+            setSaleDate(new Date(initialData.date).toISOString().split('T')[0]);
         } else {
             clearForm();
         }
@@ -311,11 +312,16 @@ function NewSaleForm({ onSaleAdded, onSaleUpdated, initialData }: { onSaleAdded:
         setSelectedCustomer("");
         setSaleItems([{itemId: "", quantity: 1, feet: 1, discount: 0, color: '', thickness: ''}]);
         setOverallDiscount(0);
+        setSaleDate(new Date().toISOString().split('T')[0]);
     }
     
     const handleSave = async () => {
         if (!selectedCustomer) {
             toast({ variant: "destructive", title: "Please select a customer." });
+            return;
+        }
+        if (!saleDate) {
+            toast({ variant: "destructive", title: "Please select a sale date." });
             return;
         }
         if (saleItems.some(item => !item.itemId || (item.quantity || 0) <= 0)) {
@@ -371,11 +377,6 @@ function NewSaleForm({ onSaleAdded, onSaleUpdated, initialData }: { onSaleAdded:
         }
         setCustomerModalOpen(false);
     }
-    
-    const itemOptions = allItems.map(item => ({
-        value: item.id,
-        label: `${item.name} ${item.thickness ? `(${item.thickness})` : ''} - ${item.color}`
-    }));
 
     return (
         <>
@@ -388,7 +389,7 @@ function NewSaleForm({ onSaleAdded, onSaleUpdated, initialData }: { onSaleAdded:
                 </Button>
             </CardHeader>
             <CardContent className="space-y-6">
-                <div className="grid md:grid-cols-2 gap-4">
+                <div className="grid md:grid-cols-3 gap-4">
                     <div className="space-y-2">
                         <Label htmlFor="customer">Customer</Label>
                         <div className="flex gap-2">
@@ -407,6 +408,15 @@ function NewSaleForm({ onSaleAdded, onSaleUpdated, initialData }: { onSaleAdded:
                             <AddCustomerForm onCustomerAdded={handleCustomerAdded} />
                         </Dialog>
                         </div>
+                    </div>
+                     <div className="space-y-2">
+                        <Label htmlFor="date">Sale Date</Label>
+                        <Input
+                            id="date"
+                            type="date"
+                            value={saleDate}
+                            onChange={(e) => setSaleDate(e.target.value)}
+                        />
                     </div>
                     <div className="space-y-2">
                         <Label htmlFor="discount">Overall Discount (%)</Label>
@@ -428,12 +438,14 @@ function NewSaleForm({ onSaleAdded, onSaleUpdated, initialData }: { onSaleAdded:
                          <div key={index} className="grid grid-cols-1 md:grid-cols-7 gap-2 items-end p-3 border rounded-md">
                             <div className="md:col-span-2 space-y-2">
                                 <Label>Item</Label>
-                                <Combobox
-                                    options={itemOptions}
-                                    value={saleItem.itemId}
-                                    onValueChange={(value) => handleItemChange(index, "itemId", value)}
-                                    placeholder="Select an item"
-                                />
+                                <Select onValueChange={(value) => handleItemChange(index, "itemId", value)} value={saleItem.itemId}>
+                                    <SelectTrigger>
+                                        <SelectValue placeholder="Select an item" />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        {allItems.map(i => <SelectItem key={i.id} value={i.id}>{i.name} {i.thickness ? `(${i.thickness})` : ''} - {i.color}</SelectItem>)}
+                                    </SelectContent>
+                                </Select>
                             </div>
                             
                             <div className="space-y-2">
@@ -669,3 +681,5 @@ export default function SalesPage() {
     </>
   );
 }
+
+    

@@ -392,7 +392,7 @@ export const DataProvider = ({ children }: { children: ReactNode }) => {
 
     const addTransaction = async (transaction: Omit<Transaction, 'id'>) => {
         if (!transactionsCol) throw new Error("Transactions collection not available");
-        const newTransaction = { ...transaction, date: transaction.date };
+        const newTransaction = { ...transaction, date: new Date(transaction.date) };
         const colRef = collection(firestore, 'transactions');
         return addDocumentNonBlocking(colRef, newTransaction);
     };
@@ -400,7 +400,12 @@ export const DataProvider = ({ children }: { children: ReactNode }) => {
     const updateTransaction = async (id: string, transaction: Partial<Omit<Transaction, 'id'>>) => {
         if (!user) throw new Error("User not authenticated");
         const transactionRef = doc(firestore, 'transactions', id);
-        return updateDocumentNonBlocking(transactionRef, transaction);
+        // Ensure date is converted to a Firestore-compatible format if it exists
+        const dataToUpdate = { ...transaction };
+        if (transaction.date) {
+            dataToUpdate.date = new Date(transaction.date);
+        }
+        return updateDocumentNonBlocking(transactionRef, dataToUpdate);
     };
 
     const deleteTransaction = async (id: string) => {
@@ -439,7 +444,7 @@ export const DataProvider = ({ children }: { children: ReactNode }) => {
                 id: newSaleId,
                 total,
                 status: 'draft' as const,
-                date: sale.date || serverTimestamp(),
+                date: new Date(sale.date),
             };
 
             transaction.set(newSaleRef, newSaleData);
@@ -462,7 +467,7 @@ export const DataProvider = ({ children }: { children: ReactNode }) => {
         const updatedSaleData = {
             ...sale,
             total,
-            date: sale.date || serverTimestamp()
+            date: new Date(sale.date),
         };
 
         return updateDocumentNonBlocking(saleRef, updatedSaleData);
@@ -517,6 +522,7 @@ export const DataProvider = ({ children }: { children: ReactNode }) => {
         if (!sale || sale.status === 'posted') return;
 
         const batch = writeBatch(firestore);
+        const saleRef = doc(firestore, 'sales', saleId);
         
         // 1. Update sale status
         batch.update(saleRef, { status: 'posted' });
@@ -529,7 +535,7 @@ export const DataProvider = ({ children }: { children: ReactNode }) => {
             category: 'Sale',
             customerId: sale.customerId,
             customerName: sale.customerName,
-            date: sale.date, // Use the original sale date
+            date: toDate(sale.date), // Use the original sale date
         };
         const transactionRef = doc(collection(firestore, 'transactions'));
         batch.set(transactionRef, transactionData);
@@ -601,7 +607,7 @@ export const DataProvider = ({ children }: { children: ReactNode }) => {
         
         const batch = writeBatch(firestore);
 
-        const newExpense = { ...expense, date: expense.date || serverTimestamp() };
+        const newExpense = { ...expense, date: new Date() };
         const expenseRef = doc(collection(firestore, 'expenses'));
         batch.set(expenseRef, newExpense);
 
@@ -612,7 +618,7 @@ export const DataProvider = ({ children }: { children: ReactNode }) => {
             category: expense.category,
             vendorId: expense.vendorId,
             vendorName: vendor?.name,
-            date: expense.date || serverTimestamp()
+            date: new Date()
         };
         const transactionRef = doc(collection(firestore, 'transactions'));
         batch.set(transactionRef, transactionData);
@@ -788,4 +794,6 @@ export const useData = () => {
 };
 
     
+    
+
     
