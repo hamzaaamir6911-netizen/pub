@@ -50,26 +50,41 @@ h1, h2, h3, h4, h5, h6 {
 
 
 @media print {
+  /* Hide all elements that are not part of the print content by default */
+  body > *:not(.printable-area):not([data-radix-dialog-portal]) {
+    display: none !important;
+  }
+
+  /* Hide elements specifically marked as no-print */
   .no-print, 
   .no-print * {
     display: none !important;
   }
-
+  
+  /* Reset body styles for printing */
   body {
     background: #fff !important;
-  }
-
-  .printable-area, .printable-area * {
-      visibility: visible;
-  }
-
-  #printable-invoice, #printable-challan, #printable-estimate, #printable-payslip {
-      position: absolute;
-      left: 0;
-      top: 0;
-      width: 100%;
+    color: #000 !important;
+    font-size: 12pt;
+    margin: 0;
+    padding: 0;
   }
   
+  /* Make sure the main app container is not hidden */
+  main, .container, .printable-area {
+    display: block !important;
+    visibility: visible !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    width: 100% !important;
+    max-width: 100% !important;
+  }
+  
+  /* Handle Radix Dialog for printing invoices/challans */
+  [data-radix-dialog-portal] {
+    position: static;
+  }
+
   [data-radix-dialog-overlay] {
     display: none !important;
   }
@@ -87,6 +102,15 @@ h1, h2, h3, h4, h5, h6 {
     border: none !important;
     overflow: visible !important;
     background: white !important;
+    display: block !important; /* Ensure it is visible */
+    visibility: visible !important;
+  }
+  
+  #printable-invoice, #printable-challan, #printable-estimate, #printable-payslip, .printable-area {
+    display: block !important;
+    visibility: visible !important;
+    position: static !important;
+    width: 100% !important;
   }
 
   [data-radix-dialog-content] .overflow-y-auto {
