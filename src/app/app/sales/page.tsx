@@ -428,14 +428,12 @@ function NewSaleForm({ onSaleAdded, onSaleUpdated, initialData }: { onSaleAdded:
                          <div key={index} className="grid grid-cols-1 md:grid-cols-7 gap-2 items-end p-3 border rounded-md">
                             <div className="md:col-span-2 space-y-2">
                                 <Label>Item</Label>
-                                <Select onValueChange={(value) => handleItemChange(index, "itemId", value)} value={saleItem.itemId}>
-                                    <SelectTrigger>
-                                        <SelectValue placeholder="Select an item" />
-                                    </SelectTrigger>
-                                    <SelectContent>
-                                        {itemOptions.map(i => <SelectItem key={i.value} value={i.value}>{i.label}</SelectItem>)}
-                                    </SelectContent>
-                                </Select>
+                                <Combobox
+                                    options={itemOptions}
+                                    value={saleItem.itemId}
+                                    onValueChange={(value) => handleItemChange(index, "itemId", value)}
+                                    placeholder="Select an item"
+                                />
                             </div>
                             
                             <div className="space-y-2">
