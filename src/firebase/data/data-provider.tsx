@@ -425,12 +425,14 @@ export const DataProvider = ({ children }: { children: ReactNode }) => {
             await runTransaction(firestore, async (transaction) => {
                 const counterDoc = await transaction.get(counterRef);
     
-                // Initialize counter if it doesn't exist
-                if (!counterDoc.exists()) {
-                    await transaction.set(counterRef, { currentNumber: 0 });
+                let newSaleNumber = 1;
+                if (counterDoc.exists()) {
+                    newSaleNumber = counterDoc.data().currentNumber + 1;
+                } else {
+                    // If counter doesn't exist, create it.
+                    transaction.set(counterRef, { currentNumber: 1 });
                 }
     
-                const newSaleNumber = (counterDoc.data()?.currentNumber || 0) + 1;
                 const newSaleId = `INV-${String(newSaleNumber).padStart(3, '0')}`;
     
                 // Calculate total
@@ -442,9 +444,8 @@ export const DataProvider = ({ children }: { children: ReactNode }) => {
                 const overallDiscountAmount = (subtotal * sale.discount) / 100;
                 const total = subtotal - overallDiscountAmount;
     
-                // Prepare the new sale data with the generated ID
                 const newSaleData: Sale = {
-                    id: newSaleId, // Set the sequential ID
+                    id: newSaleId,
                     ...sale,
                     total,
                     status: 'draft' as const,
@@ -453,13 +454,12 @@ export const DataProvider = ({ children }: { children: ReactNode }) => {
     
                 const newSaleRef = doc(saleCollectionRef, newSaleId);
     
-                // Atomically create the new sale and update the counter
                 transaction.set(newSaleRef, newSaleData);
                 transaction.update(counterRef, { currentNumber: newSaleNumber });
             });
         } catch (e) {
             console.error("Transaction failed: ", e);
-            throw e; // Re-throw the error to be handled by the caller
+            throw e;
         }
     };
 
@@ -488,11 +488,7 @@ export const DataProvider = ({ children }: { children: ReactNode }) => {
          if (!estimatesCol || !user) {
             throw new Error("Estimates collection not available or user not authenticated");
         }
-        
-        // This function will now use addDoc to let Firestore generate a unique ID.
-        // The sequential ID logic is complex and was causing issues.
-        // Using Firestore's native unique IDs is safer and prevents data loss.
-        
+    
         const subtotal = estimate.items.reduce((total, currentItem) => {
             const itemTotal = (currentItem.feet || 1) * currentItem.price * currentItem.quantity;
             const discountAmount = itemTotal * ((currentItem.discount || 0) / 100);
@@ -504,10 +500,9 @@ export const DataProvider = ({ children }: { children: ReactNode }) => {
         const newEstimateData = {
             ...estimate,
             total,
-            date: new Date(), // Use current date for simplicity
+            date: new Date(),
         };
     
-        // Use addDoc for safety. It creates a new document with a unique ID.
         await addDoc(collection(firestore, 'estimates'), newEstimateData);
     };
     
@@ -801,3 +796,6 @@ export const useData = () => {
     
 
 
+
+
+    
