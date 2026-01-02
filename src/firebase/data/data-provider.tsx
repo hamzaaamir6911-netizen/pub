@@ -64,11 +64,16 @@ const toDate = (timestamp: any): Date => {
     if (timestamp instanceof Timestamp) {
       return timestamp.toDate();
     }
-    if (timestamp instanceof Date) {
-      return timestamp;
+    // Handle cases where timestamp might be a plain JS Date object or a string/number
+    // This ensures backward compatibility if some dates were not saved as Timestamps
+    if (timestamp && typeof timestamp.toDate === 'function') {
+        return timestamp.toDate();
     }
-    // For string or number dates, or if it's null/undefined
-    return new Date(timestamp || new Date());
+    if (timestamp instanceof Date) {
+        return timestamp;
+    }
+    // Fallback for string dates, though this should be avoided
+    return new Date(timestamp);
 };
 
 const sectionsData = [
@@ -318,7 +323,7 @@ export const DataProvider = ({ children }: { children: ReactNode }) => {
                 category: 'Opening Balance',
                 customerId: newCustomerRef.id,
                 customerName: customer.customerName,
-                date: new Date(),
+                date: serverTimestamp() as Timestamp,
             };
             batch.set(transactionRef, transactionData);
         }
@@ -358,7 +363,7 @@ export const DataProvider = ({ children }: { children: ReactNode }) => {
                 category: 'Opening Balance',
                 vendorId: newVendorRef.id,
                 vendorName: vendor.name,
-                date: new Date(),
+                date: serverTimestamp() as Timestamp,
             };
             batch.set(transactionRef, transactionData);
        }
@@ -393,16 +398,16 @@ export const DataProvider = ({ children }: { children: ReactNode }) => {
 
     const addTransaction = async (transaction: Omit<Transaction, 'id'>) => {
         const colRef = collection(firestore, 'transactions');
-        return await addDoc(colRef, transaction);
+        return await addDoc(colRef, { ...transaction, date: serverTimestamp() });
     };
     
     const updateTransaction = async (id: string, transaction: Partial<Omit<Transaction, 'id'>>) => {
         if (!user) throw new Error("User not authenticated");
         const transactionRef = doc(firestore, 'transactions', id);
         // Ensure date is converted to a Firestore-compatible format if it exists
-        const dataToUpdate = { ...transaction };
+        const dataToUpdate: Partial<Omit<Transaction, 'id'>> = { ...transaction };
         if (transaction.date) {
-            dataToUpdate.date = new Date(transaction.date);
+            dataToUpdate.date = serverTimestamp() as Timestamp;
         }
         return updateDocumentNonBlocking(transactionRef, dataToUpdate);
     };
@@ -416,20 +421,19 @@ export const DataProvider = ({ children }: { children: ReactNode }) => {
         if (!user) {
             throw new Error("User not authenticated.");
         }
-    
+
         const counterRef = doc(firestore, 'counters', 'salesCounter');
         const saleCollectionRef = collection(firestore, 'sales');
-    
+
         try {
             await runTransaction(firestore, async (transaction) => {
                 const counterDoc = await transaction.get(counterRef);
-    
-                let newSaleNumber = 1;
+                
+                let newSaleNumber;
                 if (counterDoc.exists()) {
-                    newSaleNumber = counterDoc.data().currentNumber + 1;
+                    newSaleNumber = (counterDoc.data().currentNumber || 0) + 1;
                 } else {
-                    // If counter doesn't exist, create it.
-                    transaction.set(counterRef, { currentNumber: 1 });
+                    newSaleNumber = 1; // Start from 1 if counter doesn't exist
                 }
     
                 const newSaleId = `INV-${String(newSaleNumber).padStart(3, '0')}`;
@@ -448,19 +452,21 @@ export const DataProvider = ({ children }: { children: ReactNode }) => {
                     ...sale,
                     total,
                     status: 'draft' as const,
-                    date: new Date(sale.date)
+                    date: sale.date // Keep the user selected date
                 };
     
                 const newSaleRef = doc(saleCollectionRef, newSaleId);
-    
-                transaction.set(newSaleRef, newSaleData);
-                transaction.update(counterRef, { currentNumber: newSaleNumber });
+                
+                // Use the transaction to perform the writes
+                transaction.set(newSaleRef, { ...newSaleData, date: serverTimestamp() }); // Save with server timestamp
+                transaction.set(counterRef, { currentNumber: newSaleNumber }, { merge: true });
             });
         } catch (e) {
             console.error("Transaction failed: ", e);
             throw e;
         }
     };
+
 
     const updateSale = async (saleId: string, sale: Omit<Sale, 'id' | 'total' | 'status'>) => {
         if (!user) throw new Error("User not authenticated");
@@ -477,7 +483,7 @@ export const DataProvider = ({ children }: { children: ReactNode }) => {
         const updatedSaleData = {
             ...sale,
             total,
-            date: new Date(sale.date),
+            date: serverTimestamp(),
         };
 
         return updateDocumentNonBlocking(saleRef, updatedSaleData);
@@ -499,7 +505,7 @@ export const DataProvider = ({ children }: { children: ReactNode }) => {
         const newEstimateData = {
             ...estimate,
             total,
-            date: new Date(),
+            date: serverTimestamp(),
         };
     
         await addDoc(collection(firestore, 'estimates'), newEstimateData);
@@ -616,18 +622,18 @@ export const DataProvider = ({ children }: { children: ReactNode }) => {
         
         const batch = writeBatch(firestore);
 
-        const newExpense = { ...expense, date: new Date() };
+        const newExpense = { ...expense, date: serverTimestamp() };
         const expenseRef = doc(collection(firestore, 'expenses'));
         batch.set(expenseRef, newExpense);
 
-        const transactionData = {
+        const transactionData: Omit<Transaction, 'id'> = {
             description: expense.title,
             amount: expense.amount,
             type: 'debit' as const,
             category: expense.category,
             vendorId: expense.vendorId,
             vendorName: vendor?.name,
-            date: new Date()
+            date: serverTimestamp() as Timestamp
         };
         const transactionRef = doc(collection(firestore, 'transactions'));
         batch.set(transactionRef, transactionData);
@@ -681,7 +687,7 @@ export const DataProvider = ({ children }: { children: ReactNode }) => {
         
         // 3. Add a single consolidated transaction to the ledger
         const transactionRef = doc(collection(firestore, 'transactions'));
-        const transactionData: Omit<Transaction, 'id' | 'date'> = {
+        const transactionData: Omit<Transaction, 'id'> = {
             description: `Salary payment for ${payment.month} ${payment.year}`,
             amount: payment.totalAmountPaid,
             type: 'debit',
@@ -801,3 +807,5 @@ export const useData = () => {
   }
   return context;
 };
+
+    
