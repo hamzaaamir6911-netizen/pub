@@ -50,72 +50,36 @@ h1, h2, h3, h4, h5, h6 {
 
 
 @media print {
-  /* Hide all elements that are not part of the print content by default */
-  body > *:not(.printable-area):not([data-radix-dialog-portal]) {
-    display: none !important;
-  }
-
-  /* Hide elements specifically marked as no-print */
-  .no-print, 
-  .no-print * {
-    display: none !important;
+  body.printing * {
+    visibility: hidden;
   }
   
-  /* Reset body styles for printing */
-  body {
-    background: #fff !important;
-    color: #000 !important;
-    font-size: 12pt;
+  body.printing .printable-area,
+  body.printing .printable-area * {
+    visibility: visible;
+  }
+
+  body.printing .printable-area {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: auto;
     margin: 0;
-    padding: 0;
-  }
-  
-  /* Make sure the main app container is not hidden */
-  main, .container, .printable-area {
-    display: block !important;
-    visibility: visible !important;
-    margin: 0 !important;
-    padding: 0 !important;
-    width: 100% !important;
-    max-width: 100% !important;
-  }
-  
-  /* Handle Radix Dialog for printing invoices/challans */
-  [data-radix-dialog-portal] {
-    position: static;
+    padding: 1.5rem; /* Equivalent of p-6 */
   }
 
-  [data-radix-dialog-overlay] {
+  .no-print {
     display: none !important;
   }
 
-  [data-radix-dialog-content] {
-    position: relative !important;
-    inset: auto !important;
-    transform: none !important;
-    width: 100% !important;
-    max-width: 100% !important;
-    height: auto !important;
-    max-height: none !important;
-    box-shadow: none !important;
-    padding: 0 !important;
-    border: none !important;
-    overflow: visible !important;
-    background: white !important;
-    display: block !important; /* Ensure it is visible */
-    visibility: visible !important;
+  body:not(.printing) {
+     /* Regular styles here if needed, but mostly handled by tailwind */
   }
   
-  #printable-invoice, #printable-challan, #printable-estimate, #printable-payslip, .printable-area {
-    display: block !important;
-    visibility: visible !important;
-    position: static !important;
-    width: 100% !important;
-  }
-
-  [data-radix-dialog-content] .overflow-y-auto {
-      overflow-y: visible !important;
-      height: auto !important;
+  @page {
+    size: auto;
+    margin: 0mm;
   }
 }
     
