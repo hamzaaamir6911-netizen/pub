@@ -2,7 +2,7 @@
 "use client";
 
 import { useState, useEffect, useMemo } from "react";
-import { PlusCircle, X, MoreHorizontal, Printer, Edit } from "lucide-react";
+import { PlusCircle, X, MoreHorizontal, Printer, Edit, Trash2 } from "lucide-react";
 import {
   Table,
   TableBody,
@@ -311,7 +311,7 @@ export default function LedgerPage() {
       // This seems complex. Let's simplify the view logic.
       // General Ledger: Credit increases balance, Debit decreases.
       // Customer Ledger: Debit is a Sale (increases what they owe you). Credit is a Payment (decreases what they owe you).
-      // Vendor Ledger: Credit is a Purchase from them (increases what you owe them). Debit is a Payment to them (decreases what you owe them).
+      // Vendor Ledger: Credit is a Purchase from them (increases what we owe them). Debit is a Payment to them (decreases what we owe them).
       if (selectedCustomerId) {
         // Customer perspective: debit increases their due, credit decreases it.
         runningBalance += (t.type === 'debit' ? t.amount : -t.amount);
@@ -441,6 +441,7 @@ export default function LedgerPage() {
                             className="text-red-500 focus:bg-red-500/10 focus:text-red-500"
                             disabled={['Sale', 'Opening Balance', 'Salary'].includes(transaction.category)}
                           >
+                            <Trash2 className="mr-2 h-4 w-4"/>
                             Delete
                           </DropdownMenuItem>
                         </DropdownMenuContent>
@@ -473,3 +474,5 @@ export default function LedgerPage() {
     </>
   );
 }
+
+    
