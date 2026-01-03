@@ -59,13 +59,13 @@ function DeliveryChallan({ sale }: { sale: Sale }) {
                 </div>
             </DialogHeader>
             <div className="flex-grow overflow-y-auto printable-area" id="printable-challan">
-                 <div className="p-2 sm:p-4 md:p-6">
+                 <div className="p-2 sm:p-4 md:p-6 text-sm">
                     <div className="text-center mb-8">
-                      <h1 className="text-xl sm:text-2xl font-bold font-headline">ARCO Aluminium Company</h1>
+                      <h1 className="text-2xl font-bold font-headline">ARCO Aluminium Company</h1>
                       <p className="mt-1 text-lg font-bold">Delivery Challan</p>
                     </div>
-                    <div className="p-2 sm:p-4 md:p-6 text-xs sm:text-sm">
-                        <div className="grid grid-cols-2 gap-4 mb-6 font-bold">
+                    <div className="p-2 sm:p-4 md:p-6 text-sm">
+                        <div className="grid grid-cols-2 gap-4 mb-6">
                             <div>
                                 <p className="font-semibold">Customer:</p>
                                 <p>{customer?.address}</p>
@@ -92,7 +92,7 @@ function DeliveryChallan({ sale }: { sale: Sale }) {
                                 </TableHeader>
                                 <TableBody>
                                     {sale.items.map((item, index) => (
-                                        <TableRow key={index} className="font-bold">
+                                        <TableRow key={index}>
                                             <TableCell>{item.itemName}</TableCell>
                                             <TableCell>{item.color}</TableCell>
                                             <TableCell>{item.thickness || '-'}</TableCell>
@@ -104,7 +104,7 @@ function DeliveryChallan({ sale }: { sale: Sale }) {
                             </Table>
                         </div>
 
-                        <div className="mt-24 grid grid-cols-2 gap-4 text-center font-bold">
+                        <div className="mt-24 grid grid-cols-2 gap-4 text-center font-semibold">
                             <div className="border-t pt-2">
                                 <p>Receiver's Signature</p>
                             </div>
@@ -113,7 +113,7 @@ function DeliveryChallan({ sale }: { sale: Sale }) {
                             </div>
                         </div>
 
-                         <div className="mt-16 text-center text-xs text-gray-500 border-t pt-2 font-bold">
+                         <div className="mt-16 text-center text-xs text-gray-500 border-t pt-2 font-semibold">
                             <p>Industrial Estate, Hayatabad Road B-5 PLOT 59 PESHAWAR</p>
                             <p>Phone: +923334646356</p>
                         </div>
@@ -148,40 +148,40 @@ function SaleInvoice({ sale, onPost, onUnpost }: { sale: Sale, onPost: (saleId: 
     }
 
     return (
-        <DialogContent className="max-w-4xl max-h-[90vh] flex flex-col">
+        <DialogContent className="max-w-4xl max-h-[90vh] flex flex-col print:max-w-full print:h-auto print:max-h-none print:p-0">
             <DialogHeader className="flex-shrink-0 no-print">
                 <div className="flex flex-col items-center justify-center pt-4">
                     <DialogTitle>Sale Invoice: {sale.id}</DialogTitle>
                 </div>
             </DialogHeader>
             <div className="flex-grow overflow-y-auto printable-area" id="printable-invoice">
-                 <div className="p-2 sm:p-4 md:p-6">
+                 <div className="p-6 text-sm">
                      {/* Header */}
                     <div className="flex justify-between items-start mb-6">
                         <div>
-                            <h1 className="text-xl sm:text-2xl font-bold text-gray-800">ARCO Aluminium</h1>
-                            <p className="text-xs sm:text-sm text-gray-500">B-5, PLOT 59, Industrial Estate, Hayatabad, Peshawar</p>
-                            <p className="text-xs sm:text-sm text-gray-500">+92 333 4646356</p>
+                            <h1 className="text-2xl font-bold text-gray-800">ARCO Aluminium</h1>
+                            <p className="text-sm text-gray-500">B-5, PLOT 59, Industrial Estate, Hayatabad, Peshawar</p>
+                            <p className="text-sm text-gray-500">+92 333 4646356</p>
                         </div>
                         <div className="text-right">
-                             <h2 className="text-lg sm:text-xl font-bold text-gray-700">INVOICE</h2>
-                             <p className="text-xs sm:text-sm text-gray-500 mt-1">Invoice #: {sale.id}</p>
-                             <p className="text-xs sm:text-sm text-gray-500">Date: {formatDate(sale.date)}</p>
+                             <h2 className="text-xl font-bold text-gray-700">INVOICE</h2>
+                             <p className="text-sm text-gray-500 mt-1">Invoice #: {sale.id}</p>
+                             <p className="text-sm text-gray-500">Date: {formatDate(sale.date)}</p>
                               <Badge variant={sale.status === 'posted' ? 'default' : 'secondary'} className="mt-2">{sale.status}</Badge>
                         </div>
                     </div>
 
                      {/* Bill To */}
                     <div className="mb-8">
-                        <p className="font-bold text-xs text-gray-500 uppercase mb-1">Bill To</p>
-                        <p className="text-gray-800 font-semibold text-sm">{sale.customerName}</p>
-                        <p className="text-gray-600 text-xs">{customer?.address}</p>
-                        <p className="text-gray-600 text-xs">{customer?.phoneNumber}</p>
+                        <p className="font-bold text-gray-500 uppercase mb-1">To</p>
+                        <p className="text-gray-800 font-semibold">{sale.customerName}</p>
+                        <p className="text-gray-600 ">{customer?.address}</p>
+                        <p className="text-gray-600 ">{customer?.phoneNumber}</p>
                     </div>
 
                     {/* Items Table */}
                     <div className="overflow-x-auto">
-                        <Table className="text-xs">
+                        <Table className="text-sm">
                             <TableHeader className="bg-gray-50">
                                 <TableRow>
                                     <TableHead className="px-2 py-2 text-left font-medium text-gray-500 uppercase tracking-wider">Description</TableHead>
@@ -203,7 +203,7 @@ function SaleInvoice({ sale, onPost, onUnpost }: { sale: Sale, onPost: (saleId: 
                                         <TableRow key={index}>
                                             <TableCell className="px-2 py-2 font-medium text-gray-800">
                                                 {item.itemName}
-                                                <span className="text-gray-500 text-xs block">{item.thickness} - {item.color}</span>
+                                                <span className="text-gray-500 block">{item.thickness} - {item.color}</span>
                                             </TableCell>
                                             <TableCell className="px-2 py-2 text-right text-gray-600">{item.feet ? item.feet.toFixed(2) : '-'}</TableCell>
                                             <TableCell className="px-2 py-2 text-right text-gray-600">{item.quantity}</TableCell>
@@ -221,16 +221,16 @@ function SaleInvoice({ sale, onPost, onUnpost }: { sale: Sale, onPost: (saleId: 
                     <div className="flex justify-end mt-4">
                         <div className="w-full max-w-xs">
                             <div className="flex justify-between py-1 border-b">
-                                <span className="text-xs text-gray-600">Subtotal</span>
-                                <span className="text-xs font-semibold text-gray-800">{formatCurrency(subtotal)}</span>
+                                <span className="text-gray-600">Subtotal</span>
+                                <span className="font-semibold text-gray-800">{formatCurrency(subtotal)}</span>
                             </div>
                             <div className="flex justify-between py-1 border-b">
-                                <span className="text-xs text-gray-600">Overall Discount ({sale.discount}%)</span>
-                                <span className="text-xs font-semibold text-gray-800">- {formatCurrency(subtotal * (sale.discount / 100))}</span>
+                                <span className="text-gray-600">Overall Discount ({sale.discount}%)</span>
+                                <span className="font-semibold text-gray-800">- {formatCurrency(subtotal * (sale.discount / 100))}</span>
                             </div>
                             <div className="flex justify-between py-2 bg-gray-100 px-2 rounded-md mt-2">
-                                <span className="font-bold text-sm text-gray-800">Grand Total</span>
-                                <span className="font-bold text-sm text-gray-800">{formatCurrency(sale.total)}</span>
+                                <span className="font-bold text-gray-800">Grand Total</span>
+                                <span className="font-bold text-gray-800">{formatCurrency(sale.total)}</span>
                             </div>
                         </div>
                     </div>
@@ -795,6 +795,7 @@ export default function SalesPage() {
 
 
     
+
 
 
 

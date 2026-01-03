@@ -49,37 +49,52 @@ h1, h2, h3, h4, h5, h6 {
 }
 
 @media print {
-  body.printing {
-    visibility: hidden;
+  @page {
+    size: A4;
+    margin: 1.5cm;
   }
 
-  body.printing .printable-area,
-  body.printing .printable-area * {
-    visibility: visible;
+  body, html {
+    height: auto !important;
+    overflow: visible !important;
+    background: #fff;
   }
 
-  body.printing .printable-area {
-    position: absolute;
-    left: 0;
-    top: 0;
-    width: 100%;
-    height: auto;
-    margin: 0;
-    padding: 0;
-    max-height: none !important;
-    overflow-y: visible !important;
+  .printable-area {
+    display: block !important;
+    position: static !important;
+    width: 100% !important;
+    height: auto !important;
+    overflow: visible !important;
+    page-break-inside: avoid;
+  }
+
+  .no-print, [data-radix-popper-content-wrapper], [data-radix-focus-guard] {
+    display: none !important;
   }
   
-  .no-print {
+  [data-radix-dialog-overlay] {
     display: none !important;
   }
 
-  body:not(.printing) {
-     /* Regular styles handled by tailwind */
+  [data-radix-dialog-portal] {
+    position: static !important;
   }
   
-  @page {
-    size: auto;
-    margin: 1.5cm;
+  [data-radix-dialog-content] {
+    position: static !important;
+    width: 100% !important;
+    height: auto !important;
+    max-width: 100% !important;
+    max-height: none !important;
+    border: none !important;
+    box-shadow: none !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    transform: none !important;
+    overflow: visible !important;
+    display: block !important;
+    page-break-before: auto;
+    page-break-after: auto;
   }
 }

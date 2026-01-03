@@ -54,39 +54,39 @@ function EstimatePrint({ estimate }: { estimate: Estimate }) {
     let subtotal = 0;
 
     return (
-        <DialogContent className="max-w-4xl max-h-[90vh] flex flex-col">
+        <DialogContent className="max-w-4xl max-h-[90vh] flex flex-col print:max-w-full print:h-auto print:max-h-none print:p-0">
              <DialogHeader className="flex-shrink-0 no-print">
                 <div className="flex flex-col items-center justify-center pt-4">
                     <DialogTitle>Estimate: {estimate.id}</DialogTitle>
                 </div>
             </DialogHeader>
             <div id="printable-estimate" className="flex-grow overflow-y-auto printable-area">
-                <div className="p-2 sm:p-4 md:p-6">
+                <div className="p-6 text-sm">
                     {/* Header */}
                     <div className="flex justify-between items-start mb-6">
                         <div>
-                            <h1 className="text-xl sm:text-2xl font-bold text-gray-800">ARCO Aluminium</h1>
-                            <p className="text-xs sm:text-sm text-gray-500">B-5, PLOT 59, Industrial Estate, Hayatabad, Peshawar</p>
-                            <p className="text-xs sm:text-sm text-gray-500">+92 333 4646356</p>
+                            <h1 className="text-2xl font-bold text-gray-800">ARCO Aluminium</h1>
+                            <p className="text-sm text-gray-500">B-5, PLOT 59, Industrial Estate, Hayatabad, Peshawar</p>
+                            <p className="text-sm text-gray-500">+92 333 4646356</p>
                         </div>
                         <div className="text-right">
-                             <h2 className="text-lg sm:text-xl font-bold text-gray-700">ESTIMATE</h2>
-                             <p className="text-xs sm:text-sm text-gray-500 mt-1">Estimate #: {estimate.id}</p>
-                             <p className="text-xs sm:text-sm text-gray-500">Date: {formatDate(estimate.date)}</p>
+                             <h2 className="text-xl font-bold text-gray-700">ESTIMATE</h2>
+                             <p className="text-sm text-gray-500 mt-1">Estimate #: {estimate.id}</p>
+                             <p className="text-sm text-gray-500">Date: {formatDate(estimate.date)}</p>
                         </div>
                     </div>
 
                     {/* Bill To */}
                     <div className="mb-8">
-                        <p className="font-bold text-xs text-gray-500 uppercase mb-1">Estimate For</p>
-                        <p className="text-gray-800 font-semibold text-sm">{estimate.customerName}</p>
-                        <p className="text-gray-600 text-xs">{customer?.address}</p>
-                        <p className="text-gray-600 text-xs">{customer?.phoneNumber}</p>
+                        <p className="font-bold text-gray-500 uppercase mb-1">Estimate For</p>
+                        <p className="text-gray-800 font-semibold">{estimate.customerName}</p>
+                        <p className="text-gray-600 ">{customer?.address}</p>
+                        <p className="text-gray-600 ">{customer?.phoneNumber}</p>
                     </div>
 
 
                     <div className="overflow-x-auto">
-                        <Table className="text-xs">
+                        <Table className="text-sm">
                             <TableHeader className="bg-gray-50">
                                 <TableRow>
                                     <TableHead className="px-2 py-2 text-left font-medium text-gray-500 uppercase tracking-wider">Description</TableHead>
@@ -108,7 +108,7 @@ function EstimatePrint({ estimate }: { estimate: Estimate }) {
                                         <TableRow key={index}>
                                             <TableCell className="px-2 py-2 font-medium text-gray-800">
                                                 {item.itemName}
-                                                <span className="text-gray-500 text-xs block">{item.thickness} - {item.color}</span>
+                                                <span className="text-gray-500 block">{item.thickness} - {item.color}</span>
                                             </TableCell>
                                             <TableCell className="px-2 py-2 text-right text-gray-600">{item.feet ? item.feet.toFixed(2) : '-'}</TableCell>
                                             <TableCell className="px-2 py-2 text-right text-gray-600">{item.quantity}</TableCell>
@@ -125,16 +125,16 @@ function EstimatePrint({ estimate }: { estimate: Estimate }) {
                     <div className="flex justify-end mt-4">
                         <div className="w-full max-w-xs">
                             <div className="flex justify-between py-1 border-b">
-                                <span className="text-xs text-gray-600">Subtotal</span>
-                                <span className="text-xs font-semibold text-gray-800">{formatCurrency(subtotal)}</span>
+                                <span className="text-gray-600">Subtotal</span>
+                                <span className="font-semibold text-gray-800">{formatCurrency(subtotal)}</span>
                             </div>
                             <div className="flex justify-between py-1 border-b">
-                                <span className="text-xs text-gray-600">Overall Discount ({estimate.discount}%)</span>
-                                <span className="text-xs font-semibold text-gray-800">- {formatCurrency(subtotal * (estimate.discount / 100))}</span>
+                                <span className="text-gray-600">Overall Discount ({estimate.discount}%)</span>
+                                <span className="font-semibold text-gray-800">- {formatCurrency(subtotal * (estimate.discount / 100))}</span>
                             </div>
                             <div className="flex justify-between py-2 bg-gray-100 px-2 rounded-md mt-2">
-                                <span className="font-bold text-sm text-gray-800">Grand Total</span>
-                                <span className="font-bold text-sm text-gray-800">{formatCurrency(estimate.total)}</span>
+                                <span className="font-bold text-gray-800">Grand Total</span>
+                                <span className="font-bold text-gray-800">{formatCurrency(estimate.total)}</span>
                             </div>
                         </div>
                     </div>
