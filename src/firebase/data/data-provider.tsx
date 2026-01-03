@@ -428,6 +428,7 @@ export const DataProvider = ({ children }: { children: ReactNode }) => {
             ...transaction,
             date: transaction.date || serverTimestamp()
         };
+        // Use await to ensure the document is added before proceeding
         const docRef = await addDoc(colRef, transactionWithServerDate);
         return docRef;
     };
@@ -838,5 +839,7 @@ export const useData = () => {
   }
   return context;
 };
+
+    
 
     

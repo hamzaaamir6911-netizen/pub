@@ -39,38 +39,12 @@ import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { cn } from "@/lib/utils";
 
-function AddTransactionForm({ onTransactionAdded }: { onTransactionAdded: (newTransaction: Omit<Transaction, 'id'>) => Promise<void> }) {
-  const { customers, vendors } = useData();
+function AddPaymentForm({ onTransactionAdded, onOpenChange }: { onTransactionAdded: (newTransaction: Omit<Transaction, 'id'>) => Promise<void>, onOpenChange: (open: boolean) => void }) {
   const [description, setDescription] = useState('');
   const [amount, setAmount] = useState(0);
   const [type, setType] = useState<'credit' | 'debit'>('credit');
   const [date, setDate] = useState(new Date().toISOString().split('T')[0]);
-  const [customerId, setCustomerId] = useState<string | undefined>(undefined);
-  const [vendorId, setVendorId] = useState<string | undefined>(undefined);
   const { toast } = useToast();
-
-  const handleTypeChange = (newType: 'credit' | 'debit') => {
-    setType(newType);
-    setCustomerId(undefined);
-    setVendorId(undefined);
-    setDescription('');
-  };
-  
-  const handleCustomerChange = (newCustomerId: string) => {
-      setCustomerId(newCustomerId);
-      const customer = customers.find(c => c.id === newCustomerId);
-      if (customer) {
-          setDescription(`Cash received from ${customer.customerName}`);
-      }
-  }
-
-  const handleVendorChange = (newVendorId: string) => {
-      setVendorId(newVendorId);
-      const vendor = vendors.find(v => v.id === newVendorId);
-      if (vendor) {
-          setDescription(`Payment to ${vendor.name}`);
-      }
-  }
 
   const handleSubmit = async (event: FormEvent) => {
     event.preventDefault(); 
@@ -78,37 +52,35 @@ function AddTransactionForm({ onTransactionAdded }: { onTransactionAdded: (newTr
       toast({ variant: 'destructive', title: 'Please fill all fields correctly.' });
       return;
     }
-    const customer = customers.find(c => c.id === customerId);
-    const vendor = vendors.find(v => v.id === vendorId);
-
+    
     const newTransaction: Omit<Transaction, 'id'> = {
       description,
       amount,
       type,
-      category: type === 'credit' ? (customerId ? 'Customer Payment' : 'Cash Received') : (vendorId ? 'Vendor Payment' : 'Payment'),
-      customerId: customerId,
-      customerName: customer?.customerName,
-      vendorId: vendorId,
-      vendorName: vendor?.name,
+      category: type === 'credit' ? 'Cash Received' : 'Payment',
       date: new Date(date),
     };
 
-    await onTransactionAdded(newTransaction);
-    toast({ title: 'Transaction Added!', description: `A transaction of ${formatCurrency(amount)} has been recorded.` });
-    
-    // Clear form
-    setDescription('');
-    setAmount(0);
-    setCustomerId(undefined);
-    setVendorId(undefined);
-    setDate(new Date().toISOString().split('T')[0]);
-    setType('credit');
+    try {
+        await onTransactionAdded(newTransaction);
+        toast({ title: 'Transaction Added!', description: `A transaction of ${formatCurrency(amount)} has been recorded.` });
+        
+        // Clear form and close dialog
+        setDescription('');
+        setAmount(0);
+        setDate(new Date().toISOString().split('T')[0]);
+        setType('credit');
+        onOpenChange(false); // Close the dialog on success
+    } catch(e) {
+        console.error("Failed to add transaction: ", e);
+        toast({ variant: 'destructive', title: 'Error', description: "Could not save the transaction." });
+    }
   };
 
   return (
     <DialogContent>
       <DialogHeader>
-        <DialogTitle>Add New Voucher</DialogTitle>
+        <DialogTitle>Add New Payment</DialogTitle>
       </DialogHeader>
       <form onSubmit={handleSubmit}>
         <div className="space-y-4 py-4">
@@ -118,47 +90,21 @@ function AddTransactionForm({ onTransactionAdded }: { onTransactionAdded: (newTr
           </div>
           <div className="space-y-2">
             <Label htmlFor="type">Transaction Type</Label>
-            <Select onValueChange={handleTypeChange} value={type}>
+            <Select onValueChange={(value: 'credit' | 'debit') => setType(value)} value={type}>
               <SelectTrigger id="type"><SelectValue /></SelectTrigger>
               <SelectContent>
                 <SelectItem value="credit">Cash Received (Credit)</SelectItem>
-                <SelectItem value="debit">Payment (Debit)</SelectItem>
+                <SelectItem value="debit">Payment Made (Debit)</SelectItem>
               </SelectContent>
             </Select>
           </div>
-
-          {type === 'credit' && (
-            <div className="space-y-2">
-              <Label htmlFor="customer">From Customer (Optional)</Label>
-              <Select onValueChange={handleCustomerChange} value={customerId}>
-                <SelectTrigger id="customer"><SelectValue placeholder="Select a customer" /></SelectTrigger>
-                <SelectContent>
-                  {customers.map(c => <SelectItem key={c.id} value={c.id}>{c.customerName}</SelectItem>)}
-                </SelectContent>
-              </Select>
-            </div>
-          )}
-          
-          {type === 'debit' && (
-            <div className="space-y-2">
-              <Label htmlFor="vendor">To Vendor (Optional)</Label>
-              <Select onValueChange={handleVendorChange} value={vendorId}>
-                <SelectTrigger id="vendor"><SelectValue placeholder="Select a vendor" /></SelectTrigger>
-                <SelectContent>
-                  {vendors.map(v => <SelectItem key={v.id} value={v.id}>{v.name}</SelectItem>)}
-                </SelectContent>
-              </Select>
-            </div>
-          )}
-
           <div className="space-y-2">
             <Label htmlFor="description">Description</Label>
             <Input 
               id="description" 
               value={description} 
               onChange={(e) => setDescription(e.target.value)} 
-              placeholder={type === 'debit' ? "e.g. Payment for supplies" : "e.g. Cash from customer"}
-              disabled={ (type === 'credit' && !!customerId) || (type === 'debit' && !!vendorId) }
+              placeholder={type === 'debit' ? "e.g. Payment for supplies" : "e.g. Cash from sale"}
             />
           </div>
           <div className="space-y-2">
@@ -167,7 +113,7 @@ function AddTransactionForm({ onTransactionAdded }: { onTransactionAdded: (newTr
           </div>
         </div>
         <DialogFooter>
-          <Button type="submit">Add Transaction</Button>
+          <Button type="submit">Add Payment</Button>
         </DialogFooter>
       </form>
     </DialogContent>
@@ -184,7 +130,6 @@ export default function LedgerPage() {
 
   const handleTransactionAdded = async (newTransaction: Omit<Transaction, 'id'>) => {
     await addTransaction(newTransaction);
-    setAddModalOpen(false);
   }
 
   const handleDelete = (id: string) => {
@@ -240,14 +185,14 @@ export default function LedgerPage() {
             <Button variant="outline" onClick={() => window.print()}>
                 <Printer className="mr-2 h-4 w-4" /> Print Page
             </Button>
-             <Dialog open={isAddModalOpen} onOpenChange={setAddModalOpen}>
+            <Dialog open={isAddModalOpen} onOpenChange={setAddModalOpen}>
                 <DialogTrigger asChild>
                     <Button>
                         <PlusCircle className="mr-2 h-4 w-4" />
-                        Add Voucher
+                        Add Payment
                     </Button>
                 </DialogTrigger>
-                <AddTransactionForm onTransactionAdded={handleTransactionAdded} />
+                <AddPaymentForm onTransactionAdded={handleTransactionAdded} onOpenChange={setAddModalOpen} />
             </Dialog>
         </div>
       </PageHeader>
