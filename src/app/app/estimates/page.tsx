@@ -65,8 +65,16 @@ function EstimatePrint({ estimate }: { estimate: Estimate }) {
                     {/* Header */}
                     <div className="flex justify-between items-start mb-6">
                         <div>
-                            <h1 className="text-2xl font-bold text-gray-800">ARCO Aluminium</h1>
-                            <p className="text-sm text-gray-500">B-5, PLOT 59, Industrial Estate, Hayatabad, Peshawar</p>
+                            <svg width="200" height="50" viewBox="0 0 400 100" className="text-black">
+                                <g transform="translate(10, 10)">
+                                    <path d="M0 80 L20 0 L70 0 L50 80 Z M40 50 L25 50 L32.5 20 Z" fill="currentColor" />
+                                    <path d="M50 0 L100 0 L100 20 L70 20 L70 35 L90 35 L90 55 L70 55 L70 80 L50 80 Z" fill="currentColor"/>
+                                    <path d="M120 40 C120 15, 160 15, 160 40 C160 65, 120 65, 120 40 Z M140 0 C100 0, 100 80, 140 80 C180 80, 180 0, 140 0 Z" fill="currentColor"/>
+                                    <path d="M240 40 C240 10, 180 10, 180 40 C180 70, 240 70, 240 40 Z M210 0 C160 0, 160 80, 210 80 C260 80, 260 0, 210 0 Z" fill="currentColor"/>
+                                    <text x="0" y="98" className="text-2xl font-sans font-semibold" fill="currentColor">AR Aluminum Company</text>
+                                </g>
+                            </svg>
+                            <p className="text-sm text-gray-500 mt-2">B-5, PLOT 59, Industrial Estate, Hayatabad, Peshawar</p>
                             <p className="text-sm text-gray-500">+92 333 4646356</p>
                         </div>
                         <div className="text-right">
