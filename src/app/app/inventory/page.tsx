@@ -155,9 +155,9 @@ export default function InventoryPage() {
   }
 
   const categoryVariant = {
-    Aluminium: "default",
-    Glass: "secondary",
-    Accessories: "outline",
+    "Aluminium": "default",
+    "Glass": "secondary",
+    "Accessories": "outline",
   } as const;
 
   const uniqueThicknesses = [...new Set(items.map(item => item.thickness).filter(Boolean))].sort();
@@ -262,3 +262,5 @@ export default function InventoryPage() {
     </>
   );
 }
+
+    
