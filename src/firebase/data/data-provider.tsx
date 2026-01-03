@@ -5,7 +5,7 @@
 import React, { createContext, useContext, ReactNode, useEffect, useState } from 'react';
 import type { Item, Customer, Sale, Expense, Transaction, Vendor, Estimate, Labour, SalaryPayment } from '@/lib/types';
 import { useCollection, useFirestore, useMemoFirebase, useUser } from '@/firebase';
-import { collection, doc, writeBatch, serverTimestamp, Timestamp, orderBy, query, where, getDocs, runTransaction, increment, addDoc, getDoc, deleteDoc, setDoc, updateDoc } from 'firebase/firestore';
+import { collection, doc, writeBatch, serverTimestamp, Timestamp, orderBy, query, where, getDocs, runTransaction, increment, addDoc, getDoc, deleteDoc, setDoc, updateDoc, onSnapshot } from 'firebase/firestore';
 import { addDocumentNonBlocking, deleteDocumentNonBlocking, updateDocumentNonBlocking } from '../non-blocking-updates';
 
 
@@ -193,6 +193,8 @@ export const DataProvider = ({ children }: { children: ReactNode }) => {
     const firestore = useFirestore();
     const { user, isUserLoading } = useUser();
     const [isSeeding, setIsSeeding] = useState(false);
+    const [transactions, setTransactions] = useState<Transaction[]>([]);
+    const [transactionsLoading, setTransactionsLoading] = useState(true);
 
     useEffect(() => {
         const seedData = async () => {
@@ -255,8 +257,8 @@ export const DataProvider = ({ children }: { children: ReactNode }) => {
     const salesCol = useMemoFirebase(() => shouldFetch ? query(collection(firestore, 'sales'), orderBy('date', 'asc')) : null, [firestore, shouldFetch]);
     const estimatesCol = useMemoFirebase(() => shouldFetch ? query(collection(firestore, 'estimates'), orderBy('date', 'desc')) : null, [firestore, shouldFetch]);
     const expensesCol = useMemoFirebase(() => shouldFetch ? query(collection(firestore, 'expenses'), orderBy('date', 'desc')) : null, [firestore, shouldFetch]);
-    const transactionsCol = useMemoFirebase(() => shouldFetch ? query(collection(firestore, 'transactions'), orderBy('date', 'desc')) : null, [firestore, shouldFetch]);
     const salaryPaymentsCol = useMemoFirebase(() => shouldFetch ? query(collection(firestore, 'salaryPayments'), orderBy('date', 'desc')) : null, [firestore, shouldFetch]);
+    const transactionsQuery = useMemoFirebase(() => shouldFetch ? query(collection(firestore, 'transactions'), orderBy('date', 'desc')) : null, [firestore, shouldFetch]);
 
 
     // Fetch data
@@ -267,8 +269,32 @@ export const DataProvider = ({ children }: { children: ReactNode }) => {
     const { data: salesData, isLoading: salesLoading } = useCollection<Sale>(salesCol);
     const { data: estimatesData, isLoading: estimatesLoading } = useCollection<Estimate>(estimatesCol);
     const { data: expensesData, isLoading: expensesLoading } = useCollection<Expense>(expensesCol);
-    const { data: transactionsData, isLoading: transactionsLoading } = useCollection<Transaction>(transactionsCol);
     const { data: salaryPaymentsData, isLoading: salaryPaymentsLoading } = useCollection<SalaryPayment>(salaryPaymentsCol);
+
+    // Manual subscription for transactions
+    useEffect(() => {
+        if (!transactionsQuery) {
+            setTransactions([]);
+            setTransactionsLoading(false);
+            return;
+        }
+
+        setTransactionsLoading(true);
+        const unsubscribe = onSnapshot(transactionsQuery, (snapshot) => {
+            const fetchedTransactions = snapshot.docs.map(doc => ({
+                id: doc.id,
+                ...doc.data(),
+                date: toDate(doc.data().date)
+            })) as Transaction[];
+            setTransactions(fetchedTransactions);
+            setTransactionsLoading(false);
+        }, (error) => {
+            console.error("Error fetching transactions:", error);
+            setTransactionsLoading(false);
+        });
+
+        return () => unsubscribe();
+    }, [transactionsQuery]);
 
     
     const items = itemsData?.map(item => ({ ...item, quantity: item.quantity ?? 0, createdAt: toDate(item.createdAt) })) || [];
@@ -278,7 +304,6 @@ export const DataProvider = ({ children }: { children: ReactNode }) => {
     const sales = salesData?.map(sale => ({ ...sale, date: toDate(sale.date) })) || [];
     const estimates = estimatesData?.map(estimate => ({ ...estimate, date: toDate(estimate.date) })) || [];
     const expenses = expensesData?.map(expense => ({ ...expense, date: toDate(expense.date) })) || [];
-    const transactions = transactionsData?.map(transaction => ({ ...transaction, date: toDate(transaction.date) })) || [];
     const salaryPayments = salaryPaymentsData?.map(payment => ({ ...payment, date: toDate(payment.date) })) || [];
 
 
@@ -304,7 +329,7 @@ export const DataProvider = ({ children }: { children: ReactNode }) => {
     };
 
     const addCustomer = async (customer: Omit<Customer, 'id' | 'createdAt'>) => {
-        if (!customersCol || !transactionsCol) throw new Error("A required collection is not available");
+        if (!customersCol) throw new Error("A required collection is not available");
 
         const batch = writeBatch(firestore);
 
@@ -344,7 +369,7 @@ export const DataProvider = ({ children }: { children: ReactNode }) => {
     };
     
     const addVendor = async (vendor: Omit<Vendor, 'id' | 'createdAt'>) => {
-       if (!vendorsCol || !transactionsCol) throw new Error("A required collection is not available");
+       if (!vendorsCol) throw new Error("A required collection is not available");
        
        const batch = writeBatch(firestore);
 
@@ -396,11 +421,23 @@ export const DataProvider = ({ children }: { children: ReactNode }) => {
     };
 
 
-    const addTransaction = async (transaction: Omit<Transaction, 'id'>) => {
+    const addTransaction = async (transaction: Omit<Transaction, 'id'>): Promise<Transaction> => {
         if (!user) throw new Error("User not authenticated");
         const colRef = collection(firestore, 'transactions');
-        const dataToAdd = { ...transaction, date: transaction.date || serverTimestamp() };
-        return await addDocumentNonBlocking(colRef, dataToAdd);
+        const dataToAdd = { ...transaction, date: transaction.date || new Date() };
+        
+        const docRef = await addDoc(colRef, dataToAdd);
+        
+        // Optimistic UI Update
+        const newTransaction: Transaction = {
+            id: docRef.id,
+            ...dataToAdd,
+            date: toDate(dataToAdd.date) // Ensure it's a JS Date object
+        };
+
+        setTransactions(prev => [newTransaction, ...prev].sort((a,b) => b.date.getTime() - a.date.getTime()));
+
+        return newTransaction;
     };
     
     const updateTransaction = async (id: string, transaction: Partial<Omit<Transaction, 'id'>>) => {
