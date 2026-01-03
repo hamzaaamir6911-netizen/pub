@@ -68,7 +68,6 @@ function DeliveryChallan({ sale }: { sale: Sale }) {
                         <div className="grid grid-cols-2 gap-4 mb-6 font-bold">
                             <div>
                                 <p className="text-lg">Customer:</p>
-                                <p>{sale.customerName}</p>
                                 <p>{customer?.address}</p>
                                 <p>{customer?.phoneNumber}</p>
                             </div>
@@ -790,3 +789,4 @@ export default function SalesPage() {
 
 
     
+
