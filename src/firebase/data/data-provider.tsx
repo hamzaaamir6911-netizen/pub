@@ -397,9 +397,10 @@ export const DataProvider = ({ children }: { children: ReactNode }) => {
 
 
     const addTransaction = async (transaction: Omit<Transaction, 'id'>) => {
+        if (!user) throw new Error("User not authenticated");
         const colRef = collection(firestore, 'transactions');
         const dataToAdd = { ...transaction, date: transaction.date || serverTimestamp() };
-        return await addDoc(colRef, dataToAdd);
+        return await addDocumentNonBlocking(colRef, dataToAdd);
     };
     
     const updateTransaction = async (id: string, transaction: Partial<Omit<Transaction, 'id'>>) => {
