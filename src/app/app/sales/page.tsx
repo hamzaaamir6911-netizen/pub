@@ -135,7 +135,7 @@ function SaleInvoice({ sale, onPost, onUnpost }: { sale: Sale, onPost: (saleId: 
     const customer = customers.find(c => c.id === sale.customerId);
     const { toast } = useToast();
     
-    let runningTotal = 0;
+    let subtotal = 0;
 
     const handlePost = () => {
         onPost(sale.id);
@@ -148,84 +148,88 @@ function SaleInvoice({ sale, onPost, onUnpost }: { sale: Sale, onPost: (saleId: 
     }
 
     return (
-        <DialogContent className="max-w-6xl max-h-[90vh] flex flex-col">
+        <DialogContent className="max-w-4xl max-h-[90vh] flex flex-col">
             <DialogHeader className="flex-shrink-0 no-print">
                 <div className="flex flex-col items-center justify-center pt-4">
                     <DialogTitle>Sale Invoice: {sale.id}</DialogTitle>
                 </div>
             </DialogHeader>
-            <div className="flex-grow overflow-y-auto" id="printable-invoice">
-                 <div className="p-6">
-                    <div className="text-center mb-8">
-                      <h1 className="text-3xl font-bold font-headline">ARCO Aluminium Company</h1>
-                      <p className="mt-2 text-xl font-bold">Sale Invoice: {sale.id}</p>
+            <div className="flex-grow overflow-y-auto printable-area" id="printable-invoice">
+                 <div className="p-8">
+                     {/* Header */}
+                    <div className="flex justify-between items-start mb-10">
+                        <div>
+                            <h1 className="text-3xl font-bold text-gray-800">ARCO Aluminium</h1>
+                            <p className="text-sm text-gray-500">B-5, PLOT 59, Industrial Estate, Hayatabad, Peshawar</p>
+                            <p className="text-sm text-gray-500">+92 333 4646356</p>
+                        </div>
+                        <div className="text-right">
+                             <h2 className="text-2xl font-bold text-gray-700">INVOICE</h2>
+                             <p className="text-sm text-gray-500 mt-1">Invoice #: {sale.id}</p>
+                             <p className="text-sm text-gray-500">Date: {formatDate(sale.date)}</p>
+                              <Badge variant={sale.status === 'posted' ? 'default' : 'secondary'} className="mt-2">{sale.status}</Badge>
+                        </div>
                     </div>
-                    <div className="p-6">
-                        <div className="grid grid-cols-2 gap-4 mb-6 font-bold">
-                            <div>
-                                <p className="text-lg">Customer:</p>
-                                <p>{sale.customerName}</p>
-                                <p>{customer?.address}</p>
-                                <p>{customer?.phoneNumber}</p>
-                            </div>
-                            <div className="text-right">
-                                <p className="text-lg">Date:</p>
-                                <p>{formatDate(sale.date)}</p>
-                                <p className="mt-2 text-lg">Status:</p>
-                                <Badge variant={sale.status === 'posted' ? 'default' : 'secondary'} className="text-base font-bold">{sale.status}</Badge>
-                            </div>
-                        </div>
 
-                        <div className="overflow-x-auto">
-                            <Table>
-                                <TableHeader>
-                                    <TableRow>
-                                        <TableHead className="font-bold">Item</TableHead>
-                                        <TableHead className="font-bold">Colour</TableHead>
-                                        <TableHead className="font-bold">Thickness</TableHead>
-                                        <TableHead className="text-right font-bold">Feet</TableHead>
-                                        <TableHead className="text-right font-bold">Quantity</TableHead>
-                                        <TableHead className="text-right font-bold">Rate</TableHead>
-                                        <TableHead className="text-right font-bold">Discount</TableHead>
-                                        <TableHead className="text-right font-bold">Amount</TableHead>
-                                    </TableRow>
-                                </TableHeader>
-                                <TableBody>
-                                    {sale.items.map((item, index) => {
-                                        const itemSubtotal = (item.feet || 1) * item.price * item.quantity;
-                                        const discountAmount = itemSubtotal * ((item.discount || 0) / 100);
-                                        const finalAmount = itemSubtotal - discountAmount;
-                                        runningTotal += finalAmount;
-                                        
-                                        return (
-                                            <TableRow key={index} className="font-bold">
-                                                <TableCell>{item.itemName}</TableCell>
-                                                <TableCell>{item.color}</TableCell>
-                                                <TableCell>{item.thickness || '-'}</TableCell>
-                                                <TableCell className="text-right">{item.feet ? item.feet.toFixed(2) : '-'}</TableCell>
-                                                <TableCell className="text-right">{item.quantity}</TableCell>
-                                                <TableCell className="text-right">{formatCurrency(item.price)}</TableCell>
-                                                <TableCell className="text-right">{item.discount || 0}%</TableCell>
-                                                <TableCell className="text-right">{formatCurrency(finalAmount)}</TableCell>
-                                            </TableRow>
-                                        )
-                                    })}
-                                </TableBody>
-                            </Table>
-                        </div>
+                     {/* Bill To */}
+                    <div className="mb-10">
+                        <p className="font-bold text-sm text-gray-500 uppercase mb-2">Bill To</p>
+                        <p className="text-gray-800 font-semibold">{sale.customerName}</p>
+                        <p className="text-gray-600 text-sm">{customer?.address}</p>
+                        <p className="text-gray-600 text-sm">{customer?.phoneNumber}</p>
+                    </div>
 
-                        <div className="mt-6 flex justify-end">
-                            <div className="w-80 space-y-2">
-                                <div className="flex justify-between font-bold text-xl border-t-2 border-black pt-2">
-                                    <span>Total:</span>
-                                    <span>{formatCurrency(sale.total)}</span>
-                                </div>
+                    {/* Items Table */}
+                    <div className="overflow-x-auto">
+                        <Table>
+                            <TableHeader className="bg-gray-50">
+                                <TableRow>
+                                    <TableHead className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Description</TableHead>
+                                    <TableHead className="px-4 py-2 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Qty</TableHead>
+                                    <TableHead className="px-4 py-2 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Rate</TableHead>
+                                    <TableHead className="px-4 py-2 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Discount</TableHead>
+                                    <TableHead className="px-4 py-2 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Amount</TableHead>
+                                </TableRow>
+                            </TableHeader>
+                            <TableBody>
+                                {sale.items.map((item, index) => {
+                                    const itemSubtotal = (item.feet || 1) * item.price * item.quantity;
+                                    const discountAmount = itemSubtotal * ((item.discount || 0) / 100);
+                                    const finalAmount = itemSubtotal - discountAmount;
+                                    subtotal += finalAmount;
+                                    
+                                    return (
+                                        <TableRow key={index}>
+                                            <TableCell className="px-4 py-3 font-medium text-gray-800">
+                                                {item.itemName}
+                                                <span className="text-gray-500 text-xs block">{item.thickness} - {item.color} {item.feet ? `- ${item.feet.toFixed(2)}ft` : ''}</span>
+                                            </TableCell>
+                                            <TableCell className="px-4 py-3 text-right text-gray-600">{item.quantity}</TableCell>
+                                            <TableCell className="px-4 py-3 text-right text-gray-600">{formatCurrency(item.price)}</TableCell>
+                                            <TableCell className="px-4 py-3 text-right text-gray-600">{item.discount || 0}%</TableCell>
+                                            <TableCell className="px-4 py-3 text-right font-semibold text-gray-800">{formatCurrency(finalAmount)}</TableCell>
+                                        </TableRow>
+                                    )
+                                })}
+                            </TableBody>
+                        </Table>
+                    </div>
+
+                    {/* Totals */}
+                    <div className="flex justify-end mt-6">
+                        <div className="w-full max-w-sm">
+                            <div className="flex justify-between py-2 border-b">
+                                <span className="text-gray-600">Subtotal</span>
+                                <span className="font-semibold text-gray-800">{formatCurrency(subtotal)}</span>
                             </div>
-                        </div>
-
-                         <div className="mt-24 text-center text-xs text-gray-500 border-t pt-4 font-bold">
-                            <p>Industrial Estate, Hayatabad Road B-5 PLOT 59 PESHAWAR</p>
-                            <p>Phone: +923334646356</p>
+                            <div className="flex justify-between py-2 border-b">
+                                <span className="text-gray-600">Overall Discount ({sale.discount}%)</span>
+                                <span className="font-semibold text-gray-800">- {formatCurrency(subtotal * (sale.discount / 100))}</span>
+                            </div>
+                            <div className="flex justify-between py-3 bg-gray-100 px-4 rounded-md mt-2">
+                                <span className="font-bold text-lg text-gray-800">Grand Total</span>
+                                <span className="font-bold text-lg text-gray-800">{formatCurrency(sale.total)}</span>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -789,4 +793,5 @@ export default function SalesPage() {
 
 
     
+
 
