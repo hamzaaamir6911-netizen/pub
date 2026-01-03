@@ -48,12 +48,11 @@ h1, h2, h3, h4, h5, h6 {
   }
 }
 
-
 @media print {
-  body.printing * {
+  body.printing {
     visibility: hidden;
   }
-  
+
   body.printing .printable-area,
   body.printing .printable-area * {
     visibility: visible;
@@ -66,20 +65,21 @@ h1, h2, h3, h4, h5, h6 {
     width: 100%;
     height: auto;
     margin: 0;
-    padding: 1.5rem; /* Equivalent of p-6 */
+    padding: 0;
+    max-height: none !important;
+    overflow-y: visible !important;
   }
-
+  
   .no-print {
     display: none !important;
   }
 
   body:not(.printing) {
-     /* Regular styles here if needed, but mostly handled by tailwind */
+     /* Regular styles handled by tailwind */
   }
   
   @page {
     size: auto;
-    margin: 0mm;
+    margin: 1.5cm;
   }
 }
-    

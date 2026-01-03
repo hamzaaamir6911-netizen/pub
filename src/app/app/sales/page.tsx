@@ -68,7 +68,6 @@ function DeliveryChallan({ sale }: { sale: Sale }) {
                         <div className="grid grid-cols-2 gap-4 mb-6 font-bold">
                             <div>
                                 <p className="font-semibold">Customer:</p>
-                                <p>{customer?.customerName}</p>
                                 <p>{customer?.address}</p>
                                 <p>{customer?.phoneNumber}</p>
                             </div>
@@ -186,6 +185,7 @@ function SaleInvoice({ sale, onPost, onUnpost }: { sale: Sale, onPost: (saleId: 
                             <TableHeader className="bg-gray-50">
                                 <TableRow>
                                     <TableHead className="px-2 py-2 text-left font-medium text-gray-500 uppercase tracking-wider">Description</TableHead>
+                                    <TableHead className="px-2 py-2 text-right font-medium text-gray-500 uppercase tracking-wider">Feet</TableHead>
                                     <TableHead className="px-2 py-2 text-right font-medium text-gray-500 uppercase tracking-wider">Qty</TableHead>
                                     <TableHead className="px-2 py-2 text-right font-medium text-gray-500 uppercase tracking-wider">Rate</TableHead>
                                     <TableHead className="px-2 py-2 text-right font-medium text-gray-500 uppercase tracking-wider">Discount</TableHead>
@@ -203,8 +203,9 @@ function SaleInvoice({ sale, onPost, onUnpost }: { sale: Sale, onPost: (saleId: 
                                         <TableRow key={index}>
                                             <TableCell className="px-2 py-2 font-medium text-gray-800">
                                                 {item.itemName}
-                                                <span className="text-gray-500 text-xs block">{item.thickness} - {item.color} {item.feet ? `- ${item.feet.toFixed(2)}ft` : ''}</span>
+                                                <span className="text-gray-500 text-xs block">{item.thickness} - {item.color}</span>
                                             </TableCell>
+                                            <TableCell className="px-2 py-2 text-right text-gray-600">{item.feet ? item.feet.toFixed(2) : '-'}</TableCell>
                                             <TableCell className="px-2 py-2 text-right text-gray-600">{item.quantity}</TableCell>
                                             <TableCell className="px-2 py-2 text-right text-gray-600">{formatCurrency(item.price)}</TableCell>
                                             <TableCell className="px-2 py-2 text-right text-gray-600">{item.discount || 0}%</TableCell>
@@ -794,6 +795,7 @@ export default function SalesPage() {
 
 
     
+
 
 
 
