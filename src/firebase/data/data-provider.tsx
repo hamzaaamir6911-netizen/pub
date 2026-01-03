@@ -6,7 +6,7 @@ import React, { createContext, useContext, ReactNode, useEffect, useState } from
 import type { Item, Customer, Sale, Expense, Transaction, Vendor, Estimate, Labour, SalaryPayment } from '@/lib/types';
 import { useCollection, useFirestore, useMemoFirebase, useUser } from '@/firebase';
 import { collection, doc, writeBatch, serverTimestamp, Timestamp, orderBy, query, where, getDocs, runTransaction, increment, addDoc, getDoc, deleteDoc, setDoc, updateDoc, onSnapshot } from 'firebase/firestore';
-import { addDocumentNonBlocking, deleteDocumentNonBlocking, updateDocumentNonBlocking } from '../non-blocking-updates';
+import { deleteDocumentNonBlocking, updateDocumentNonBlocking } from '../non-blocking-updates';
 
 
 interface DataContextProps {
@@ -314,7 +314,7 @@ export const DataProvider = ({ children }: { children: ReactNode }) => {
     const addItem = async (item: Omit<Item, 'id' | 'createdAt'>) => {
         if (!itemsCol) throw new Error("Items collection not available");
         const newItem = { ...item, createdAt: serverTimestamp() };
-        return addDocumentNonBlocking(itemsCol, newItem);
+        return addDoc(itemsCol, newItem);
     };
 
     const deleteItem = async (id: string) => {
@@ -428,7 +428,7 @@ export const DataProvider = ({ children }: { children: ReactNode }) => {
             ...transaction,
             date: transaction.date || serverTimestamp()
         };
-        const docRef = await addDocumentNonBlocking(colRef, transactionWithServerDate);
+        const docRef = await addDoc(colRef, transactionWithServerDate);
         return docRef;
     };
     
