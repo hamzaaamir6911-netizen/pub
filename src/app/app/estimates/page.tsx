@@ -37,7 +37,7 @@ import {
 } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Card, CardContent, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle, CardFooter } from "@/componentsui/card";
 import { Label } from "@/components/ui/label";
 import { PageHeader } from "@/components/page-header";
 import { formatCurrency, formatDate } from "@/lib/utils";
@@ -65,37 +65,12 @@ function EstimatePrint({ estimate }: { estimate: Estimate }) {
                     {/* Header */}
                     <div className="flex justify-between items-start mb-6">
                         <div>
-                           <svg width="200" height="50" viewBox="0 0 400 100" className="text-black">
-                                <defs>
-                                    <linearGradient id="grad1" x1="0%" y1="0%" x2="100%" y2="0%">
-                                        <stop offset="0%" style={{stopColor: 'rgb(150,150,150)', stopOpacity: 1}} />
-                                        <stop offset="50%" style={{stopColor: 'rgb(220,220,220)', stopOpacity: 1}} />
-                                        <stop offset="100%" style={{stopColor: 'rgb(150,150,150)', stopOpacity: 1}} />
-                                    </linearGradient>
-                                    <linearGradient id="grad2" x1="0%" y1="0%" x2="100%" y2="0%">
-                                        <stop offset="0%" style={{stopColor: 'rgb(255,215,0)', stopOpacity: 1}} />
-                                        <stop offset="50%" style={{stopColor: 'rgb(255,235,100)', stopOpacity: 1}} />
-                                        <stop offset="100%" style={{stopColor: 'rgb(255,215,0)', stopOpacity: 1}} />
-                                    </linearGradient>
-                                </defs>
-                                <g transform="translate(10, 10)">
-                                    {/* A */}
-                                    <path d="M0 80 L30 0 L60 0 L35 80 Z M32.5 50 L15 50 L23.75 20 Z" fill="url(#grad1)" />
-                                    {/* R */}
-                                    <path d="M65 0 H105 V20 H85 V35 H100 L110 55 H85 V80 H65 Z M85 55 h10 l-5-15z" fill="url(#grad1)" />
-                                    {/* C */}
-                                    <path d="M165 40 C165 10, 125 10, 125 40 C125 70, 165 70, 165 40 Z M145 0 C110 0, 110 80, 145 80 C180 80, 180 0, 145 0 Z M145 20 C125 20, 125 60, 145 60 C165 60, 165 20, 145 20 Z" fill="url(#grad1)"/>
-                                    {/* O */}
-                                    <path d="M230 40 C230 10, 190 10, 190 40 C190 70, 230 70, 230 40 Z M210 0 C175 0, 175 80, 210 80 C245 80, 245 0, 210 0 Z M210 20 C190 20, 190 60, 210 60 C230 60, 230 20, 210 20 Z" fill="url(#grad2)"/>
-                                    
-                                    <text x="0" y="98" className="text-2xl font-sans font-semibold" fill="currentColor">AR Aluminum Company</text>
-                                </g>
-                            </svg>
+                           <img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAOEAAADhCAMAAAAJbSJIAAAAbFBMVEX////tHCXsGCD8y8ztGSDsAAD8zM781Nb2qa/5u7793d/sDhL+8/P84+T4tLfsAB/8xMXsCRD3sbX+9/f1paf+7u/sFh7+6Or70dLsExj6x8j3rK7sABb5v8D2nZ/sABnsABT5wsT1mJv6z9DhvJBKAAACyklEQVR4nO3di2LiMBiGYSx5C5qiFSkKgtb2/u9xISlWpMyYk7v9PO+BvS/HCSG5BAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAACA/5xG6firaW6b5bVwD+h1s+h9eWaT+bC89kZdD69M5uPz+pP1vEwz+S/L61fS83Jt5i/m9cfqebkN818sr59Pz+v7mn3w+/s36no1y/yA/uL5+lP1vM6w/A9/d/1+VZfN8yvL64/U8/J8+z9+f/1N+r75W/U8z7L8D//d/4V+f23/gP+p/8f/q/+R/0//r/+F/7v/D/9f/6f/N/73/W/8z/3f+B/6v/Af9H/4f/Bf9H/5P/Jf9L/4P/Bf9H/zP/Vf9L/yP/Zf9L/uP+5/6P/U/8L/yP/U/6H/Bf9D/yP/Q/8D/0P/A/9D/wP/Q/8D/0P/A/9D/wP/Q/8D/0P/A/9D/wP/Q/8D/0P/A/9D/wP/Q/8D/0P/A/9D/wP/Q/8D/0P/A/9D/wP/Q/8D/0P/A/9D/wP/Q/8D/0P/A/9D/wP/Q/8D/wP/Q/8D/0P/A/9D/wP/Q/8D/wP/Q/8D/wP/Q/8D/0P/A/9D/wP/Q/8D/0P/A/9D/wP/Q/8D/0P/A/9D/wP/Q/8D/0P/A/9D/wP/Q/8D/wP/Q/8D/wP/Q/8D/wP/Q/8D/wP/Q/8D/wP/Q/8D/wP/Q/8D/wP/Q/8D/wP/Q/8D/wP/Q/8D/wP/Q/8D/wP/Q/8D/wP/Q/8D/wP/Q/8D/wP/Q/8D/wP/Q/8D/wP/Q/8D/wP/Q/8D/wP/Q/8D/wP/Q/8D/wP/Q/8D/wP/Q/8D/wP/Q/8D/wP/Q/8D/wP/Q/8D/wP/Q/8D/wP/Q/8D/wP/Q/8D/wP/Q/8D/wP/Q/8D/wP/Q/8D/wP/Q/8D/wP/Q/8D/wP/Q/8D/wP/Q/8D/wP/Q/8D/wP/Q/8D/wP/Q/8D/wP/Q/8D/wP/Q/8D/wP/Q/8D/wP/Q/8D/wP/Q/8D/wP/Q/8D/wP/Q/8D/wP/Q/8D/wP/Q/8D/wP/Q/8D/wP/Q/8D/wP/Q/8D/wP/Q/8D/wP/Q/8D/wP/Q/8D/wP/Q/8D/wP/Q/8D/wP/Q/8D/wP/Q/8D/wP/Q/8D/wP/Q/8D/wP/Q/8D/wP/Q/8D/wP/Q/8D/wP/Q/8D/wP/Q/8D/wP/Q/8D/wP/Q/8D/wP/Q/8D/wP/Q/8D/wP/Q/8D/wP/Q/8D/wP/Q/8D/wP/Q/8D/wP/Q/8D/wP/Q/8D/wP/Q/8D/wP/Q/8D/wP/Q/8D/wP/Q/8D/wP/Q/8D/wP/Q/8D/wP/Q/8D/wP/Q/8D/wP/Q/8D/wP/Q/8D/wP/Q/8D/wP/Q/8D/wP/Q/8D/wP/Q/8D/wP/Q/8D/wP/Q/8D/wP/Q/8D/wP/Q/8D/wP/Q/8D/wP/Q/8D/wP/Q/8D/wP/Q/8D/wP/Q/8D/wP/Q/8D/wP/Q/8D/wP/Q/8D/wP/Q/8D/wP/Q/8D/wP/Q/8D/wP/Q/8D/wP/Q/8D/wP/Q/8D/wP/Q/8D/wP/Q/8D/wP/Q/8D/wP/Q/8D/wP/Q/8D/wP/Q/8D/wP/Q/8D/wP/Q/8D/wP/Q/8D/wP/Q/8D/wP/Q/8D/wP/Q/8D/wP/Q/8D/wP/Q/8D/wP/Q/8D/wP/Q/8D/wP/Q/8D/wP/Q/8D/wP/Q/8D/wP/Q/8D/wP/Q/8D/wP/Q/8D/wP/Q/8D/wP/Q/8D/wP/Q/8D/wP/Q/8D/wP/Q/8D/wP/Q/8D/wP/Q/8D/wP/Q/8D/wP/Q/8D/wP/Q/8D/wP/Q/8D/wP/Q/8D/wP/Q/8D/wP/Q/8D/wP/Q/8D/wP/Q/8D/wP/Q/8D/wP/Q/8D/wP/Q/8D/wP/Q/8D/wP/Q/8D/wP/Q/8D/wP/Q/8D/wP/Q/8D/wP/Q/8D/wP/Q/8D/wP/Q/8D/wP/Q/8D/wP/Q/8D/wP/Q/8D/wP/Q/8D/wP/Q/8D/wP/Q/8D/wP/Q/8D/wP/Q/8D/wP/Q/8D/wP/Q/8D/wP/Q/8D/wP/Q/8D/wP/Q/8D/wP/Q/8D/wP/Q/8D/wP/Q/8D/wP/Q/8D/wP/Q/8D/wP/Q/8D/wP/Q/8D/wP/Q/8D/wP/Q/8D/wP/Q/8D/wP/Q/8D/wP/Q/8D/wP/Q/8D/wP/Q/8D/wP/Q/8D/wP/Q/8D/wP/Q/8D/wP/Q/8D/wP/Q/8D/wP/Q/8D/wP/Q/8D/wP/Q/8D/wP/Q/8D/wP/Q/8D/wP/Q/8D/wP/Q/8D/wP/Q/8D/wP/Q/8D/wP/Q/8D/wP/Q/8D/wP/Q/8D/wP/Q/8D/wP/Q/8D/wP/Q/8D/wP/Q/8D/wP/Q/8D/wP/Q/8D/wP/Q/8D/wP/Q/8D/wP/Q/8D/wP/Q/8D/wP/Q/8D/wP/Q/8D/wP/Q/8D/wP/Q/8D/wP/Q/8D/wP/Q/8D/wP/Q/8D/wP/Q/8D/wP/Q/8D/wP/Q/8D/wP/Q/8D/wP/Q/8D/wP/Q/s..D/wP/Q/8D/wP/Q/8D/wP/Q/8D/wP/Q/8D/wP/Q/8D/wP/Q/8D/wP/Q/8D/wP/Q/8D/wP/Q/8D/wP/Q/8D/wP/Q/8D/wP/Q/8D/wP/Q/8D/wP/Q/8D/wP/Q/8D/wP/Q/8D/wP/Q/8D/wP/Q/8D/wP/Q/8D/wP/Q/8D/wP/Q/8D/wP/Q/8D/wP/Q/8D/wP/Q/8D/wP/Q/8D/wP/Q/8D/wP/Q/8D/wP/Q/8D/wP/Q/8D/wP/Q/8D/wP/Q/8D/wP/Q/8D/wP/Q/8D/wP/Q/8D/wP/Q/8D/wP/Q/8D/wP/Q/8D/wP/Q/8D/wP/Q/8D/wP/Q/8D/wP/Q/8D/wP/Q/8D/wP/Q/8D/wP/Q/8D/wP/Q/8D/wP/Q/8D/wP/Q/8D/wP/Q/8D/wP/Q/8D/wP/Q/8D/wP/Q/8D/wP/Q/8D/wP/Q/8D/wP/Q/8D/wP/Q/8D/wP/Q/8D/wP/Q/8D/wP/Q/8D/wP/Q/8D/wP/Q/8D/wP/Q/8D/wP/Q/8D/wP/Q/8D/wP/Q/8D/wP/Q/8D/wP/Q/8D/wP/Q/8D/wP/Q/8D/wP/Q/8D/wP/Q/8D/wP/Q/8D/wP/Q/8D/wP/Q/8D/wP/Q/8D/wP/Q/8D/wP/Q/8D/wP/Q/8D/wP/Q/8D/wP/Q/8D/wP/Q/8D/wP/Q/8D/wP/Q/8D/wP/Q/8D/wP/Q/8D/wP/Q/8D/wP/Q/8D/wP/Q/8D/wP/Q/8D/wP/Q/8D/wP/Q/8D/wP/Q/8D/wP/Q/8D/wP/Q/8D/wP/Q/8D/wP/Q/8D/wP/Q/8D/wP/Q/8D/wP/Q/8D/wP/Q/8D/wP/Q/8D/wP/Q/8D/wP/Q/8D/wP/Q/8D/wP/Q/8D/wP/Q/8D/wP/Q/8D/wP/Q/8D/wP/Q/8D/wP/Q/8D/wP/Q/8D/wP/Q/8D/wP/Q/8D/wP/Q/8D/wP/Q/8D/wP/Q/8D/wP/Q/8D/wP/Q/8D/wP/Q/8D/wP/Q/8D/wP/Q/8D/wP/Q/8D/wP/Q/8D/wP/Q/8D/wP/Q/8D/wP/Q/8D/wP/Q/8D/wP/Q/8D/wP/Q/8D/wP/Q/8D/wP/Q/8D/wP/Q/8D/wP/Q/8D/wP/Q/8D/wP/Q/8D/wP/Q/8D/wP/Q/8D/wP/Q/8D/wP/Q/8D/wP/Q/8D/wP/Q/8D/wP/Q/8D/wP/Q/8D/wP/Q/8D/wP/Q/8D/wP/Q/8D/wP/Q/8D/wP/Q/8D/wP/Q/8D/wP/Q/8D/wP/Q/8D/wP/Q/8D/wP/Q/8D/wP/Q/8D/wP/Q/8D/wP/Q/8D/wP/Q/8D/wP/Q/8D/wP/Q/8D/wP/Q/8D/wP/Q/8D/wP/Q/8D/wP/Q/8D/wP/Q/8D/wP/Q/8D/wP/Q/8D/wP/Q/8D/wP/Q/8D/wP/Q/8D/wP/Q/8D/wP/Q/8D/wP/Q/8D/wP/Q/8D/wP/Q/8D/wP/Q/8D/wP/Q/8D/wP/Q/8D/wP/Q/8D/wP/Q/8D/wP/Q/8D/wP/Q/8D/wP/Q/8D/wP/Q/8D/wP/Q/8D/wP/Q/8D/wP/Q/8D/wP/Q/8D/wP/Q/8D/wP/Q/8D/wP/Q/8D/wP/Q/8D/wP/Q/8D/wP/Q/8D/wP/Q/8D/wP/Q/8D/wP/Q/8D/wP/Q/8D/wP/Q/8D/wP/Q/8D/wP/Q/8D/wP/Q/8D/wP/Q/8D/wP/Q/8D/wP/Q/8D/wP/Q/8D/wP/Q/8D/wP/Q/8D/wP/Q/8D/wP/Q/8D/wP/Q/8D/wP/Q/8D/wP/Q/8D/wP/Q/8D/wP/Q/8D/wP/Q/8D/wP/Q/8D/wP/Q/8D/wP/Q/8D/wP/Q/8D/wP/Q/8D/wP/Q/8D/wP/Q/P8D/wP/Q/8D/wP/Q/8D/wP/Q/8D/wP/Q/8D/wP/Q/8D/wP/Q/8D/wP/Q/8D/wP/Q/8D/wP/Q/8D/wP/Q/8D/wP/Q/8D/wP/Q/8D/wP/Q/8D/wP/Q/8D/wP/Q/8D/wP/Q/8D/wP/Q/8D/wP/Q/8D/wP/Q/8D/wP/Q/8D/wP/Q/8D/wP/Q/8D/wP/Q/8D/wP/Q/8D/wP/Q/8D/wP/Q/8D/wP/Q/8D/wP/Q/8D/wP/Q/8D/wP/Q/8D/wP/Q/8D/wP/Q/8D/wP/Q/8D/wP/Q/8D/wP/Q/8D/wP/Q/8D/wP/Q/8D/wP/Q/8D/wP/Q/8D/wP/Q/8D/wP/Q/8D/wP/Q/8D/wP/Q/8D/wP/Q/8D/wP/Q/8D/wP/Q/8D/wP/Q/8D/wP/Q/8D/wP/Q/8D/wP/Q/8D/wP/Q/8D/wP/Q/8D/wP/Q/8D/wP/Q/8D/wP/Q/8D/wP/Q/8D/wP/Q/8D/wP/Q/8D/wP/Q/8D/wP/Q/8D/wP/Q/8D/wP/Q/8D/wP/Q/8D/wP/Q/8D/wP/Q/8D/wP/Q/8D/wP/Q/8D/wP/Q/8D/wP/Q/8D/wP/Q/8D/wP/Q/8D/wP/Q/8D/wP/Q/8D/wP/Q/8D/wP/Q/8D/wP/Q/8D/wP/Q/8D/wP/Q/8D/wP/Q/8D/wP/Q/8D/wP/Q/8D/wP/Q/8D/wP/Q/8D/wP/Q/8D/wP/Q/8D/wP/Q/8D/wP/Q/8D/wP/Q/8D/wP/Q/8D/wP/Q/8D/wP/Q/8D/wP/Q/8D/wP/Q/8D/wP/Q/8D/wP/Q/8D/wP/Q/8D/wP/Q/8D/wP/Q/8D/wP/Q/8D/wP/Q/8D/wP/Q/8D/wP/Q/8D/wP/Q/8D/wP/Q/8D/wP/Q/8D/wP/Q/8D/wP/Q/8D/wP/Q/8D/wP/Q/8D/wP/Q/8D/wP/Q/8D/wP/Q/8D/wP/Q/8D/wP/Q/8D/wP/Q/8D/wP/Q/8D/wP/Q/8D/wP/Q/8D/wP/Q/8D/wP/Q/8D/wP/Q/8D/wP/Q/8D/wP/Q/8D/wP/Q/8D/wP/Q/8D/wP/Q/8D/wP/Q/8D/wP/Q/8D/wP/Q/8D/wP/Q/8D/wP/Q/8D/wP/Q/8D/wP/Q/8D/wP/Q/8D/wP/Q/8D/wP/Q/8D/wP/Q/8D/wP/Q/8D/wP/Q/8D/wP/Q/8D/wP/Q/8D/wP/Q/8D/wP/Q/8D/wP/Q/8D/wP/Q/8D/wP/Q/8D/wP/Q/8D/wP/Q/8D/wP/Q/8D/wP/Q/8D/wP/Q/8D/wP/Q/8D/wP/Q/8D/wP/Q/8D/wP/Q/8D/w-` alt="ARCO Aluminium Company Logo" className="w-48"/>
                             <p className="text-sm text-gray-500 mt-2">B-5, PLOT 59, Industrial Estate, Hayatabad, Peshawar</p>
                             <p className="text-sm text-gray-500">+92 333 4646356</p>
                         </div>
                         <div className="text-right">
-                             <h2 className="text-xl font-bold text-gray-700">ESTIMATE</h2>
+                             <h2 className="text-2xl font-bold text-gray-700">ESTIMATE</h2>
                              <p className="text-sm text-gray-500 mt-1">Estimate #: {estimate.id}</p>
                              <p className="text-sm text-gray-500">Date: {formatDate(estimate.date)}</p>
                         </div>
@@ -112,8 +87,8 @@ function EstimatePrint({ estimate }: { estimate: Estimate }) {
 
                     <div className="overflow-x-auto">
                         <Table className="text-sm">
-                            <TableHeader className="bg-gray-50">
-                                <TableRow>
+                            <TableHeader>
+                                <TableRow className="bg-gray-50">
                                     <TableHead className="px-2 py-2 text-left font-medium text-gray-500 uppercase tracking-wider">Description</TableHead>
                                     <TableHead className="px-2 py-2 text-right font-medium text-gray-500 uppercase tracking-wider">Feet</TableHead>
                                     <TableHead className="px-2 py-2 text-right font-medium text-gray-500 uppercase tracking-wider">Qty</TableHead>
@@ -608,3 +583,4 @@ export default function EstimatesPage() {
     </>
   );
 }
+
