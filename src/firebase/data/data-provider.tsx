@@ -424,17 +424,17 @@ export const DataProvider = ({ children }: { children: ReactNode }) => {
     const addTransaction = async (transaction: Omit<Transaction, 'id'>): Promise<Transaction> => {
         if (!user) throw new Error("User not authenticated");
         const colRef = collection(firestore, 'transactions');
-        const dataToAdd = { ...transaction, date: transaction.date || new Date() };
         
-        const docRef = await addDoc(colRef, dataToAdd);
+        const docRef = await addDoc(colRef, transaction);
         
-        // Optimistic UI Update
+        // This is the optimistic UI update part.
         const newTransaction: Transaction = {
             id: docRef.id,
-            ...dataToAdd,
-            date: toDate(dataToAdd.date) // Ensure it's a JS Date object
+            ...transaction,
+            date: toDate(transaction.date) // Ensure date is a JS Date object for the UI state.
         };
 
+        // Prepend and re-sort to ensure correct chronological order in UI.
         setTransactions(prev => [newTransaction, ...prev].sort((a,b) => b.date.getTime() - a.date.getTime()));
 
         return newTransaction;
@@ -846,3 +846,5 @@ export const useData = () => {
   }
   return context;
 };
+
+    
