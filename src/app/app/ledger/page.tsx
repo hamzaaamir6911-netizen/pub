@@ -1,7 +1,7 @@
 
 "use client";
 
-import { useState, useMemo, FormEvent } from "react";
+import { useState, useMemo, FormEvent, useEffect } from "react";
 import { X, MoreHorizontal, Printer, Edit, Trash2, PlusCircle } from "lucide-react";
 import {
   Table,
@@ -44,7 +44,21 @@ function AddPaymentForm({ onTransactionAdded, onOpenChange }: { onTransactionAdd
   const [amount, setAmount] = useState(0);
   const [type, setType] = useState<'credit' | 'debit'>('credit');
   const [date, setDate] = useState(new Date().toISOString().split('T')[0]);
+  const [selectedCustomerId, setSelectedCustomerId] = useState<string | undefined>(undefined);
+  const { customers } = useData();
   const { toast } = useToast();
+  
+  useEffect(() => {
+    if (type === 'credit' && selectedCustomerId) {
+        const customer = customers.find(c => c.id === selectedCustomerId);
+        if (customer) {
+            setDescription(`Cash received from ${customer.customerName}`);
+        }
+    } else {
+        setDescription('');
+    }
+  }, [type, selectedCustomerId, customers]);
+
 
   const handleSubmit = async (event: FormEvent) => {
     event.preventDefault(); 
@@ -53,24 +67,28 @@ function AddPaymentForm({ onTransactionAdded, onOpenChange }: { onTransactionAdd
       return;
     }
     
+    const customer = customers.find(c => c.id === selectedCustomerId);
+
     const newTransaction: Omit<Transaction, 'id'> = {
       description,
       amount,
       type,
-      category: type === 'credit' ? 'Cash Received' : 'Payment',
+      category: type === 'credit' ? (customer ? 'Customer Payment' : 'Cash Received') : 'Payment',
       date: new Date(date),
+      customerId: selectedCustomerId,
+      customerName: customer?.customerName,
     };
 
     try {
         await onTransactionAdded(newTransaction);
         toast({ title: 'Transaction Added!', description: `A transaction of ${formatCurrency(amount)} has been recorded.` });
         
-        // Clear form and close dialog
         setDescription('');
         setAmount(0);
         setDate(new Date().toISOString().split('T')[0]);
         setType('credit');
-        onOpenChange(false); // Close the dialog on success
+        setSelectedCustomerId(undefined);
+        onOpenChange(false);
     } catch(e) {
         console.error("Failed to add transaction: ", e);
         toast({ variant: 'destructive', title: 'Error', description: "Could not save the transaction." });
@@ -90,7 +108,7 @@ function AddPaymentForm({ onTransactionAdded, onOpenChange }: { onTransactionAdd
           </div>
           <div className="space-y-2">
             <Label htmlFor="type">Transaction Type</Label>
-            <Select onValueChange={(value: 'credit' | 'debit') => setType(value)} value={type}>
+            <Select onValueChange={(value: 'credit' | 'debit') => { setType(value); setSelectedCustomerId(undefined); }} value={type}>
               <SelectTrigger id="type"><SelectValue /></SelectTrigger>
               <SelectContent>
                 <SelectItem value="credit">Cash Received (Credit)</SelectItem>
@@ -98,6 +116,21 @@ function AddPaymentForm({ onTransactionAdded, onOpenChange }: { onTransactionAdd
               </SelectContent>
             </Select>
           </div>
+          
+           {type === 'credit' && (
+             <div className="space-y-2">
+                <Label htmlFor="customer">From Customer (Optional)</Label>
+                <Select onValueChange={setSelectedCustomerId} value={selectedCustomerId}>
+                    <SelectTrigger id="customer">
+                        <SelectValue placeholder="Select a customer" />
+                    </SelectTrigger>
+                    <SelectContent>
+                        {customers.map(c => <SelectItem key={c.id} value={c.id}>{c.customerName}</SelectItem>)}
+                    </SelectContent>
+                </Select>
+            </div>
+           )}
+
           <div className="space-y-2">
             <Label htmlFor="description">Description</Label>
             <Input 
@@ -105,6 +138,7 @@ function AddPaymentForm({ onTransactionAdded, onOpenChange }: { onTransactionAdd
               value={description} 
               onChange={(e) => setDescription(e.target.value)} 
               placeholder={type === 'debit' ? "e.g. Payment for supplies" : "e.g. Cash from sale"}
+              disabled={type === 'credit' && !!selectedCustomerId}
             />
           </div>
           <div className="space-y-2">
