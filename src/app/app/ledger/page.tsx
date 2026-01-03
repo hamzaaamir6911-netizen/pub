@@ -2,7 +2,7 @@
 "use client";
 
 import { useState, useMemo } from "react";
-import { X, MoreHorizontal, Printer, Edit, Trash2 } from "lucide-react";
+import { X, MoreHorizontal, Printer, Edit, Trash2, PlusCircle } from "lucide-react";
 import {
   Table,
   TableBody,
@@ -19,32 +19,170 @@ import {
   DropdownMenuLabel,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+  DialogFooter,
+} from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { PageHeader } from "@/components/page-header";
 import type { Transaction } from "@/lib/types";
 import { useToast } from "@/hooks/use-toast";
 import { Label } from "@/components/ui/label";
+import { Input } from "@/components/ui/input";
 import { useData } from "@/firebase/data/data-provider";
 import { formatCurrency, formatDate } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { cn } from "@/lib/utils";
 
-
-export default function LedgerPage() {
-  const { transactions, deleteTransaction, customers, vendors } = useData();
-  const [selectedCustomerId, setSelectedCustomerId] = useState<string | null>(null);
-  const [selectedVendorId, setSelectedVendorId] = useState<string | null>(null);
+function AddTransactionForm({ onTransactionAdded }: { onTransactionAdded: (newTransaction: Omit<Transaction, 'id'>) => void }) {
+  const { customers, vendors } = useData();
+  const [description, setDescription] = useState('');
+  const [amount, setAmount] = useState(0);
+  const [type, setType] = useState<'credit' | 'debit'>('credit');
+  const [date, setDate] = useState(new Date().toISOString().split('T')[0]);
+  const [customerId, setCustomerId] = useState<string | undefined>(undefined);
+  const [vendorId, setVendorId] = useState<string | undefined>(undefined);
   const { toast } = useToast();
 
+  const handleTypeChange = (newType: 'credit' | 'debit') => {
+    setType(newType);
+    setCustomerId(undefined);
+    setVendorId(undefined);
+    setDescription('');
+  };
+  
+  const handleCustomerChange = (newCustomerId: string) => {
+      setCustomerId(newCustomerId);
+      const customer = customers.find(c => c.id === newCustomerId);
+      if (customer) {
+          setDescription(`Cash received from ${customer.customerName}`);
+      }
+  }
+
+  const handleVendorChange = (newVendorId: string) => {
+      setVendorId(newVendorId);
+      const vendor = vendors.find(v => v.id === newVendorId);
+      if (vendor) {
+          setDescription(`Payment to ${vendor.name}`);
+      }
+  }
+
+  const handleSubmit = () => {
+    if (!description || amount <= 0 || !date) {
+      toast({ variant: 'destructive', title: 'Please fill all fields correctly.' });
+      return;
+    }
+    const customer = customers.find(c => c.id === customerId);
+    const vendor = vendors.find(v => v.id === vendorId);
+
+    const newTransaction: Omit<Transaction, 'id'> = {
+      description,
+      amount,
+      type,
+      category: type === 'credit' ? (customerId ? 'Customer Payment' : 'Cash Received') : (vendorId ? 'Vendor Payment' : 'Payment'),
+      customerId: customerId,
+      customerName: customer?.customerName,
+      vendorId: vendorId,
+      vendorName: vendor?.name,
+      date: new Date(date),
+    };
+
+    onTransactionAdded(newTransaction);
+    toast({ title: 'Transaction Added!', description: `A transaction of ${formatCurrency(amount)} has been recorded.` });
+  };
+
+  return (
+    <DialogContent>
+      <DialogHeader>
+        <DialogTitle>Add New Voucher</DialogTitle>
+      </DialogHeader>
+      <div className="space-y-4 py-4">
+        <div className="space-y-2">
+          <Label htmlFor="date">Transaction Date</Label>
+          <Input id="date" type="date" value={date} onChange={(e) => setDate(e.target.value)} />
+        </div>
+        <div className="space-y-2">
+          <Label htmlFor="type">Transaction Type</Label>
+          <Select onValueChange={handleTypeChange} value={type}>
+            <SelectTrigger id="type"><SelectValue /></SelectTrigger>
+            <SelectContent>
+              <SelectItem value="credit">Cash Received (Credit)</SelectItem>
+              <SelectItem value="debit">Payment (Debit)</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+
+        {type === 'credit' && (
+          <div className="space-y-2">
+            <Label htmlFor="customer">From Customer (Optional)</Label>
+            <Select onValueChange={handleCustomerChange} value={customerId}>
+              <SelectTrigger id="customer"><SelectValue placeholder="Select a customer" /></SelectTrigger>
+              <SelectContent>
+                {customers.map(c => <SelectItem key={c.id} value={c.id}>{c.customerName}</SelectItem>)}
+              </SelectContent>
+            </Select>
+          </div>
+        )}
+        
+        {type === 'debit' && (
+          <div className="space-y-2">
+            <Label htmlFor="vendor">To Vendor (Optional)</Label>
+            <Select onValueChange={handleVendorChange} value={vendorId}>
+              <SelectTrigger id="vendor"><SelectValue placeholder="Select a vendor" /></SelectTrigger>
+              <SelectContent>
+                {vendors.map(v => <SelectItem key={v.id} value={v.id}>{v.name}</SelectItem>)}
+              </SelectContent>
+            </Select>
+          </div>
+        )}
+
+        <div className="space-y-2">
+          <Label htmlFor="description">Description</Label>
+          <Input 
+            id="description" 
+            value={description} 
+            onChange={(e) => setDescription(e.target.value)} 
+            placeholder={type === 'debit' ? "e.g. Payment for supplies" : "e.g. Cash from customer"}
+            disabled={ (type === 'credit' && !!customerId) || (type === 'debit' && !!vendorId) }
+          />
+        </div>
+        <div className="space-y-2">
+          <Label htmlFor="amount">Amount</Label>
+          <Input id="amount" type="number" value={amount} onChange={(e) => setAmount(parseFloat(e.target.value) || 0)} placeholder="Amount in PKR"/>
+        </div>
+      </div>
+      <DialogFooter>
+        <Button onClick={handleSubmit}>Add Transaction</Button>
+      </DialogFooter>
+    </DialogContent>
+  );
+}
+
+
+export default function LedgerPage() {
+  const { transactions, deleteTransaction, customers, vendors, addTransaction } = useData();
+  const [selectedCustomerId, setSelectedCustomerId] = useState<string | null>(null);
+  const [selectedVendorId, setSelectedVendorId] = useState<string | null>(null);
+  const [isAddModalOpen, setAddModalOpen] = useState(false);
+  const { toast } = useToast();
+
+  const handleTransactionAdded = (newTransaction: Omit<Transaction, 'id'>) => {
+    addTransaction(newTransaction);
+    setAddModalOpen(false);
+  }
+
   const handleDelete = (id: string) => {
-    // Check if the transaction is linked to a system process that shouldn't be deleted from here
     const transaction = transactions.find(t => t.id === id);
     if (transaction && ['Sale', 'Opening Balance', 'Salary'].includes(transaction.category)) {
       toast({
         variant: 'destructive',
         title: 'Deletion Not Allowed',
-        description: 'System-generated transactions (like Sales or Opening Balances) cannot be deleted from the ledger directly.',
+        description: 'System-generated transactions cannot be deleted from the ledger directly.',
       });
       return;
     }
@@ -56,23 +194,19 @@ export default function LedgerPage() {
     let filtered = transactions;
     if (selectedCustomerId) {
         filtered = transactions.filter(t => t.customerId === selectedCustomerId);
-    } else if (selectedVendorId) { // Use else if to make filters mutually exclusive
+    } else if (selectedVendorId) {
         filtered = transactions.filter(t => t.vendorId === selectedVendorId);
     }
-    // Correct sorting: oldest to newest for chronological order
     return filtered.sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
   }, [transactions, selectedCustomerId, selectedVendorId]);
 
   let runningBalance = 0;
   const transactionsWithBalance = filteredTransactions.map(t => {
       if (selectedCustomerId) {
-        // Customer perspective: debit increases their due, credit decreases it.
         runningBalance += (t.type === 'debit' ? t.amount : -t.amount);
       } else if (selectedVendorId) {
-        // Vendor perspective: credit increases what we owe them, debit decreases it.
          runningBalance += (t.type === 'credit' ? t.amount : -t.amount);
       } else {
-        // General cash ledger: credit is cash in, debit is cash out.
         runningBalance += (t.type === 'credit' ? t.amount : -t.amount);
       }
       return { ...t, balance: runningBalance };
@@ -95,7 +229,15 @@ export default function LedgerPage() {
             <Button variant="outline" onClick={() => window.print()}>
                 <Printer className="mr-2 h-4 w-4" /> Print Page
             </Button>
-            {/* "Add Voucher" button has been removed as per the request */}
+             <Dialog open={isAddModalOpen} onOpenChange={setAddModalOpen}>
+                <DialogTrigger asChild>
+                    <Button>
+                        <PlusCircle className="mr-2 h-4 w-4" />
+                        Add Voucher
+                    </Button>
+                </DialogTrigger>
+                <AddTransactionForm onTransactionAdded={handleTransactionAdded} />
+            </Dialog>
         </div>
       </PageHeader>
 
@@ -213,3 +355,5 @@ export default function LedgerPage() {
     </>
   );
 }
+
+    
