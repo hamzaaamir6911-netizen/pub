@@ -398,7 +398,8 @@ export const DataProvider = ({ children }: { children: ReactNode }) => {
 
     const addTransaction = async (transaction: Omit<Transaction, 'id'>) => {
         const colRef = collection(firestore, 'transactions');
-        return await addDoc(colRef, { ...transaction, date: serverTimestamp() });
+        const dataToAdd = { ...transaction, date: transaction.date || serverTimestamp() };
+        return await addDoc(colRef, dataToAdd);
     };
     
     const updateTransaction = async (id: string, transaction: Partial<Omit<Transaction, 'id'>>) => {
@@ -407,7 +408,7 @@ export const DataProvider = ({ children }: { children: ReactNode }) => {
         // Ensure date is converted to a Firestore-compatible format if it exists
         const dataToUpdate: Partial<Omit<Transaction, 'id'>> = { ...transaction };
         if (transaction.date) {
-            dataToUpdate.date = serverTimestamp() as Timestamp;
+            dataToUpdate.date = transaction.date;
         }
         return updateDocumentNonBlocking(transactionRef, dataToUpdate);
     };
@@ -807,5 +808,3 @@ export const useData = () => {
   }
   return context;
 };
-
-    
