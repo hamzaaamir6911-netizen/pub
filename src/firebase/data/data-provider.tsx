@@ -458,7 +458,7 @@ export const DataProvider = ({ children }: { children: ReactNode }) => {
                 const newSaleRef = doc(saleCollectionRef, newSaleId);
                 
                 // Use the transaction to perform the writes
-                transaction.set(newSaleRef, { ...newSaleData, date: serverTimestamp() }); // Save with server timestamp
+                transaction.set(newSaleRef, { ...newSaleData, date: sale.date });
                 transaction.set(counterRef, { currentNumber: newSaleNumber }, { merge: true });
             });
         } catch (e) {
@@ -483,7 +483,7 @@ export const DataProvider = ({ children }: { children: ReactNode }) => {
         const updatedSaleData = {
             ...sale,
             total,
-            date: serverTimestamp(),
+            date: sale.date,
         };
 
         return updateDocumentNonBlocking(saleRef, updatedSaleData);
