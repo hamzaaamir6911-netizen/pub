@@ -1,8 +1,8 @@
 
 "use client";
 
-import { useState, useEffect, useMemo } from "react";
-import { PlusCircle, X, MoreHorizontal, Printer, Edit, Trash2 } from "lucide-react";
+import { useState, useMemo } from "react";
+import { X, MoreHorizontal, Printer, Edit, Trash2 } from "lucide-react";
 import {
   Table,
   TableBody,
@@ -12,14 +12,6 @@ import {
   TableRow,
   TableFooter
 } from "@/components/ui/table";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-  DialogFooter,
-} from "@/components/ui/dialog";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -32,7 +24,6 @@ import { PageHeader } from "@/components/page-header";
 import type { Transaction } from "@/lib/types";
 import { useToast } from "@/hooks/use-toast";
 import { Label } from "@/components/ui/label";
-import { Input } from "@/components/ui/input";
 import { useData } from "@/firebase/data/data-provider";
 import { formatCurrency, formatDate } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
@@ -40,255 +31,23 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { cn } from "@/lib/utils";
 
 
-function AddTransactionForm({ onTransactionAdded }: { onTransactionAdded: (newTransaction: Omit<Transaction, 'id'>) => void }) {
-  const { customers, vendors } = useData();
-  const [description, setDescription] = useState('');
-  const [amount, setAmount] = useState(0);
-  const [type, setType] = useState<'credit' | 'debit'>('credit');
-  const [category, setCategory] = useState('');
-  const [customerId, setCustomerId] = useState<string | undefined>(undefined);
-  const [vendorId, setVendorId] = useState<string | undefined>(undefined);
-  const [date, setDate] = useState<string>(new Date().toISOString().split('T')[0]); // YYYY-MM-DD
-  const { toast } = useToast();
-
-  useEffect(() => {
-    if (type === 'credit' && customerId) {
-        const customer = customers.find(c => c.id === customerId);
-        if (customer) {
-            setDescription(`Cash received from ${customer.customerName}`);
-            setCategory('Customer Payment');
-        }
-    } else if (type === 'debit' && vendorId) {
-        const vendor = vendors.find(v => v.id === vendorId);
-        if(vendor) {
-            setDescription(`Payment to ${vendor.name}`);
-            setCategory('Vendor Payment');
-        }
-    } else {
-        setDescription('');
-        setCategory('');
-        setCustomerId(undefined);
-        setVendorId(undefined);
-    }
-  }, [type, customerId, vendorId, customers, vendors]);
-
-  const handleSubmit = () => {
-    if (!description || amount <= 0 || !date) {
-      toast({ variant: 'destructive', title: 'Please fill all fields, including date.' });
-      return;
-    }
-    const customer = customers.find(c => c.id === customerId);
-    const vendor = vendors.find(v => v.id === vendorId);
-
-    const newTransaction: Omit<Transaction, 'id'> = {
-      description,
-      amount,
-      type,
-      category: category || (type === 'credit' ? 'Cash Received' : 'Payment'),
-      customerId: customerId,
-      customerName: customer?.customerName,
-      vendorId: vendorId,
-      vendorName: vendor?.name,
-      date: new Date(date), // Convert string to Date object
-    };
-    onTransactionAdded(newTransaction);
-    toast({ title: 'Transaction Added!', description: `A transaction of ${formatCurrency(amount)} has been recorded.` });
-    setDescription('');
-    setAmount(0);
-    setCategory('');
-    setCustomerId(undefined);
-    setVendorId(undefined);
-    setDate(new Date().toISOString().split('T')[0]);
-  };
-
-  return (
-    <DialogContent>
-      <DialogHeader>
-        <DialogTitle>Add New Voucher</DialogTitle>
-      </DialogHeader>
-      <div className="space-y-4 py-4">
-        <div className="space-y-2">
-            <Label htmlFor="date">Transaction Date</Label>
-            <Input
-                id="date"
-                type="date"
-                value={date}
-                onChange={(e) => setDate(e.target.value)}
-            />
-        </div>
-        <div className="space-y-2">
-            <Label htmlFor="type">Transaction Type</Label>
-            <Select onValueChange={(v: any) => setType(v)} value={type}>
-                <SelectTrigger id="type">
-                    <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                    <SelectItem value="credit">Cash Received (Credit)</SelectItem>
-                    <SelectItem value="debit">Payment (Debit)</SelectItem>
-                </SelectContent>
-            </Select>
-        </div>
-
-        {type === 'credit' && (
-            <div className="space-y-2">
-                <Label htmlFor="customer">From Customer</Label>
-                <Select onValueChange={setCustomerId} value={customerId}>
-                    <SelectTrigger id="customer">
-                        <SelectValue placeholder="Select a customer" />
-                    </SelectTrigger>
-                    <SelectContent>
-                        {customers.map(c => <SelectItem key={c.id} value={c.id}>{c.customerName}</SelectItem>)}
-                    </SelectContent>
-                </Select>
-            </div>
-        )}
-        
-        {type === 'debit' && (
-            <div className="space-y-2">
-                <Label htmlFor="vendor">To Vendor</Label>
-                <Select onValueChange={setVendorId} value={vendorId}>
-                    <SelectTrigger id="vendor">
-                        <SelectValue placeholder="Select a vendor" />
-                    </SelectTrigger>
-                    <SelectContent>
-                        {vendors.map(v => <SelectItem key={v.id} value={v.id}>{v.name}</SelectItem>)}
-                    </SelectContent>
-                </Select>
-            </div>
-        )}
-
-        <div className="space-y-2">
-          <Label htmlFor="description">Description</Label>
-          <Input 
-            id="description" 
-            value={description} 
-            onChange={(e) => setDescription(e.target.value)} 
-            placeholder={type === 'debit' ? "Payment for supplies" : "Cash from customer"}
-            disabled={ (type === 'credit' && !!customerId) || (type === 'debit' && !!vendorId) }
-          />
-        </div>
-        <div className="space-y-2">
-            <Label htmlFor="amount">Amount</Label>
-            <Input id="amount" type="number" value={amount} onChange={(e) => setAmount(parseFloat(e.target.value) || 0)} placeholder="Amount in PKR"/>
-        </div>
-      </div>
-      <DialogFooter>
-        <Button onClick={handleSubmit}>Add Transaction</Button>
-      </DialogFooter>
-    </DialogContent>
-  );
-}
-
-function EditTransactionForm({ transaction, onTransactionUpdated }: { transaction: Transaction, onTransactionUpdated: (id: string, updatedTransaction: Partial<Omit<Transaction, 'id'>>) => void }) {
-  const [description, setDescription] = useState(transaction.description);
-  const [amount, setAmount] = useState(transaction.amount);
-  const [date, setDate] = useState<string>(new Date(transaction.date).toISOString().split('T')[0]);
-  const { toast } = useToast();
-  
-  const isLinkedTransaction = useMemo(() => ['Sale', 'Salary', 'Opening Balance'].includes(transaction.category), [transaction.category]);
-
-  const handleSubmit = () => {
-    if (!description || amount <= 0 || !date) {
-      toast({ variant: 'destructive', title: 'Please fill all fields.' });
-      return;
-    }
-
-    const updatedTransaction: Partial<Omit<Transaction, 'id'>> = {
-      description,
-      amount,
-      date: new Date(date),
-    };
-    onTransactionUpdated(transaction.id, updatedTransaction);
-    toast({ title: 'Transaction Updated!', description: `Transaction has been updated.` });
-  };
-
-  return (
-    <DialogContent>
-      <DialogHeader>
-        <DialogTitle>Edit Voucher</DialogTitle>
-      </DialogHeader>
-      <div className="space-y-4 py-4">
-        <div className="space-y-2">
-            <Label>Transaction Date</Label>
-            <Input
-                id="date"
-                type="date"
-                value={date}
-                onChange={(e) => setDate(e.target.value)}
-                disabled={isLinkedTransaction}
-            />
-            {isLinkedTransaction && (
-             <p className="text-xs text-muted-foreground">Date for system-generated transactions cannot be edited.</p>
-           )}
-        </div>
-        <div className="space-y-2">
-          <Label>Transaction Type</Label>
-          <Input value={transaction.type} disabled />
-        </div>
-        <div className="space-y-2">
-          <Label>Category</Label>
-          <Input value={transaction.category} disabled />
-        </div>
-         <div className="space-y-2">
-          <Label htmlFor="description">Description</Label>
-          <Input 
-            id="description" 
-            value={description} 
-            onChange={(e) => setDescription(e.target.value)}
-            disabled={isLinkedTransaction}
-          />
-           {isLinkedTransaction && (
-            <p className="text-xs text-muted-foreground">Description for system-generated transactions (Sale, Salary, Opening Balance) cannot be edited.</p>
-           )}
-        </div>
-        <div className="space-y-2">
-            <Label htmlFor="amount">Amount</Label>
-            <Input 
-                id="amount" 
-                type="number" 
-                value={amount} 
-                onChange={(e) => setAmount(parseFloat(e.target.value) || 0)}
-                disabled={isLinkedTransaction}
-            />
-            {isLinkedTransaction && (
-                <p className="text-xs text-muted-foreground">Amount for system-generated transactions cannot be edited directly.</p>
-            )}
-        </div>
-      </div>
-      <DialogFooter>
-        <Button onClick={handleSubmit} disabled={isLinkedTransaction}>Save Changes</Button>
-      </DialogFooter>
-    </DialogContent>
-  );
-}
-
-
 export default function LedgerPage() {
-  const { transactions, addTransaction, updateTransaction, deleteTransaction, customers, vendors } = useData();
-  const [isAddModalOpen, setAddModalOpen] = useState(false);
-  const [isEditModalOpen, setEditModalOpen] = useState(false);
-  const [editingTransaction, setEditingTransaction] = useState<Transaction | null>(null);
+  const { transactions, deleteTransaction, customers, vendors } = useData();
   const [selectedCustomerId, setSelectedCustomerId] = useState<string | null>(null);
   const [selectedVendorId, setSelectedVendorId] = useState<string | null>(null);
   const { toast } = useToast();
 
-  const handleTransactionAdded = (newTransaction: Omit<Transaction, 'id'>) => {
-    addTransaction(newTransaction);
-    setAddModalOpen(false);
-  }
-
-  const handleTransactionUpdated = (id: string, updatedTransaction: Partial<Omit<Transaction, 'id'>>) => {
-    updateTransaction(id, updatedTransaction);
-    setEditModalOpen(false);
-    setEditingTransaction(null);
-  }
-
-  const handleEditClick = (transaction: Transaction) => {
-    setEditingTransaction(transaction);
-    setEditModalOpen(true);
-  }
-
   const handleDelete = (id: string) => {
+    // Check if the transaction is linked to a system process that shouldn't be deleted from here
+    const transaction = transactions.find(t => t.id === id);
+    if (transaction && ['Sale', 'Opening Balance', 'Salary'].includes(transaction.category)) {
+      toast({
+        variant: 'destructive',
+        title: 'Deletion Not Allowed',
+        description: 'System-generated transactions (like Sales or Opening Balances) cannot be deleted from the ledger directly.',
+      });
+      return;
+    }
     deleteTransaction(id);
     toast({ title: "Transaction Deleted" });
   }
@@ -306,12 +65,6 @@ export default function LedgerPage() {
 
   let runningBalance = 0;
   const transactionsWithBalance = filteredTransactions.map(t => {
-      // For debits in customer ledger, balance increases. For credits, it decreases.
-      // For debits in vendor ledger, our liability decreases. For credits (purchases), it increases.
-      // This seems complex. Let's simplify the view logic.
-      // General Ledger: Credit increases balance, Debit decreases.
-      // Customer Ledger: Debit is a Sale (increases what they owe you). Credit is a Payment (decreases what they owe you).
-      // Vendor Ledger: Credit is a Purchase from them (increases what we owe them). Debit is a Payment to them (decreases what we owe them).
       if (selectedCustomerId) {
         // Customer perspective: debit increases their due, credit decreases it.
         runningBalance += (t.type === 'debit' ? t.amount : -t.amount);
@@ -342,15 +95,7 @@ export default function LedgerPage() {
             <Button variant="outline" onClick={() => window.print()}>
                 <Printer className="mr-2 h-4 w-4" /> Print Page
             </Button>
-            <Dialog open={isAddModalOpen} onOpenChange={setAddModalOpen}>
-                <DialogTrigger asChild>
-                    <Button>
-                        <PlusCircle className="mr-2 h-4 w-4" />
-                        Add Voucher
-                    </Button>
-                </DialogTrigger>
-                <AddTransactionForm onTransactionAdded={handleTransactionAdded} />
-            </Dialog>
+            {/* "Add Voucher" button has been removed as per the request */}
         </div>
       </PageHeader>
 
@@ -432,7 +177,7 @@ export default function LedgerPage() {
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end">
                           <DropdownMenuLabel>Actions</DropdownMenuLabel>
-                           <DropdownMenuItem onSelect={() => handleEditClick(transaction)}>
+                           <DropdownMenuItem disabled>
                               <Edit className="mr-2 h-4 w-4" />
                               Edit
                           </DropdownMenuItem>
@@ -465,12 +210,6 @@ export default function LedgerPage() {
         </Table>
       </div>
     </div>
-
-    {editingTransaction && (
-        <Dialog open={isEditModalOpen} onOpenChange={setEditModalOpen}>
-            <EditTransactionForm transaction={editingTransaction} onTransactionUpdated={handleTransactionUpdated} />
-        </Dialog>
-    )}
     </>
   );
 }
