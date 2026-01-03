@@ -342,15 +342,10 @@ export default function LedgerPage() {
             <Button variant="outline" onClick={() => window.print()}>
                 <Printer className="mr-2 h-4 w-4" /> Print Page
             </Button>
-            <Dialog open={isAddModalOpen} onOpenChange={setAddModalOpen}>
-                <DialogTrigger asChild>
-                    <Button>
-                        <PlusCircle className="mr-2 h-4 w-4" />
-                        Add Voucher
-                    </Button>
-                </DialogTrigger>
-                <AddTransactionForm onTransactionAdded={handleTransactionAdded} />
-            </Dialog>
+            <Button onClick={() => setAddModalOpen(true)}>
+                <PlusCircle className="mr-2 h-4 w-4" />
+                Add Voucher
+            </Button>
         </div>
       </PageHeader>
 
@@ -466,6 +461,10 @@ export default function LedgerPage() {
       </div>
     </div>
     
+    <Dialog open={isAddModalOpen} onOpenChange={setAddModalOpen}>
+        <AddTransactionForm onTransactionAdded={handleTransactionAdded} />
+    </Dialog>
+
     {editingTransaction && (
         <Dialog open={isEditModalOpen} onOpenChange={setEditModalOpen}>
             <EditTransactionForm transaction={editingTransaction} onTransactionUpdated={handleTransactionUpdated} />
@@ -474,3 +473,4 @@ export default function LedgerPage() {
     </>
   );
 }
+
