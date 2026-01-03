@@ -65,12 +65,29 @@ function EstimatePrint({ estimate }: { estimate: Estimate }) {
                     {/* Header */}
                     <div className="flex justify-between items-start mb-6">
                         <div>
-                            <svg width="200" height="50" viewBox="0 0 400 100" className="text-black">
+                           <svg width="200" height="50" viewBox="0 0 400 100" className="text-black">
+                                <defs>
+                                    <linearGradient id="grad1" x1="0%" y1="0%" x2="100%" y2="0%">
+                                        <stop offset="0%" style={{stopColor: 'rgb(150,150,150)', stopOpacity: 1}} />
+                                        <stop offset="50%" style={{stopColor: 'rgb(220,220,220)', stopOpacity: 1}} />
+                                        <stop offset="100%" style={{stopColor: 'rgb(150,150,150)', stopOpacity: 1}} />
+                                    </linearGradient>
+                                    <linearGradient id="grad2" x1="0%" y1="0%" x2="100%" y2="0%">
+                                        <stop offset="0%" style={{stopColor: 'rgb(255,215,0)', stopOpacity: 1}} />
+                                        <stop offset="50%" style={{stopColor: 'rgb(255,235,100)', stopOpacity: 1}} />
+                                        <stop offset="100%" style={{stopColor: 'rgb(255,215,0)', stopOpacity: 1}} />
+                                    </linearGradient>
+                                </defs>
                                 <g transform="translate(10, 10)">
-                                    <path d="M0 80 L20 0 L70 0 L50 80 Z M40 50 L25 50 L32.5 20 Z" fill="currentColor" />
-                                    <path d="M50 0 L100 0 L100 20 L70 20 L70 35 L90 35 L90 55 L70 55 L70 80 L50 80 Z" fill="currentColor"/>
-                                    <path d="M120 40 C120 15, 160 15, 160 40 C160 65, 120 65, 120 40 Z M140 0 C100 0, 100 80, 140 80 C180 80, 180 0, 140 0 Z" fill="currentColor"/>
-                                    <path d="M240 40 C240 10, 180 10, 180 40 C180 70, 240 70, 240 40 Z M210 0 C160 0, 160 80, 210 80 C260 80, 260 0, 210 0 Z" fill="currentColor"/>
+                                    {/* A */}
+                                    <path d="M0 80 L30 0 L60 0 L35 80 Z M32.5 50 L15 50 L23.75 20 Z" fill="url(#grad1)" />
+                                    {/* R */}
+                                    <path d="M65 0 H105 V20 H85 V35 H100 L110 55 H85 V80 H65 Z M85 55 h10 l-5-15z" fill="url(#grad1)" />
+                                    {/* C */}
+                                    <path d="M165 40 C165 10, 125 10, 125 40 C125 70, 165 70, 165 40 Z M145 0 C110 0, 110 80, 145 80 C180 80, 180 0, 145 0 Z M145 20 C125 20, 125 60, 145 60 C165 60, 165 20, 145 20 Z" fill="url(#grad1)"/>
+                                    {/* O */}
+                                    <path d="M230 40 C230 10, 190 10, 190 40 C190 70, 230 70, 230 40 Z M210 0 C175 0, 175 80, 210 80 C245 80, 245 0, 210 0 Z M210 20 C190 20, 190 60, 210 60 C230 60, 230 20, 210 20 Z" fill="url(#grad2)"/>
+                                    
                                     <text x="0" y="98" className="text-2xl font-sans font-semibold" fill="currentColor">AR Aluminum Company</text>
                                 </g>
                             </svg>
