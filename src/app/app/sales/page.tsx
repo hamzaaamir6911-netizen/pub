@@ -52,29 +52,30 @@ function DeliveryChallan({ sale }: { sale: Sale }) {
     const customer = customers.find(c => c.id === sale.customerId);
 
     return (
-        <DialogContent className="max-w-6xl max-h-[90vh] flex flex-col">
+        <DialogContent className="max-w-4xl max-h-[90vh] flex flex-col">
             <DialogHeader className="flex-shrink-0 no-print">
                 <div className="flex flex-col items-center justify-center pt-4">
                     <DialogTitle>Delivery Challan: {sale.id}</DialogTitle>
                 </div>
             </DialogHeader>
-            <div className="flex-grow overflow-y-auto" id="printable-challan">
-                 <div className="p-6">
+            <div className="flex-grow overflow-y-auto printable-area" id="printable-challan">
+                 <div className="p-2 sm:p-4 md:p-6">
                     <div className="text-center mb-8">
-                      <h1 className="text-3xl font-bold font-headline">ARCO Aluminium Company</h1>
-                      <p className="mt-2 text-xl font-bold">Delivery Challan</p>
+                      <h1 className="text-xl sm:text-2xl font-bold font-headline">ARCO Aluminium Company</h1>
+                      <p className="mt-1 text-lg font-bold">Delivery Challan</p>
                     </div>
-                    <div className="p-6">
+                    <div className="p-2 sm:p-4 md:p-6 text-xs sm:text-sm">
                         <div className="grid grid-cols-2 gap-4 mb-6 font-bold">
                             <div>
-                                <p className="text-lg">Customer:</p>
+                                <p className="font-semibold">Customer:</p>
+                                <p>{customer?.customerName}</p>
                                 <p>{customer?.address}</p>
                                 <p>{customer?.phoneNumber}</p>
                             </div>
                             <div className="text-right">
-                                <p className="text-lg">Challan No:</p>
+                                <p className="font-semibold">Challan No:</p>
                                 <p>{sale.id}</p>
-                                <p className="mt-2 text-lg">Date:</p>
+                                <p className="mt-2 font-semibold">Date:</p>
                                 <p>{formatDate(sale.date)}</p>
                             </div>
                         </div>
@@ -113,7 +114,7 @@ function DeliveryChallan({ sale }: { sale: Sale }) {
                             </div>
                         </div>
 
-                         <div className="mt-24 text-center text-xs text-gray-500 border-t pt-4 font-bold">
+                         <div className="mt-16 text-center text-xs text-gray-500 border-t pt-2 font-bold">
                             <p>Industrial Estate, Hayatabad Road B-5 PLOT 59 PESHAWAR</p>
                             <p>Phone: +923334646356</p>
                         </div>
@@ -155,40 +156,40 @@ function SaleInvoice({ sale, onPost, onUnpost }: { sale: Sale, onPost: (saleId: 
                 </div>
             </DialogHeader>
             <div className="flex-grow overflow-y-auto printable-area" id="printable-invoice">
-                 <div className="p-8">
+                 <div className="p-2 sm:p-4 md:p-6">
                      {/* Header */}
-                    <div className="flex justify-between items-start mb-10">
+                    <div className="flex justify-between items-start mb-6">
                         <div>
-                            <h1 className="text-3xl font-bold text-gray-800">ARCO Aluminium</h1>
-                            <p className="text-sm text-gray-500">B-5, PLOT 59, Industrial Estate, Hayatabad, Peshawar</p>
-                            <p className="text-sm text-gray-500">+92 333 4646356</p>
+                            <h1 className="text-xl sm:text-2xl font-bold text-gray-800">ARCO Aluminium</h1>
+                            <p className="text-xs sm:text-sm text-gray-500">B-5, PLOT 59, Industrial Estate, Hayatabad, Peshawar</p>
+                            <p className="text-xs sm:text-sm text-gray-500">+92 333 4646356</p>
                         </div>
                         <div className="text-right">
-                             <h2 className="text-2xl font-bold text-gray-700">INVOICE</h2>
-                             <p className="text-sm text-gray-500 mt-1">Invoice #: {sale.id}</p>
-                             <p className="text-sm text-gray-500">Date: {formatDate(sale.date)}</p>
+                             <h2 className="text-lg sm:text-xl font-bold text-gray-700">INVOICE</h2>
+                             <p className="text-xs sm:text-sm text-gray-500 mt-1">Invoice #: {sale.id}</p>
+                             <p className="text-xs sm:text-sm text-gray-500">Date: {formatDate(sale.date)}</p>
                               <Badge variant={sale.status === 'posted' ? 'default' : 'secondary'} className="mt-2">{sale.status}</Badge>
                         </div>
                     </div>
 
                      {/* Bill To */}
-                    <div className="mb-10">
-                        <p className="font-bold text-sm text-gray-500 uppercase mb-2">Bill To</p>
-                        <p className="text-gray-800 font-semibold">{sale.customerName}</p>
-                        <p className="text-gray-600 text-sm">{customer?.address}</p>
-                        <p className="text-gray-600 text-sm">{customer?.phoneNumber}</p>
+                    <div className="mb-8">
+                        <p className="font-bold text-xs text-gray-500 uppercase mb-1">Bill To</p>
+                        <p className="text-gray-800 font-semibold text-sm">{sale.customerName}</p>
+                        <p className="text-gray-600 text-xs">{customer?.address}</p>
+                        <p className="text-gray-600 text-xs">{customer?.phoneNumber}</p>
                     </div>
 
                     {/* Items Table */}
                     <div className="overflow-x-auto">
-                        <Table>
+                        <Table className="text-xs">
                             <TableHeader className="bg-gray-50">
                                 <TableRow>
-                                    <TableHead className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Description</TableHead>
-                                    <TableHead className="px-4 py-2 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Qty</TableHead>
-                                    <TableHead className="px-4 py-2 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Rate</TableHead>
-                                    <TableHead className="px-4 py-2 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Discount</TableHead>
-                                    <TableHead className="px-4 py-2 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Amount</TableHead>
+                                    <TableHead className="px-2 py-2 text-left font-medium text-gray-500 uppercase tracking-wider">Description</TableHead>
+                                    <TableHead className="px-2 py-2 text-right font-medium text-gray-500 uppercase tracking-wider">Qty</TableHead>
+                                    <TableHead className="px-2 py-2 text-right font-medium text-gray-500 uppercase tracking-wider">Rate</TableHead>
+                                    <TableHead className="px-2 py-2 text-right font-medium text-gray-500 uppercase tracking-wider">Discount</TableHead>
+                                    <TableHead className="px-2 py-2 text-right font-medium text-gray-500 uppercase tracking-wider">Amount</TableHead>
                                 </TableRow>
                             </TableHeader>
                             <TableBody>
@@ -200,14 +201,14 @@ function SaleInvoice({ sale, onPost, onUnpost }: { sale: Sale, onPost: (saleId: 
                                     
                                     return (
                                         <TableRow key={index}>
-                                            <TableCell className="px-4 py-3 font-medium text-gray-800">
+                                            <TableCell className="px-2 py-2 font-medium text-gray-800">
                                                 {item.itemName}
                                                 <span className="text-gray-500 text-xs block">{item.thickness} - {item.color} {item.feet ? `- ${item.feet.toFixed(2)}ft` : ''}</span>
                                             </TableCell>
-                                            <TableCell className="px-4 py-3 text-right text-gray-600">{item.quantity}</TableCell>
-                                            <TableCell className="px-4 py-3 text-right text-gray-600">{formatCurrency(item.price)}</TableCell>
-                                            <TableCell className="px-4 py-3 text-right text-gray-600">{item.discount || 0}%</TableCell>
-                                            <TableCell className="px-4 py-3 text-right font-semibold text-gray-800">{formatCurrency(finalAmount)}</TableCell>
+                                            <TableCell className="px-2 py-2 text-right text-gray-600">{item.quantity}</TableCell>
+                                            <TableCell className="px-2 py-2 text-right text-gray-600">{formatCurrency(item.price)}</TableCell>
+                                            <TableCell className="px-2 py-2 text-right text-gray-600">{item.discount || 0}%</TableCell>
+                                            <TableCell className="px-2 py-2 text-right font-semibold text-gray-800">{formatCurrency(finalAmount)}</TableCell>
                                         </TableRow>
                                     )
                                 })}
@@ -216,19 +217,19 @@ function SaleInvoice({ sale, onPost, onUnpost }: { sale: Sale, onPost: (saleId: 
                     </div>
 
                     {/* Totals */}
-                    <div className="flex justify-end mt-6">
-                        <div className="w-full max-w-sm">
-                            <div className="flex justify-between py-2 border-b">
-                                <span className="text-gray-600">Subtotal</span>
-                                <span className="font-semibold text-gray-800">{formatCurrency(subtotal)}</span>
+                    <div className="flex justify-end mt-4">
+                        <div className="w-full max-w-xs">
+                            <div className="flex justify-between py-1 border-b">
+                                <span className="text-xs text-gray-600">Subtotal</span>
+                                <span className="text-xs font-semibold text-gray-800">{formatCurrency(subtotal)}</span>
                             </div>
-                            <div className="flex justify-between py-2 border-b">
-                                <span className="text-gray-600">Overall Discount ({sale.discount}%)</span>
-                                <span className="font-semibold text-gray-800">- {formatCurrency(subtotal * (sale.discount / 100))}</span>
+                            <div className="flex justify-between py-1 border-b">
+                                <span className="text-xs text-gray-600">Overall Discount ({sale.discount}%)</span>
+                                <span className="text-xs font-semibold text-gray-800">- {formatCurrency(subtotal * (sale.discount / 100))}</span>
                             </div>
-                            <div className="flex justify-between py-3 bg-gray-100 px-4 rounded-md mt-2">
-                                <span className="font-bold text-lg text-gray-800">Grand Total</span>
-                                <span className="font-bold text-lg text-gray-800">{formatCurrency(sale.total)}</span>
+                            <div className="flex justify-between py-2 bg-gray-100 px-2 rounded-md mt-2">
+                                <span className="font-bold text-sm text-gray-800">Grand Total</span>
+                                <span className="font-bold text-sm text-gray-800">{formatCurrency(sale.total)}</span>
                             </div>
                         </div>
                     </div>
@@ -793,5 +794,6 @@ export default function SalesPage() {
 
 
     
+
 
 

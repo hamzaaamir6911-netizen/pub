@@ -61,39 +61,39 @@ function EstimatePrint({ estimate }: { estimate: Estimate }) {
                 </div>
             </DialogHeader>
             <div id="printable-estimate" className="flex-grow overflow-y-auto printable-area">
-                <div className="p-8">
+                <div className="p-2 sm:p-4 md:p-6">
                     {/* Header */}
-                    <div className="flex justify-between items-start mb-10">
+                    <div className="flex justify-between items-start mb-6">
                         <div>
-                            <h1 className="text-3xl font-bold text-gray-800">ARCO Aluminium</h1>
-                            <p className="text-sm text-gray-500">B-5, PLOT 59, Industrial Estate, Hayatabad, Peshawar</p>
-                            <p className="text-sm text-gray-500">+92 333 4646356</p>
+                            <h1 className="text-xl sm:text-2xl font-bold text-gray-800">ARCO Aluminium</h1>
+                            <p className="text-xs sm:text-sm text-gray-500">B-5, PLOT 59, Industrial Estate, Hayatabad, Peshawar</p>
+                            <p className="text-xs sm:text-sm text-gray-500">+92 333 4646356</p>
                         </div>
                         <div className="text-right">
-                             <h2 className="text-2xl font-bold text-gray-700">ESTIMATE</h2>
-                             <p className="text-sm text-gray-500 mt-1">Estimate #: {estimate.id}</p>
-                             <p className="text-sm text-gray-500">Date: {formatDate(estimate.date)}</p>
+                             <h2 className="text-lg sm:text-xl font-bold text-gray-700">ESTIMATE</h2>
+                             <p className="text-xs sm:text-sm text-gray-500 mt-1">Estimate #: {estimate.id}</p>
+                             <p className="text-xs sm:text-sm text-gray-500">Date: {formatDate(estimate.date)}</p>
                         </div>
                     </div>
 
                     {/* Bill To */}
-                    <div className="mb-10">
-                        <p className="font-bold text-sm text-gray-500 uppercase mb-2">Estimate For</p>
-                        <p className="text-gray-800 font-semibold">{estimate.customerName}</p>
-                        <p className="text-gray-600 text-sm">{customer?.address}</p>
-                        <p className="text-gray-600 text-sm">{customer?.phoneNumber}</p>
+                    <div className="mb-8">
+                        <p className="font-bold text-xs text-gray-500 uppercase mb-1">Estimate For</p>
+                        <p className="text-gray-800 font-semibold text-sm">{estimate.customerName}</p>
+                        <p className="text-gray-600 text-xs">{customer?.address}</p>
+                        <p className="text-gray-600 text-xs">{customer?.phoneNumber}</p>
                     </div>
 
 
                     <div className="overflow-x-auto">
-                        <Table>
+                        <Table className="text-xs">
                             <TableHeader className="bg-gray-50">
                                 <TableRow>
-                                    <TableHead className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Description</TableHead>
-                                    <TableHead className="px-4 py-2 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Qty</TableHead>
-                                    <TableHead className="px-4 py-2 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Rate</TableHead>
-                                    <TableHead className="px-4 py-2 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Discount</TableHead>
-                                    <TableHead className="px-4 py-2 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Amount</TableHead>
+                                    <TableHead className="px-2 py-2 text-left font-medium text-gray-500 uppercase tracking-wider">Description</TableHead>
+                                    <TableHead className="px-2 py-2 text-right font-medium text-gray-500 uppercase tracking-wider">Qty</TableHead>
+                                    <TableHead className="px-2 py-2 text-right font-medium text-gray-500 uppercase tracking-wider">Rate</TableHead>
+                                    <TableHead className="px-2 py-2 text-right font-medium text-gray-500 uppercase tracking-wider">Discount</TableHead>
+                                    <TableHead className="px-2 py-2 text-right font-medium text-gray-500 uppercase tracking-wider">Amount</TableHead>
                                 </TableRow>
                             </TableHeader>
                             <TableBody>
@@ -105,14 +105,14 @@ function EstimatePrint({ estimate }: { estimate: Estimate }) {
                                     
                                     return (
                                         <TableRow key={index}>
-                                            <TableCell className="px-4 py-3 font-medium text-gray-800">
+                                            <TableCell className="px-2 py-2 font-medium text-gray-800">
                                                 {item.itemName}
                                                 <span className="text-gray-500 text-xs block">{item.thickness} - {item.color} {item.feet ? `- ${item.feet.toFixed(2)}ft` : ''}</span>
                                             </TableCell>
-                                            <TableCell className="px-4 py-3 text-right text-gray-600">{item.quantity}</TableCell>
-                                            <TableCell className="px-4 py-3 text-right text-gray-600">{formatCurrency(item.price)}</TableCell>
-                                            <TableCell className="px-4 py-3 text-right text-gray-600">{item.discount || 0}%</TableCell>
-                                            <TableCell className="px-4 py-3 text-right font-semibold text-gray-800">{formatCurrency(finalAmount)}</TableCell>
+                                            <TableCell className="px-2 py-2 text-right text-gray-600">{item.quantity}</TableCell>
+                                            <TableCell className="px-2 py-2 text-right text-gray-600">{formatCurrency(item.price)}</TableCell>
+                                            <TableCell className="px-2 py-2 text-right text-gray-600">{item.discount || 0}%</TableCell>
+                                            <TableCell className="px-2 py-2 text-right font-semibold text-gray-800">{formatCurrency(finalAmount)}</TableCell>
                                         </TableRow>
                                     )
                                 })}
@@ -120,19 +120,19 @@ function EstimatePrint({ estimate }: { estimate: Estimate }) {
                         </Table>
                     </div>
 
-                    <div className="flex justify-end mt-6">
-                        <div className="w-full max-w-sm">
-                            <div className="flex justify-between py-2 border-b">
-                                <span className="text-gray-600">Subtotal</span>
-                                <span className="font-semibold text-gray-800">{formatCurrency(subtotal)}</span>
+                    <div className="flex justify-end mt-4">
+                        <div className="w-full max-w-xs">
+                            <div className="flex justify-between py-1 border-b">
+                                <span className="text-xs text-gray-600">Subtotal</span>
+                                <span className="text-xs font-semibold text-gray-800">{formatCurrency(subtotal)}</span>
                             </div>
-                            <div className="flex justify-between py-2 border-b">
-                                <span className="text-gray-600">Overall Discount ({estimate.discount}%)</span>
-                                <span className="font-semibold text-gray-800">- {formatCurrency(subtotal * (estimate.discount / 100))}</span>
+                            <div className="flex justify-between py-1 border-b">
+                                <span className="text-xs text-gray-600">Overall Discount ({estimate.discount}%)</span>
+                                <span className="text-xs font-semibold text-gray-800">- {formatCurrency(subtotal * (estimate.discount / 100))}</span>
                             </div>
-                            <div className="flex justify-between py-3 bg-gray-100 px-4 rounded-md mt-2">
-                                <span className="font-bold text-lg text-gray-800">Grand Total</span>
-                                <span className="font-bold text-lg text-gray-800">{formatCurrency(estimate.total)}</span>
+                            <div className="flex justify-between py-2 bg-gray-100 px-2 rounded-md mt-2">
+                                <span className="font-bold text-sm text-gray-800">Grand Total</span>
+                                <span className="font-bold text-sm text-gray-800">{formatCurrency(estimate.total)}</span>
                             </div>
                         </div>
                     </div>
