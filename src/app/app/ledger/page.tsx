@@ -1,7 +1,7 @@
 
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, FormEvent } from "react";
 import { X, MoreHorizontal, Printer, Edit, Trash2, PlusCircle } from "lucide-react";
 import {
   Table,
@@ -39,7 +39,7 @@ import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { cn } from "@/lib/utils";
 
-function AddTransactionForm({ onTransactionAdded }: { onTransactionAdded: (newTransaction: Omit<Transaction, 'id'>) => void }) {
+function AddTransactionForm({ onTransactionAdded }: { onTransactionAdded: (newTransaction: Omit<Transaction, 'id'>) => Promise<void> }) {
   const { customers, vendors } = useData();
   const [description, setDescription] = useState('');
   const [amount, setAmount] = useState(0);
@@ -72,7 +72,8 @@ function AddTransactionForm({ onTransactionAdded }: { onTransactionAdded: (newTr
       }
   }
 
-  const handleSubmit = () => {
+  const handleSubmit = async (event: FormEvent) => {
+    event.preventDefault(); 
     if (!description || amount <= 0 || !date) {
       toast({ variant: 'destructive', title: 'Please fill all fields correctly.' });
       return;
@@ -92,8 +93,16 @@ function AddTransactionForm({ onTransactionAdded }: { onTransactionAdded: (newTr
       date: new Date(date),
     };
 
-    onTransactionAdded(newTransaction);
+    await onTransactionAdded(newTransaction);
     toast({ title: 'Transaction Added!', description: `A transaction of ${formatCurrency(amount)} has been recorded.` });
+    
+    // Clear form
+    setDescription('');
+    setAmount(0);
+    setCustomerId(undefined);
+    setVendorId(undefined);
+    setDate(new Date().toISOString().split('T')[0]);
+    setType('credit');
   };
 
   return (
@@ -101,64 +110,66 @@ function AddTransactionForm({ onTransactionAdded }: { onTransactionAdded: (newTr
       <DialogHeader>
         <DialogTitle>Add New Voucher</DialogTitle>
       </DialogHeader>
-      <div className="space-y-4 py-4">
-        <div className="space-y-2">
-          <Label htmlFor="date">Transaction Date</Label>
-          <Input id="date" type="date" value={date} onChange={(e) => setDate(e.target.value)} />
-        </div>
-        <div className="space-y-2">
-          <Label htmlFor="type">Transaction Type</Label>
-          <Select onValueChange={handleTypeChange} value={type}>
-            <SelectTrigger id="type"><SelectValue /></SelectTrigger>
-            <SelectContent>
-              <SelectItem value="credit">Cash Received (Credit)</SelectItem>
-              <SelectItem value="debit">Payment (Debit)</SelectItem>
-            </SelectContent>
-          </Select>
-        </div>
-
-        {type === 'credit' && (
+      <form onSubmit={handleSubmit}>
+        <div className="space-y-4 py-4">
           <div className="space-y-2">
-            <Label htmlFor="customer">From Customer (Optional)</Label>
-            <Select onValueChange={handleCustomerChange} value={customerId}>
-              <SelectTrigger id="customer"><SelectValue placeholder="Select a customer" /></SelectTrigger>
+            <Label htmlFor="date">Transaction Date</Label>
+            <Input id="date" type="date" value={date} onChange={(e) => setDate(e.target.value)} />
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="type">Transaction Type</Label>
+            <Select onValueChange={handleTypeChange} value={type}>
+              <SelectTrigger id="type"><SelectValue /></SelectTrigger>
               <SelectContent>
-                {customers.map(c => <SelectItem key={c.id} value={c.id}>{c.customerName}</SelectItem>)}
+                <SelectItem value="credit">Cash Received (Credit)</SelectItem>
+                <SelectItem value="debit">Payment (Debit)</SelectItem>
               </SelectContent>
             </Select>
           </div>
-        )}
-        
-        {type === 'debit' && (
-          <div className="space-y-2">
-            <Label htmlFor="vendor">To Vendor (Optional)</Label>
-            <Select onValueChange={handleVendorChange} value={vendorId}>
-              <SelectTrigger id="vendor"><SelectValue placeholder="Select a vendor" /></SelectTrigger>
-              <SelectContent>
-                {vendors.map(v => <SelectItem key={v.id} value={v.id}>{v.name}</SelectItem>)}
-              </SelectContent>
-            </Select>
-          </div>
-        )}
 
-        <div className="space-y-2">
-          <Label htmlFor="description">Description</Label>
-          <Input 
-            id="description" 
-            value={description} 
-            onChange={(e) => setDescription(e.target.value)} 
-            placeholder={type === 'debit' ? "e.g. Payment for supplies" : "e.g. Cash from customer"}
-            disabled={ (type === 'credit' && !!customerId) || (type === 'debit' && !!vendorId) }
-          />
+          {type === 'credit' && (
+            <div className="space-y-2">
+              <Label htmlFor="customer">From Customer (Optional)</Label>
+              <Select onValueChange={handleCustomerChange} value={customerId}>
+                <SelectTrigger id="customer"><SelectValue placeholder="Select a customer" /></SelectTrigger>
+                <SelectContent>
+                  {customers.map(c => <SelectItem key={c.id} value={c.id}>{c.customerName}</SelectItem>)}
+                </SelectContent>
+              </Select>
+            </div>
+          )}
+          
+          {type === 'debit' && (
+            <div className="space-y-2">
+              <Label htmlFor="vendor">To Vendor (Optional)</Label>
+              <Select onValueChange={handleVendorChange} value={vendorId}>
+                <SelectTrigger id="vendor"><SelectValue placeholder="Select a vendor" /></SelectTrigger>
+                <SelectContent>
+                  {vendors.map(v => <SelectItem key={v.id} value={v.id}>{v.name}</SelectItem>)}
+                </SelectContent>
+              </Select>
+            </div>
+          )}
+
+          <div className="space-y-2">
+            <Label htmlFor="description">Description</Label>
+            <Input 
+              id="description" 
+              value={description} 
+              onChange={(e) => setDescription(e.target.value)} 
+              placeholder={type === 'debit' ? "e.g. Payment for supplies" : "e.g. Cash from customer"}
+              disabled={ (type === 'credit' && !!customerId) || (type === 'debit' && !!vendorId) }
+            />
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="amount">Amount</Label>
+            <Input id="amount" type="number" value={amount} onChange={(e) => setAmount(parseFloat(e.target.value) || 0)} placeholder="Amount in PKR"/>
+          </div>
         </div>
-        <div className="space-y-2">
-          <Label htmlFor="amount">Amount</Label>
-          <Input id="amount" type="number" value={amount} onChange={(e) => setAmount(parseFloat(e.target.value) || 0)} placeholder="Amount in PKR"/>
-        </div>
-      </div>
-      <DialogFooter>
-        <Button onClick={handleSubmit}>Add Transaction</Button>
-      </DialogFooter>
+        <DialogFooter>
+          <Button type="submit">Add Transaction</Button>
+        </DialogFooter>
+      </form>
     </DialogContent>
   );
 }
@@ -171,8 +182,8 @@ export default function LedgerPage() {
   const [isAddModalOpen, setAddModalOpen] = useState(false);
   const { toast } = useToast();
 
-  const handleTransactionAdded = (newTransaction: Omit<Transaction, 'id'>) => {
-    addTransaction(newTransaction);
+  const handleTransactionAdded = async (newTransaction: Omit<Transaction, 'id'>) => {
+    await addTransaction(newTransaction);
     setAddModalOpen(false);
   }
 

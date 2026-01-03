@@ -421,23 +421,15 @@ export const DataProvider = ({ children }: { children: ReactNode }) => {
     };
 
 
-    const addTransaction = async (transaction: Omit<Transaction, 'id'>): Promise<Transaction> => {
+    const addTransaction = async (transaction: Omit<Transaction, 'id'>): Promise<any> => {
         if (!user) throw new Error("User not authenticated");
         const colRef = collection(firestore, 'transactions');
-        
-        const docRef = await addDoc(colRef, transaction);
-        
-        // This is the optimistic UI update part.
-        const newTransaction: Transaction = {
-            id: docRef.id,
+        const transactionWithServerDate = {
             ...transaction,
-            date: toDate(transaction.date) // Ensure date is a JS Date object for the UI state.
+            date: transaction.date || serverTimestamp()
         };
-
-        // Prepend and re-sort to ensure correct chronological order in UI.
-        setTransactions(prev => [newTransaction, ...prev].sort((a,b) => b.date.getTime() - a.date.getTime()));
-
-        return newTransaction;
+        const docRef = await addDocumentNonBlocking(colRef, transactionWithServerDate);
+        return docRef;
     };
     
     const updateTransaction = async (id: string, transaction: Partial<Omit<Transaction, 'id'>>) => {
