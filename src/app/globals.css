@@ -55,21 +55,14 @@ h1, h2, h3, h4, h5, h6 {
   }
 
   body, html {
-    height: auto !important;
-    overflow: visible !important;
     background: #fff !important;
     color: #000 !important;
     margin: 0;
     padding: 0;
   }
   
-  /* Force all elements to have a transparent background and black text */
-  * {
-    background: transparent !important;
-    color: #000 !important;
-    border-color: #ddd !important;
-    box-shadow: none !important;
-    text-shadow: none !important;
+  .no-print, [data-radix-popper-content-wrapper], [data-radix-focus-guard], [data-radix-dialog-overlay] {
+    display: none !important;
   }
 
   .printable-area {
@@ -80,10 +73,6 @@ h1, h2, h3, h4, h5, h6 {
     overflow: visible !important;
     page-break-inside: avoid;
     padding: 1.5cm;
-  }
-
-  .no-print, [data-radix-popper-content-wrapper], [data-radix-focus-guard], [data-radix-dialog-overlay] {
-    display: none !important;
   }
   
   [data-radix-dialog-portal] {
@@ -108,13 +97,7 @@ h1, h2, h3, h4, h5, h6 {
     page-break-inside: avoid;
   }
 
-  /* Add rules to prevent breaking inside common elements */
-  tr, thead, tbody, tfoot, h1, h2, h3, h4, h5, h6, p {
+  tr, h1, h2, h3, h4, h5, h6, p, .card {
     page-break-inside: avoid !important;
-  }
-  
-  .card, .table {
-     page-break-before: auto;
-     page-break-inside: avoid;
   }
 }
