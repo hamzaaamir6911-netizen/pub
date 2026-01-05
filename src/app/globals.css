@@ -48,29 +48,42 @@ h1, h2, h3, h4, h5, h6 {
   }
 }
 
+
 @media print {
   body {
-    background: #fff !important;
+    background-color: #fff !important;
   }
-  .printable-area {
-    display: block;
+  
+  /* Force all text to black for printing, overriding dark mode styles */
+  * {
+    color: #000 !important;
+    background-color: transparent !important;
+    box-shadow: none !important;
+    text-shadow: none !important;
   }
+
+  /* Hide non-printable elements */
   .no-print {
     display: none !important;
   }
-   /* Hide everything by default */
+  
+  /* Hide everything in the body by default */
   body * {
     visibility: hidden;
   }
-  /* Make the printable area and its children visible */
+
+  /* Make only the printable area and its children visible */
   .printable-area, .printable-area * {
     visibility: visible;
   }
-  /* Position the printable area at the top of the page */
+
+  /* Position the printable area to take up the whole page */
   .printable-area {
     position: absolute;
     left: 0;
     top: 0;
     width: 100%;
+    margin: 0;
+    padding: 0;
   }
 }

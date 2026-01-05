@@ -51,14 +51,7 @@ function DeliveryChallan({ sale }: { sale: Sale }) {
     const customer = customers.find(c => c.id === sale.customerId);
     
     const handlePrint = () => {
-        const printContent = document.getElementById("printable-challan");
-        if (printContent) {
-            const originalContents = document.body.innerHTML;
-            document.body.innerHTML = printContent.innerHTML;
-            window.print();
-            document.body.innerHTML = originalContents;
-            window.location.reload(); // Reload to restore original event listeners and state
-        }
+        window.print();
     };
 
     return (
@@ -128,7 +121,7 @@ function DeliveryChallan({ sale }: { sale: Sale }) {
             </div>
 
             {/* This is the hidden, printable version */}
-            <div id="printable-challan" className="hidden print:block">
+            <div id="printable-challan" className="hidden printable-area">
                  {/* Content is duplicated here for printing */}
                  <div className="p-4 text-xl">
                     <div className="text-center mb-4">
@@ -216,15 +209,7 @@ function SaleInvoice({ sale, onPost, onUnpost }: { sale: Sale, onPost: (saleId: 
     }
     
     const handlePrint = () => {
-        const printContent = document.getElementById('printable-invoice-area');
-        if (printContent) {
-            const originalContents = document.body.innerHTML;
-            document.body.innerHTML = printContent.innerHTML;
-            window.print();
-            document.body.innerHTML = originalContents;
-            // A reload is necessary to restore the app's state and event listeners
-            window.location.reload();
-        }
+        window.print();
     };
 
 
