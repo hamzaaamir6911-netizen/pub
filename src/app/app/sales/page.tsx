@@ -80,7 +80,7 @@ function DeliveryChallan({ sale }: { sale: Sale }) {
                         <Table>
                             <TableHeader>
                                 <TableRow>
-                                    <TableHead className="font-extrabold text-2xl">Item</TableHead>
+                                    <TableHead className="font-extrabold text-2xl w-[40%]">Item</TableHead>
                                     <TableHead className="font-extrabold text-2xl">Colour</TableHead>
                                     <TableHead className="font-extrabold text-2xl">Thickness</TableHead>
                                     <TableHead className="text-right font-extrabold text-2xl">Feet</TableHead>
