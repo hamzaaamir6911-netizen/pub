@@ -51,13 +51,15 @@ h1, h2, h3, h4, h5, h6 {
 @media print {
   @page {
     size: A4;
-    margin: 1.5cm;
+    margin: 0;
   }
 
   body, html {
     height: auto !important;
     overflow: visible !important;
     background: #fff;
+    margin: 0;
+    padding: 0;
   }
 
   .printable-area {
@@ -67,6 +69,7 @@ h1, h2, h3, h4, h5, h6 {
     height: auto !important;
     overflow: visible !important;
     page-break-inside: avoid;
+    padding: 1.5cm; /* Add padding to content area to compensate for page margin removal */
   }
 
   .no-print, [data-radix-popper-content-wrapper], [data-radix-focus-guard] {
