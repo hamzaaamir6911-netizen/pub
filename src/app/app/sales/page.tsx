@@ -251,6 +251,8 @@ function SaleInvoice({ sale, onPost, onUnpost }: { sale: Sale, onPost: (saleId: 
                                 <TableHeader>
                                     <TableRow className="bg-teal-600 hover:bg-teal-700">
                                         <TableHead className="px-4 py-2 font-bold text-white">DESCRIPTION</TableHead>
+                                        <TableHead className="px-4 py-2 font-bold text-white">THICKNESS</TableHead>
+                                        <TableHead className="px-4 py-2 text-right font-bold text-white">FEET</TableHead>
                                         <TableHead className="px-4 py-2 text-right font-bold text-white">QTY</TableHead>
                                         <TableHead className="px-4 py-2 text-right font-bold text-white">RATE</TableHead>
                                         <TableHead className="px-4 py-2 text-right font-bold text-white">AMOUNT</TableHead>
@@ -264,9 +266,11 @@ function SaleInvoice({ sale, onPost, onUnpost }: { sale: Sale, onPost: (saleId: 
                                                 <TableCell className="px-4 py-3 font-medium text-gray-800">
                                                     {item.itemName}
                                                     <span className="text-gray-500 text-sm block">
-                                                        {item.thickness} - {item.color} {item.feet ? `| ${item.feet.toFixed(2)} ft` : ''}
+                                                        {item.color}
                                                     </span>
                                                 </TableCell>
+                                                <TableCell className="px-4 py-3 text-gray-600">{item.thickness || '-'}</TableCell>
+                                                <TableCell className="px-4 py-3 text-right text-gray-600">{item.feet?.toFixed(2) ?? '-'}</TableCell>
                                                 <TableCell className="px-4 py-3 text-right text-gray-600">{item.quantity}</TableCell>
                                                 <TableCell className="px-4 py-3 text-right text-gray-600">{formatCurrency(item.price)}</TableCell>
                                                 <TableCell className="px-4 py-3 text-right font-medium text-gray-800">{formatCurrency(finalAmount)}</TableCell>
