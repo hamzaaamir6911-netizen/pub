@@ -69,7 +69,7 @@ h1, h2, h3, h4, h5, h6 {
     height: auto !important;
     overflow: visible !important;
     page-break-inside: avoid;
-    padding: 1.5cm; /* Add padding to content area to compensate for page margin removal */
+    padding: 2cm 1.5cm; 
   }
 
   .no-print, [data-radix-popper-content-wrapper], [data-radix-focus-guard] {
@@ -99,5 +99,19 @@ h1, h2, h3, h4, h5, h6 {
     display: block !important;
     page-break-before: auto;
     page-break-after: auto;
+    page-break-inside: avoid;
+  }
+
+  /* Add rules to prevent breaking inside common elements */
+  tr, thead, tbody, tfoot {
+    page-break-inside: avoid !important;
+  }
+
+  h1, h2, h3, h4, h5, h6, p, .card, .table {
+    page-break-inside: avoid;
+  }
+  
+  .card, .table {
+     page-break-before: auto;
   }
 }
