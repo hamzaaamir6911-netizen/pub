@@ -125,6 +125,11 @@ export default function LabourPage() {
     setModalOpen(false);
     setEditingLabourer(null);
   }
+  
+  const handlePrint = () => {
+    window.print();
+  };
+
 
   return (
     <>
@@ -133,7 +138,7 @@ export default function LabourPage() {
         description="Manage your workforce information."
       >
         <div className="flex items-center gap-2">
-            <Button variant="outline" onClick={() => window.print()} className="no-print">
+            <Button variant="outline" onClick={handlePrint} className="no-print">
                 <Printer className="mr-2 h-4 w-4" /> Print
             </Button>
             <Dialog open={isModalOpen} onOpenChange={setModalOpen}>

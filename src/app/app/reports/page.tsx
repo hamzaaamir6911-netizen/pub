@@ -240,12 +240,65 @@ function LedgerReport() {
 }
 
 function SalaryPayslip({ payment }: { payment: SalaryPayment }) {
+    const handlePrint = () => {
+        const printContent = document.getElementById("printable-payslip-area");
+        if (printContent) {
+            const originalContents = document.body.innerHTML;
+            document.body.innerHTML = printContent.innerHTML;
+            window.print();
+            document.body.innerHTML = originalContents;
+            window.location.reload();
+        }
+    };
     return (
-        <DialogContent className="max-w-4xl max-h-[90vh] flex flex-col">
-            <DialogHeader className="flex-shrink-0 no-print">
-                <DialogTitle>Payslip for {payment.month} {payment.year}</DialogTitle>
-            </DialogHeader>
-            <div className="flex-grow overflow-y-auto" id="printable-payslip">
+        <>
+            <DialogContent className="max-w-4xl max-h-[90vh] flex flex-col">
+                <DialogHeader className="flex-shrink-0 no-print">
+                    <DialogTitle>Payslip for {payment.month} {payment.year}</DialogTitle>
+                </DialogHeader>
+                <div className="flex-grow overflow-y-auto">
+                    <div className="p-6">
+                        <div className="text-center mb-8">
+                            <h1 className="text-2xl font-bold">Salary Payslip</h1>
+                            <p className="text-lg font-semibold">{payment.month} {payment.year}</p>
+                        </div>
+                        <Table>
+                            <TableHeader>
+                                <TableRow>
+                                    <TableHead>Labourer</TableHead>
+                                    <TableHead className="text-right">Monthly Salary</TableHead>
+                                    <TableHead className="text-right">Days Worked</TableHead>
+                                    <TableHead className="text-right">Overtime (hrs)</TableHead>
+                                    <TableHead className="text-right">Deductions</TableHead>
+                                    <TableHead className="text-right font-bold">Total Payable</TableHead>
+                                </TableRow>
+                            </TableHeader>
+                            <TableBody>
+                                {payment.labourers.map(l => (
+                                    <TableRow key={l.labourerId}>
+                                        <TableCell className="font-medium">{l.labourerName}</TableCell>
+                                        <TableCell className="text-right">{formatCurrency(l.monthlySalary)}</TableCell>
+                                        <TableCell className="text-right">{l.daysWorked}</TableCell>
+                                        <TableCell className="text-right">{l.overtimeHours}</TableCell>
+                                        <TableCell className="text-right text-red-500">{formatCurrency(l.deductions)}</TableCell>
+                                        <TableCell className="text-right font-bold">{formatCurrency(l.totalPayable)}</TableCell>
+                                    </TableRow>
+                                ))}
+                            </TableBody>
+                             <TableRow className="bg-muted/50 font-bold">
+                                <TableCell colSpan={5} className="text-right">Grand Total Paid</TableCell>
+                                <TableCell className="text-right">{formatCurrency(payment.totalAmountPaid)}</TableCell>
+                            </TableRow>
+                        </Table>
+                    </div>
+                </div>
+                <DialogFooter className="mt-4 flex-shrink-0 no-print">
+                    <Button variant="outline" onClick={handlePrint}>
+                        <Printer className="mr-2 h-4 w-4" /> Print / Save PDF
+                    </Button>
+                </DialogFooter>
+            </DialogContent>
+             <div id="printable-payslip-area" className="hidden printable-area">
                 <div className="p-6">
                     <div className="text-center mb-8">
                         <h1 className="text-2xl font-bold">Salary Payslip</h1>
@@ -281,12 +334,7 @@ function SalaryPayslip({ payment }: { payment: SalaryPayment }) {
                     </Table>
                 </div>
             </div>
-            <DialogFooter className="mt-4 flex-shrink-0 no-print">
-                <Button variant="outline" onClick={() => window.print()}>
-                    <Printer className="mr-2 h-4 w-4" /> Print / Save PDF
-                </Button>
-            </DialogFooter>
-        </DialogContent>
+        </>
     );
 }
 
@@ -351,6 +399,10 @@ export default function ReportsPage() {
     const monthlyData = getMonthlySalesData();
     const [activeTab, setActiveTab] = useState("monthly");
     
+    const handlePrint = () => {
+        window.print();
+    }
+    
     const dailyReportData = [
         { date: "Today", sales: stats.todaySummary.sales.reduce((acc, s) => acc + s.total, 0), expenses: stats.todaySummary.expenses.reduce((acc, e) => acc + e.amount, 0)},
         // Note: Yesterday's data is hardcoded as an example.
@@ -363,7 +415,7 @@ export default function ReportsPage() {
         title="Reports"
         description="Analyze your factory's financial performance."
       >
-        <Button variant="outline" onClick={() => window.print()} className="no-print">
+        <Button variant="outline" onClick={handlePrint} className="no-print">
             <Printer className="mr-2 h-4 w-4" /> Print Report
         </Button>
       </PageHeader>

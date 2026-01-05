@@ -52,15 +52,27 @@ function EstimatePrint({ estimate }: { estimate: Estimate }) {
     const customer = customers.find(c => c.id === estimate.customerId);
     
     let subtotal = 0;
+    
+    const handlePrint = () => {
+        const printContent = document.getElementById("printable-estimate");
+        if (printContent) {
+            const originalContents = document.body.innerHTML;
+            document.body.innerHTML = printContent.innerHTML;
+            window.print();
+            document.body.innerHTML = originalContents;
+            window.location.reload(); 
+        }
+    };
+
 
     return (
-        <DialogContent className="max-w-4xl max-h-[90vh] flex flex-col print:max-w-full print:h-auto print:max-h-none print:p-0">
+        <DialogContent className="max-w-4xl max-h-[90vh] flex flex-col">
              <DialogHeader className="flex-shrink-0 no-print">
                 <div className="flex flex-col items-center justify-center pt-4">
                     <DialogTitle>Estimate: {estimate.id}</DialogTitle>
                 </div>
             </DialogHeader>
-            <div id="printable-estimate" className="flex-grow overflow-y-auto printable-area">
+            <div className="flex-grow overflow-y-auto">
                 <div className="p-6 text-sm">
                     {/* Header */}
                     <div className="flex justify-between items-start mb-6">
@@ -140,8 +152,91 @@ function EstimatePrint({ estimate }: { estimate: Estimate }) {
                     </div>
                 </div>
             </div>
+            
+            <div id="printable-estimate" className="hidden printable-area">
+                {/* Duplicated content for printing */}
+                 <div className="p-6 text-sm">
+                    {/* Header */}
+                    <div className="flex justify-between items-start mb-6">
+                        <div>
+                            <h1 className="text-xl font-bold font-headline">ARCO Aluminium Company</h1>
+                            <p className="text-sm font-medium text-gray-600 mt-2">B-5, PLOT 59, Industrial Estate, Hayatabad, Peshawar</p>
+                            <p className="text-sm font-medium text-gray-600">+92 333 4646356</p>
+                        </div>
+                        <div className="text-right">
+                             <h2 className="text-2xl font-bold text-gray-800">ESTIMATE</h2>
+                             <p className="text-sm font-semibold text-gray-600 mt-1">Estimate #: {estimate.id}</p>
+                             <p className="text-sm font-semibold text-gray-600">Date: {formatDate(estimate.date)}</p>
+                        </div>
+                    </div>
+
+                    {/* Bill To */}
+                    <div className="mb-8">
+                        <p className="font-bold text-gray-500 uppercase mb-1">Estimate For</p>
+                        <p className="text-gray-900 font-bold text-base">{estimate.customerName}</p>
+                        <p className="text-gray-700 font-medium ">{customer?.address}</p>
+                        <p className="text-gray-700 font-medium ">{customer?.phoneNumber}</p>
+                    </div>
+
+
+                    <div className="overflow-x-auto">
+                        <Table className="text-sm">
+                            <TableHeader>
+                                <TableRow className="bg-gray-100">
+                                    <TableHead className="px-2 py-2 text-left font-bold text-gray-600 uppercase tracking-wider">Description</TableHead>
+                                    <TableHead className="px-2 py-2 text-right font-bold text-gray-600 uppercase tracking-wider">Feet</TableHead>
+                                    <TableHead className="px-2 py-2 text-right font-bold text-gray-600 uppercase tracking-wider">Qty</TableHead>
+                                    <TableHead className="px-2 py-2 text-right font-bold text-gray-600 uppercase tracking-wider">Rate</TableHead>
+                                    <TableHead className="px-2 py-2 text-right font-bold text-gray-600 uppercase tracking-wider">Discount</TableHead>
+                                    <TableHead className="px-2 py-2 text-right font-bold text-gray-600 uppercase tracking-wider">Amount</TableHead>
+                                </TableRow>
+                            </TableHeader>
+                            <TableBody>
+                                {estimate.items.map((item, index) => {
+                                    const itemSubtotal = (item.feet || 1) * item.price * item.quantity;
+                                    const discountAmount = itemSubtotal * ((item.discount || 0) / 100);
+                                    const finalAmount = itemSubtotal - discountAmount;
+                                    subtotal += finalAmount;
+                                    
+                                    return (
+                                        <TableRow key={index} className="font-medium">
+                                            <TableCell className="px-2 py-2 font-bold text-gray-800">
+                                                {item.itemName}
+                                                <span className="text-gray-600 font-medium block">{item.thickness} - {item.color}</span>
+                                            </TableCell>
+                                            <TableCell className="px-2 py-2 text-right text-gray-700">{item.feet ? item.feet.toFixed(2) : '-'}</TableCell>
+                                            <TableCell className="px-2 py-2 text-right text-gray-700">{item.quantity}</TableCell>
+                                            <TableCell className="px-2 py-2 text-right text-gray-700">{formatCurrency(item.price)}</TableCell>
+                                            <TableCell className="px-2 py-2 text-right text-gray-700">{item.discount || 0}%</TableCell>
+                                            <TableCell className="px-2 py-2 text-right font-bold text-gray-900">{formatCurrency(finalAmount)}</TableCell>
+                                        </TableRow>
+                                    )
+                                })}
+                            </TableBody>
+                        </Table>
+                    </div>
+
+                    <div className="flex justify-end mt-4">
+                        <div className="w-full max-w-sm text-base">
+                            <div className="flex justify-between py-1.5 border-b">
+                                <span className="font-semibold text-gray-700">Subtotal</span>
+                                <span className="font-bold text-gray-900">{formatCurrency(subtotal)}</span>
+                            </div>
+                            <div className="flex justify-between py-1.5 border-b">
+                                <span className="font-semibold text-gray-700">Overall Discount ({estimate.discount}%)</span>
+                                <span className="font-bold text-gray-900">- {formatCurrency(subtotal * (estimate.discount / 100))}</span>
+                            </div>
+                            <div className="flex justify-between py-2 bg-gray-100 px-3 rounded-md mt-2">
+                                <span className="font-extrabold text-gray-900 text-lg">Grand Total</span>
+                                <span className="font-extrabold text-gray-900 text-lg">{formatCurrency(estimate.total)}</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
             <DialogFooter className="mt-4 flex-shrink-0 no-print">
-                <Button variant="outline" onClick={() => window.print()}>
+                <Button variant="outline" onClick={handlePrint}>
                     <Printer className="mr-2 h-4 w-4" />
                     Print / Save PDF
                 </Button>
@@ -500,7 +595,7 @@ export default function EstimatesPage() {
         title="Estimates"
         description="Create and manage quotations for customers."
       />
-      <Tabs value={activeTab} onValueChange={setActiveTab} className="printable-area">
+      <Tabs value={activeTab} onValueChange={setActiveTab}>
         <TabsList className="w-full sm:w-auto grid grid-cols-2 no-print">
           <TabsTrigger value="history">Estimates History</TabsTrigger>
           <TabsTrigger value="new">New Estimate</TabsTrigger>

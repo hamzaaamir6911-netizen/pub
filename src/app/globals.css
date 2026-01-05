@@ -50,10 +50,27 @@ h1, h2, h3, h4, h5, h6 {
 
 @media print {
   body {
-    -webkit-print-color-adjust: exact;
-    print-color-adjust: exact;
+    background: #fff !important;
+  }
+  .printable-area {
+    display: block;
   }
   .no-print {
     display: none !important;
+  }
+   /* Hide everything by default */
+  body * {
+    visibility: hidden;
+  }
+  /* Make the printable area and its children visible */
+  .printable-area, .printable-area * {
+    visibility: visible;
+  }
+  /* Position the printable area at the top of the page */
+  .printable-area {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 100%;
   }
 }

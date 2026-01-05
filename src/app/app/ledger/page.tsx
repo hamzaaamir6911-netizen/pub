@@ -207,6 +207,10 @@ export default function LedgerPage() {
     setSelectedVendorId(null);
   }
 
+  const handlePrint = () => {
+    window.print();
+  }
+
   const hasFilter = selectedCustomerId || selectedVendorId;
 
   return (
@@ -216,7 +220,7 @@ export default function LedgerPage() {
         description="A record of all financial transactions."
       >
         <div className="flex items-center gap-2 no-print">
-            <Button variant="outline" onClick={() => window.print()}>
+            <Button variant="outline" onClick={handlePrint}>
                 <Printer className="mr-2 h-4 w-4" /> Print Page
             </Button>
             <Dialog open={isAddModalOpen} onOpenChange={setAddModalOpen}>
@@ -345,5 +349,3 @@ export default function LedgerPage() {
     </>
   );
 }
-
-    
