@@ -101,7 +101,7 @@ function DeliveryChallan({ sale }: { sale: Sale }) {
                         </Table>
                     </div>
 
-                    <div className="mt-16 grid grid-cols-2 gap-4 text-center">
+                    <div className="mt-8 grid grid-cols-2 gap-4 text-center">
                         <div className="border-t pt-2 font-extrabold text-2xl">
                             <p>Receiver's Signature</p>
                         </div>
@@ -110,7 +110,7 @@ function DeliveryChallan({ sale }: { sale: Sale }) {
                         </div>
                     </div>
 
-                     <div className="mt-8 text-center text-lg text-gray-500 border-t pt-2">
+                     <div className="mt-4 text-center text-lg text-gray-500 border-t pt-2">
                         <p className="font-bold">Industrial Estate, Hayatabad Road B-5 PLOT 59 PESHAWAR</p>
                         <p className="font-bold">Phone: +923334646356</p>
                     </div>
