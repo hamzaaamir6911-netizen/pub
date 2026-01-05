@@ -49,55 +49,11 @@ h1, h2, h3, h4, h5, h6 {
 }
 
 @media print {
-  @page {
-    size: A4;
-    margin: 0;
+  body {
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
   }
-
-  body, html {
-    background: #fff !important;
-    color: #000 !important;
-    margin: 0;
-    padding: 0;
-  }
-  
-  .no-print, [data-radix-popper-content-wrapper], [data-radix-focus-guard], [data-radix-dialog-overlay] {
+  .no-print {
     display: none !important;
-  }
-
-  .printable-area {
-    display: block !important;
-    position: static !important;
-    width: 100% !important;
-    height: auto !important;
-    overflow: visible !important;
-    page-break-inside: avoid;
-    padding: 1.5cm;
-  }
-  
-  [data-radix-dialog-portal] {
-    position: static !important;
-  }
-  
-  [data-radix-dialog-content] {
-    position: static !important;
-    width: 100% !important;
-    height: auto !important;
-    max-width: 100% !important;
-    max-height: none !important;
-    border: none !important;
-    box-shadow: none !important;
-    padding: 0 !important;
-    margin: 0 !important;
-    transform: none !important;
-    overflow: visible !important;
-    display: block !important;
-    page-break-before: auto;
-    page-break-after: auto;
-    page-break-inside: avoid;
-  }
-
-  tr, h1, h2, h3, h4, h5, h6, p, .card {
-    page-break-inside: avoid !important;
   }
 }
