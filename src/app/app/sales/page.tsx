@@ -1,4 +1,5 @@
 
+
 "use client";
 
 import { useState, useRef, useEffect } from "react";
@@ -173,25 +174,46 @@ function SaleInvoice({ sale, onPost, onUnpost }: { sale: Sale, onPost: (saleId: 
     }
     
     const handlePrint = () => {
-        const printContent = document.getElementById('printable-invoice')?.innerHTML;
+        const printContent = document.getElementById("printable-invoice");
         if (printContent) {
             const printWindow = window.open('', '', 'height=800,width=1000');
             if (printWindow) {
                 printWindow.document.write('<html><head><title>Print Invoice</title>');
+    
+                // Get all style sheets
                 const styles = Array.from(document.styleSheets)
-                    .map(s => s.href ? `<link rel="stylesheet" href="${s.href}">` : '')
+                    .map(styleSheet => {
+                        try {
+                            // For external stylesheets, create a link tag
+                            if (styleSheet.href) {
+                                return `<link rel="stylesheet" href="${styleSheet.href}">`;
+                            }
+                            // For inline styles, read the rules and create a style tag
+                            return `<style>${Array.from(styleSheet.cssRules).map(rule => rule.cssText).join('')}</style>`;
+                        } catch (e) {
+                            console.warn("Could not read stylesheet rules. This is often due to CORS restrictions.", e);
+                            if (styleSheet.href) {
+                                return `<link rel="stylesheet" href="${styleSheet.href}">`;
+                            }
+                            return '';
+                        }
+                    })
                     .join('');
+    
                 printWindow.document.write(styles);
-                 printWindow.document.write('<style>@media print { body { -webkit-print-color-adjust: exact; print-color-adjust: exact; } .no-print { display: none !important; } .printable-area { display: block !important; } }</style>');
-                printWindow.document.write('</head><body>');
-                printWindow.document.write(printContent);
+                printWindow.document.write('<style>@media print { body { -webkit-print-color-adjust: exact; print-color-adjust: exact; } .no-print { display: none !important; } }</style>');
+    
+                printWindow.document.write('</head><body class="bg-white">');
+                printWindow.document.write(printContent.innerHTML);
                 printWindow.document.write('</body></html>');
                 printWindow.document.close();
                 printWindow.focus();
+                
+                // Use a timeout to ensure styles are loaded before printing
                 setTimeout(() => {
                     printWindow.print();
                     printWindow.close();
-                }, 250);
+                }, 500); // 500ms delay, can be adjusted
             }
         }
     };
@@ -204,7 +226,7 @@ function SaleInvoice({ sale, onPost, onUnpost }: { sale: Sale, onPost: (saleId: 
                 </DialogHeader>
 
                 <div className="flex-grow overflow-y-auto bg-gray-50">
-                     <div id="printable-invoice" className="p-8 bg-white shadow-lg rounded-sm text-base printable-area">
+                     <div id="printable-invoice" className="p-8 bg-white shadow-lg rounded-sm text-base">
                         {/* Header */}
                         <div className="flex justify-between items-start pb-8 border-b">
                             <div>
@@ -226,7 +248,7 @@ function SaleInvoice({ sale, onPost, onUnpost }: { sale: Sale, onPost: (saleId: 
                         {/* From/To */}
                         <div className="grid grid-cols-2 gap-8 my-8">
                             <div>
-                                <div className="px-4 py-2 bg-teal-600 text-white font-bold rounded-t-md">From</div>
+                                <div className="px-4 py-2 bg-primary text-primary-foreground font-bold rounded-t-md">From</div>
                                 <div className="border-l border-r border-b p-4 rounded-b-md">
                                     <p className="font-bold">ARCO Aluminium Company</p>
                                     <p>B-5, PLOT 59, Industrial Estate</p>
@@ -235,7 +257,7 @@ function SaleInvoice({ sale, onPost, onUnpost }: { sale: Sale, onPost: (saleId: 
                                 </div>
                             </div>
                              <div>
-                                <div className="px-4 py-2 bg-teal-600 text-white font-bold rounded-t-md">To</div>
+                                <div className="px-4 py-2 bg-primary text-primary-foreground font-bold rounded-t-md">To</div>
                                 <div className="border-l border-r border-b p-4 rounded-b-md">
                                     <p className="font-bold">{customer?.customerName}</p>
                                     <p>{customer?.address}</p>
@@ -249,13 +271,13 @@ function SaleInvoice({ sale, onPost, onUnpost }: { sale: Sale, onPost: (saleId: 
                         <div className="overflow-x-auto mb-8">
                             <Table>
                                 <TableHeader>
-                                    <TableRow className="bg-teal-600 hover:bg-teal-700">
-                                        <TableHead className="px-4 py-2 font-bold text-white">DESCRIPTION</TableHead>
-                                        <TableHead className="px-4 py-2 font-bold text-white">THICKNESS</TableHead>
-                                        <TableHead className="px-4 py-2 text-right font-bold text-white">FEET</TableHead>
-                                        <TableHead className="px-4 py-2 text-right font-bold text-white">QTY</TableHead>
-                                        <TableHead className="px-4 py-2 text-right font-bold text-white">RATE</TableHead>
-                                        <TableHead className="px-4 py-2 text-right font-bold text-white">AMOUNT</TableHead>
+                                    <TableRow className="bg-primary hover:bg-primary/90">
+                                        <TableHead className="px-4 py-2 font-bold text-primary-foreground">DESCRIPTION</TableHead>
+                                        <TableHead className="px-4 py-2 font-bold text-primary-foreground">THICKNESS</TableHead>
+                                        <TableHead className="px-4 py-2 text-right font-bold text-primary-foreground">FEET</TableHead>
+                                        <TableHead className="px-4 py-2 text-right font-bold text-primary-foreground">QTY</TableHead>
+                                        <TableHead className="px-4 py-2 text-right font-bold text-primary-foreground">RATE</TableHead>
+                                        <TableHead className="px-4 py-2 text-right font-bold text-primary-foreground">AMOUNT</TableHead>
                                     </TableRow>
                                 </TableHeader>
                                 <TableBody>
@@ -284,7 +306,7 @@ function SaleInvoice({ sale, onPost, onUnpost }: { sale: Sale, onPost: (saleId: 
                         <div className="flex justify-between items-start">
                             {/* Notes Section */}
                             <div className="w-1/2">
-                                <div className="px-4 py-2 bg-teal-600 text-white font-bold rounded-t-md">Notes</div>
+                                <div className="px-4 py-2 bg-primary text-primary-foreground font-bold rounded-t-md">Notes</div>
                                 <div className="border-l border-r border-b p-4 rounded-b-md h-32">
                                     <p className="text-gray-600">Thank you for your business!</p>
                                 </div>
