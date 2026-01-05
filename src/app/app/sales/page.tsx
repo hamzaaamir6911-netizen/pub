@@ -56,23 +56,23 @@ function DeliveryChallan({ sale }: { sale: Sale }) {
                 <DialogTitle>Delivery Challan: {sale.id}</DialogTitle>
             </DialogHeader>
             <div className="flex-grow overflow-y-auto printable-area" id="printable-challan">
-                 <div className="p-4 text-lg">
-                    <div className="text-center mb-6">
-                      <h1 className="text-3xl font-extrabold font-headline">ARCO Aluminium Company</h1>
-                      <p className="mt-1 text-2xl font-extrabold">Delivery Challan</p>
+                 <div className="p-4 text-xl">
+                    <div className="text-center mb-4">
+                      <h1 className="text-4xl font-extrabold font-headline">ARCO Aluminium Company</h1>
+                      <p className="mt-1 text-3xl font-extrabold">Delivery Challan</p>
                     </div>
                     <div className="grid grid-cols-2 gap-4 mb-4">
                         <div>
-                            <p className="font-extrabold text-xl">Customer:</p>
-                            <p className="font-bold text-lg">{sale.customerName}</p>
-                            <p className="font-bold text-lg">{customer?.address}</p>
-                            <p className="font-bold text-lg">{customer?.phoneNumber}</p>
+                            <p className="font-extrabold text-2xl">Customer:</p>
+                            <p className="font-bold text-2xl">{sale.customerName}</p>
+                            <p className="font-bold text-xl">{customer?.address}</p>
+                            <p className="font-bold text-xl">{customer?.phoneNumber}</p>
                         </div>
                         <div className="text-right">
-                            <p className="font-extrabold text-xl">Challan No:</p>
-                            <p className="font-bold text-lg">{sale.id}</p>
-                            <p className="mt-2 font-extrabold text-xl">Date:</p>
-                            <p className="font-bold text-lg">{formatDate(sale.date)}</p>
+                            <p className="font-extrabold text-2xl">Challan No:</p>
+                            <p className="font-bold text-2xl">{sale.id}</p>
+                            <p className="mt-2 font-extrabold text-2xl">Date:</p>
+                            <p className="font-bold text-2xl">{formatDate(sale.date)}</p>
                         </div>
                     </div>
 
@@ -80,16 +80,16 @@ function DeliveryChallan({ sale }: { sale: Sale }) {
                         <Table>
                             <TableHeader>
                                 <TableRow>
-                                    <TableHead className="font-extrabold text-xl">Item</TableHead>
-                                    <TableHead className="font-extrabold text-xl">Colour</TableHead>
-                                    <TableHead className="font-extrabold text-xl">Thickness</TableHead>
-                                    <TableHead className="text-right font-extrabold text-xl">Feet</TableHead>
-                                    <TableHead className="text-right font-extrabold text-xl">Quantity</TableHead>
+                                    <TableHead className="font-extrabold text-2xl">Item</TableHead>
+                                    <TableHead className="font-extrabold text-2xl">Colour</TableHead>
+                                    <TableHead className="font-extrabold text-2xl">Thickness</TableHead>
+                                    <TableHead className="text-right font-extrabold text-2xl">Feet</TableHead>
+                                    <TableHead className="text-right font-extrabold text-2xl">Quantity</TableHead>
                                 </TableRow>
                             </TableHeader>
                             <TableBody>
                                 {sale.items.map((item, index) => (
-                                    <TableRow key={index} className="font-bold text-lg">
+                                    <TableRow key={index} className="font-bold text-xl">
                                         <TableCell>{item.itemName}</TableCell>
                                         <TableCell>{item.color}</TableCell>
                                         <TableCell>{item.thickness || '-'}</TableCell>
@@ -101,16 +101,16 @@ function DeliveryChallan({ sale }: { sale: Sale }) {
                         </Table>
                     </div>
 
-                    <div className="mt-20 grid grid-cols-2 gap-4 text-center">
-                        <div className="border-t pt-2 font-extrabold text-xl">
+                    <div className="mt-16 grid grid-cols-2 gap-4 text-center">
+                        <div className="border-t pt-2 font-extrabold text-2xl">
                             <p>Receiver's Signature</p>
                         </div>
-                        <div className="border-t pt-2 font-extrabold text-xl">
+                        <div className="border-t pt-2 font-extrabold text-2xl">
                             <p>Driver's Signature</p>
                         </div>
                     </div>
 
-                     <div className="mt-12 text-center text-base text-gray-500 border-t pt-2">
+                     <div className="mt-8 text-center text-lg text-gray-500 border-t pt-2">
                         <p className="font-bold">Industrial Estate, Hayatabad Road B-5 PLOT 59 PESHAWAR</p>
                         <p className="font-bold">Phone: +923334646356</p>
                     </div>
@@ -149,7 +149,7 @@ function SaleInvoice({ sale, onPost, onUnpost }: { sale: Sale, onPost: (saleId: 
                 <DialogTitle>Sale Invoice: {sale.id}</DialogTitle>
             </DialogHeader>
             <div className="flex-grow overflow-y-auto printable-area" id="printable-invoice">
-                 <div className="p-4 text-base">
+                 <div className="p-4 text-lg">
                      {/* Header */}
                     <div className="flex justify-between items-start mb-4">
                         <div>
@@ -178,12 +178,12 @@ function SaleInvoice({ sale, onPost, onUnpost }: { sale: Sale, onPost: (saleId: 
                         <Table className="text-lg">
                             <TableHeader>
                                 <TableRow className="bg-gray-100">
-                                    <TableHead className="px-2 py-2 text-left font-extrabold text-gray-600 uppercase tracking-wider text-lg">Description</TableHead>
-                                    <TableHead className="px-2 py-2 text-right font-extrabold text-gray-600 uppercase tracking-wider text-lg">Feet</TableHead>
-                                    <TableHead className="px-2 py-2 text-right font-extrabold text-gray-600 uppercase tracking-wider text-lg">Qty</TableHead>
-                                    <TableHead className="px-2 py-2 text-right font-extrabold text-gray-600 uppercase tracking-wider text-lg">Rate</TableHead>
-                                    <TableHead className="px-2 py-2 text-right font-extrabold text-gray-600 uppercase tracking-wider text-lg">Discount</TableHead>
-                                    <TableHead className="px-2 py-2 text-right font-extrabold text-gray-600 uppercase tracking-wider text-lg">Amount</TableHead>
+                                    <TableHead className="px-2 py-2 text-left font-extrabold text-gray-600 uppercase tracking-wider text-xl">Description</TableHead>
+                                    <TableHead className="px-2 py-2 text-right font-extrabold text-gray-600 uppercase tracking-wider text-xl">Feet</TableHead>
+                                    <TableHead className="px-2 py-2 text-right font-extrabold text-gray-600 uppercase tracking-wider text-xl">Qty</TableHead>
+                                    <TableHead className="px-2 py-2 text-right font-extrabold text-gray-600 uppercase tracking-wider text-xl">Rate</TableHead>
+                                    <TableHead className="px-2 py-2 text-right font-extrabold text-gray-600 uppercase tracking-wider text-xl">Discount</TableHead>
+                                    <TableHead className="px-2 py-2 text-right font-extrabold text-gray-600 uppercase tracking-wider text-xl">Amount</TableHead>
                                 </TableRow>
                             </TableHeader>
                             <TableBody>
@@ -786,6 +786,8 @@ export default function SalesPage() {
 }
 
 
+
+    
 
     
 
