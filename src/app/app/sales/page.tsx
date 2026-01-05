@@ -1,5 +1,4 @@
 
-
 "use client";
 
 import { useState, useRef, useEffect } from "react";
@@ -57,23 +56,23 @@ function DeliveryChallan({ sale }: { sale: Sale }) {
                 <DialogTitle>Delivery Challan: {sale.id}</DialogTitle>
             </DialogHeader>
             <div className="flex-grow overflow-y-auto printable-area" id="printable-challan">
-                 <div className="p-4 text-sm">
+                 <div className="p-4 text-base">
                     <div className="text-center mb-6">
-                      <h1 className="text-xl font-bold font-headline">ARCO Aluminium Company</h1>
-                      <p className="mt-1 text-lg font-bold">Delivery Challan</p>
+                      <h1 className="text-3xl font-extrabold font-headline">ARCO Aluminium Company</h1>
+                      <p className="mt-1 text-2xl font-extrabold">Delivery Challan</p>
                     </div>
                     <div className="grid grid-cols-2 gap-4 mb-4">
                         <div>
-                            <p className="font-bold">Customer:</p>
-                            <p>{sale.customerName}</p>
-                            <p>{customer?.address}</p>
-                            <p>{customer?.phoneNumber}</p>
+                            <p className="font-extrabold text-lg">Customer:</p>
+                            <p className="font-bold">{sale.customerName}</p>
+                            <p className="font-bold">{customer?.address}</p>
+                            <p className="font-bold">{customer?.phoneNumber}</p>
                         </div>
                         <div className="text-right">
-                            <p className="font-bold">Challan No:</p>
-                            <p>{sale.id}</p>
-                            <p className="mt-2 font-bold">Date:</p>
-                            <p>{formatDate(sale.date)}</p>
+                            <p className="font-extrabold text-lg">Challan No:</p>
+                            <p className="font-bold">{sale.id}</p>
+                            <p className="mt-2 font-extrabold text-lg">Date:</p>
+                            <p className="font-bold">{formatDate(sale.date)}</p>
                         </div>
                     </div>
 
@@ -81,16 +80,16 @@ function DeliveryChallan({ sale }: { sale: Sale }) {
                         <Table>
                             <TableHeader>
                                 <TableRow>
-                                    <TableHead className="font-bold">Item</TableHead>
-                                    <TableHead className="font-bold">Colour</TableHead>
-                                    <TableHead className="font-bold">Thickness</TableHead>
-                                    <TableHead className="text-right font-bold">Feet</TableHead>
-                                    <TableHead className="text-right font-bold">Quantity</TableHead>
+                                    <TableHead className="font-extrabold text-lg">Item</TableHead>
+                                    <TableHead className="font-extrabold text-lg">Colour</TableHead>
+                                    <TableHead className="font-extrabold text-lg">Thickness</TableHead>
+                                    <TableHead className="text-right font-extrabold text-lg">Feet</TableHead>
+                                    <TableHead className="text-right font-extrabold text-lg">Quantity</TableHead>
                                 </TableRow>
                             </TableHeader>
                             <TableBody>
                                 {sale.items.map((item, index) => (
-                                    <TableRow key={index} className="font-medium">
+                                    <TableRow key={index} className="font-bold text-base">
                                         <TableCell>{item.itemName}</TableCell>
                                         <TableCell>{item.color}</TableCell>
                                         <TableCell>{item.thickness || '-'}</TableCell>
@@ -103,17 +102,17 @@ function DeliveryChallan({ sale }: { sale: Sale }) {
                     </div>
 
                     <div className="mt-20 grid grid-cols-2 gap-4 text-center">
-                        <div className="border-t pt-2 font-semibold">
+                        <div className="border-t pt-2 font-extrabold text-lg">
                             <p>Receiver's Signature</p>
                         </div>
-                        <div className="border-t pt-2 font-semibold">
+                        <div className="border-t pt-2 font-extrabold text-lg">
                             <p>Driver's Signature</p>
                         </div>
                     </div>
 
-                     <div className="mt-12 text-center text-xs text-gray-500 border-t pt-2">
-                        <p className="font-semibold">Industrial Estate, Hayatabad Road B-5 PLOT 59 PESHAWAR</p>
-                        <p className="font-semibold">Phone: +923334646356</p>
+                     <div className="mt-12 text-center text-sm text-gray-500 border-t pt-2">
+                        <p className="font-bold">Industrial Estate, Hayatabad Road B-5 PLOT 59 PESHAWAR</p>
+                        <p className="font-bold">Phone: +923334646356</p>
                     </div>
                 </div>
             </div>
@@ -146,7 +145,7 @@ function SaleInvoice({ sale, onPost, onUnpost }: { sale: Sale, onPost: (saleId: 
 
     return (
         <DialogContent className="max-w-4xl max-h-[90vh] flex flex-col print:p-0 print:max-w-full print:h-auto print:max-h-none">
-            <DialogHeader className="flex-shrink-0 no-print">
+            <DialogHeader className="flex-shrink-0 no-print pt-0">
                 <DialogTitle>Sale Invoice: {sale.id}</DialogTitle>
             </DialogHeader>
             <div className="flex-grow overflow-y-auto printable-area" id="printable-invoice">
@@ -154,37 +153,37 @@ function SaleInvoice({ sale, onPost, onUnpost }: { sale: Sale, onPost: (saleId: 
                      {/* Header */}
                     <div className="flex justify-between items-start mb-4">
                         <div>
-                           <h1 className="text-xl font-bold font-headline">ARCO Aluminium Company</h1>
-                           <p className="font-semibold text-gray-600">B-5, PLOT 59, Industrial Estate, Hayatabad, Peshawar</p>
-                           <p className="font-semibold text-gray-600">+92 333 4646356</p>
+                           <h1 className="text-2xl font-extrabold font-headline">ARCO Aluminium Company</h1>
+                           <p className="font-bold text-gray-600">B-5, PLOT 59, Industrial Estate, Hayatabad, Peshawar</p>
+                           <p className="font-bold text-gray-600">+92 333 4646356</p>
                         </div>
                         <div className="text-right">
-                             <h2 className="text-2xl font-bold text-gray-800">INVOICE</h2>
-                             <p className="font-semibold text-gray-600">Invoice #: {sale.id}</p>
-                             <p className="font-semibold text-gray-600">Date: {formatDate(sale.date)}</p>
-                             <Badge variant={sale.status === 'posted' ? 'default' : 'secondary'} className="mt-1 font-bold">{sale.status}</Badge>
+                             <h2 className="text-3xl font-extrabold text-gray-800">INVOICE</h2>
+                             <p className="font-bold text-gray-600">Invoice #: {sale.id}</p>
+                             <p className="font-bold text-gray-600">Date: {formatDate(sale.date)}</p>
+                             <Badge variant={sale.status === 'posted' ? 'default' : 'secondary'} className="mt-1 font-extrabold text-base">{sale.status}</Badge>
                         </div>
                     </div>
 
                      {/* Bill To */}
                     <div className="mb-6">
-                        <p className="font-bold text-gray-500 uppercase mb-1 text-xs">To</p>
-                        <p className="text-gray-900 font-bold text-base">{sale.customerName}</p>
-                        <p className="text-gray-700 font-medium">{customer?.address}</p>
-                        <p className="text-gray-700 font-medium">{customer?.phoneNumber}</p>
+                        <p className="font-extrabold text-gray-500 uppercase mb-1 text-base">To</p>
+                        <p className="text-gray-900 font-extrabold text-xl">{sale.customerName}</p>
+                        <p className="font-bold text-gray-700">{customer?.address}</p>
+                        <p className="font-bold text-gray-700">{customer?.phoneNumber}</p>
                     </div>
 
                     {/* Items Table */}
                     <div className="overflow-x-auto">
-                        <Table className="text-sm">
+                        <Table className="text-base">
                             <TableHeader>
                                 <TableRow className="bg-gray-100">
-                                    <TableHead className="px-2 py-2 text-left font-bold text-gray-600 uppercase tracking-wider">Description</TableHead>
-                                    <TableHead className="px-2 py-2 text-right font-bold text-gray-600 uppercase tracking-wider">Feet</TableHead>
-                                    <TableHead className="px-2 py-2 text-right font-bold text-gray-600 uppercase tracking-wider">Qty</TableHead>
-                                    <TableHead className="px-2 py-2 text-right font-bold text-gray-600 uppercase tracking-wider">Rate</TableHead>
-                                    <TableHead className="px-2 py-2 text-right font-bold text-gray-600 uppercase tracking-wider">Discount</TableHead>
-                                    <TableHead className="px-2 py-2 text-right font-bold text-gray-600 uppercase tracking-wider">Amount</TableHead>
+                                    <TableHead className="px-2 py-2 text-left font-extrabold text-gray-600 uppercase tracking-wider">Description</TableHead>
+                                    <TableHead className="px-2 py-2 text-right font-extrabold text-gray-600 uppercase tracking-wider">Feet</TableHead>
+                                    <TableHead className="px-2 py-2 text-right font-extrabold text-gray-600 uppercase tracking-wider">Qty</TableHead>
+                                    <TableHead className="px-2 py-2 text-right font-extrabold text-gray-600 uppercase tracking-wider">Rate</TableHead>
+                                    <TableHead className="px-2 py-2 text-right font-extrabold text-gray-600 uppercase tracking-wider">Discount</TableHead>
+                                    <TableHead className="px-2 py-2 text-right font-extrabold text-gray-600 uppercase tracking-wider">Amount</TableHead>
                                 </TableRow>
                             </TableHeader>
                             <TableBody>
@@ -195,16 +194,16 @@ function SaleInvoice({ sale, onPost, onUnpost }: { sale: Sale, onPost: (saleId: 
                                     subtotal += finalAmount;
                                     
                                     return (
-                                        <TableRow key={index} className="font-medium">
-                                            <TableCell className="px-2 py-2 font-semibold text-gray-800">
+                                        <TableRow key={index} className="font-bold text-base">
+                                            <TableCell className="px-2 py-2 font-extrabold text-gray-800">
                                                 {item.itemName}
-                                                <span className="text-gray-600 font-medium block">{item.thickness} - {item.color}</span>
+                                                <span className="text-gray-600 font-bold block">{item.thickness} - {item.color}</span>
                                             </TableCell>
                                             <TableCell className="px-2 py-2 text-right text-gray-700">{item.feet ? item.feet.toFixed(2) : '-'}</TableCell>
                                             <TableCell className="px-2 py-2 text-right text-gray-700">{item.quantity}</TableCell>
                                             <TableCell className="px-2 py-2 text-right text-gray-700">{formatCurrency(item.price)}</TableCell>
                                             <TableCell className="px-2 py-2 text-right text-gray-700">{item.discount || 0}%</TableCell>
-                                            <TableCell className="px-2 py-2 text-right font-bold text-gray-900">{formatCurrency(finalAmount)}</TableCell>
+                                            <TableCell className="px-2 py-2 text-right font-extrabold text-gray-900">{formatCurrency(finalAmount)}</TableCell>
                                         </TableRow>
                                     )
                                 })}
@@ -214,18 +213,18 @@ function SaleInvoice({ sale, onPost, onUnpost }: { sale: Sale, onPost: (saleId: 
 
                     {/* Totals */}
                     <div className="flex justify-end mt-4">
-                        <div className="w-full max-w-xs text-sm">
+                        <div className="w-full max-w-sm text-lg">
                             <div className="flex justify-between py-1 border-b">
-                                <span className="font-semibold text-gray-700">Subtotal</span>
-                                <span className="font-semibold text-gray-900">{formatCurrency(subtotal)}</span>
+                                <span className="font-extrabold text-gray-700">Subtotal</span>
+                                <span className="font-extrabold text-gray-900">{formatCurrency(subtotal)}</span>
                             </div>
                             <div className="flex justify-between py-1 border-b">
-                                <span className="font-semibold text-gray-700">Overall Discount ({sale.discount}%)</span>
-                                <span className="font-semibold text-gray-900">- {formatCurrency(subtotal * (sale.discount / 100))}</span>
+                                <span className="font-extrabold text-gray-700">Overall Discount ({sale.discount}%)</span>
+                                <span className="font-extrabold text-gray-900">- {formatCurrency(subtotal * (sale.discount / 100))}</span>
                             </div>
                             <div className="flex justify-between py-2 bg-gray-100 px-2 rounded-md mt-2">
-                                <span className="font-extrabold text-gray-900 text-base">Grand Total</span>
-                                <span className="font-extrabold text-gray-900 text-base">{formatCurrency(sale.total)}</span>
+                                <span className="font-extrabold text-gray-900 text-xl">Grand Total</span>
+                                <span className="font-extrabold text-gray-900 text-xl">{formatCurrency(sale.total)}</span>
                             </div>
                         </div>
                     </div>
@@ -786,3 +785,6 @@ export default function SalesPage() {
   );
 }
 
+
+
+    
