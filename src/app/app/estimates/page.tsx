@@ -54,7 +54,7 @@ function EstimatePrint({ estimate }: { estimate: Estimate }) {
     let subtotal = 0;
     
     const handlePrint = () => {
-        const printContent = document.getElementById("printable-estimate")?.innerHTML;
+        const printContent = document.getElementById("printable-estimate");
         if (printContent) {
             const printWindow = window.open('', '', 'height=800,width=1000');
             if (printWindow) {
@@ -63,8 +63,8 @@ function EstimatePrint({ estimate }: { estimate: Estimate }) {
                   .map(s => s.href ? `<link rel="stylesheet" href="${s.href}">` : '')
                   .join('');
                 printWindow.document.write(styles);
-                printWindow.document.write('</head><body>');
-                printWindow.document.write(printContent);
+                printWindow.document.write('</head><body class="bg-white">');
+                printWindow.document.write(printContent.innerHTML);
                 printWindow.document.write('</body></html>');
                 printWindow.document.close();
                 printWindow.focus();
@@ -84,59 +84,43 @@ function EstimatePrint({ estimate }: { estimate: Estimate }) {
                     <DialogTitle>Estimate: {estimate.id}</DialogTitle>
                 </div>
             </DialogHeader>
-            <div className="flex-grow overflow-y-auto">
-                 {/* This is the hidden, printable version */}
-                <div id="printable-estimate" className="p-6 text-sm printable-area">
+            <div className="flex-grow overflow-y-auto bg-gray-100 p-4">
+                <div id="printable-estimate" className="p-8 bg-white shadow-lg rounded-sm text-sm">
                     {/* Header */}
                     <div className="flex justify-between items-start mb-8">
                         <div>
-                            <h1 className="text-3xl font-bold font-headline text-primary">ARCO Aluminium</h1>
-                            <p className="text-muted-foreground">Factory &amp; Manufacturing</p>
+                            <h1 className="text-2xl font-bold text-gray-800">ARCO Aluminium Company</h1>
+                            <p className="text-gray-500">B-5, PLOT 59, Industrial Estate, Hayatabad, Peshawar</p>
+                            <p className="text-gray-500">+92 333 4646356</p>
                         </div>
                         <div className="text-right">
-                            <div className="grid grid-cols-2 gap-x-4 gap-y-1">
+                            <h2 className="text-2xl font-bold uppercase text-gray-800">Estimate</h2>
+                            <div className="grid grid-cols-2 gap-x-2 mt-2">
+                                <span className="font-semibold">Estimate #:</span>
+                                <span>{estimate.id}</span>
                                 <span className="font-semibold">Date:</span>
-                                <span className="text-muted-foreground">{formatDate(estimate.date)}</span>
-                                <span className="font-semibold">Estimate Number:</span>
-                                <span className="text-muted-foreground">{estimate.id}</span>
-                                <span className="font-semibold">Estimate For:</span>
-                                <span className="text-muted-foreground">{estimate.customerName}</span>
+                                <span>{formatDate(estimate.date)}</span>
                             </div>
                         </div>
                     </div>
 
-                    {/* From/To */}
-                    <div className="grid grid-cols-2 gap-8 mb-8">
-                        <div>
-                            <div className="bg-primary/90 text-primary-foreground font-semibold rounded-t-lg px-4 py-2">From</div>
-                            <div className="border-x border-b rounded-b-lg p-4">
-                                <p className="font-bold">ARCO Aluminium Company</p>
-                                <p>B-5, PLOT 59, Industrial Estate,</p>
-                                <p>Hayatabad, Peshawar</p>
-                                <p>Pakistan</p>
-                                <p>+92 333 4646356</p>
-                            </div>
-                        </div>
-                        <div>
-                             <div className="bg-primary/90 text-primary-foreground font-semibold rounded-t-lg px-4 py-2">To</div>
-                             <div className="border-x border-b rounded-b-lg p-4">
-                                <p className="font-bold">{estimate.customerName}</p>
-                                <p>{customer?.address}</p>
-                                <p>{customer?.phoneNumber}</p>
-                             </div>
-                        </div>
+                    {/* Bill To */}
+                    <div className="mb-8">
+                        <p className="font-semibold text-gray-700 mb-1">TO:</p>
+                        <p className="font-bold text-gray-900">{estimate.customerName}</p>
+                        <p className="text-gray-600">{customer?.address}</p>
+                        <p className="text-gray-600">{customer?.phoneNumber}</p>
                     </div>
-
 
                     {/* Items Table */}
                     <div className="overflow-x-auto mb-8">
-                        <Table className="text-sm">
+                        <Table>
                             <TableHeader>
-                                <TableRow className="bg-primary/90 hover:bg-primary/90">
-                                    <TableHead className="px-4 py-3 text-left font-bold text-primary-foreground uppercase tracking-wider">Description</TableHead>
-                                    <TableHead className="px-4 py-3 text-right font-bold text-primary-foreground uppercase tracking-wider">Quantity</TableHead>
-                                    <TableHead className="px-4 py-3 text-right font-bold text-primary-foreground uppercase tracking-wider">Rate</TableHead>
-                                    <TableHead className="px-4 py-3 text-right font-bold text-primary-foreground uppercase tracking-wider">Amount</TableHead>
+                                <TableRow className="bg-gray-50">
+                                    <TableHead className="px-4 py-2 font-bold text-gray-600">ITEM</TableHead>
+                                    <TableHead className="px-4 py-2 text-right font-bold text-gray-600">QTY</TableHead>
+                                    <TableHead className="px-4 py-2 text-right font-bold text-gray-600">RATE</TableHead>
+                                    <TableHead className="px-4 py-2 text-right font-bold text-gray-600">AMOUNT</TableHead>
                                 </TableRow>
                             </TableHeader>
                             <TableBody>
@@ -147,16 +131,16 @@ function EstimatePrint({ estimate }: { estimate: Estimate }) {
                                     subtotal += finalAmount;
                                     
                                     return (
-                                        <TableRow key={index} className="font-medium border-b">
-                                            <TableCell className="px-4 py-3 font-bold text-foreground">
+                                        <TableRow key={index} className="border-b">
+                                            <TableCell className="px-4 py-2 font-medium text-gray-800">
                                                 {item.itemName}
-                                                <span className="text-muted-foreground font-medium block">
-                                                    {item.thickness} - {item.color} - {item.feet ? `${item.feet.toFixed(2)} ft` : ''}
+                                                <span className="text-gray-500 text-xs block">
+                                                    {item.thickness} - {item.color} {item.feet ? `| ${item.feet.toFixed(2)} ft` : ''}
                                                 </span>
                                             </TableCell>
-                                            <TableCell className="px-4 py-3 text-right text-muted-foreground">{item.quantity}</TableCell>
-                                            <TableCell className="px-4 py-3 text-right text-muted-foreground">{formatCurrency(item.price)}</TableCell>
-                                            <TableCell className="px-4 py-3 text-right font-semibold text-foreground">{formatCurrency(finalAmount)}</TableCell>
+                                            <TableCell className="px-4 py-2 text-right text-gray-600">{item.quantity}</TableCell>
+                                            <TableCell className="px-4 py-2 text-right text-gray-600">{formatCurrency(item.price)}</TableCell>
+                                            <TableCell className="px-4 py-2 text-right font-medium text-gray-800">{formatCurrency(finalAmount)}</TableCell>
                                         </TableRow>
                                     )
                                 })}
@@ -164,21 +148,27 @@ function EstimatePrint({ estimate }: { estimate: Estimate }) {
                         </Table>
                     </div>
 
+                    {/* Totals */}
                     <div className="flex justify-end">
-                        <div className="w-full max-w-sm space-y-2 text-sm">
-                             <div className="flex justify-between py-1.5">
-                                <span className="font-semibold text-muted-foreground">Subtotal</span>
-                                <span className="font-semibold text-foreground">{formatCurrency(subtotal)}</span>
+                        <div className="w-full max-w-xs space-y-2">
+                             <div className="flex justify-between">
+                                <span className="text-gray-600">Subtotal</span>
+                                <span className="text-gray-800">{formatCurrency(subtotal)}</span>
                             </div>
-                            <div className="flex justify-between py-1.5">
-                                <span className="font-semibold text-muted-foreground">Overall Discount ({estimate.discount}%)</span>
-                                <span className="font-semibold text-foreground">- {formatCurrency(subtotal * (estimate.discount / 100))}</span>
+                            <div className="flex justify-between">
+                                <span className="text-gray-600">Overall Discount ({estimate.discount}%)</span>
+                                <span className="text-gray-800">- {formatCurrency(subtotal * (estimate.discount / 100))}</span>
                             </div>
-                            <div className="flex justify-between py-2 border-t mt-2">
-                                <span className="font-bold text-base text-foreground">Total Estimate</span>
-                                <span className="font-bold text-base text-foreground">{formatCurrency(estimate.total)}</span>
+                            <div className="flex justify-between font-bold text-lg border-t pt-2">
+                                <span>Total</span>
+                                <span>{formatCurrency(estimate.total)}</span>
                             </div>
                         </div>
+                    </div>
+
+                     {/* Footer */}
+                    <div className="mt-12 text-center text-xs text-gray-400 border-t pt-4">
+                        <p>Thank you for your business!</p>
                     </div>
                 </div>
             </div>
