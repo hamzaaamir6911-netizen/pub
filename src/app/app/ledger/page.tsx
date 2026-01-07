@@ -1,4 +1,5 @@
 
+
 "use client";
 
 import { useState, useMemo, FormEvent, useEffect } from "react";
@@ -208,7 +209,9 @@ export default function LedgerPage() {
   }
 
   const handlePrint = () => {
+    document.body.classList.add('printing-now');
     window.print();
+    document.body.classList.remove('printing-now');
   }
 
   const hasFilter = selectedCustomerId || selectedVendorId;

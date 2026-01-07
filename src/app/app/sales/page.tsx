@@ -52,77 +52,18 @@ function DeliveryChallan({ sale }: { sale: Sale }) {
     const customer = customers.find(c => c.id === sale.customerId);
     
     const handlePrint = () => {
-        window.print();
+      document.body.classList.add('printing-now');
+      window.print();
+      document.body.classList.remove('printing-now');
     };
 
     return (
-        <>
-        <div id="printable-challan" className="hidden printable-area">
-             <div className="p-4 text-xl">
-                <div className="text-center mb-4">
-                  <h1 className="text-4xl font-extrabold font-headline">ARCO Aluminium Company</h1>
-                  <p className="mt-1 text-3xl font-extrabold">Delivery Challan</p>
-                </div>
-                <div className="grid grid-cols-2 gap-4 mb-4">
-                    <div>
-                        <p className="font-extrabold text-2xl">Customer:</p>
-                        <p className="font-bold text-2xl">{sale.customerName}</p>
-                        <p className="font-bold text-xl">{customer?.address}</p>
-                        <p className="font-bold text-xl">{customer?.phoneNumber}</p>
-                    </div>
-                    <div className="text-right">
-                        <p className="font-extrabold text-2xl">Challan No:</p>
-                        <p className="font-bold text-2xl">{sale.id}</p>
-                        <p className="mt-2 font-extrabold text-2xl">Date:</p>
-                        <p className="font-bold text-2xl">{formatDate(sale.date)}</p>
-                    </div>
-                </div>
-                <div className="overflow-x-auto">
-                    <Table>
-                        <TableHeader>
-                            <TableRow>
-                                <TableHead className="font-extrabold text-2xl w-[40%]">Item</TableHead>
-                                <TableHead className="font-extrabold text-2xl">Colour</TableHead>
-                                <TableHead className="font-extrabold text-2xl">Thickness</TableHead>
-                                <TableHead className="text-right font-extrabold text-2xl">Feet</TableHead>
-                                <TableHead className="text-right font-extrabold text-2xl">Quantity</TableHead>
-                            </TableRow>
-                        </TableHeader>
-                        <TableBody>
-                            {sale.items.map((item, index) => (
-                                <TableRow key={index} className="font-bold text-xl">
-                                    <TableCell>{item.itemName}</TableCell>
-                                    <TableCell>{item.color}</TableCell>
-                                    <TableCell>{item.thickness || '-'}</TableCell>
-                                    <TableCell className="text-right">{item.feet ? item.feet.toFixed(2) : '-'}</TableCell>
-                                    <TableCell className="text-right">{item.quantity}</TableCell>
-                                </TableRow>
-                            ))}
-                        </TableBody>
-                    </Table>
-                </div>
-                <div className="mt-16 grid grid-cols-2 gap-4 text-center">
-                    <div className="border-t-2 border-black pt-2 font-extrabold text-2xl">
-                        <p>Receiver's Signature</p>
-                    </div>
-                    <div className="border-t-2 border-black pt-2 font-extrabold text-2xl">
-                        <p>Driver's Signature</p>
-                    </div>
-                </div>
-                 <div className="mt-8 text-center text-lg text-gray-500 border-t pt-2">
-                    <p className="font-bold">Industrial Estate, Hayatabad Road B-5 PLOT 59 PESHAWAR</p>
-                    <p className="font-bold">Phone: +923334646356</p>
-                </div>
-            </div>
-        </div>
-
-        <DialogContent className="max-w-4xl max-h-[90vh] flex flex-col no-print">
-            <DialogHeader className="flex-shrink-0">
+        <DialogContent className="max-w-4xl max-h-[90vh] flex flex-col">
+            <DialogHeader className="flex-shrink-0 no-print">
                 <DialogTitle>Delivery Challan: {sale.id}</DialogTitle>
             </DialogHeader>
 
             <div className="flex-grow overflow-y-auto">
-                {/* This is a visual copy for the user inside the modal */}
                  <div className="p-4 text-xl">
                     <div className="text-center mb-4">
                       <h1 className="text-4xl font-extrabold font-headline">ARCO Aluminium Company</h1>
@@ -181,14 +122,13 @@ function DeliveryChallan({ sale }: { sale: Sale }) {
                 </div>
             </div>
 
-            <DialogFooter className="mt-4 flex-shrink-0">
+            <DialogFooter className="mt-4 flex-shrink-0 no-print">
                  <Button variant="outline" onClick={handlePrint}>
                     <Printer className="mr-2 h-4 w-4" />
                     Print Challan
                 </Button>
             </DialogFooter>
         </DialogContent>
-        </>
     );
 }
 
@@ -216,12 +156,18 @@ function SaleInvoice({ sale, onPost, onUnpost }: { sale: Sale, onPost: (saleId: 
     }
     
     const handlePrint = () => {
-        window.print();
+      document.body.classList.add('printing-now');
+      window.print();
+      document.body.classList.remove('printing-now');
     };
 
     return (
-        <>
-            <div id="printable-invoice" className="hidden printable-area">
+        <DialogContent className="max-w-5xl max-h-[90vh] flex flex-col">
+            <DialogHeader className="flex-shrink-0 pt-4 no-print">
+                <DialogTitle>Sale Invoice: {sale.id}</DialogTitle>
+            </DialogHeader>
+
+            <div className="flex-grow overflow-y-auto bg-gray-50">
                  <div className="p-8 bg-white shadow-lg rounded-sm text-base">
                     {/* Header */}
                     <div className="flex justify-between items-start pb-8 border-b">
@@ -326,143 +272,28 @@ function SaleInvoice({ sale, onPost, onUnpost }: { sale: Sale, onPost: (saleId: 
                             </div>
                         </div>
                     </div>
+
                 </div>
             </div>
-            
-            <DialogContent className="max-w-5xl max-h-[90vh] flex flex-col no-print">
-                <DialogHeader className="flex-shrink-0 pt-4">
-                    <DialogTitle>Sale Invoice: {sale.id}</DialogTitle>
-                </DialogHeader>
 
-                <div className="flex-grow overflow-y-auto bg-gray-50">
-                     {/* This is a visual copy for the user inside the modal */}
-                     <div className="p-8 bg-white shadow-lg rounded-sm text-base">
-                        {/* Header */}
-                        <div className="flex justify-between items-start pb-8 border-b">
-                            <div>
-                                <h1 className="text-3xl font-extrabold text-gray-800 font-headline">ARCO Aluminium</h1>
-                                <p className="text-gray-600">B-5, PLOT 59, Industrial Estate, Hayatabad, Peshawar</p>
-                            </div>
-                            <div className="text-right">
-                                <div className="grid grid-cols-2 gap-x-4">
-                                    <span className="font-semibold text-gray-600">Date:</span>
-                                    <span className="text-gray-800">{formatDate(sale.date)}</span>
-                                    <span className="font-semibold text-gray-600">Invoice No:</span>
-                                    <span className="text-gray-800">{sale.id}</span>
-                                    <span className="font-semibold text-gray-600">Invoice For:</span>
-                                    <span className="text-gray-800">{sale.customerName}</span>
-                                </div>
-                            </div>
-                        </div>
-
-                        {/* From/To */}
-                        <div className="grid grid-cols-2 gap-8 my-8">
-                            <div>
-                                <div className="px-4 py-2 bg-primary text-primary-foreground font-bold rounded-t-md">From</div>
-                                <div className="border-l border-r border-b p-4 rounded-b-md">
-                                    <p className="font-bold">ARCO Aluminium Company</p>
-                                    <p>B-5, PLOT 59, Industrial Estate</p>
-                                    <p>Hayatabad, Peshawar, Pakistan</p>
-                                    <p>+92 333 4646356</p>
-                                </div>
-                            </div>
-                             <div>
-                                <div className="px-4 py-2 bg-primary text-primary-foreground font-bold rounded-t-md">To</div>
-                                <div className="border-l border-r border-b p-4 rounded-b-md">
-                                    <p className="font-bold">{customer?.customerName}</p>
-                                    <p>{customer?.address}</p>
-                                    <p>{customer?.phoneNumber}</p>
-                                </div>
-                            </div>
-                        </div>
-
-
-                        {/* Items Table */}
-                        <div className="overflow-x-auto mb-8">
-                            <Table>
-                                <TableHeader>
-                                    <TableRow className="bg-primary hover:bg-primary/90">
-                                        <TableHead className="px-4 py-2 font-bold text-primary-foreground">DESCRIPTION</TableHead>
-                                        <TableHead className="px-4 py-2 font-bold text-primary-foreground">THICKNESS</TableHead>
-                                        <TableHead className="px-4 py-2 text-right font-bold text-primary-foreground">FEET</TableHead>
-                                        <TableHead className="px-4 py-2 text-right font-bold text-primary-foreground">QTY</TableHead>
-                                        <TableHead className="px-4 py-2 text-right font-bold text-primary-foreground">RATE</TableHead>
-                                        <TableHead className="px-4 py-2 text-right font-bold text-primary-foreground">AMOUNT</TableHead>
-                                    </TableRow>
-                                </TableHeader>
-                                <TableBody>
-                                    {sale.items.map((item, index) => {
-                                        const finalAmount = (item.feet || 1) * item.price * item.quantity * (1 - ((item.discount || 0) / 100));
-                                        return (
-                                            <TableRow key={index} className="border-b even:bg-gray-50">
-                                                <TableCell className="px-4 py-3 font-medium text-gray-800">
-                                                    {item.itemName}
-                                                    <span className="text-gray-500 text-sm block">
-                                                        {item.color}
-                                                    </span>
-                                                </TableCell>
-                                                <TableCell className="px-4 py-3 text-gray-600">{item.thickness || '-'}</TableCell>
-                                                <TableCell className="px-4 py-3 text-right text-gray-600">{item.feet?.toFixed(2) ?? '-'}</TableCell>
-                                                <TableCell className="px-4 py-3 text-right text-gray-600">{item.quantity}</TableCell>
-                                                <TableCell className="px-4 py-3 text-right text-gray-600">{formatCurrency(item.price)}</TableCell>
-                                                <TableCell className="px-4 py-3 text-right font-medium text-gray-800">{formatCurrency(finalAmount)}</TableCell>
-                                            </TableRow>
-                                        )
-                                    })}
-                                </TableBody>
-                            </Table>
-                        </div>
-                        
-                        <div className="flex justify-between items-start">
-                            {/* Notes Section */}
-                            <div className="w-1/2">
-                                <div className="px-4 py-2 bg-primary text-primary-foreground font-bold rounded-t-md">Notes</div>
-                                <div className="border-l border-r border-b p-4 rounded-b-md h-32">
-                                    <p className="text-gray-600">Thank you for your business!</p>
-                                </div>
-                            </div>
-                            
-                            {/* Totals Section */}
-                            <div className="w-1/3">
-                                <div className="bg-gray-100 p-4 rounded-md space-y-2">
-                                    <div className="flex justify-between">
-                                        <span className="text-gray-600">Subtotal</span>
-                                        <span className="text-gray-800 font-medium">{formatCurrency(subtotal)}</span>
-                                    </div>
-                                    <div className="flex justify-between">
-                                        <span className="text-gray-600">Discount ({sale.discount}%)</span>
-                                        <span className="text-gray-800 font-medium">- {formatCurrency(overallDiscountAmount)}</span>
-                                    </div>
-                                    <div className="flex justify-between font-bold text-lg border-t pt-2 mt-2">
-                                        <span>Total</span>
-                                        <span>{formatCurrency(sale.total)}</span>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-
-                    </div>
-                </div>
-
-                <DialogFooter className="mt-4 flex-shrink-0">
-                     <Button variant="outline" onClick={handlePrint}>
-                        <Printer className="mr-2 h-4 w-4" />
-                        Print Invoice
+            <DialogFooter className="mt-4 flex-shrink-0 no-print">
+                 <Button variant="outline" onClick={handlePrint}>
+                    <Printer className="mr-2 h-4 w-4" />
+                    Print Invoice
+                </Button>
+                {sale.status === 'draft' ? (
+                    <Button onClick={handlePost}>
+                        <CheckCircle className="mr-2 h-4 w-4" />
+                        Post to Ledger
                     </Button>
-                    {sale.status === 'draft' ? (
-                        <Button onClick={handlePost}>
-                            <CheckCircle className="mr-2 h-4 w-4" />
-                            Post to Ledger
-                        </Button>
-                    ) : (
-                        <Button variant="destructive" onClick={handleUnpost}>
-                            <Undo2 className="mr-2 h-4 w-4" />
-                            Unpost from Ledger
-                        </Button>
-                    )}
-                </DialogFooter>
-            </DialogContent>
-        </>
+                ) : (
+                    <Button variant="destructive" onClick={handleUnpost}>
+                        <Undo2 className="mr-2 h-4 w-4" />
+                        Unpost from Ledger
+                    </Button>
+                )}
+            </DialogFooter>
+        </DialogContent>
     )
 }
 

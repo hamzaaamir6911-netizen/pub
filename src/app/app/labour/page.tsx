@@ -1,4 +1,5 @@
 
+
 "use client";
 
 import { useState } from "react";
@@ -127,7 +128,9 @@ export default function LabourPage() {
   }
   
   const handlePrint = () => {
+    document.body.classList.add('printing-now');
     window.print();
+    document.body.classList.remove('printing-now');
   };
 
 
