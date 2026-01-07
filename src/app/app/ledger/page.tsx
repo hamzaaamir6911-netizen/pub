@@ -198,7 +198,7 @@ export default function LedgerPage() {
         return;
     }
     
-    if (['Opening Balance', 'Salary'].includes(transaction.category)) {
+    if (transaction.category === 'Salary') {
       toast({
         variant: 'destructive',
         title: 'Deletion Not Allowed',
@@ -358,7 +358,7 @@ export default function LedgerPage() {
                             <DropdownMenuItem
                                 onSelect={() => handleDelete(transaction)}
                                 className="text-red-500 focus:bg-red-500/10 focus:text-red-500"
-                                disabled={['Opening Balance', 'Salary'].includes(transaction.category)}
+                                disabled={transaction.category === 'Salary'}
                             >
                                 <Trash2 className="mr-2 h-4 w-4"/>
                                 Delete
@@ -388,3 +388,5 @@ export default function LedgerPage() {
     </>
   );
 }
+
+    
