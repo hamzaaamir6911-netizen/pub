@@ -59,7 +59,8 @@ function AddPaymentForm({ onTransactionAdded, onOpenChange }: { onTransactionAdd
             if (type === 'credit') {
                 setDescription(`Cash received from ${customer.customerName}`);
             } else {
-                setDescription(`Debit Note to ${customer.customerName}`);
+                 // For debit, clear the description so user can type.
+                setDescription('');
             }
         }
     } else {
@@ -116,7 +117,7 @@ function AddPaymentForm({ onTransactionAdded, onOpenChange }: { onTransactionAdd
           </div>
           <div className="space-y-2">
             <Label htmlFor="type">Transaction Type</Label>
-            <Select onValueChange={(value: 'credit' | 'debit') => { setType(value); setSelectedCustomerId(undefined); }} value={type}>
+            <Select onValueChange={(value: 'credit' | 'debit') => { setType(value); }} value={type}>
               <SelectTrigger id="type"><SelectValue /></SelectTrigger>
               <SelectContent>
                 <SelectItem value="credit">Cash Received (Credit)</SelectItem>
@@ -143,8 +144,7 @@ function AddPaymentForm({ onTransactionAdded, onOpenChange }: { onTransactionAdd
               id="description" 
               value={description} 
               onChange={(e) => setDescription(e.target.value)} 
-              placeholder={type === 'debit' ? "e.g. Payment for supplies" : "e.g. Cash from sale"}
-              disabled={!!selectedCustomerId}
+              placeholder={type === 'debit' ? "e.g. Fine for late payment" : "e.g. Cash from sale"}
             />
           </div>
           <div className="space-y-2">
@@ -187,13 +187,13 @@ export default function LedgerPage() {
 
   const handleDelete = async (transaction: Transaction) => {
     if (transaction.category === 'Sale' && transaction.description.includes('Invoice:')) {
-        const invoiceId = transaction.description.split('Invoice: ')[1].slice(0, -1);
-        const sale = sales.find(s => s.id === invoiceId);
+        const sale = sales.find(s => transaction.description.includes(s.id));
         if (sale) {
             await unpostSale(sale);
-            toast({ title: 'Sale Un-posted', description: `Sale ${invoiceId} has been reverted to draft.` });
+            toast({ title: 'Sale Un-posted', description: `Sale ${sale.id} has been reverted to draft.` });
         } else {
-            toast({ variant: 'destructive', title: 'Sale not found', description: `Could not find sale with ID ${invoiceId}.`});
+             const invoiceId = transaction.description.split('Invoice: ')[1]?.slice(0, -1);
+             toast({ variant: 'destructive', title: 'Sale not found', description: `Could not find sale with ID ${invoiceId}. It might be on a different page or already deleted.`});
         }
         return;
     }

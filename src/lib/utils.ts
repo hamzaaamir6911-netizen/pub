@@ -1,5 +1,6 @@
 import { clsx, type ClassValue } from "clsx"
 import { twMerge } from "tailwind-merge"
+import { Timestamp } from "firebase/firestore";
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs))
@@ -14,12 +15,23 @@ export function formatCurrency(amount: number) {
   }).format(amount);
 }
 
-export function formatDate(date: Date) {
-  // Check if date is a valid Date object
-  if (!(date instanceof Date) || isNaN(date.getTime())) {
+const toDate = (date: Date | Timestamp | string | number): Date => {
+    if (date instanceof Timestamp) {
+      return date.toDate();
+    }
+    if (date instanceof Date) {
+        return date;
+    }
+    return new Date(date);
+};
+
+
+export function formatDate(date: Date | Timestamp | string | number) {
+  const dateObj = toDate(date);
+  if (isNaN(dateObj.getTime())) {
     return 'Invalid Date';
   }
-  return date.toLocaleDateString('en-GB', {
+  return dateObj.toLocaleDateString('en-GB', {
     day: '2-digit',
     month: 'short',
     year: 'numeric',
