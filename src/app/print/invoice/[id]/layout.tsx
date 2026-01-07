@@ -1,18 +1,37 @@
 
 // This is a minimal layout for the print-only pages.
-// It ensures no other app-wide layout (like headers or footers) is applied.
+// It ensures no other app-wide layout (like headers or footers) is applied,
+// but it DOES include the necessary global styles for formatting.
+import '@/app/globals.css';
+import { PT_Sans } from "next/font/google";
+import { cn } from "@/lib/utils";
+
+const fontBody = PT_Sans({
+  subsets: ["latin"],
+  variable: "--font-body",
+  weight: ['400', '700']
+})
+
+const fontHeadline = PT_Sans({
+  subsets: ["latin"],
+  variable: "--font-headline",
+  weight: '700'
+})
+
+
 export default function PrintLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
   return (
-    <html>
-      <body>
+    <html lang="en">
+      <body className={cn(
+          fontBody.variable,
+          fontHeadline.variable
+        )}>
         {children}
       </body>
     </html>
   );
 }
-
-    
