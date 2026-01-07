@@ -54,52 +54,109 @@ function EstimatePrint({ estimate }: { estimate: Estimate }) {
     let subtotal = 0;
     
     const handlePrint = () => {
-        const printContent = document.getElementById("printable-estimate");
-        if (printContent) {
-            const printWindow = window.open('', '', 'height=800,width=1000');
-            if (printWindow) {
-                const allStyles = Array.from(document.querySelectorAll('style, link[rel="stylesheet"]'))
-                    .map(el => el.outerHTML)
-                    .join('');
-
-                printWindow.document.write(`
-                    <html>
-                        <head>
-                            <title>Print Estimate</title>
-                            ${allStyles}
-                            <style>
-                                @media print {
-                                    body { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
-                                    .no-print { display: none !important; }
-                                }
-                            </style>
-                        </head>
-                        <body class="bg-white">
-                            ${printContent.innerHTML}
-                        </body>
-                    </html>
-                `);
-                printWindow.document.close();
-                printWindow.focus();
-                
-                setTimeout(() => {
-                    printWindow.print();
-                    printWindow.close();
-                }, 500);
-            }
-        }
+       window.print();
     };
 
 
     return (
-        <DialogContent className="max-w-4xl max-h-[90vh] flex flex-col">
-             <DialogHeader className="flex-shrink-0 no-print">
+        <>
+        <div id="printable-estimate" className="hidden printable-area">
+             <div className="p-8 bg-white shadow-lg rounded-sm text-sm">
+                    {/* Header */}
+                    <div className="flex justify-between items-start mb-8">
+                        <div>
+                            <h1 className="text-2xl font-bold text-gray-800">ARCO Aluminium Company</h1>
+                            <p className="text-gray-500">B-5, PLOT 59, Industrial Estate, Hayatabad, Peshawar</p>
+                            <p className="text-gray-500">+92 333 4646356</p>
+                        </div>
+                        <div className="text-right">
+                            <h2 className="text-2xl font-bold uppercase text-gray-800">Estimate</h2>
+                            <div className="grid grid-cols-2 gap-x-2 mt-2">
+                                <span className="font-semibold">Estimate #:</span>
+                                <span>{estimate.id}</span>
+                                <span className="font-semibold">Date:</span>
+                                <span>{formatDate(estimate.date)}</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* Bill To */}
+                    <div className="mb-8">
+                        <p className="font-semibold text-gray-700 mb-1">TO:</p>
+                        <p className="font-bold text-gray-900">{estimate.customerName}</p>
+                        <p className="text-gray-600">{customer?.address}</p>
+                        <p className="text-gray-600">{customer?.phoneNumber}</p>
+                    </div>
+
+                    {/* Items Table */}
+                    <div className="overflow-x-auto mb-8">
+                        <Table>
+                            <TableHeader>
+                                <TableRow className="bg-gray-50">
+                                    <TableHead className="px-4 py-2 font-bold text-gray-600">ITEM</TableHead>
+                                    <TableHead className="px-4 py-2 text-right font-bold text-gray-600">QTY</TableHead>
+                                    <TableHead className="px-4 py-2 text-right font-bold text-gray-600">RATE</TableHead>
+                                    <TableHead className="px-4 py-2 text-right font-bold text-gray-600">AMOUNT</TableHead>
+                                </TableRow>
+                            </TableHeader>
+                            <TableBody>
+                                {estimate.items.map((item, index) => {
+                                    const itemSubtotal = (item.feet || 1) * item.price * item.quantity;
+                                    const discountAmount = itemSubtotal * ((item.discount || 0) / 100);
+                                    const finalAmount = itemSubtotal - discountAmount;
+                                    subtotal += finalAmount;
+                                    
+                                    return (
+                                        <TableRow key={index} className="border-b">
+                                            <TableCell className="px-4 py-2 font-medium text-gray-800">
+                                                {item.itemName}
+                                                <span className="text-gray-500 text-xs block">
+                                                    {item.thickness} - {item.color} {item.feet ? `| ${item.feet.toFixed(2)} ft` : ''}
+                                                </span>
+                                            </TableCell>
+                                            <TableCell className="px-4 py-2 text-right text-gray-600">{item.quantity}</TableCell>
+                                            <TableCell className="px-4 py-2 text-right text-gray-600">{formatCurrency(item.price)}</TableCell>
+                                            <TableCell className="px-4 py-2 text-right font-medium text-gray-800">{formatCurrency(finalAmount)}</TableCell>
+                                        </TableRow>
+                                    )
+                                })}
+                            </TableBody>
+                        </Table>
+                    </div>
+
+                    {/* Totals */}
+                    <div className="flex justify-end">
+                        <div className="w-full max-w-xs space-y-2">
+                             <div className="flex justify-between">
+                                <span className="text-gray-600">Subtotal</span>
+                                <span className="text-gray-800">{formatCurrency(subtotal)}</span>
+                            </div>
+                            <div className="flex justify-between">
+                                <span className="text-gray-600">Overall Discount ({estimate.discount}%)</span>
+                                <span className="text-gray-800">- {formatCurrency(subtotal * (estimate.discount / 100))}</span>
+                            </div>
+                            <div className="flex justify-between font-bold text-lg border-t pt-2">
+                                <span>Total</span>
+                                <span>{formatCurrency(estimate.total)}</span>
+                            </div>
+                        </div>
+                    </div>
+
+                     {/* Footer */}
+                    <div className="mt-12 text-center text-xs text-gray-400 border-t pt-4">
+                        <p>Thank you for your business!</p>
+                    </div>
+                </div>
+        </div>
+        <DialogContent className="max-w-4xl max-h-[90vh] flex flex-col no-print">
+             <DialogHeader className="flex-shrink-0">
                 <div className="flex flex-col items-center justify-center pt-4">
                     <DialogTitle>Estimate: {estimate.id}</DialogTitle>
                 </div>
             </DialogHeader>
             <div className="flex-grow overflow-y-auto bg-gray-100 p-4">
-                <div id="printable-estimate" className="p-8 bg-white shadow-lg rounded-sm text-sm">
+                {/* This is a visual copy for the user inside the modal */}
+                 <div className="p-8 bg-white shadow-lg rounded-sm text-sm">
                     {/* Header */}
                     <div className="flex justify-between items-start mb-8">
                         <div>
@@ -187,13 +244,14 @@ function EstimatePrint({ estimate }: { estimate: Estimate }) {
                 </div>
             </div>
             
-            <DialogFooter className="mt-4 flex-shrink-0 no-print">
+            <DialogFooter className="mt-4 flex-shrink-0">
                 <Button variant="outline" onClick={handlePrint}>
                     <Printer className="mr-2 h-4 w-4" />
                     Print / Save PDF
                 </Button>
             </DialogFooter>
         </DialogContent>
+        </>
     )
 }
 
