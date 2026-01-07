@@ -58,11 +58,12 @@ function DeliveryChallan({ sale }: { sale: Sale }) {
 
     return (
         <DialogContent className="max-w-4xl max-h-[90vh] flex flex-col">
+          <div className="printable-area">
             <DialogHeader className="flex-shrink-0 no-print">
                 <DialogTitle>Delivery Challan: {sale.id}</DialogTitle>
             </DialogHeader>
 
-            <div className="flex-grow overflow-y-auto printable-area">
+            <div className="flex-grow overflow-y-auto">
                  <div className="p-4 text-xl">
                     <div className="text-center mb-4">
                       <h1 className="text-4xl font-extrabold font-headline">ARCO Aluminium Company</h1>
@@ -127,13 +128,12 @@ function DeliveryChallan({ sale }: { sale: Sale }) {
                     Print Challan
                 </Button>
             </DialogFooter>
+          </div>
         </DialogContent>
     );
 }
 
 function SaleInvoice({ sale, onPost, onUnpost }: { sale: Sale, onPost: (saleId: string) => void, onUnpost: (saleId: string) => void }) {
-    const { customers } = useData();
-    const customer = customers.find(c => c.id === sale.customerId);
     const { toast } = useToast();
     
     const handlePost = () => {
@@ -147,9 +147,12 @@ function SaleInvoice({ sale, onPost, onUnpost }: { sale: Sale, onPost: (saleId: 
     }
     
     const handlePrint = () => {
-      document.body.classList.add('printing-now');
-      window.print();
-      document.body.classList.remove('printing-now');
+      const printWindow = window.open(`/print/invoice/${sale.id}`, '_blank');
+      printWindow?.addEventListener('load', () => {
+          printWindow?.print();
+          // Optional: close the window after printing
+          // setTimeout(() => printWindow?.close(), 500);
+      });
     };
 
     return (
@@ -158,96 +161,13 @@ function SaleInvoice({ sale, onPost, onUnpost }: { sale: Sale, onPost: (saleId: 
                 <DialogTitle>Sale Invoice: {sale.id}</DialogTitle>
             </DialogHeader>
 
-            <div className="flex-grow overflow-y-auto bg-gray-50 printable-area">
-                 <div className="p-8 bg-white shadow-lg rounded-sm text-sm">
-                    {/* Header */}
-                    <div className="text-center mb-8">
-                      <h1 className="text-2xl font-bold font-headline">ARCO Aluminium Company</h1>
-                      <p className="text-muted-foreground">B-5, PLOT 59, Industrial Estate, Hayatabad, Peshawar</p>
-                      <p className="text-muted-foreground">+92 333 4646356</p>
-                      <h2 className="text-xl font-bold mt-4 uppercase">Sale Invoice</h2>
-                    </div>
-
-                    {/* From/To */}
-                    <div className="grid grid-cols-2 gap-4 my-8">
-                        <div>
-                            <p className="font-semibold text-gray-700 mb-1">Bill To:</p>
-                            <p className="font-bold text-gray-900">{sale.customerName}</p>
-                            <p className="text-gray-600">{customer?.address}</p>
-                            <p className="text-gray-600">{customer?.phoneNumber}</p>
-                        </div>
-                         <div className="text-right">
-                             <div className="grid grid-cols-2 gap-x-2 mt-2">
-                                <span className="font-semibold">Invoice #:</span>
-                                <span>{sale.id}</span>
-                                <span className="font-semibold">Date:</span>
-                                <span>{formatDate(sale.date)}</span>
-                            </div>
-                        </div>
-                    </div>
-
-
-                    {/* Items Table */}
-                    <div className="overflow-x-auto mb-8">
-                        <Table>
-                            <TableHeader>
-                                <TableRow className="bg-gray-50">
-                                    <TableHead className="px-4 py-2 font-bold text-gray-600">Item</TableHead>
-                                    <TableHead className="px-4 py-2 font-bold text-gray-600">Thickness</TableHead>
-                                    <TableHead className="px-4 py-2 text-right font-bold text-gray-600">Feet</TableHead>
-                                    <TableHead className="px-4 py-2 text-right font-bold text-gray-600">Qty</TableHead>
-                                    <TableHead className="px-4 py-2 text-right font-bold text-gray-600">Rate</TableHead>
-                                    <TableHead className="px-4 py-2 text-right font-bold text-gray-600">Amount</TableHead>
-                                </TableRow>
-                            </TableHeader>
-                            <TableBody>
-                                {sale.items.map((item, index) => {
-                                    const itemSubtotal = (item.feet || 1) * item.price * item.quantity;
-                                    const discountAmount = itemSubtotal * ((item.discount || 0) / 100);
-                                    const finalAmount = itemSubtotal - discountAmount;
-                                    return (
-                                        <TableRow key={index} className="border-b">
-                                            <TableCell className="px-4 py-2 font-medium text-gray-800">
-                                                {item.itemName}
-                                                <span className="text-gray-500 text-xs block">
-                                                    {item.color}
-                                                </span>
-                                            </TableCell>
-                                            <TableCell className="px-4 py-2 text-gray-600">{item.thickness || '-'}</TableCell>
-                                            <TableCell className="px-4 py-2 text-right text-gray-600">{item.feet?.toFixed(2) ?? '-'}</TableCell>
-                                            <TableCell className="px-4 py-2 text-right text-gray-600">{item.quantity}</TableCell>
-                                            <TableCell className="px-4 py-2 text-right text-gray-600">{formatCurrency(item.price)}</TableCell>
-                                            <TableCell className="px-4 py-2 text-right font-medium text-gray-800">{formatCurrency(finalAmount)}</TableCell>
-                                        </TableRow>
-                                    )
-                                })}
-                            </TableBody>
-                        </Table>
-                    </div>
-                    
-                    {/* Totals Section */}
-                    <div className="flex justify-end">
-                        <div className="w-full max-w-xs space-y-2">
-                             <div className="flex justify-between">
-                                <span className="text-gray-600">Subtotal</span>
-                                <span className="text-gray-800">{formatCurrency(sale.items.reduce((acc, item) => acc + ((item.feet || 1) * item.price * item.quantity * (1 - (item.discount || 0) / 100)), 0))}</span>
-                            </div>
-                            <div className="flex justify-between">
-                                <span className="text-gray-600">Overall Discount ({sale.discount}%)</span>
-                                <span className="text-gray-800">- {formatCurrency(sale.items.reduce((acc, item) => acc + ((item.feet || 1) * item.price * item.quantity * (1-(item.discount || 0) / 100)), 0) * (sale.discount / 100))}</span>
-                            </div>
-                            <div className="flex justify-between font-bold text-lg border-t pt-2">
-                                <span>Grand Total</span>
-                                <span>{formatCurrency(sale.total)}</span>
-                            </div>
-                        </div>
-                    </div>
-
-                     {/* Footer */}
-                    <div className="mt-12 text-center text-xs text-gray-400 border-t pt-4">
-                        <p>Thank you for your business!</p>
-                    </div>
-                </div>
+            {/* This is just a preview, the actual print comes from /print/invoice/[id] */}
+            <div className="flex-grow overflow-y-auto bg-gray-50 rounded-sm">
+                 <iframe 
+                    src={`/print/invoice/${sale.id}`}
+                    className="w-full h-full border-none"
+                    title={`Invoice Preview ${sale.id}`}
+                 />
             </div>
 
             <DialogFooter className="mt-4 flex-shrink-0 no-print">
