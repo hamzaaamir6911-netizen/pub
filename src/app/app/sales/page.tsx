@@ -178,42 +178,34 @@ function SaleInvoice({ sale, onPost, onUnpost }: { sale: Sale, onPost: (saleId: 
         if (printContent) {
             const printWindow = window.open('', '', 'height=800,width=1000');
             if (printWindow) {
-                printWindow.document.write('<html><head><title>Print Invoice</title>');
-    
-                // Get all style sheets
-                const styles = Array.from(document.styleSheets)
-                    .map(styleSheet => {
-                        try {
-                            // For external stylesheets, create a link tag
-                            if (styleSheet.href) {
-                                return `<link rel="stylesheet" href="${styleSheet.href}">`;
-                            }
-                            // For inline styles, read the rules and create a style tag
-                            return `<style>${Array.from(styleSheet.cssRules).map(rule => rule.cssText).join('')}</style>`;
-                        } catch (e) {
-                            console.warn("Could not read stylesheet rules. This is often due to CORS restrictions.", e);
-                            if (styleSheet.href) {
-                                return `<link rel="stylesheet" href="${styleSheet.href}">`;
-                            }
-                            return '';
-                        }
-                    })
+                const allStyles = Array.from(document.querySelectorAll('style, link[rel="stylesheet"]'))
+                    .map(el => el.outerHTML)
                     .join('');
-    
-                printWindow.document.write(styles);
-                printWindow.document.write('<style>@media print { body { -webkit-print-color-adjust: exact; print-color-adjust: exact; } .no-print { display: none !important; } }</style>');
-    
-                printWindow.document.write('</head><body class="bg-white">');
-                printWindow.document.write(printContent.innerHTML);
-                printWindow.document.write('</body></html>');
+
+                printWindow.document.write(`
+                    <html>
+                        <head>
+                            <title>Print Invoice</title>
+                            ${allStyles}
+                            <style>
+                                @media print {
+                                    body { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+                                    .no-print { display: none !important; }
+                                }
+                            </style>
+                        </head>
+                        <body class="bg-white">
+                            ${printContent.innerHTML}
+                        </body>
+                    </html>
+                `);
                 printWindow.document.close();
                 printWindow.focus();
                 
-                // Use a timeout to ensure styles are loaded before printing
                 setTimeout(() => {
                     printWindow.print();
                     printWindow.close();
-                }, 500); // 500ms delay, can be adjusted
+                }, 500);
             }
         }
     };
