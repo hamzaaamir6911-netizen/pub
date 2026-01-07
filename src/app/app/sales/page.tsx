@@ -146,14 +146,16 @@ function SaleInvoice({ sale, onPost, onUnpost }: { sale: Sale, onPost: (saleId: 
         toast({ variant: 'destructive', title: 'Sale Unposted!', description: `Sale ${sale.id} has been reverted to draft.`});
     }
     
+    // NEW RELIABLE PRINT LOGIC
     const handlePrint = () => {
       const printWindow = window.open(`/print/invoice/${sale.id}`, '_blank');
-      if (printWindow) {
-        printWindow.onload = () => {
-            printWindow.print();
-            // Optional: close the window after printing
-            // setTimeout(() => printWindow.close(), 500);
-        };
+      // The new window will handle its own printing and closing.
+      if (!printWindow) {
+        toast({
+          variant: "destructive",
+          title: "Print Failed",
+          description: "Please allow pop-ups for this site to print invoices."
+        });
       }
     };
 
@@ -166,7 +168,7 @@ function SaleInvoice({ sale, onPost, onUnpost }: { sale: Sale, onPost: (saleId: 
             {/* This is just a preview, the actual print comes from /print/invoice/[id] */}
             <div className="flex-grow overflow-y-auto bg-gray-50 rounded-sm">
                  <iframe 
-                    src={`/print/invoice/${sale.id}`}
+                    src={`/print/invoice/${sale.id}?preview=true`} // Added a query param to prevent auto-print in preview
                     className="w-full h-full border-none"
                     title={`Invoice Preview ${sale.id}`}
                  />

@@ -15,9 +15,21 @@ function InvoicePrintPage({ params }: { params: { id: string } }) {
   useEffect(() => {
     if (sales.length > 0) {
       const foundSale = sales.find(s => s.id === params.id);
-      setSale(foundSale || null);
+      if (foundSale) {
+        setSale(foundSale);
+      }
     }
   }, [sales, params.id]);
+  
+  // Trigger print dialog once the sale data is loaded and rendered
+  useEffect(() => {
+    if (sale) {
+      setTimeout(() => {
+        window.print();
+        window.onafterprint = () => window.close();
+      }, 500); // A small delay to ensure content is fully rendered
+    }
+  }, [sale]);
 
   const customer = sale ? customers.find(c => c.id === sale.customerId) : null;
   
@@ -113,4 +125,9 @@ function InvoicePrintPage({ params }: { params: { id: string } }) {
   );
 }
 
-export default InvoicePrintPage;
+// We need to wrap the default export in the DataProvider to access the data hooks
+export default function InvoicePrintPageWrapper({ params }: { params: { id: string } }) {
+    return (
+        <InvoicePrintPage params={params} />
+    )
+}
