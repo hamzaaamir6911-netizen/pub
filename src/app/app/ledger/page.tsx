@@ -50,10 +50,14 @@ function AddPaymentForm({ onTransactionAdded, onOpenChange }: { onTransactionAdd
   const { toast } = useToast();
   
   useEffect(() => {
-    if (type === 'credit' && selectedCustomerId) {
+    if (selectedCustomerId) {
         const customer = customers.find(c => c.id === selectedCustomerId);
         if (customer) {
-            setDescription(`Cash received from ${customer.customerName}`);
+            if (type === 'credit') {
+                setDescription(`Cash received from ${customer.customerName}`);
+            } else {
+                setDescription(`Debit Note to ${customer.customerName}`);
+            }
         }
     } else {
         setDescription('');
@@ -74,7 +78,7 @@ function AddPaymentForm({ onTransactionAdded, onOpenChange }: { onTransactionAdd
       description,
       amount,
       type,
-      category: type === 'credit' ? (customer ? 'Customer Payment' : 'Cash Received') : 'Payment',
+      category: type === 'credit' ? (customer ? 'Customer Payment' : 'Cash Received') : (customer ? 'Customer Debit' : 'Payment'),
       date: new Date(date),
       customerId: selectedCustomerId,
       customerName: customer?.customerName,
@@ -99,7 +103,7 @@ function AddPaymentForm({ onTransactionAdded, onOpenChange }: { onTransactionAdd
   return (
     <DialogContent>
       <DialogHeader>
-        <DialogTitle>Add New Payment</DialogTitle>
+        <DialogTitle>Add New Transaction</DialogTitle>
       </DialogHeader>
       <form onSubmit={handleSubmit}>
         <div className="space-y-4 py-4">
@@ -113,24 +117,22 @@ function AddPaymentForm({ onTransactionAdded, onOpenChange }: { onTransactionAdd
               <SelectTrigger id="type"><SelectValue /></SelectTrigger>
               <SelectContent>
                 <SelectItem value="credit">Cash Received (Credit)</SelectItem>
-                <SelectItem value="debit">Payment Made (Debit)</SelectItem>
+                <SelectItem value="debit">Payment / Debit Note (Debit)</SelectItem>
               </SelectContent>
             </Select>
           </div>
           
-           {type === 'credit' && (
-             <div className="space-y-2">
-                <Label htmlFor="customer">From Customer (Optional)</Label>
-                <Select onValueChange={setSelectedCustomerId} value={selectedCustomerId}>
-                    <SelectTrigger id="customer">
-                        <SelectValue placeholder="Select a customer" />
-                    </SelectTrigger>
-                    <SelectContent>
-                        {customers.map(c => <SelectItem key={c.id} value={c.id}>{c.customerName}</SelectItem>)}
-                    </SelectContent>
-                </Select>
-            </div>
-           )}
+           <div className="space-y-2">
+              <Label htmlFor="customer">For Customer (Optional)</Label>
+              <Select onValueChange={setSelectedCustomerId} value={selectedCustomerId}>
+                  <SelectTrigger id="customer">
+                      <SelectValue placeholder="Select a customer" />
+                  </SelectTrigger>
+                  <SelectContent>
+                      {customers.map(c => <SelectItem key={c.id} value={c.id}>{c.customerName}</SelectItem>)}
+                  </SelectContent>
+              </Select>
+          </div>
 
           <div className="space-y-2">
             <Label htmlFor="description">Description</Label>
@@ -139,7 +141,7 @@ function AddPaymentForm({ onTransactionAdded, onOpenChange }: { onTransactionAdd
               value={description} 
               onChange={(e) => setDescription(e.target.value)} 
               placeholder={type === 'debit' ? "e.g. Payment for supplies" : "e.g. Cash from sale"}
-              disabled={type === 'credit' && !!selectedCustomerId}
+              disabled={!!selectedCustomerId}
             />
           </div>
           <div className="space-y-2">
@@ -148,7 +150,7 @@ function AddPaymentForm({ onTransactionAdded, onOpenChange }: { onTransactionAdd
           </div>
         </div>
         <DialogFooter>
-          <Button type="submit">Add Payment</Button>
+          <Button type="submit">Add Transaction</Button>
         </DialogFooter>
       </form>
     </DialogContent>
@@ -241,7 +243,7 @@ export default function LedgerPage() {
                 <DialogTrigger asChild>
                     <Button>
                         <PlusCircle className="mr-2 h-4 w-4" />
-                        Add Payment
+                        Add Transaction
                     </Button>
                 </DialogTrigger>
                 <AddPaymentForm onTransactionAdded={handleTransactionAdded} onOpenChange={setAddModalOpen} />
@@ -334,11 +336,17 @@ export default function LedgerPage() {
                           <DropdownMenuItem
                             onSelect={() => handleDelete(transaction)}
                             className="text-red-500 focus:bg-red-500/10 focus:text-red-500"
-                            disabled={['Opening Balance', 'Salary'].includes(transaction.category)}
+                            disabled={['Opening Balance', 'Salary'].includes(transaction.category) || (transaction.category === 'Sale' && transaction.description.includes('Invoice:'))}
                           >
                             <Trash2 className="mr-2 h-4 w-4"/>
                             Delete
                           </DropdownMenuItem>
+                           {transaction.category === 'Sale' && transaction.description.includes('Invoice:') && (
+                                <DropdownMenuItem onSelect={() => handleDelete(transaction)} className="text-blue-500 focus:bg-blue-500/10 focus:text-blue-500">
+                                    <Undo2 className="mr-2 h-4 w-4" />
+                                    Unpost Sale
+                                </DropdownMenuItem>
+                           )}
                         </DropdownMenuContent>
                       </DropdownMenu>
                     </TableCell>
@@ -363,3 +371,4 @@ export default function LedgerPage() {
     </>
   );
 }
+
