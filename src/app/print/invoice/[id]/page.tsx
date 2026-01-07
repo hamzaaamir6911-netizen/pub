@@ -2,6 +2,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { useSearchParams } from 'next/navigation';
 import { useData } from '@/firebase/data/data-provider';
 import type { Sale } from '@/lib/types';
 import { formatCurrency, formatDate } from '@/lib/utils';
@@ -11,6 +12,8 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 function InvoicePrintPage({ params }: { params: { id: string } }) {
   const { sales, customers } = useData();
   const [sale, setSale] = useState<Sale | null>(null);
+  const searchParams = useSearchParams();
+  const isPreview = searchParams.get('preview') === 'true';
 
   useEffect(() => {
     if (sales.length > 0) {
@@ -23,18 +26,22 @@ function InvoicePrintPage({ params }: { params: { id: string } }) {
   
   // Trigger print dialog once the sale data is loaded and rendered
   useEffect(() => {
-    if (sale) {
-      setTimeout(() => {
+    // Only print if data is loaded and it's not a preview
+    if (sale && !isPreview) {
+      const timeoutId = setTimeout(() => {
         window.print();
         window.onafterprint = () => window.close();
-      }, 500); // A small delay to ensure content is fully rendered
+      }, 500); // A small delay to ensure content is fully rendered in all browsers
+      
+      // Cleanup the timeout if the component unmounts
+      return () => clearTimeout(timeoutId);
     }
-  }, [sale]);
+  }, [sale, isPreview]);
 
   const customer = sale ? customers.find(c => c.id === sale.customerId) : null;
   
   if (!sale) {
-    return <div className="p-10 text-center">Loading invoice...</div>;
+    return <div className="p-10 text-center text-lg font-semibold">Loading invoice...</div>;
   }
 
   // Calculate totals
@@ -131,3 +138,5 @@ export default function InvoicePrintPageWrapper({ params }: { params: { id: stri
         <InvoicePrintPage params={params} />
     )
 }
+
+    
