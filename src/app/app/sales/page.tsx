@@ -49,76 +49,31 @@ import { Badge } from "@/components/ui/badge";
 function DeliveryChallan({ sale }: { sale: Sale }) {
     const { customers } = useData();
     const customer = customers.find(c => c.id === sale.customerId);
+    const { toast } = useToast();
     
     const handlePrint = () => {
-      document.body.classList.add('printing-now');
-      window.print();
-      document.body.classList.remove('printing-now');
+      const printWindow = window.open(`/print/challan/${sale.id}`, '_blank', 'noopener,noreferrer');
+      if (!printWindow) {
+        toast({
+          variant: "destructive",
+          title: "Print Failed",
+          description: "Please allow pop-ups for this site to print the challan."
+        });
+      }
     };
 
     return (
-        <DialogContent className="max-w-4xl max-h-[90vh] flex flex-col printable-area">
+        <DialogContent className="max-w-4xl max-h-[90vh] flex flex-col">
             <DialogHeader className="flex-shrink-0 no-print">
-                <DialogTitle>Delivery Challan: {sale.id}</DialogTitle>
+                <DialogTitle>Delivery Challan Preview: {sale.id}</DialogTitle>
             </DialogHeader>
 
-            <div className="flex-grow overflow-y-auto">
-                 <div className="p-4 text-xl">
-                    <div className="text-center mb-4">
-                      <h1 className="text-4xl font-extrabold font-headline">ARCO Aluminium Company</h1>
-                      <p className="mt-1 text-3xl font-extrabold">Delivery Challan</p>
-                    </div>
-                    <div className="grid grid-cols-2 gap-4 mb-4">
-                        <div>
-                            <p className="font-extrabold text-2xl">Customer:</p>
-                            <p className="font-bold text-2xl">{sale.customerName}</p>
-                            <p className="font-bold text-xl">{customer?.address}</p>
-                            <p className="font-bold text-xl">{customer?.phoneNumber}</p>
-                        </div>
-                        <div className="text-right">
-                            <p className="font-extrabold text-2xl">Challan No:</p>
-                            <p className="font-bold text-2xl">{sale.id}</p>
-                            <p className="mt-2 font-extrabold text-2xl">Date:</p>
-                            <p className="font-bold text-2xl">{formatDate(sale.date)}</p>
-                        </div>
-                    </div>
-                    <div className="overflow-x-auto">
-                        <Table>
-                            <TableHeader>
-                                <TableRow>
-                                    <TableHead className="font-extrabold text-2xl w-[40%]">Item</TableHead>
-                                    <TableHead className="font-extrabold text-2xl">Colour</TableHead>
-                                    <TableHead className="font-extrabold text-2xl">Thickness</TableHead>
-                                    <TableHead className="text-right font-extrabold text-2xl">Feet</TableHead>
-                                    <TableHead className="text-right font-extrabold text-2xl">Quantity</TableHead>
-                                </TableRow>
-                            </TableHeader>
-                            <TableBody>
-                                {sale.items.map((item, index) => (
-                                    <TableRow key={index} className="font-bold text-xl">
-                                        <TableCell>{item.itemName}</TableCell>
-                                        <TableCell>{item.color}</TableCell>
-                                        <TableCell>{item.thickness || '-'}</TableCell>
-                                        <TableCell className="text-right">{item.feet ? item.feet.toFixed(2) : '-'}</TableCell>
-                                        <TableCell className="text-right">{item.quantity}</TableCell>
-                                    </TableRow>
-                                ))}
-                            </TableBody>
-                        </Table>
-                    </div>
-                    <div className="mt-16 grid grid-cols-2 gap-4 text-center">
-                        <div className="border-t-2 border-black pt-2 font-extrabold text-2xl">
-                            <p>Receiver's Signature</p>
-                        </div>
-                        <div className="border-t-2 border-black pt-2 font-extrabold text-2xl">
-                            <p>Driver's Signature</p>
-                        </div>
-                    </div>
-                     <div className="mt-8 text-center text-lg text-gray-500 border-t pt-2">
-                        <p className="font-bold">Industrial Estate, Hayatabad Road B-5 PLOT 59 PESHAWAR</p>
-                        <p className="font-bold">Phone: +923334646356</p>
-                    </div>
-                </div>
+            <div className="flex-grow overflow-y-auto bg-gray-50 rounded-sm">
+                 <iframe 
+                    src={`/print/challan/${sale.id}?preview=true`}
+                    className="w-full h-full border-none"
+                    title={`Challan Preview ${sale.id}`}
+                 />
             </div>
 
             <DialogFooter className="mt-4 flex-shrink-0 no-print">
@@ -144,7 +99,6 @@ function SaleInvoice({ sale, onPost, onUnpost }: { sale: Sale, onPost: (saleId: 
         toast({ variant: 'destructive', title: 'Sale Unposted!', description: `Sale ${sale.id} has been reverted to draft.`});
     }
     
-    // NEW RELIABLE PRINT LOGIC
     const handlePrint = () => {
       const printWindow = window.open(`/print/invoice/${sale.id}`, '_blank', 'noopener,noreferrer');
       if (!printWindow) {
@@ -157,15 +111,14 @@ function SaleInvoice({ sale, onPost, onUnpost }: { sale: Sale, onPost: (saleId: 
     };
 
     return (
-        <DialogContent className="max-w-5xl max-h-[90vh] flex flex-col printable-area">
+        <DialogContent className="max-w-5xl max-h-[90vh] flex flex-col">
             <DialogHeader className="flex-shrink-0 pt-4 no-print">
-                <DialogTitle>Sale Invoice: {sale.id}</DialogTitle>
+                <DialogTitle>Sale Invoice Preview: {sale.id}</DialogTitle>
             </DialogHeader>
 
-            {/* This is just a preview, the actual print comes from /print/invoice/[id] */}
             <div className="flex-grow overflow-y-auto bg-gray-50 rounded-sm">
                  <iframe 
-                    src={`/print/invoice/${sale.id}?preview=true`} // Added a query param to prevent auto-print in preview
+                    src={`/print/invoice/${sale.id}?preview=true`}
                     className="w-full h-full border-none"
                     title={`Invoice Preview ${sale.id}`}
                  />
@@ -561,16 +514,13 @@ export default function SalesPage() {
   const [editingSale, setEditingSale] = useState<Sale | null>(null);
 
   const sortedSales = [...sales].sort((a, b) => {
-    // Attempt to parse number from ID, default to 0 if fails
     const numA = parseInt(a.id.split('-')[1] || '0', 10);
     const numB = parseInt(b.id.split('-')[1] || '0', 10);
     
-    // If both have numeric parts, sort by number
     if (!isNaN(numA) && !isNaN(numB) && numA !== numB) {
-        return numA - numB;
+        return numB - numA;
     }
     
-    // Fallback to sorting by date if IDs are not numeric or are equal
     return new Date(b.date).getTime() - new Date(a.date).getTime();
   });
 
@@ -591,13 +541,11 @@ export default function SalesPage() {
 
   const handlePostSale = (saleId: string) => {
       postSale(saleId);
-      // Close the dialog by resetting the selected sale
       setSelectedSale(null);
   }
 
    const handleUnpostSale = (saleId: string) => {
       unpostSale(saleId);
-      // Close the dialog
       setSelectedSale(null);
   }
 
@@ -607,7 +555,6 @@ export default function SalesPage() {
   }
   
   useEffect(() => {
-      // If we switch away from the 'new' tab, clear any editing state.
       if (activeTab !== 'new') {
           setEditingSale(null);
       }
@@ -619,7 +566,7 @@ export default function SalesPage() {
         title="Sales"
         description="Record new sales and view sales history."
       />
-      <Tabs value={activeTab} onValueChange={setActiveTab}>
+      <Tabs value={activeTab} onOpenChange={setActiveTab}>
         <TabsList className="w-full sm:w-auto grid grid-cols-2 no-print">
           <TabsTrigger value="history">Sales History</TabsTrigger>
           <TabsTrigger value="new">{editingSale ? 'Edit Sale' : 'New Sale'}</TabsTrigger>
