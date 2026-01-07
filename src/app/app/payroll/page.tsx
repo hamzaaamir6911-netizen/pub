@@ -69,7 +69,7 @@ function SalaryPayslip({ payment }: { payment: SalaryPayment }) {
             <DialogHeader className="flex-shrink-0 no-print">
                 <DialogTitle>Payslip for {payment.month} {payment.year}</DialogTitle>
             </DialogHeader>
-            <div className="flex-grow overflow-y-auto">
+            <div className="flex-grow overflow-y-auto printable-area">
                 <div className="p-6">
                     <div className="text-center mb-8">
                         <h1 className="text-2xl font-bold">Salary Payslip</h1>
@@ -434,3 +434,5 @@ export default function PayrollPage() {
     </>
   );
 }
+
+    

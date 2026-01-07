@@ -140,8 +140,8 @@ export default function LabourPage() {
         title="Labour Management"
         description="Manage your workforce information."
       >
-        <div className="flex items-center gap-2">
-            <Button variant="outline" onClick={handlePrint} className="no-print">
+        <div className="flex items-center gap-2 no-print">
+            <Button variant="outline" onClick={handlePrint}>
                 <Printer className="mr-2 h-4 w-4" /> Print
             </Button>
             <Dialog open={isModalOpen} onOpenChange={setModalOpen}>
@@ -209,3 +209,5 @@ export default function LabourPage() {
     </>
   );
 }
+
+    

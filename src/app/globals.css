@@ -50,11 +50,25 @@ h1, h2, h3, h4, h5, h6 {
 
 
 @media print {
-  body.printing-now > :not([data-radix-portal]) {
-    display: none;
-  }
-  
   .no-print {
     display: none !important;
   }
+
+  body.printing-now > :not(.printable-area) {
+    display: none !important;
+  }
+
+  body.printing-now .printable-area {
+    display: block !important;
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 100%;
+  }
+  
+  .break-inside-avoid {
+    break-inside: avoid;
+  }
 }
+
+    

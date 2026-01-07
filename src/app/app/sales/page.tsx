@@ -63,7 +63,7 @@ function DeliveryChallan({ sale }: { sale: Sale }) {
                 <DialogTitle>Delivery Challan: {sale.id}</DialogTitle>
             </DialogHeader>
 
-            <div className="flex-grow overflow-y-auto">
+            <div className="flex-grow overflow-y-auto printable-area">
                  <div className="p-4 text-xl">
                     <div className="text-center mb-4">
                       <h1 className="text-4xl font-extrabold font-headline">ARCO Aluminium Company</h1>
@@ -167,7 +167,7 @@ function SaleInvoice({ sale, onPost, onUnpost }: { sale: Sale, onPost: (saleId: 
                 <DialogTitle>Sale Invoice: {sale.id}</DialogTitle>
             </DialogHeader>
 
-            <div className="flex-grow overflow-y-auto bg-gray-50">
+            <div className="flex-grow overflow-y-auto bg-gray-50 printable-area">
                  <div className="p-8 bg-white shadow-lg rounded-sm text-base">
                     {/* Header */}
                     <div className="flex justify-between items-start pb-8 border-b">
@@ -835,3 +835,5 @@ export default function SalesPage() {
     </>
   );
 }
+
+    

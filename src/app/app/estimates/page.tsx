@@ -67,7 +67,7 @@ function EstimatePrint({ estimate }: { estimate: Estimate }) {
                     <DialogTitle>Estimate: {estimate.id}</DialogTitle>
                 </div>
             </DialogHeader>
-            <div className="flex-grow overflow-y-auto bg-gray-100 p-4">
+            <div className="flex-grow overflow-y-auto bg-gray-100 p-4 printable-area">
                  <div className="p-8 bg-white shadow-lg rounded-sm text-sm">
                     {/* Header */}
                     <div className="flex justify-between items-start mb-8">
@@ -599,3 +599,5 @@ export default function EstimatesPage() {
     </>
   );
 }
+
+    
