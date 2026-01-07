@@ -45,7 +45,8 @@ import type { Estimate, SaleItem, Customer, Item } from "@/lib/types";
 import { useToast } from "@/hooks/use-toast";
 import { useData } from "@/firebase/data/data-provider";
 import { cn } from "@/lib/utils";
-
+import { useCollection, useFirestore, useMemoFirebase, useUser } from "@/firebase";
+import { collection, orderBy, query } from "firebase/firestore";
 
 function EstimatePrint({ estimate }: { estimate: Estimate }) {
     const { customers } = useData();
@@ -491,7 +492,15 @@ function NewEstimateForm({ onEstimateAdded }: { onEstimateAdded: (newEstimate: O
 }
 
 export default function EstimatesPage() {
-  const { estimates, addEstimate, deleteEstimate, createSaleFromEstimate } = useData();
+  const { addEstimate, deleteEstimate, createSaleFromEstimate } = useData();
+  const firestore = useFirestore();
+  const { user } = useUser();
+  const shouldFetch = !!user;
+
+  const estimatesCol = useMemoFirebase(() => shouldFetch ? query(collection(firestore, 'estimates'), orderBy('date', 'desc')) : null, [firestore, shouldFetch]);
+  const { data: estimatesData } = useCollection<Estimate>(estimatesCol);
+  const estimates = estimatesData || [];
+
   const [activeTab, setActiveTab] = useState("history");
   const [selectedEstimate, setSelectedEstimate] = useState<Estimate | null>(null);
   const { toast } = useToast();

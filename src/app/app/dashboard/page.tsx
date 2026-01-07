@@ -31,7 +31,11 @@ import { Button } from "@/components/ui/button"
 import { PageHeader } from "@/components/page-header"
 import { formatCurrency, formatDate } from "@/lib/utils"
 import { ChartContainer, ChartTooltip, ChartTooltipContent, ChartConfig, ChartLegend, ChartLegendContent } from "@/components/ui/chart"
-import { useData } from "@/firebase/data/data-provider"
+import { useCollection, useFirestore, useMemoFirebase } from "@/firebase"
+import type { Sale, Expense } from "@/lib/types"
+import { collection, query, orderBy, where } from "firebase/firestore"
+import { useUser } from "@/firebase/provider"
+
 
 const chartConfig = {
   sales: {
@@ -93,7 +97,59 @@ function ChartOfAccounts() {
 
 
 export default function DashboardPage() {
-  const { getDashboardStats, getMonthlySalesData, sales } = useData();
+  const firestore = useFirestore();
+  const { user } = useUser();
+  const shouldFetch = !!user;
+
+  const salesCol = useMemoFirebase(() => shouldFetch ? query(collection(firestore, 'sales'), orderBy('date', 'desc')) : null, [firestore, shouldFetch]);
+  const expensesCol = useMemoFirebase(() => shouldFetch ? query(collection(firestore, 'expenses'), orderBy('date', 'desc')) : null, [firestore, shouldFetch]);
+
+  const { data: salesData } = useCollection<Sale>(salesCol);
+  const { data: expensesData } = useCollection<Expense>(expensesCol);
+  const sales = salesData || [];
+  const expenses = expensesData || [];
+
+  const getDashboardStats = () => {
+    const totalSales = sales.filter(s => s.status === 'posted').reduce((sum, sale) => sum + sale.total, 0);
+    const totalExpenses = expenses.reduce((sum, expense) => sum + expense.amount, 0);
+    
+    const profitLoss = totalSales - totalExpenses;
+
+    const today = new Date();
+    const todaySummary = {
+        sales: sales.filter(s => new Date(s.date).toDateString() === today.toDateString() && s.status === 'posted'),
+        expenses: expenses.filter(e => new Date(e.date).toDateString() === today.toDateString()),
+    };
+    return { totalSales, totalExpenses, profitLoss, todaySummary };
+  };
+
+  const getMonthlySalesData = () => {
+    const revenueByMonth: { [key: string]: number } = {};
+    const expensesByMonth: { [key: string]: number } = {};
+    
+    sales.filter(s => s.status === 'posted').forEach(sale => {
+        const month = new Date(sale.date).toLocaleString('default', { month: 'short' });
+        revenueByMonth[month] = (revenueByMonth[month] || 0) + sale.total;
+    });
+
+    expenses.forEach(expense => {
+        const month = new Date(expense.date).toLocaleString('default', { month: 'short' });
+        expensesByMonth[month] = (expensesByMonth[month] || 0) + expense.amount;
+    });
+
+    const lastSixMonths = [...Array(6)].map((_, i) => {
+        const d = new Date();
+        d.setMonth(d.getMonth() - i);
+        return d.toLocaleString('default', { month: 'short' });
+    }).reverse();
+
+    return lastSixMonths.map(month => ({
+        name: month,
+        sales: revenueByMonth[month] || 0,
+        expenses: expensesByMonth[month] || 0,
+    }));
+  };
+
   const stats = getDashboardStats();
   const monthlyData = getMonthlySalesData();
 

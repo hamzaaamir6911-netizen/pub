@@ -1,4 +1,5 @@
 
+
 "use client";
 
 import { useState } from "react";
@@ -22,13 +23,15 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { PageHeader } from "@/components/page-header";
 import { formatCurrency, formatDate } from "@/lib/utils";
-import type { Expense } from "@/lib/types";
+import type { Expense, Transaction } from "@/lib/types";
 import { useData } from "@/firebase/data/data-provider";
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { useToast } from "@/hooks/use-toast";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { useCollection, useFirestore, useMemoFirebase, useUser } from "@/firebase";
+import { collection, orderBy, query } from "firebase/firestore";
 
 function AddExpenseForm({ onExpenseAdded }: { onExpenseAdded: (newExpense: Omit<Expense, 'id' | 'date'>) => void }) {
     const { vendors } = useData();
@@ -104,11 +107,23 @@ function AddExpenseForm({ onExpenseAdded }: { onExpenseAdded: (newExpense: Omit<
 }
 
 export default function ExpensesPage() {
-  const { expenses, addExpense, deleteExpense } = useData();
+  const { addExpense, deleteExpense } = useData();
+  const firestore = useFirestore();
+  const { user } = useUser();
+  const shouldFetch = !!user;
+
+  const expensesCol = useMemoFirebase(() => shouldFetch ? query(collection(firestore, 'expenses'), orderBy('date', 'desc')) : null, [firestore, shouldFetch]);
+  const transactionsCol = useMemoFirebase(() => shouldFetch ? collection(firestore, 'transactions') : null, [firestore, shouldFetch]);
+  
+  const { data: expensesData } = useCollection<Expense>(expensesCol);
+  const { data: transactionsData } = useCollection<Transaction>(transactionsCol);
+  const expenses = expensesData || [];
+  const transactions = transactionsData || [];
+  
   const [isExpenseModalOpen, setExpenseModalOpen] = useState(false);
 
-  const handleDelete = (id: string) => {
-    deleteExpense(id);
+  const handleDelete = (expense: Expense) => {
+    deleteExpense(expense, transactions);
   };
   
   const handleExpenseAdded = (newExpense: Omit<Expense, 'id' | 'date'>) => {
@@ -168,7 +183,7 @@ export default function ExpensesPage() {
                       <DropdownMenuLabel>Actions</DropdownMenuLabel>
                       <DropdownMenuItem>Edit</DropdownMenuItem>
                       <DropdownMenuItem
-                        onSelect={() => handleDelete(expense.id)}
+                        onSelect={() => handleDelete(expense)}
                         className="text-red-500 focus:bg-red-500/10 focus:text-red-500"
                       >
                         Delete

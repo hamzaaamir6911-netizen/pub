@@ -36,7 +36,9 @@ import { cn } from "@/lib/utils"
 import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogTrigger } from "@/components/ui/dialog"
-import type { SalaryPayment } from "@/lib/types"
+import type { SalaryPayment, Sale, Expense, Transaction } from "@/lib/types"
+import { useCollection, useFirestore, useMemoFirebase, useUser } from "@/firebase"
+import { collection, orderBy, query } from "firebase/firestore"
 
 const chartConfig = {
   sales: {
@@ -82,12 +84,10 @@ function ReportCard({ title, description, children, printableId }: { title: stri
                     </html>
                 `);
                 
-                // Copy all link and style tags from the main document to the print window
                 document.querySelectorAll('link[rel="stylesheet"], style').forEach(node => {
                     printWindow.document.head.appendChild(node.cloneNode(true));
                 });
 
-                // Use a timeout to ensure styles are loaded before printing
                 setTimeout(() => {
                     printWindow.document.close();
                     printWindow.focus();
@@ -171,7 +171,15 @@ function SalaryPayslip({ payment }: { payment: SalaryPayment }) {
 }
 
 function LedgerReportContent() {
-    const { transactions, customers, vendors } = useData();
+    const { customers, vendors } = useData();
+    const firestore = useFirestore();
+    const { user } = useUser();
+    const shouldFetch = !!user;
+
+    const transactionsCol = useMemoFirebase(() => shouldFetch ? collection(firestore, 'transactions') : null, [firestore, shouldFetch]);
+    const { data: transactionsData } = useCollection<Transaction>(transactionsCol);
+    const transactions = transactionsData || [];
+
     const [date, setDate] = React.useState<DateRange | undefined>({
         from: addDays(new Date(), -30),
         to: new Date(),
@@ -294,7 +302,14 @@ function LedgerReportContent() {
 }
 
 function SalaryReportContent() {
-    const { salaryPayments } = useData();
+    const firestore = useFirestore();
+    const { user } = useUser();
+    const shouldFetch = !!user;
+
+    const salaryPaymentsCol = useMemoFirebase(() => shouldFetch ? query(collection(firestore, 'salaryPayments'), orderBy('date', 'desc')) : null, [firestore, shouldFetch]);
+    const { data: salaryPaymentsData } = useCollection<SalaryPayment>(salaryPaymentsCol);
+    const salaryPayments = salaryPaymentsData || [];
+    
     const [selectedPayment, setSelectedPayment] = useState<SalaryPayment | null>(null);
 
     return (
@@ -339,14 +354,62 @@ function SalaryReportContent() {
 }
 
 export default function ReportsPage() {
-    const { getDashboardStats, getMonthlySalesData } = useData();
-    const stats = getDashboardStats();
-    const monthlyData = getMonthlySalesData();
+    const firestore = useFirestore();
+    const { user } = useUser();
+    const shouldFetch = !!user;
     
-    const dailyReportData = [
-        { date: "Today", sales: stats.todaySummary.sales.reduce((acc, s) => acc + s.total, 0), expenses: stats.todaySummary.expenses.reduce((acc, e) => acc + e.amount, 0)},
-        { date: "Yesterday", sales: 34500, expenses: 12000 }, 
-    ]
+    const salesCol = useMemoFirebase(() => shouldFetch ? collection(firestore, 'sales') : null, [firestore, shouldFetch]);
+    const expensesCol = useMemoFirebase(() => shouldFetch ? collection(firestore, 'expenses') : null, [firestore, shouldFetch]);
+    
+    const { data: salesData } = useCollection<Sale>(salesCol);
+    const { data: expensesData } = useCollection<Expense>(expensesCol);
+    
+    const sales = salesData || [];
+    const expenses = expensesData || [];
+
+    const stats = useMemo(() => {
+        const totalSales = sales.filter(s => s.status === 'posted').reduce((sum, sale) => sum + sale.total, 0);
+        const totalExpenses = expenses.reduce((sum, expense) => sum + expense.amount, 0);
+        const profitLoss = totalSales - totalExpenses;
+        return { totalSales, totalExpenses, profitLoss };
+    }, [sales, expenses]);
+
+    const monthlyData = useMemo(() => {
+        const revenueByMonth: { [key: string]: number } = {};
+        const expensesByMonth: { [key: string]: number } = {};
+        
+        sales.filter(s => s.status === 'posted').forEach(sale => {
+            const month = new Date(sale.date).toLocaleString('default', { month: 'short' });
+            revenueByMonth[month] = (revenueByMonth[month] || 0) + sale.total;
+        });
+
+        expenses.forEach(expense => {
+            const month = new Date(expense.date).toLocaleString('default', { month: 'short' });
+            expensesByMonth[month] = (expensesByMonth[month] || 0) + expense.amount;
+        });
+
+        const lastSixMonths = [...Array(6)].map((_, i) => {
+            const d = new Date();
+            d.setMonth(d.getMonth() - i);
+            return d.toLocaleString('default', { month: 'short' });
+        }).reverse();
+
+        return lastSixMonths.map(month => ({
+            name: month,
+            sales: revenueByMonth[month] || 0,
+            expenses: expensesByMonth[month] || 0,
+        }));
+    }, [sales, expenses]);
+    
+    const dailyReportData = useMemo(() => {
+        const today = new Date();
+        const todaySales = sales.filter(s => new Date(s.date).toDateString() === today.toDateString() && s.status === 'posted').reduce((acc, s) => acc + s.total, 0);
+        const todayExpenses = expenses.filter(e => new Date(e.date).toDateString() === today.toDateString()).reduce((acc, e) => acc + e.amount, 0);
+
+        return [
+            { date: "Today", sales: todaySales, expenses: todayExpenses },
+        ];
+    }, [sales, expenses]);
 
   return (
     <>

@@ -1,4 +1,5 @@
 
+
 "use client";
 
 import { useState, useRef, useEffect } from "react";
@@ -40,15 +41,15 @@ import { Card, CardContent, CardHeader, CardTitle, CardFooter } from "@/componen
 import { Label } from "@/components/ui/label";
 import { PageHeader } from "@/components/page-header";
 import { formatCurrency, formatDate, cn } from "@/lib/utils";
-import type { Sale, SaleItem, Customer, Item } from "@/lib/types";
+import type { Sale, SaleItem, Customer, Item, Transaction } from "@/lib/types";
 import { useToast } from "@/hooks/use-toast";
 import { useData } from "@/firebase/data/data-provider";
 import { Badge } from "@/components/ui/badge";
+import { useCollection, useFirestore, useMemoFirebase, useUser } from "@/firebase";
+import { collection, orderBy, query } from "firebase/firestore";
 
 
 function DeliveryChallan({ sale }: { sale: Sale }) {
-    const { customers } = useData();
-    const customer = customers.find(c => c.id === sale.customerId);
     const { toast } = useToast();
     
     const handlePrint = () => {
@@ -86,16 +87,16 @@ function DeliveryChallan({ sale }: { sale: Sale }) {
     );
 }
 
-function SaleInvoice({ sale, onPost, onUnpost }: { sale: Sale, onPost: (saleId: string) => void, onUnpost: (saleId: string) => void }) {
+function SaleInvoice({ sale, onPost, onUnpost }: { sale: Sale, onPost: (sale: Sale) => void, onUnpost: (sale: Sale) => void }) {
     const { toast } = useToast();
     
     const handlePost = () => {
-        onPost(sale.id);
+        onPost(sale);
         toast({ title: 'Sale Posted!', description: `Sale ${sale.id} has been posted to the ledger.`});
     }
 
     const handleUnpost = () => {
-        onUnpost(sale.id);
+        onUnpost(sale);
         toast({ variant: 'destructive', title: 'Sale Unposted!', description: `Sale ${sale.id} has been reverted to draft.`});
     }
     
@@ -507,7 +508,20 @@ function NewSaleForm({ onSaleAdded, onSaleUpdated, initialData }: { onSaleAdded:
 }
 
 export default function SalesPage() {
-  const { sales, addSale, updateSale, deleteSale, postSale, unpostSale } = useData();
+  const { addSale, updateSale, deleteSale, postSale, unpostSale } = useData();
+  const firestore = useFirestore();
+  const { user } = useUser();
+  const shouldFetch = !!user;
+
+  const salesCol = useMemoFirebase(() => shouldFetch ? query(collection(firestore, 'sales'), orderBy('date', 'desc')) : null, [firestore, shouldFetch]);
+  const transactionsCol = useMemoFirebase(() => shouldFetch ? collection(firestore, 'transactions') : null, [firestore, shouldFetch]);
+
+  const { data: salesData } = useCollection<Sale>(salesCol);
+  const { data: transactionsData } = useCollection<Transaction>(transactionsCol);
+  
+  const sales = salesData || [];
+  const transactions = transactionsData || [];
+  
   const [activeTab, setActiveTab] = useState("history");
   const [selectedSale, setSelectedSale] = useState<Sale | null>(null);
   const [selectedChallan, setSelectedChallan] = useState<Sale | null>(null);
@@ -524,8 +538,8 @@ export default function SalesPage() {
     return new Date(b.date).getTime() - new Date(a.date).getTime();
   });
 
-  const handleDelete = (id: string) => {
-    deleteSale(id);
+  const handleDelete = (sale: Sale) => {
+    deleteSale(sale, transactions);
   };
   
   const handleSaleAdded = (newSale: Omit<Sale, 'id' |'total'|'status'>) => {
@@ -539,13 +553,13 @@ export default function SalesPage() {
     setEditingSale(null);
   }
 
-  const handlePostSale = (saleId: string) => {
-      postSale(saleId);
+  const handlePostSale = (sale: Sale) => {
+      postSale(sale);
       setSelectedSale(null);
   }
 
-   const handleUnpostSale = (saleId: string) => {
-      unpostSale(saleId);
+   const handleUnpostSale = (sale: Sale) => {
+      unpostSale(sale);
       setSelectedSale(null);
   }
 
@@ -566,7 +580,7 @@ export default function SalesPage() {
         title="Sales"
         description="Record new sales and view sales history."
       />
-      <Tabs value={activeTab} onOpenChange={setActiveTab}>
+      <Tabs value={activeTab} onValueChange={setActiveTab}>
         <TabsList className="w-full sm:w-auto grid grid-cols-2 no-print">
           <TabsTrigger value="history">Sales History</TabsTrigger>
           <TabsTrigger value="new">{editingSale ? 'Edit Sale' : 'New Sale'}</TabsTrigger>
@@ -641,7 +655,7 @@ export default function SalesPage() {
                                 Edit
                               </DropdownMenuItem>
                               <DropdownMenuItem
-                                onSelect={() => handleDelete(sale.id)}
+                                onSelect={() => handleDelete(sale)}
                                 className="text-red-500 focus:bg-red-500/10 focus:text-red-500"
                               >
                                 <Trash2 className="mr-2 h-4 w-4"/>

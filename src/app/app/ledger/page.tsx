@@ -3,7 +3,7 @@
 "use client";
 
 import { useState, useMemo, FormEvent, useEffect } from "react";
-import { X, MoreHorizontal, Printer, Edit, Trash2, PlusCircle } from "lucide-react";
+import { X, MoreHorizontal, Printer, Edit, Trash2, PlusCircle, Undo2 } from "lucide-react";
 import {
   Table,
   TableBody,
@@ -30,7 +30,7 @@ import {
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { PageHeader } from "@/components/page-header";
-import type { Transaction } from "@/lib/types";
+import type { Transaction, Sale } from "@/lib/types";
 import { useToast } from "@/hooks/use-toast";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
@@ -39,6 +39,9 @@ import { formatCurrency, formatDate } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { cn } from "@/lib/utils";
+import { useCollection, useFirestore, useMemoFirebase, useUser } from "@/firebase";
+import { collection, orderBy, query } from "firebase/firestore";
+
 
 function AddPaymentForm({ onTransactionAdded, onOpenChange }: { onTransactionAdded: (newTransaction: Omit<Transaction, 'id'>) => Promise<void>, onOpenChange: (open: boolean) => void }) {
   const [description, setDescription] = useState('');
@@ -159,7 +162,20 @@ function AddPaymentForm({ onTransactionAdded, onOpenChange }: { onTransactionAdd
 
 
 export default function LedgerPage() {
-  const { transactions, deleteTransaction, customers, vendors, addTransaction, unpostSale, sales } = useData();
+  const { customers, vendors, addTransaction, unpostSale, deleteTransaction } = useData();
+  const firestore = useFirestore();
+  const { user } = useUser();
+  const shouldFetch = !!user;
+
+  const transactionsCol = useMemoFirebase(() => shouldFetch ? query(collection(firestore, 'transactions'), orderBy('date', 'desc')) : null, [firestore, shouldFetch]);
+  const salesCol = useMemoFirebase(() => shouldFetch ? collection(firestore, 'sales') : null, [firestore, shouldFetch]);
+
+  const { data: transactionsData } = useCollection<Transaction>(transactionsCol);
+  const { data: salesData } = useCollection<Sale>(salesCol);
+
+  const transactions = transactionsData || [];
+  const sales = salesData || [];
+
   const [selectedCustomerId, setSelectedCustomerId] = useState<string | null>(null);
   const [selectedVendorId, setSelectedVendorId] = useState<string | null>(null);
   const [isAddModalOpen, setAddModalOpen] = useState(false);
@@ -174,7 +190,7 @@ export default function LedgerPage() {
         const invoiceId = transaction.description.split('Invoice: ')[1].slice(0, -1);
         const sale = sales.find(s => s.id === invoiceId);
         if (sale) {
-            await unpostSale(sale.id);
+            await unpostSale(sale);
             toast({ title: 'Sale Un-posted', description: `Sale ${invoiceId} has been reverted to draft.` });
         } else {
             toast({ variant: 'destructive', title: 'Sale not found', description: `Could not find sale with ID ${invoiceId}.`});
@@ -333,19 +349,20 @@ export default function LedgerPage() {
                               <Edit className="mr-2 h-4 w-4" />
                               Edit
                           </DropdownMenuItem>
-                          <DropdownMenuItem
-                            onSelect={() => handleDelete(transaction)}
-                            className="text-red-500 focus:bg-red-500/10 focus:text-red-500"
-                            disabled={['Opening Balance', 'Salary'].includes(transaction.category) || (transaction.category === 'Sale' && transaction.description.includes('Invoice:'))}
-                          >
-                            <Trash2 className="mr-2 h-4 w-4"/>
-                            Delete
-                          </DropdownMenuItem>
-                           {transaction.category === 'Sale' && transaction.description.includes('Invoice:') && (
+                           {transaction.category === 'Sale' && transaction.description.includes('Invoice:') ? (
                                 <DropdownMenuItem onSelect={() => handleDelete(transaction)} className="text-blue-500 focus:bg-blue-500/10 focus:text-blue-500">
                                     <Undo2 className="mr-2 h-4 w-4" />
                                     Unpost Sale
                                 </DropdownMenuItem>
+                           ) : (
+                            <DropdownMenuItem
+                                onSelect={() => handleDelete(transaction)}
+                                className="text-red-500 focus:bg-red-500/10 focus:text-red-500"
+                                disabled={['Opening Balance', 'Salary'].includes(transaction.category)}
+                            >
+                                <Trash2 className="mr-2 h-4 w-4"/>
+                                Delete
+                            </DropdownMenuItem>
                            )}
                         </DropdownMenuContent>
                       </DropdownMenu>
@@ -371,4 +388,3 @@ export default function LedgerPage() {
     </>
   );
 }
-

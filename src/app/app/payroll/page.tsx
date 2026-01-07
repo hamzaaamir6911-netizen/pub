@@ -44,12 +44,14 @@ import { Card, CardContent, CardHeader, CardTitle, CardFooter, CardDescription }
 import { Label } from "@/components/ui/label";
 import { PageHeader } from "@/components/page-header";
 import { formatCurrency, formatDate } from "@/lib/utils";
-import type { SalaryLabourer, SalaryPayment } from "@/lib/types";
+import type { SalaryLabourer, SalaryPayment, Expense, Transaction } from "@/lib/types";
 import { useToast } from "@/hooks/use-toast";
 import { useData } from "@/firebase/data/data-provider";
 import { Combobox } from "@/components/ui/combobox";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { useCollection, useFirestore, useMemoFirebase, useUser } from "@/firebase";
+import { collection, orderBy, query } from "firebase/firestore";
 
 
 const months = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
@@ -319,7 +321,23 @@ function NewPayslipForm({ onPayslipGenerated }: { onPayslipGenerated: () => void
 }
 
 export default function PayrollPage() {
-  const { salaryPayments, deleteSalaryPayment } = useData();
+  const { deleteSalaryPayment } = useData();
+  const firestore = useFirestore();
+  const { user } = useUser();
+  const shouldFetch = !!user;
+
+  const salaryPaymentsCol = useMemoFirebase(() => shouldFetch ? query(collection(firestore, 'salaryPayments'), orderBy('date', 'desc')) : null, [firestore, shouldFetch]);
+  const expensesCol = useMemoFirebase(() => shouldFetch ? collection(firestore, 'expenses') : null, [firestore, shouldFetch]);
+  const transactionsCol = useMemoFirebase(() => shouldFetch ? collection(firestore, 'transactions') : null, [firestore, shouldFetch]);
+  
+  const { data: salaryPaymentsData } = useCollection<SalaryPayment>(salaryPaymentsCol);
+  const { data: expensesData } = useCollection<Expense>(expensesCol);
+  const { data: transactionsData } = useCollection<Transaction>(transactionsCol);
+  
+  const salaryPayments = salaryPaymentsData || [];
+  const expenses = expensesData || [];
+  const transactions = transactionsData || [];
+
   const { toast } = useToast();
   const [activeTab, setActiveTab] = useState("new");
   const [selectedPayment, setSelectedPayment] = useState<SalaryPayment | null>(null);
@@ -328,8 +346,8 @@ export default function PayrollPage() {
       setActiveTab("history");
   }
 
-  const handleDelete = (paymentId: string) => {
-    deleteSalaryPayment(paymentId);
+  const handleDelete = (payment: SalaryPayment) => {
+    deleteSalaryPayment(payment, expenses, transactions);
     toast({ title: "Payslip Deleted", description: "The salary payment has been removed." });
   }
 
@@ -415,7 +433,7 @@ export default function PayrollPage() {
                                                       </AlertDialogHeader>
                                                       <AlertDialogFooter>
                                                         <AlertDialogCancel>Cancel</AlertDialogCancel>
-                                                        <AlertDialogAction onClick={() => handleDelete(payment.id)}>Delete</AlertDialogAction>
+                                                        <AlertDialogAction onClick={() => handleDelete(payment)}>Delete</AlertDialogAction>
                                                       </AlertDialogFooter>
                                                     </AlertDialogContent>
                                                   </AlertDialog>
