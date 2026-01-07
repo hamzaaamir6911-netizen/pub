@@ -53,19 +53,24 @@ h1, h2, h3, h4, h5, h6 {
   .no-print {
     display: none !important;
   }
+  
+  body.printing-now {
+    visibility: hidden;
+  }
 
-  body.printing-now > :not(.printable-area) {
-    display: none !important;
+  body.printing-now .printable-area,
+  body.printing-now .printable-area * {
+    visibility: visible;
   }
 
   body.printing-now .printable-area {
-    display: block !important;
     position: absolute;
     left: 0;
     top: 0;
     width: 100%;
+    height: 100%;
   }
-  
+
   .break-inside-avoid {
     break-inside: avoid;
   }

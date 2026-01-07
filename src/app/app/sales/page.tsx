@@ -57,8 +57,7 @@ function DeliveryChallan({ sale }: { sale: Sale }) {
     };
 
     return (
-        <DialogContent className="max-w-4xl max-h-[90vh] flex flex-col">
-          <div className="printable-area">
+        <DialogContent className="max-w-4xl max-h-[90vh] flex flex-col printable-area">
             <DialogHeader className="flex-shrink-0 no-print">
                 <DialogTitle>Delivery Challan: {sale.id}</DialogTitle>
             </DialogHeader>
@@ -128,7 +127,6 @@ function DeliveryChallan({ sale }: { sale: Sale }) {
                     Print Challan
                 </Button>
             </DialogFooter>
-          </div>
         </DialogContent>
     );
 }
@@ -148,8 +146,7 @@ function SaleInvoice({ sale, onPost, onUnpost }: { sale: Sale, onPost: (saleId: 
     
     // NEW RELIABLE PRINT LOGIC
     const handlePrint = () => {
-      const printWindow = window.open(`/print/invoice/${sale.id}`, '_blank');
-      // The new window will handle its own printing and closing.
+      const printWindow = window.open(`/print/invoice/${sale.id}`, '_blank', 'noopener,noreferrer');
       if (!printWindow) {
         toast({
           variant: "destructive",
@@ -160,7 +157,7 @@ function SaleInvoice({ sale, onPost, onUnpost }: { sale: Sale, onPost: (saleId: 
     };
 
     return (
-        <DialogContent className="max-w-5xl max-h-[90vh] flex flex-col">
+        <DialogContent className="max-w-5xl max-h-[90vh] flex flex-col printable-area">
             <DialogHeader className="flex-shrink-0 pt-4 no-print">
                 <DialogTitle>Sale Invoice: {sale.id}</DialogTitle>
             </DialogHeader>
