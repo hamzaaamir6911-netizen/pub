@@ -157,7 +157,7 @@ function AddPaymentForm({ onTransactionAdded, onOpenChange }: { onTransactionAdd
 
 
 export default function LedgerPage() {
-  const { transactions, deleteTransaction, customers, vendors, addTransaction } = useData();
+  const { transactions, deleteTransaction, customers, vendors, addTransaction, unpostSale, sales } = useData();
   const [selectedCustomerId, setSelectedCustomerId] = useState<string | null>(null);
   const [selectedVendorId, setSelectedVendorId] = useState<string | null>(null);
   const [isAddModalOpen, setAddModalOpen] = useState(false);
@@ -167,9 +167,20 @@ export default function LedgerPage() {
     await addTransaction(newTransaction);
   }
 
-  const handleDelete = (id: string) => {
-    const transaction = transactions.find(t => t.id === id);
-    if (transaction && ['Sale', 'Opening Balance', 'Salary'].includes(transaction.category)) {
+  const handleDelete = async (transaction: Transaction) => {
+    if (transaction.category === 'Sale' && transaction.description.includes('Invoice:')) {
+        const invoiceId = transaction.description.split('Invoice: ')[1].slice(0, -1);
+        const sale = sales.find(s => s.id === invoiceId);
+        if (sale) {
+            await unpostSale(sale.id);
+            toast({ title: 'Sale Un-posted', description: `Sale ${invoiceId} has been reverted to draft.` });
+        } else {
+            toast({ variant: 'destructive', title: 'Sale not found', description: `Could not find sale with ID ${invoiceId}.`});
+        }
+        return;
+    }
+    
+    if (['Opening Balance', 'Salary'].includes(transaction.category)) {
       toast({
         variant: 'destructive',
         title: 'Deletion Not Allowed',
@@ -177,7 +188,7 @@ export default function LedgerPage() {
       });
       return;
     }
-    deleteTransaction(id);
+    deleteTransaction(transaction.id);
     toast({ title: "Transaction Deleted" });
   }
 
@@ -321,9 +332,9 @@ export default function LedgerPage() {
                               Edit
                           </DropdownMenuItem>
                           <DropdownMenuItem
-                            onSelect={() => handleDelete(transaction.id)}
+                            onSelect={() => handleDelete(transaction)}
                             className="text-red-500 focus:bg-red-500/10 focus:text-red-500"
-                            disabled={['Sale', 'Opening Balance', 'Salary'].includes(transaction.category)}
+                            disabled={['Opening Balance', 'Salary'].includes(transaction.category)}
                           >
                             <Trash2 className="mr-2 h-4 w-4"/>
                             Delete
@@ -352,5 +363,3 @@ export default function LedgerPage() {
     </>
   );
 }
-
-    

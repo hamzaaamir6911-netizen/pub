@@ -593,7 +593,7 @@ export const DataProvider = ({ children }: { children: ReactNode }) => {
     const unpostSale = async (saleId: string) => {
         if (!user) throw new Error("User not authenticated");
         const saleToUnpost = sales.find(s => s.id === saleId);
-        if (!saleToUnpost || saleToUnpost.status !== 'posted') return;
+        if (!saleToUnpost) return;
     
         const batch = writeBatch(firestore);
         
@@ -613,7 +613,6 @@ export const DataProvider = ({ children }: { children: ReactNode }) => {
             const querySnapshot = await getDocs(q);
             querySnapshot.forEach((doc) => {
                 const transactionDate = toDate(doc.data().date);
-                // Check if dates match (ignoring time)
                 if (transactionDate.toDateString() === saleDate.toDateString()) {
                     batch.delete(doc.ref);
                 }
