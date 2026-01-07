@@ -167,7 +167,7 @@ export default function LedgerPage() {
   const { user } = useUser();
   const shouldFetch = !!user;
 
-  const transactionsCol = useMemoFirebase(() => shouldFetch ? query(collection(firestore, 'transactions'), orderBy('date', 'desc')) : null, [firestore, shouldFetch]);
+  const transactionsCol = useMemoFirebase(() => shouldFetch ? query(collection(firestore, 'transactions'), orderBy('date', 'asc')) : null, [firestore, shouldFetch]);
   const salesCol = useMemoFirebase(() => shouldFetch ? collection(firestore, 'sales') : null, [firestore, shouldFetch]);
 
   const { data: transactionsData } = useCollection<Transaction>(transactionsCol);
@@ -217,7 +217,7 @@ export default function LedgerPage() {
     } else if (selectedVendorId) {
         filtered = transactions.filter(t => t.vendorId === selectedVendorId);
     }
-    return filtered.sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
+    return filtered;
   }, [transactions, selectedCustomerId, selectedVendorId]);
 
   let runningBalance = 0;
