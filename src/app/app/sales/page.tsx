@@ -148,11 +148,13 @@ function SaleInvoice({ sale, onPost, onUnpost }: { sale: Sale, onPost: (saleId: 
     
     const handlePrint = () => {
       const printWindow = window.open(`/print/invoice/${sale.id}`, '_blank');
-      printWindow?.addEventListener('load', () => {
-          printWindow?.print();
-          // Optional: close the window after printing
-          // setTimeout(() => printWindow?.close(), 500);
-      });
+      if (printWindow) {
+        printWindow.onload = () => {
+            printWindow.print();
+            // Optional: close the window after printing
+            // setTimeout(() => printWindow.close(), 500);
+        };
+      }
     };
 
     return (
@@ -729,5 +731,3 @@ export default function SalesPage() {
     </>
   );
 }
-
-    
