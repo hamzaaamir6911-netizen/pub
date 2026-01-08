@@ -84,7 +84,7 @@ function SaleDetailsView({ sale }: { sale: Sale }) {
                 </div>
             </DialogHeader>
 
-            <div id="printable-area" className="flex-grow bg-gray-50 overflow-visible">
+            <div id="printable-area" className="flex-grow bg-gray-50 overflow-visible p-6">
                 {/* INVOICE VIEW - default */}
                 <div id="printable-invoice" className="p-8 bg-white text-black">
                      <div className="flex justify-between items-start mb-10">
@@ -128,7 +128,8 @@ function SaleDetailsView({ sale }: { sale: Sale }) {
                     <Table className="text-sm">
                         <TableHeader>
                             <TableRow className="bg-teal-600 hover:bg-teal-700">
-                                <TableHead className="font-bold text-white uppercase w-[50%]">Description</TableHead>
+                                <TableHead className="font-bold text-white uppercase w-[40%]">Description</TableHead>
+                                <TableHead className="text-right font-bold text-white uppercase">Feet</TableHead>
                                 <TableHead className="text-right font-bold text-white uppercase">Qty</TableHead>
                                 <TableHead className="text-right font-bold text-white uppercase">Rate</TableHead>
                                 <TableHead className="text-right font-bold text-white uppercase">Total</TableHead>
@@ -142,9 +143,10 @@ function SaleDetailsView({ sale }: { sale: Sale }) {
                                 <TableCell className="font-medium text-gray-800">
                                     {item.itemName}
                                     <span className="text-gray-500 text-xs block">
-                                        {item.thickness} - {item.color} {item.feet ? `| ${item.feet.toFixed(2)} ft` : ''}
+                                        {item.thickness} - {item.color}
                                     </span>
                                 </TableCell>
+                                <TableCell className="text-right text-gray-600">{item.feet ? item.feet.toFixed(2) : '-'}</TableCell>
                                 <TableCell className="text-right text-gray-600">{item.quantity}</TableCell>
                                 <TableCell className="text-right text-gray-600">{formatCurrency(item.price)}</TableCell>
                                 <TableCell className="text-right font-medium text-gray-800">{formatCurrency(itemTotal)}</TableCell>
@@ -278,7 +280,7 @@ export default function SalesPage() {
         description="Record new sales and view sales history."
       />
       
-      <Tabs value={activeTab} onValueChange={setActiveTab}>
+      <Tabs value={activeTab} onValueChange={setActiveTab} className="no-print">
         <TabsList className="grid w-full grid-cols-2">
           <TabsTrigger value="history">Sales History</TabsTrigger>
           <TabsTrigger value="new">{editingSale ? 'Edit Sale' : 'New Sale'}</TabsTrigger>
