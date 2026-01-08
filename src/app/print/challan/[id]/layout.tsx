@@ -3,7 +3,7 @@
 import '@/app/globals.css';
 import { PT_Sans } from "next/font/google";
 import { cn } from "@/lib/utils";
-import { DataProvider } from '@/firebase/data/data-provider';
+import { FirebaseClientProvider } from '@/firebase/client-provider';
 
 const fontBody = PT_Sans({
   subsets: ["latin"],
@@ -29,9 +29,9 @@ export default function PrintLayout({
           fontBody.variable,
           fontHeadline.variable
         )}>
-        <DataProvider>
+        <FirebaseClientProvider>
             {children}
-        </DataProvider>
+        </FirebaseClientProvider>
       </body>
     </html>
   );
