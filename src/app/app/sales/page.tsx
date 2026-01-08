@@ -2,7 +2,7 @@
 "use client";
 
 import { useState, useMemo, useEffect } from "react";
-import { MoreHorizontal, Trash2, Edit, Printer, PlusCircle, FileText, CheckCircle, Undo2 } from "lucide-react";
+import { MoreHorizontal, Trash2, Edit, Printer, PlusCircle, FileText } from "lucide-react";
 import {
   Table,
   TableBody,
@@ -233,11 +233,7 @@ export default function SalesPage() {
       setDetailsOpen(true);
   }
   
-  const handleSaleAdded = () => {
-    setActiveTab("history");
-  }
-
-  const handleSaleUpdated = () => {
+  const handleFormSuccess = () => {
     setActiveTab("history");
     setEditingSale(null);
   }
@@ -354,8 +350,7 @@ export default function SalesPage() {
           <div className="mt-4">
              <NewSaleForm 
                 initialData={editingSale} 
-                onSaleAdded={handleSaleAdded} 
-                onSaleUpdated={handleSaleUpdated}
+                onSuccess={handleFormSuccess}
             />
           </div>
         </TabsContent>

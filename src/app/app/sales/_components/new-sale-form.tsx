@@ -93,7 +93,7 @@ function AddCustomerForm({ onCustomerAdded, onOpenChange }: { onCustomerAdded: (
 }
 
 
-export function NewSaleForm({ initialData, onSaleAdded, onSaleUpdated }: { initialData?: Sale | null; onSaleAdded: () => void; onSaleUpdated: () => void; }) {
+export function NewSaleForm({ initialData, onSuccess }: { initialData?: Sale | null; onSuccess: () => void; }) {
     const { toast } = useToast();
     const { customers, items: allItems, addCustomer, addSale, updateSale } = useData();
     
@@ -216,12 +216,11 @@ export function NewSaleForm({ initialData, onSaleAdded, onSaleUpdated }: { initi
         if (isEditMode && initialData) {
             await updateSale(initialData.id, saleData);
             toast({ title: "Sale Updated!", description: `Sale ${initialData.id} has been updated.` });
-            onSaleUpdated();
         } else {
             await addSale(saleData);
             toast({ title: "Sale Draft Saved!", description: `Sale has been saved as a draft.` });
-            onSaleAdded();
         }
+        onSuccess();
     }
     
     const handleCustomerAdded = async (newCustomer: Omit<Customer, 'id'| 'createdAt'>) => {
