@@ -46,7 +46,10 @@ interface DataContextProps {
 
 const DataContext = createContext<DataContextProps | undefined>(undefined);
 
-const toDate = (timestamp: any): Date => {
+const toDate = (timestamp: any): Date | null => {
+    if (!timestamp) {
+        return null;
+    }
     if (timestamp instanceof Timestamp) {
       return timestamp.toDate();
     }
@@ -62,7 +65,7 @@ const toDate = (timestamp: any): Date => {
             return d;
         }
     }
-    return new Date(); 
+    return null;
 };
 
 
@@ -244,10 +247,10 @@ export const DataProvider = ({ children }: { children: ReactNode }) => {
     const { data: vendorsData, isLoading: vendorsLoading } = useCollection<Vendor>(vendorsCol);
     const { data: labourData, isLoading: labourLoading } = useCollection<Labour>(labourCol);
 
-    const items = itemsData?.map(item => ({ ...item, quantity: item.quantity ?? 0, createdAt: toDate(item.createdAt) })) || [];
-    const customers = customersData?.map(customer => ({ ...customer, createdAt: toDate(customer.createdAt) })) || [];
-    const vendors = vendorsData?.map(vendor => ({ ...vendor, createdAt: toDate(vendor.createdAt) })) || [];
-    const labourers = labourData?.map(labourer => ({ ...labourer, createdAt: toDate(labourer.createdAt) })) || [];
+    const items = itemsData?.map(item => ({ ...item, quantity: item.quantity ?? 0, createdAt: toDate(item.createdAt) as Date })) || [];
+    const customers = customersData?.map(customer => ({ ...customer, createdAt: toDate(customer.createdAt) as Date })) || [];
+    const vendors = vendorsData?.map(vendor => ({ ...vendor, createdAt: toDate(vendor.createdAt) as Date })) || [];
+    const labourers = labourData?.map(labourer => ({ ...labourer, createdAt: toDate(labourer.createdAt) as Date })) || [];
 
     const loading = isUserLoading || itemsLoading || customersLoading || vendorsLoading || labourLoading;
 
@@ -566,7 +569,7 @@ export const DataProvider = ({ children }: { children: ReactNode }) => {
             category: 'Sale',
             customerId: sale.customerId,
             customerName: sale.customerName,
-            date: toDate(sale.date),
+            date: toDate(sale.date) as Date,
         };
         const transactionRef = doc(collection(firestore, 'transactions'));
         batch.set(transactionRef, transactionData);
@@ -577,13 +580,21 @@ export const DataProvider = ({ children }: { children: ReactNode }) => {
     const unpostSale = async (sale: Sale) => {
         if (!user) throw new Error("User not authenticated");
         if (!sale) return;
-    
+
         const batch = writeBatch(firestore);
         
         const saleRef = doc(firestore, 'sales', sale.id);
         batch.update(saleRef, { status: 'draft' });
     
+        // Safely handle the date
         const saleDate = toDate(sale.date);
+        if (!saleDate) {
+            // If there's no valid date on the sale, we cannot reliably find the transaction.
+            // Commit the status change and skip transaction deletion.
+            await batch.commit();
+            console.warn(`Could not find transaction to delete for sale ${sale.id} due to missing date.`);
+            return;
+        }
 
         const q = query(
             collection(firestore, 'transactions'),
@@ -596,7 +607,8 @@ export const DataProvider = ({ children }: { children: ReactNode }) => {
             const querySnapshot = await getDocs(q);
             querySnapshot.forEach((doc) => {
                 const transactionDate = toDate(doc.data().date);
-                if (transactionDate.toDateString() === saleDate.toDateString()) {
+                // Only delete if transaction date matches sale date to avoid deleting wrong entries
+                if (transactionDate && transactionDate.toDateString() === saleDate.toDateString()) {
                     batch.delete(doc.ref);
                 }
             });
