@@ -2,7 +2,7 @@
 "use client";
 
 import { useState, useMemo, useEffect } from "react";
-import { MoreHorizontal, Trash2, CheckCircle, FileText, Undo2, Edit, Printer } from "lucide-react";
+import { MoreHorizontal, Trash2, Edit, Printer, PlusCircle } from "lucide-react";
 import {
   Table,
   TableBody,
@@ -19,6 +19,13 @@ import {
   DropdownMenuTrigger,
   DropdownMenuSeparator,
 } from "@/components/ui/dropdown-menu";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { PageHeader } from "@/components/page-header";
 import { formatCurrency, formatDate } from "@/lib/utils";
@@ -27,7 +34,6 @@ import { useData } from "@/firebase/data/data-provider";
 import { Badge } from "@/components/ui/badge";
 import { useCollection, useFirestore, useMemoFirebase, useUser } from "@/firebase";
 import { collection, orderBy, query } from "firebase/firestore";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { NewSaleForm } from "./_components/new-sale-form";
 
@@ -196,11 +202,6 @@ export default function SalesPage() {
     setActiveTab("new");
   };
 
-  const handleFormSuccess = () => {
-    setEditingSale(null);
-    setActiveTab("history");
-  }
-
   useEffect(() => {
     if (activeTab === "history") {
       setEditingSale(null);
@@ -270,26 +271,14 @@ export default function SalesPage() {
                         <DropdownMenuContent align="end">
                             <DropdownMenuLabel>Actions</DropdownMenuLabel>
                             <DropdownMenuItem onSelect={() => setViewingSale(sale)}>
-                                <FileText className="mr-2 h-4 w-4"/>
-                                View Details
+                                <Printer className="mr-2 h-4 w-4"/>
+                                View / Print
                             </DropdownMenuItem>
                             <DropdownMenuSeparator />
                             <DropdownMenuItem onSelect={() => handleEditClick(sale)} disabled={sale.status === 'posted'}>
                                 <Edit className="mr-2 h-4 w-4"/>
                                 Edit
                             </DropdownMenuItem>
-                            {sale.status === 'draft' && (
-                                <DropdownMenuItem onSelect={() => handlePostSale(sale.id)}>
-                                    <CheckCircle className="mr-2 h-4 w-4" />
-                                    Post to Ledger
-                                </DropdownMenuItem>
-                            )}
-                            {sale.status === 'posted' && (
-                                <DropdownMenuItem onSelect={() => handleUnpostSale(sale.id)}>
-                                    <Undo2 className="mr-2 h-4 w-4" />
-                                    Unpost
-                                </DropdownMenuItem>
-                            )}
                             <DropdownMenuSeparator />
                             <DropdownMenuItem
                             onSelect={() => handleDelete(sale)}
@@ -312,7 +301,7 @@ export default function SalesPage() {
             <div className="mt-4">
               <NewSaleForm 
                   initialData={editingSale} 
-                  onSuccess={handleFormSuccess}
+                  onSuccess={() => setActiveTab("history")}
               />
             </div>
         </TabsContent>

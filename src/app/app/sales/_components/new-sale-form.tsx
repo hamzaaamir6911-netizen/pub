@@ -117,7 +117,8 @@ export function NewSaleForm({ initialData, onSuccess }: { initialData?: Sale | n
             setOverallDiscount(initialData.discount || 0);
             setSaleDate(new Date(initialData.date));
         } else {
-            clearForm();
+            // This is for new sales, clear the form.
+             clearForm();
         }
     }, [initialData]);
 
