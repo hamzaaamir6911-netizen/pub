@@ -1,8 +1,8 @@
 
 "use client";
 
-import { useState, useMemo } from "react";
-import { MoreHorizontal, Trash2, CheckCircle, FileText, Undo2, Edit, Printer, PlusCircle } from "lucide-react";
+import { useState, useMemo, useEffect } from "react";
+import { MoreHorizontal, Trash2, CheckCircle, FileText, Undo2, Edit, Printer } from "lucide-react";
 import {
   Table,
   TableBody,
@@ -28,6 +28,7 @@ import { Badge } from "@/components/ui/badge";
 import { useCollection, useFirestore, useMemoFirebase, useUser } from "@/firebase";
 import { collection, orderBy, query } from "firebase/firestore";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { NewSaleForm } from "./_components/new-sale-form";
 
 
@@ -158,7 +159,7 @@ export default function SalesPage() {
   
   const sales = salesData || [];
   
-  const [isFormOpen, setIsFormOpen] = useState(false);
+  const [activeTab, setActiveTab] = useState("history");
   const [editingSale, setEditingSale] = useState<Sale | null>(null);
   const [viewingSale, setViewingSale] = useState<Sale | null>(null);
 
@@ -192,125 +193,131 @@ export default function SalesPage() {
 
   const handleEditClick = (sale: Sale) => {
     setEditingSale(sale);
-    setIsFormOpen(true);
+    setActiveTab("new");
   };
 
-  const handleCreateClick = () => {
+  const handleFormSuccess = () => {
     setEditingSale(null);
-    setIsFormOpen(true);
+    setActiveTab("history");
   }
 
-  const handleFormSuccess = () => {
-    setIsFormOpen(false);
-    setEditingSale(null);
-  }
+  useEffect(() => {
+    if (activeTab === "history") {
+      setEditingSale(null);
+    }
+  }, [activeTab]);
 
   return (
     <>
       <PageHeader
         title="Sales"
         description="Record new sales and view sales history."
-      >
-        <Button onClick={handleCreateClick}>
-            <PlusCircle className="mr-2 h-4 w-4" />
-            Create New Sale
-        </Button>
-      </PageHeader>
+      />
 
-      <Dialog open={isFormOpen} onOpenChange={setIsFormOpen}>
-        <DialogContent className="max-w-6xl">
-           <NewSaleForm 
-                initialData={editingSale} 
-                onSuccess={handleFormSuccess}
-            />
-        </DialogContent>
-      </Dialog>
-      
-      <div className="rounded-lg border shadow-sm mt-8 overflow-x-auto">
-        <Table>
-        <TableHeader>
-            <TableRow>
-            <TableHead>Sale ID</TableHead>
-            <TableHead>Customer</TableHead>
-            <TableHead>Date</TableHead>
-            <TableHead>Status</TableHead>
-            <TableHead className="text-right">Total Amount</TableHead>
-            <TableHead>
-                <span className="sr-only">Actions</span>
-            </TableHead>
-            </TableRow>
-        </TableHeader>
-        <TableBody>
-            {isSalesLoading || isDataLoading ? (
+      <Tabs value={activeTab} onValueChange={setActiveTab}>
+        <TabsList className="grid w-full grid-cols-2">
+          <TabsTrigger value="history">Sales History</TabsTrigger>
+          <TabsTrigger value="new">
+            {editingSale ? 'Edit Sale' : 'New Sale'}
+          </TabsTrigger>
+        </TabsList>
+        <TabsContent value="history">
+          <div className="rounded-lg border shadow-sm mt-8 overflow-x-auto">
+            <Table>
+            <TableHeader>
                 <TableRow>
-                    <TableCell colSpan={6} className="text-center h-24">Loading sales...</TableCell>
+                <TableHead>Sale ID</TableHead>
+                <TableHead>Customer</TableHead>
+                <TableHead>Date</TableHead>
+                <TableHead>Status</TableHead>
+                <TableHead className="text-right">Total Amount</TableHead>
+                <TableHead>
+                    <span className="sr-only">Actions</span>
+                </TableHead>
                 </TableRow>
-            ) : sortedSales.length === 0 ? (
-            <TableRow>
-                <TableCell colSpan={6} className="text-center h-24">No sales recorded.</TableCell>
-            </TableRow>
-            ) : (
-            sortedSales.map((sale) => (
-                <TableRow key={sale.id}>
-                <TableCell className="font-medium">{sale.id}</TableCell>
-                <TableCell>{sale.customerName}</TableCell>
-                <TableCell>{formatDate(sale.date)}</TableCell>
-                    <TableCell>
-                    <Badge variant={sale.status === 'posted' ? 'default' : 'secondary'}>
-                        {sale.status}
-                    </Badge>
+            </TableHeader>
+            <TableBody>
+                {isSalesLoading || isDataLoading ? (
+                    <TableRow>
+                        <TableCell colSpan={6} className="text-center h-24">Loading sales...</TableCell>
+                    </TableRow>
+                ) : sortedSales.length === 0 ? (
+                <TableRow>
+                    <TableCell colSpan={6} className="text-center h-24">No sales recorded.</TableCell>
+                </TableRow>
+                ) : (
+                sortedSales.map((sale) => (
+                    <TableRow key={sale.id}>
+                    <TableCell className="font-medium">{sale.id}</TableCell>
+                    <TableCell>{sale.customerName}</TableCell>
+                    <TableCell>{formatDate(sale.date)}</TableCell>
+                        <TableCell>
+                        <Badge variant={sale.status === 'posted' ? 'default' : 'secondary'}>
+                            {sale.status}
+                        </Badge>
+                        </TableCell>
+                    <TableCell className="text-right">
+                        {formatCurrency(sale.total)}
                     </TableCell>
-                <TableCell className="text-right">
-                    {formatCurrency(sale.total)}
-                </TableCell>
-                <TableCell>
-                    <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
-                        <Button aria-haspopup="true" size="icon" variant="ghost">
-                        <MoreHorizontal className="h-4 w-4" />
-                        <span className="sr-only">Toggle menu</span>
-                        </Button>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent align="end">
-                        <DropdownMenuLabel>Actions</DropdownMenuLabel>
-                        <DropdownMenuItem onSelect={() => setViewingSale(sale)}>
-                            <FileText className="mr-2 h-4 w-4"/>
-                            View Details
-                        </DropdownMenuItem>
-                        <DropdownMenuSeparator />
-                        <DropdownMenuItem onSelect={() => handleEditClick(sale)} disabled={sale.status === 'posted'}>
-                            <Edit className="mr-2 h-4 w-4"/>
-                            Edit
-                        </DropdownMenuItem>
-                        {sale.status === 'draft' && (
-                            <DropdownMenuItem onSelect={() => handlePostSale(sale.id)}>
-                                <CheckCircle className="mr-2 h-4 w-4" />
-                                Post to Ledger
+                    <TableCell>
+                        <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                            <Button aria-haspopup="true" size="icon" variant="ghost">
+                            <MoreHorizontal className="h-4 w-4" />
+                            <span className="sr-only">Toggle menu</span>
+                            </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end">
+                            <DropdownMenuLabel>Actions</DropdownMenuLabel>
+                            <DropdownMenuItem onSelect={() => setViewingSale(sale)}>
+                                <FileText className="mr-2 h-4 w-4"/>
+                                View Details
                             </DropdownMenuItem>
-                        )}
-                        {sale.status === 'posted' && (
-                            <DropdownMenuItem onSelect={() => handleUnpostSale(sale.id)}>
-                                <Undo2 className="mr-2 h-4 w-4" />
-                                Unpost
+                            <DropdownMenuSeparator />
+                            <DropdownMenuItem onSelect={() => handleEditClick(sale)} disabled={sale.status === 'posted'}>
+                                <Edit className="mr-2 h-4 w-4"/>
+                                Edit
                             </DropdownMenuItem>
-                        )}
-                        <DropdownMenuSeparator />
-                        <DropdownMenuItem
-                        onSelect={() => handleDelete(sale)}
-                        className="text-red-500 focus:bg-red-500/10 focus:text-red-500"
-                        >
-                        <Trash2 className="mr-2 h-4 w-4"/>
-                        Delete
-                        </DropdownMenuItem>
-                    </DropdownMenuContent>
-                    </DropdownMenu>
-                </TableCell>
-                </TableRow>
-            ))
-            )}
-        </TableBody>
-        </Table>
-    </div>
+                            {sale.status === 'draft' && (
+                                <DropdownMenuItem onSelect={() => handlePostSale(sale.id)}>
+                                    <CheckCircle className="mr-2 h-4 w-4" />
+                                    Post to Ledger
+                                </DropdownMenuItem>
+                            )}
+                            {sale.status === 'posted' && (
+                                <DropdownMenuItem onSelect={() => handleUnpostSale(sale.id)}>
+                                    <Undo2 className="mr-2 h-4 w-4" />
+                                    Unpost
+                                </DropdownMenuItem>
+                            )}
+                            <DropdownMenuSeparator />
+                            <DropdownMenuItem
+                            onSelect={() => handleDelete(sale)}
+                            className="text-red-500 focus:bg-red-500/10 focus:text-red-500"
+                            >
+                            <Trash2 className="mr-2 h-4 w-4"/>
+                            Delete
+                            </DropdownMenuItem>
+                        </DropdownMenuContent>
+                        </DropdownMenu>
+                    </TableCell>
+                    </TableRow>
+                ))
+                )}
+            </TableBody>
+            </Table>
+          </div>
+        </TabsContent>
+        <TabsContent value="new">
+            <div className="mt-4">
+              <NewSaleForm 
+                  initialData={editingSale} 
+                  onSuccess={handleFormSuccess}
+              />
+            </div>
+        </TabsContent>
+      </Tabs>
+
 
       {viewingSale && (
           <SaleDetailsView 

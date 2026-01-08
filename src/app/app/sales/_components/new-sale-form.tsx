@@ -242,8 +242,7 @@ export function NewSaleForm({ initialData, onSuccess }: { initialData?: Sale | n
     }));
 
     return (
-        <>
-         <Card className="shadow-none border-none">
+        <Card>
             <CardHeader className="flex flex-row items-center justify-between">
                 <CardTitle>{isEditMode ? `Edit Sale ${initialData?.id}` : 'Create New Sale'}</CardTitle>
                  {!isEditMode && (
@@ -400,6 +399,5 @@ export function NewSaleForm({ initialData, onSuccess }: { initialData?: Sale | n
                 <Button onClick={handleSave}>{isEditMode ? 'Update Sale' : 'Save Draft'}</Button>
             </CardFooter>
         </Card>
-        </>
     )
 }
