@@ -3,7 +3,6 @@
 
 import { AppHeader } from "@/components/app-header";
 import { useUser } from "@/firebase";
-import { DataProvider } from "@/firebase/data/data-provider";
 import { useRouter } from "next/navigation";
 import { useEffect } from "react";
 
@@ -50,8 +49,6 @@ export default function AppLayout({
   children: React.ReactNode;
 }) {
   return (
-    <DataProvider>
-      <AppContent>{children}</AppContent>
-    </DataProvider>
+    <AppContent>{children}</AppContent>
   );
 }

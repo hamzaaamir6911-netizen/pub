@@ -1,7 +1,7 @@
 
 'use client';
 
-import { useEffect, useState, useMemo } from 'react';
+import { useEffect, useMemo } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { useCollection, useFirestore, useMemoFirebase, useUser } from '@/firebase';
 import type { Sale } from '@/lib/types';
@@ -16,12 +16,9 @@ function SalesReportPage() {
   const searchParams = useSearchParams();
   
   const ids = searchParams.get('ids');
-  const fromDateStr = searchParams.get('from');
-  const toDateStr = searchParams.get('to');
-
   const shouldFetch = !!user;
 
-  // This query is now simpler. It just gets all sales. Filtering happens client-side.
+  // Fetch all sales. Filtering will happen client-side.
   const salesCol = useMemoFirebase(() => {
     if (!shouldFetch) return null;
     return query(collection(firestore, 'sales'), orderBy('date', 'desc'));
@@ -32,29 +29,14 @@ function SalesReportPage() {
   const filteredSales = useMemo(() => {
     if (!sales) return [];
     
-    // The date is already a Date object because of the updated DataProvider
-    let analyzedSales = sales;
-
     if (ids) {
         const selectedIds = new Set(ids.split(','));
-        return analyzedSales.filter(sale => selectedIds.has(sale.id));
+        return sales.filter(sale => selectedIds.has(sale.id));
     }
     
-    if (fromDateStr) {
-        const fromDate = new Date(fromDateStr);
-        const toDate = toDateStr ? new Date(toDateStr) : fromDate;
-        
-        const startOfDay = new Date(fromDate.setHours(0, 0, 0, 0));
-        const endOfDay = new Date(toDate.setHours(23, 59, 59, 999));
-
-        return analyzedSales.filter(sale => {
-            const saleDate = sale.date; // sale.date is now a Date object
-            return saleDate >= startOfDay && saleDate <= endOfDay;
-        });
-    }
-
-    return analyzedSales;
-  }, [sales, ids, fromDateStr, toDateStr]);
+    // If no IDs, print all fetched sales (or could add date logic back here safely)
+    return sales;
+  }, [sales, ids]);
 
   useEffect(() => {
     // We only print when data has finished loading AND there's something to print
@@ -83,7 +65,7 @@ function SalesReportPage() {
         <h1 className="text-3xl font-bold font-headline mb-1">ARCO Aluminium Company</h1>
         <h2 className="text-2xl font-semibold">Sales Report</h2>
         <p className="text-muted-foreground">
-            {fromDateStr ? `From: ${formatDate(new Date(fromDateStr))} To: ${formatDate(new Date(toDateStr || fromDateStr))}` : 'Report for selected sales'}
+            Report for selected sales
         </p>
       </div>
 

@@ -46,6 +46,7 @@ import { useData } from "@/firebase/data/data-provider";
 import { Badge } from "@/components/ui/badge";
 import { useCollection, useFirestore, useMemoFirebase, useUser } from "@/firebase";
 import { collection, orderBy, query } from "firebase/firestore";
+import { Checkbox } from "@/components/ui/checkbox";
 
 
 function DeliveryChallan({ sale }: { sale: Sale }) {
@@ -510,6 +511,7 @@ export default function SalesPage() {
   const { addSale, updateSale, deleteSale, postSale, unpostSale } = useData();
   const firestore = useFirestore();
   const { user } = useUser();
+  const { toast } = useToast();
   const shouldFetch = !!user;
 
   const salesCol = useMemoFirebase(() => shouldFetch ? query(collection(firestore, 'sales'), orderBy('date', 'desc')) : null, [firestore, shouldFetch]);
@@ -525,6 +527,7 @@ export default function SalesPage() {
   const [selectedSale, setSelectedSale] = useState<Sale | null>(null);
   const [selectedChallan, setSelectedChallan] = useState<Sale | null>(null);
   const [editingSale, setEditingSale] = useState<Sale | null>(null);
+  const [selectedRows, setSelectedRows] = useState<Set<string>>(new Set());
 
   const sortedSales = [...sales].sort((a, b) => {
     const numA = parseInt(a.id.split('-')[1] || '0', 10);
@@ -536,6 +539,44 @@ export default function SalesPage() {
     
     return new Date(b.date).getTime() - new Date(a.date).getTime();
   });
+
+  const handlePrintSelected = () => {
+    if (selectedRows.size === 0) {
+      toast({
+        variant: "destructive",
+        title: "No Sales Selected",
+        description: "Please select at least one sale to print a report.",
+      });
+      return;
+    }
+    const ids = Array.from(selectedRows).join(',');
+    const printWindow = window.open(`/print/sales-report?ids=${ids}`, '_blank', 'noopener,noreferrer');
+     if (!printWindow) {
+      toast({
+        variant: "destructive",
+        title: "Print Failed",
+        description: "Please allow pop-ups for this site to print reports."
+      });
+    }
+  };
+
+  const handleSelectRow = (id: string) => {
+    const newSelectedRows = new Set(selectedRows);
+    if (newSelectedRows.has(id)) {
+      newSelectedRows.delete(id);
+    } else {
+      newSelectedRows.add(id);
+    }
+    setSelectedRows(newSelectedRows);
+  };
+
+  const handleSelectAll = () => {
+    if (selectedRows.size === sortedSales.length) {
+      setSelectedRows(new Set());
+    } else {
+      setSelectedRows(new Set(sortedSales.map(s => s.id)));
+    }
+  };
   
   const handleDelete = (sale: Sale) => {
     deleteSale(sale, transactions);
@@ -578,7 +619,12 @@ export default function SalesPage() {
       <PageHeader
         title="Sales"
         description="Record new sales and view sales history."
-      />
+      >
+        <Button onClick={handlePrintSelected} disabled={selectedRows.size === 0}>
+            <Printer className="mr-2 h-4 w-4" />
+            Print Selected
+        </Button>
+      </PageHeader>
       <Tabs value={activeTab} onValueChange={setActiveTab}>
         <TabsList className="w-full sm:w-auto grid grid-cols-2 no-print">
           <TabsTrigger value="history">Sales History</TabsTrigger>
@@ -589,6 +635,13 @@ export default function SalesPage() {
             <Table>
               <TableHeader>
                 <TableRow>
+                  <TableHead className="w-[50px]">
+                    <Checkbox
+                        checked={selectedRows.size > 0 && selectedRows.size === sortedSales.length}
+                        onCheckedChange={handleSelectAll}
+                        aria-label="Select all rows"
+                    />
+                  </TableHead>
                   <TableHead>Sale ID</TableHead>
                   <TableHead>Customer</TableHead>
                   <TableHead>Date</TableHead>
@@ -602,11 +655,18 @@ export default function SalesPage() {
               <TableBody>
                 {sortedSales.length === 0 ? (
                   <TableRow>
-                    <TableCell colSpan={6} className="text-center h-24">No sales recorded in this date range.</TableCell>
+                    <TableCell colSpan={7} className="text-center h-24">No sales recorded in this date range.</TableCell>
                   </TableRow>
                 ) : (
                   sortedSales.map((sale) => (
-                    <TableRow key={sale.id}>
+                    <TableRow key={sale.id} data-state={selectedRows.has(sale.id) && "selected"}>
+                      <TableCell>
+                         <Checkbox
+                            checked={selectedRows.has(sale.id)}
+                            onCheckedChange={() => handleSelectRow(sale.id)}
+                            aria-label={`Select row ${sale.id}`}
+                        />
+                      </TableCell>
                       <TableCell className="font-medium">{sale.id}</TableCell>
                       <TableCell>{sale.customerName}</TableCell>
                       <TableCell>{formatDate(sale.date)}</TableCell>
