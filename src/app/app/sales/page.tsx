@@ -3,7 +3,7 @@
 "use client";
 
 import { useState, useRef, useEffect } from "react";
-import { MoreHorizontal, PlusCircle, Trash2, RotateCcw, FileText, CheckCircle, Edit, Calendar as CalendarIcon, Undo2, Printer, Truck } from "lucide-react";
+import { MoreHorizontal, PlusCircle, Trash2, RotateCcw, FileText, CheckCircle, Edit, Calendar as CalendarIcon, Undo2, Printer, Truck, X } from "lucide-react";
 import {
   Table,
   TableBody,
@@ -27,6 +27,9 @@ import {
   DropdownMenuLabel,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
+import { Calendar } from "@/components/ui/calendar"
+import type { DateRange } from "react-day-picker"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   Select,
@@ -47,6 +50,7 @@ import { useData } from "@/firebase/data/data-provider";
 import { Badge } from "@/components/ui/badge";
 import { useCollection, useFirestore, useMemoFirebase, useUser } from "@/firebase";
 import { collection, orderBy, query } from "firebase/firestore";
+import { addDays, format } from "date-fns";
 
 
 function DeliveryChallan({ sale }: { sale: Sale }) {
@@ -526,9 +530,19 @@ export default function SalesPage() {
   const [selectedSale, setSelectedSale] = useState<Sale | null>(null);
   const [selectedChallan, setSelectedChallan] = useState<Sale | null>(null);
   const [editingSale, setEditingSale] = useState<Sale | null>(null);
+  const [date, setDate] = useState<DateRange | undefined>({
+    from: addDays(new Date(), -30),
+    to: new Date(),
+  });
   const { toast } = useToast();
 
-  const sortedSales = [...sales].sort((a, b) => {
+  const filteredSales = sales.filter(sale => {
+    if (!date?.from || !date?.to) return true;
+    const saleDate = new Date(sale.date);
+    return saleDate >= date.from && saleDate <= date.to;
+  });
+
+  const sortedSales = [...filteredSales].sort((a, b) => {
     const numA = parseInt(a.id.split('-')[1] || '0', 10);
     const numB = parseInt(b.id.split('-')[1] || '0', 10);
     
@@ -540,7 +554,16 @@ export default function SalesPage() {
   });
 
   const handlePrintAll = () => {
-    const printWindow = window.open('/print/sales-report', '_blank', 'noopener,noreferrer');
+    const from = date?.from?.toISOString();
+    const to = date?.to?.toISOString();
+
+    const queryParams = new URLSearchParams();
+    if (from) queryParams.append('from', from);
+    if (to) queryParams.append('to', to);
+    
+    const url = `/print/sales-report?${queryParams.toString()}`;
+
+    const printWindow = window.open(url, '_blank', 'noopener,noreferrer');
     if (!printWindow) {
       toast({
         variant: "destructive",
@@ -603,6 +626,24 @@ export default function SalesPage() {
           <TabsTrigger value="new">{editingSale ? 'Edit Sale' : 'New Sale'}</TabsTrigger>
         </TabsList>
         <TabsContent value="history">
+          <div className="flex flex-wrap items-center gap-4 my-4 p-4 bg-muted/50 rounded-lg no-print">
+             <Popover>
+                <PopoverTrigger asChild>
+                    <Button
+                        id="date"
+                        variant={"outline"}
+                        className={cn("w-full sm:w-[300px] justify-start text-left font-normal bg-background", !date && "text-muted-foreground")}
+                    >
+                        <CalendarIcon className="mr-2 h-4 w-4" />
+                        {date?.from ? (date.to ? `${format(date.from, "LLL dd, y")} - ${format(date.to, "LLL dd, y")}` : format(date.from, "LLL dd, y")) : <span>Pick a date</span>}
+                    </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-auto p-0" align="start">
+                    <Calendar initialFocus mode="range" defaultMonth={date?.from} selected={date} onSelect={setDate} numberOfMonths={2} />
+                </PopoverContent>
+            </Popover>
+             <Button variant="ghost" size="sm" onClick={() => setDate(undefined)}><X className="mr-2 h-4 w-4" /> Clear Filter</Button>
+          </div>
           <div className="rounded-lg border shadow-sm mt-4 overflow-x-auto">
             <Table>
               <TableHeader>
@@ -620,7 +661,7 @@ export default function SalesPage() {
               <TableBody>
                 {sortedSales.length === 0 ? (
                   <TableRow>
-                    <TableCell colSpan={6} className="text-center h-24">No sales recorded yet.</TableCell>
+                    <TableCell colSpan={6} className="text-center h-24">No sales recorded in this date range.</TableCell>
                   </TableRow>
                 ) : (
                   sortedSales.map((sale) => (
