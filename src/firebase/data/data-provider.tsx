@@ -3,7 +3,7 @@
 "use client";
 
 import React, { createContext, useContext, ReactNode, useEffect, useState } from 'react';
-import type { Item, Customer, Sale, Expense, Transaction, Vendor, Estimate, Labour, SalaryPayment } from '@/lib/types';
+import type { Item, Customer, Sale, Expense, Transaction, Vendor, Estimate, Labour, SalaryPayment, SaleItem } from '@/lib/types';
 import { useCollection, useFirestore, useMemoFirebase, useUser } from '@/firebase';
 import { collection, doc, writeBatch, serverTimestamp, Timestamp, query, where, getDocs, runTransaction, addDoc, getDoc, deleteDoc, updateDoc, onSnapshot, orderBy } from 'firebase/firestore';
 import { deleteDocumentNonBlocking, updateDocumentNonBlocking } from '../non-blocking-updates';
@@ -27,6 +27,7 @@ interface DataContextProps {
   updateLabour: (id: string, labour: Partial<Omit<Labour, 'id' | 'createdAt'>>) => Promise<void>;
   deleteLabour: (id: string) => Promise<void>;
   addSale: (sale: Omit<Sale, 'id' | 'total' | 'status'>) => Promise<void>;
+  addManualSale: (sale: Omit<Sale, 'id' | 'total' | 'status' | 'items' | 'discount'>) => Promise<void>;
   updateSale: (saleId: string, sale: Omit<Sale, 'id' | 'total' | 'status'>) => Promise<void>;
   postSale: (sale: Sale) => Promise<void>;
   unpostSale: (sale: Sale) => Promise<void>;
@@ -49,21 +50,21 @@ const toDate = (timestamp: any): Date => {
     if (timestamp instanceof Timestamp) {
       return timestamp.toDate();
     }
-    // If it's already a Date object, just return it.
     if (timestamp instanceof Date) {
         return timestamp;
     }
-    // Handle cases where it might be a string or number, or null/undefined
     if (timestamp && typeof timestamp.toDate === 'function') {
         return timestamp.toDate();
     }
-    // Fallback for string/number representations, though Firestore shouldn't send these.
     if (typeof timestamp === 'string' || typeof timestamp === 'number') {
-        return new Date(timestamp);
+        const d = new Date(timestamp);
+        if (!isNaN(d.getTime())) {
+            return d;
+        }
     }
-    // Return a valid date object for null/undefined or other cases to prevent crashes
     return new Date(); 
 };
+
 
 const sectionsData = [
   { name: 'D 40 (1.2mm)', ratePerKg: 1010, weightPerFt: 0.49, ratePerFt: 495 },
@@ -427,6 +428,65 @@ export const DataProvider = ({ children }: { children: ReactNode }) => {
             throw e;
         }
     };
+    
+    const addManualSale = async (manualSale: Omit<Sale, 'id' | 'total' | 'status' | 'items' | 'discount'> & { amount: number, description: string }) => {
+        if (!user) throw new Error("User not authenticated");
+
+        const counterRef = doc(firestore, 'counters', 'salesCounter');
+        const saleCollectionRef = collection(firestore, 'sales');
+
+        try {
+            await runTransaction(firestore, async (transaction) => {
+                const counterDoc = await transaction.get(counterRef);
+                
+                let newSaleNumber;
+                if (counterDoc.exists()) {
+                    newSaleNumber = (counterDoc.data().currentNumber || 0) + 1;
+                } else {
+                    newSaleNumber = 1;
+                }
+    
+                const newSaleId = `INV-${String(newSaleNumber).padStart(3, '0')}`;
+                
+                const newSaleData: Sale = {
+                    id: newSaleId,
+                    customerId: manualSale.customerId,
+                    customerName: manualSale.customerName,
+                    date: manualSale.date,
+                    total: manualSale.amount,
+                    status: 'posted' as const,
+                    items: [{
+                        itemId: 'manual',
+                        itemName: manualSale.description,
+                        quantity: 1,
+                        price: manualSale.amount,
+                        color: '',
+                        thickness: ''
+                    }] as SaleItem[],
+                    discount: 0,
+                };
+    
+                const newSaleRef = doc(saleCollectionRef, newSaleId);
+                transaction.set(newSaleRef, newSaleData);
+                transaction.set(counterRef, { currentNumber: newSaleNumber }, { merge: true });
+
+                const newTransactionRef = doc(collection(firestore, 'transactions'));
+                const transactionData: Omit<Transaction, 'id'> = {
+                    description: `Sale to ${newSaleData.customerName} (Invoice: ${newSaleId})`,
+                    amount: newSaleData.total,
+                    type: 'debit',
+                    category: 'Sale',
+                    customerId: newSaleData.customerId,
+                    customerName: newSaleData.customerName,
+                    date: newSaleData.date,
+                };
+                transaction.set(newTransactionRef, transactionData);
+            });
+        } catch (e) {
+            console.error("Manual sale transaction failed: ", e);
+            throw e;
+        }
+    };
 
 
     const updateSale = async (saleId: string, sale: Omit<Sale, 'id' | 'total' | 'status'>) => {
@@ -673,7 +733,7 @@ export const DataProvider = ({ children }: { children: ReactNode }) => {
         addCustomer, updateCustomer, deleteCustomer,
         addVendor, deleteVendor,
         addLabour, updateLabour, deleteLabour,
-        addSale, updateSale, postSale, unpostSale, deleteSale,
+        addSale, addManualSale, updateSale, postSale, unpostSale, deleteSale,
         addEstimate, deleteEstimate, createSaleFromEstimate,
         addExpense, deleteExpense,
         addTransaction, updateTransaction, deleteTransaction,

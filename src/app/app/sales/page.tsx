@@ -48,7 +48,7 @@ import { useCollection, useFirestore, useMemoFirebase, useUser } from "@/firebas
 import { collection, orderBy, query } from "firebase/firestore";
 import { Checkbox } from "@/components/ui/checkbox";
 
-function ManualInvoiceForm({ onTransactionAdded, onOpenChange }: { onTransactionAdded: (newTransaction: Omit<Transaction, 'id'>) => Promise<void>, onOpenChange: (open: boolean) => void }) {
+function ManualInvoiceForm({ onManualSaleAdded, onOpenChange }: { onManualSaleAdded: (sale: Omit<Sale, 'id' | 'total' | 'status' | 'items' | 'discount'>) => Promise<void>, onOpenChange: (open: boolean) => void }) {
   const [description, setDescription] = useState('Manual Invoice Entry');
   const [amount, setAmount] = useState(0);
   const [date, setDate] = useState(new Date().toISOString().split('T')[0]);
@@ -66,28 +66,22 @@ function ManualInvoiceForm({ onTransactionAdded, onOpenChange }: { onTransaction
     const customer = customers.find(c => c.id === selectedCustomerId);
     if (!customer) return;
 
-    const newTransaction: Omit<Transaction, 'id'> = {
-      description,
-      amount,
-      type: 'debit',
-      category: 'Sale',
-      date: new Date(date),
-      customerId: selectedCustomerId,
+    const manualSale: Omit<Sale, 'id' | 'total' | 'status' | 'items' | 'discount'> & { amount: number, description: string } = {
       customerName: customer.customerName,
+      customerId: customer.id,
+      date: new Date(date),
+      amount,
+      description,
     };
 
     try {
-        await onTransactionAdded(newTransaction);
-        toast({ title: 'Manual Invoice Added!', description: `A debit of ${formatCurrency(amount)} has been recorded for ${customer.customerName}.` });
+        await onManualSaleAdded(manualSale);
+        toast({ title: 'Manual Invoice Added!', description: `A posted sale of ${formatCurrency(amount)} has been recorded for ${customer.customerName}.` });
         
-        setDescription('Manual Invoice Entry');
-        setAmount(0);
-        setDate(new Date().toISOString().split('T')[0]);
-        setSelectedCustomerId(undefined);
         onOpenChange(false);
     } catch(e) {
-        console.error("Failed to add transaction: ", e);
-        toast({ variant: 'destructive', title: 'Error', description: "Could not save the transaction." });
+        console.error("Failed to add manual sale: ", e);
+        toast({ variant: 'destructive', title: 'Error', description: "Could not save the manual sale." });
     }
   };
 
@@ -648,7 +642,7 @@ function NewSaleForm({ onSaleAdded, onSaleUpdated, initialData }: { onSaleAdded:
 }
 
 export default function SalesPage() {
-  const { addSale, updateSale, deleteSale, postSale, unpostSale, addTransaction } = useData();
+  const { addSale, updateSale, deleteSale, postSale, unpostSale, addTransaction, addManualSale } = useData();
   const firestore = useFirestore();
   const { user } = useUser();
   const { toast } = useToast();
@@ -730,6 +724,10 @@ export default function SalesPage() {
     addSale(newSale);
     setActiveTab("history");
   }
+  
+  const handleManualSaleAdded = (manualSale: Omit<Sale, 'id' | 'total' | 'status' | 'items' | 'discount'>) => {
+    addManualSale(manualSale);
+  }
 
   const handleSaleUpdated = (saleId: string, updatedSale: Omit<Sale, 'id'|'total'|'status'>) => {
     updateSale(saleId, updatedSale);
@@ -771,10 +769,6 @@ export default function SalesPage() {
       toast({ title: "Payment Received", description: `Recorded ${formatCurrency(amount)} from ${sale.customerName}.` });
   }
 
-   const handleManualTransactionAdded = async (newTransaction: Omit<Transaction, 'id'>) => {
-    await addTransaction(newTransaction);
-  }
-
   useEffect(() => {
       if (activeTab !== 'new') {
           setEditingSale(null);
@@ -792,7 +786,7 @@ export default function SalesPage() {
                 <DialogTrigger asChild>
                     <Button variant="outline">Add Manual Invoice</Button>
                 </DialogTrigger>
-                <ManualInvoiceForm onTransactionAdded={handleManualTransactionAdded} onOpenChange={setManualInvoiceModalOpen} />
+                <ManualInvoiceForm onManualSaleAdded={handleManualSaleAdded} onOpenChange={setManualInvoiceModalOpen} />
             </Dialog>
             <Button onClick={handlePrintSelected} disabled={selectedRows.size === 0}>
                 <Printer className="mr-2 h-4 w-4" />
