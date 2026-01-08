@@ -2,44 +2,40 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { useSearchParams } from 'next/navigation';
 import { useData } from '@/firebase/data/data-provider';
 import type { Sale } from '@/lib/types';
 import { formatCurrency, formatDate } from '@/lib/utils';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 
 function InvoicePrintPage({ params }: { params: { id: string } }) {
-  const { sales, customers } = useData();
+  const { sales, customers, loading } = useData();
   const [sale, setSale] = useState<Sale | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
-  const searchParams = useSearchParams();
-  const isPreview = searchParams.get('preview') === 'true';
+  const [isDataReady, setIsDataReady] = useState(false);
 
   useEffect(() => {
-    if (sales.length > 0) {
+    if (!loading && sales.length > 0) {
       const foundSale = sales.find(s => s.id === params.id);
       setSale(foundSale || null);
-      setIsLoading(false);
-    } else if (!sales.length && !isLoading) {
-      // If sales have loaded and are empty, stop loading
-      setIsLoading(false);
+      setIsDataReady(true);
     }
-  }, [sales, params.id, isLoading]);
-
+  }, [loading, sales, params.id]);
+  
   useEffect(() => {
-    if (sale && !isPreview) {
-      const timeoutId = setTimeout(() => {
-        window.print();
-        window.onafterprint = () => window.close();
-      }, 500); 
-      
-      return () => clearTimeout(timeoutId);
+    // This effect runs when isDataReady becomes true, ensuring data is loaded.
+    if (isDataReady) {
+        // A short timeout can help ensure the DOM is fully painted before printing.
+        const timeoutId = setTimeout(() => {
+            window.print();
+            window.onafterprint = () => window.close();
+        }, 100); // 100ms delay
+
+        return () => clearTimeout(timeoutId);
     }
-  }, [sale, isPreview]);
+  }, [isDataReady]);
 
   const customer = sale ? customers.find(c => c.id === sale.customerId) : null;
   
-  if (isLoading) {
+  if (!isDataReady) {
     return <div className="p-10 text-center text-lg font-semibold">Loading invoice...</div>;
   }
   

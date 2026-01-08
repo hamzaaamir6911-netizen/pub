@@ -14,7 +14,7 @@ interface DataContextProps {
   customers: Customer[];
   vendors: Vendor[];
   labourers: Labour[];
-  loading: boolean; // This will now represent loading of core data only
+  loading: boolean; // This will now represent loading of all core data
   addItem: (item: Omit<Item, 'id' | 'createdAt'>) => Promise<any>;
   deleteItem: (id: string) => Promise<void>;
   updateItemStock: (id: string, newQuantity: number) => Promise<void>;
@@ -27,7 +27,7 @@ interface DataContextProps {
   updateLabour: (id: string, labour: Partial<Omit<Labour, 'id' | 'createdAt'>>) => Promise<void>;
   deleteLabour: (id: string) => Promise<void>;
   addSale: (sale: Omit<Sale, 'id' | 'total' | 'status'>) => Promise<void>;
-  addManualSale: (sale: Omit<Sale, 'id' | 'total' | 'status' | 'items' | 'discount'>) => Promise<void>;
+  addManualSale: (sale: Omit<Sale, 'id' | 'total' | 'status' | 'items' | 'discount'> & { amount: number, description: string }) => Promise<void>;
   updateSale: (saleId: string, sale: Omit<Sale, 'id' | 'total' | 'status'>) => Promise<void>;
   postSale: (sale: Sale) => Promise<void>;
   unpostSale: (sale: Sale) => Promise<void>;
@@ -50,11 +50,11 @@ const toDate = (timestamp: any): Date | null => {
     if (!timestamp) {
         return null;
     }
-    if (timestamp instanceof Timestamp) {
-      return timestamp.toDate();
-    }
     if (timestamp instanceof Date) {
         return timestamp;
+    }
+    if (timestamp instanceof Timestamp) {
+      return timestamp.toDate();
     }
     if (timestamp && typeof timestamp.toDate === 'function') {
         return timestamp.toDate();
@@ -580,17 +580,14 @@ export const DataProvider = ({ children }: { children: ReactNode }) => {
     const unpostSale = async (sale: Sale) => {
         if (!user) throw new Error("User not authenticated");
         if (!sale) return;
-
+    
         const batch = writeBatch(firestore);
         
         const saleRef = doc(firestore, 'sales', sale.id);
         batch.update(saleRef, { status: 'draft' });
     
-        // Safely handle the date
         const saleDate = toDate(sale.date);
         if (!saleDate) {
-            // If there's no valid date on the sale, we cannot reliably find the transaction.
-            // Commit the status change and skip transaction deletion.
             await batch.commit();
             console.warn(`Could not find transaction to delete for sale ${sale.id} due to missing date.`);
             return;
@@ -607,7 +604,6 @@ export const DataProvider = ({ children }: { children: ReactNode }) => {
             const querySnapshot = await getDocs(q);
             querySnapshot.forEach((doc) => {
                 const transactionDate = toDate(doc.data().date);
-                // Only delete if transaction date matches sale date to avoid deleting wrong entries
                 if (transactionDate && transactionDate.toDateString() === saleDate.toDateString()) {
                     batch.delete(doc.ref);
                 }
