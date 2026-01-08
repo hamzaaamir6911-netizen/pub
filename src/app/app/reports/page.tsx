@@ -1,5 +1,4 @@
 
-
 "use client"
 
 import React, { useState, useMemo } from "react"
@@ -436,6 +435,14 @@ export default function ReportsPage() {
         ];
     }, [sales, expenses]);
 
+    const handlePrint = (report: string) => {
+        if (report === 'top-items') {
+            window.open('/print/top-items', '_blank');
+        } else {
+            window.print();
+        }
+    };
+
   return (
     <>
       <PageHeader
@@ -495,7 +502,7 @@ export default function ReportsPage() {
             </CardContent>
         </ReportCard>
 
-        <ReportCard title="Top Selling Items" description="Items sold the most by quantity." onPrint={() => window.print()}>
+        <ReportCard title="Top Selling Items" description="Items sold the most by quantity." onPrint={() => handlePrint('top-items')}>
             <ItemSalesReportContent />
         </ReportCard>
 
