@@ -2,7 +2,7 @@
 "use client";
 
 import { useState, useMemo } from "react";
-import { MoreHorizontal, Trash2, Edit, Printer, PlusCircle, FileText } from "lucide-react";
+import { MoreHorizontal, Trash2, Edit, Printer, PlusCircle, FileText, Upload, Undo } from "lucide-react";
 import {
   Table,
   TableBody,
@@ -225,7 +225,7 @@ function SaleDetailsView({ sale }: { sale: Sale }) {
 
 
 export default function SalesPage() {
-  const { deleteSale, loading: isDataLoading } = useData();
+  const { deleteSale, postSale, unpostSale, loading: isDataLoading } = useData();
   const firestore = useFirestore();
   const { user } = useUser();
   const shouldFetch = !!user;
@@ -339,6 +339,21 @@ export default function SalesPage() {
                                   View Details
                               </DropdownMenuItem>
                               <DropdownMenuSeparator />
+                              {sale.status === 'draft' ? (
+                                <AlertDialogTrigger asChild>
+                                  <DropdownMenuItem>
+                                      <Upload className="mr-2 h-4 w-4" />
+                                      Post to Ledger
+                                  </DropdownMenuItem>
+                                </AlertDialogTrigger>
+                               ) : (
+                                <AlertDialogTrigger asChild>
+                                  <DropdownMenuItem>
+                                      <Undo className="mr-2 h-4 w-4" />
+                                      Unpost from Ledger
+                                  </DropdownMenuItem>
+                                </AlertDialogTrigger>
+                               )}
                               <DropdownMenuItem onSelect={() => handleEditClick(sale)} disabled={sale.status === 'posted'}>
                                   <Edit className="mr-2 h-4 w-4"/>
                                   Edit
@@ -354,18 +369,45 @@ export default function SalesPage() {
                               </AlertDialogTrigger>
                           </DropdownMenuContent>
                         </DropdownMenu>
-                         <AlertDialogContent>
-                          <AlertDialogHeader>
-                            <AlertDialogTitle>Are you sure?</AlertDialogTitle>
-                            <AlertDialogDescription>
-                              This action cannot be undone. This will permanently delete the sale record {sale.id}. If the sale is 'posted', its corresponding ledger entry will also be removed.
-                            </AlertDialogDescription>
-                          </AlertDialogHeader>
-                          <AlertDialogFooter>
-                            <AlertDialogCancel>Cancel</AlertDialogCancel>
-                            <AlertDialogAction onClick={() => handleDelete(sale)}>Delete</AlertDialogAction>
-                          </AlertDialogFooter>
-                        </AlertDialogContent>
+                         {sale.status === 'draft' ? (
+                            <AlertDialogContent>
+                                <AlertDialogHeader>
+                                    <AlertDialogTitle>Post to Ledger?</AlertDialogTitle>
+                                    <AlertDialogDescription>
+                                        This will post the sale to the ledger and create a debit entry for {sale.customerName}. This action can be reversed.
+                                    </AlertDialogDescription>
+                                </AlertDialogHeader>
+                                <AlertDialogFooter>
+                                    <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                    <AlertDialogAction onClick={() => postSale(sale)}>Post</AlertDialogAction>
+                                </AlertDialogFooter>
+                            </AlertDialogContent>
+                          ) : (
+                            <AlertDialogContent>
+                              <AlertDialogHeader>
+                                <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+                                {sale.status === 'posted' ? (
+                                <AlertDialogDescription>
+                                  This action will unpost the sale from the ledger and remove the associated transaction.
+                                </AlertDialogDescription>
+                                ) : (
+                                <AlertDialogDescription>
+                                  This action cannot be undone. This will permanently delete the sale record {sale.id}.
+                                </AlertDialogDescription>
+                                )}
+                              </AlertDialogHeader>
+                              <AlertDialogFooter>
+                                <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                <AlertDialogAction onClick={() => {
+                                  if(sale.status === 'posted') {
+                                    unpostSale(sale)
+                                  } else {
+                                     handleDelete(sale)
+                                  }
+                                }}>Confirm</AlertDialogAction>
+                              </AlertDialogFooter>
+                            </AlertDialogContent>
+                          )}
                        </AlertDialog>
                     </TableCell>
                     </TableRow>
