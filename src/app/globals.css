@@ -51,23 +51,24 @@ h1, h2, h3, h4, h5, h6 {
 @media print {
     @page {
         size: A4;
-        margin: 0; /* No margins on the page itself */
+        margin: 0;
     }
 
     body {
-        visibility: hidden; /* Hide everything by default */
+        visibility: hidden !important;
         background: white !important;
-        -webkit-print-color-adjust: exact;
-        color-adjust: exact;
-        padding: 0;
-        margin: 0;
+        padding: 0 !important;
+        margin: 0 !important;
     }
     
-    .no-print, .no-print *, [data-radix-dialog-overlay] {
+    .no-print, .no-print * {
         display: none !important;
     }
 
-    /* Force dialog content itself to be visible and take up the whole screen */
+    [data-radix-dialog-overlay] {
+        display: none !important;
+    }
+    
     [data-radix-dialog-content] {
         visibility: visible !important;
         position: absolute !important;
@@ -81,30 +82,19 @@ h1, h2, h3, h4, h5, h6 {
         border: none !important;
         border-radius: 0 !important;
         box-shadow: none !important;
-        overflow: visible !important; /* Allow content to overflow for multi-page */
-        padding: 0 !important; /* Remove padding from the dialog container */
+        overflow: visible !important;
+        padding: 0 !important;
         animation: none !important;
     }
     
-    /* The area we specifically want to print */
     #printable-area, #printable-area * {
         visibility: visible !important;
     }
     
     #printable-area {
         margin: 0;
-        padding: 0; /* No padding on the direct printable area */
         width: 100%;
         height: auto;
-    }
-    
-    /* This ensures content inside the printable divs (invoice, challan) has some space */
-    #printable-invoice, #printable-challan {
-        padding: 1.5rem; 
-    }
-
-    tr, thead, tbody, tfoot, table, .break-inside-avoid {
-      break-inside: avoid-page !important;
     }
 
     body[data-print-view="invoice"] #printable-challan {

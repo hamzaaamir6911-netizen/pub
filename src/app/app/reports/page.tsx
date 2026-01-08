@@ -27,7 +27,7 @@ import { ChartConfig, ChartContainer, ChartTooltipContent } from "@/components/u
 import { useData } from "@/firebase/data/data-provider"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
 import { Button } from "@/components/ui/button"
-import { Calendar as CalendarIcon, Printer, FileText, X } from "lucide-react"
+import { Calendar as CalendarIcon, FileText, X } from "lucide-react"
 import { Calendar } from "@/components/ui/calendar"
 import { addDays, format } from "date-fns"
 import type { DateRange } from "react-day-picker"
@@ -51,52 +51,7 @@ const chartConfig = {
   },
 } satisfies ChartConfig
 
-function ReportCard({ title, description, children, printableId }: { title: string, description: string, children: React.ReactNode, printableId: string }) {
-    const handlePrint = () => {
-        const printContents = document.getElementById(printableId)?.innerHTML;
-        const originalContents = document.body.innerHTML;
-        
-        if (printContents) {
-            const printWindow = window.open('', '_blank');
-            if(printWindow) {
-                printWindow.document.write(`
-                    <html>
-                        <head>
-                            <title>${title}</title>
-                            <style>
-                                @import url('https://fonts.googleapis.com/css2?family=PT+Sans:wght@400;700&display=swap');
-                                body { 
-                                    font-family: 'PT Sans', sans-serif; 
-                                    -webkit-print-color-adjust: exact; 
-                                    color-adjust: exact;
-                                }
-                                table { width: 100%; border-collapse: collapse; }
-                                th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
-                                th { background-color: #f2f2f2; }
-                                .no-print { display: none; }
-                            </style>
-                        </head>
-                        <body>
-                            <h1>${title}</h1>
-                            <p>${description}</p>
-                            ${printContents}
-                        </body>
-                    </html>
-                `);
-                
-                document.querySelectorAll('link[rel="stylesheet"], style').forEach(node => {
-                    printWindow.document.head.appendChild(node.cloneNode(true));
-                });
-
-                setTimeout(() => {
-                    printWindow.document.close();
-                    printWindow.focus();
-                    printWindow.print();
-                    printWindow.close();
-                }, 500);
-            }
-        }
-    }
+function ReportCard({ title, description, children }: { title: string, description: string, children: React.ReactNode }) {
     
     return (
         <Card className="mt-4 break-inside-avoid">
@@ -106,14 +61,9 @@ function ReportCard({ title, description, children, printableId }: { title: stri
                         <CardTitle>{title}</CardTitle>
                         <CardDescription>{description}</CardDescription>
                     </div>
-                    <Button variant="ghost" size="icon" onClick={handlePrint} className="no-print">
-                        <Printer className="h-4 w-4" />
-                    </Button>
                 </div>
             </CardHeader>
-            <div id={printableId}>
-                {children}
-            </div>
+            {children}
         </Card>
     );
 }
@@ -161,11 +111,6 @@ function SalaryPayslip({ payment }: { payment: SalaryPayment }) {
                     </Table>
                 </div>
             </div>
-            <DialogFooter className="mt-4 flex-shrink-0 no-print">
-                <Button variant="outline" onClick={() => window.print()}>
-                    <Printer className="mr-2 h-4 w-4" /> Print / Save PDF
-                </Button>
-            </DialogFooter>
         </DialogContent>
     );
 }
@@ -419,7 +364,7 @@ export default function ReportsPage() {
       />
 
       <div className="columns-1 md:columns-2 gap-4">
-        <ReportCard title="Daily Report" description={formatDate(new Date())} printableId="daily-report-content">
+        <ReportCard title="Daily Report" description={formatDate(new Date())}>
             <CardContent>
                 <ChartContainer config={chartConfig} className="min-h-[200px] w-full">
                     <BarChart accessibilityLayer data={dailyReportData}>
@@ -435,7 +380,7 @@ export default function ReportsPage() {
             </CardContent>
         </ReportCard>
         
-        <ReportCard title="Monthly Performance" description="Revenue and expenses over recent months." printableId="monthly-report-content">
+        <ReportCard title="Monthly Performance" description="Revenue and expenses over recent months.">
             <CardContent>
                 <ChartContainer config={chartConfig} className="min-h-[300px] w-full">
                     <BarChart accessibilityLayer data={monthlyData}>
@@ -451,7 +396,7 @@ export default function ReportsPage() {
             </CardContent>
         </ReportCard>
 
-        <ReportCard title="Profit & Loss Statement" description="A summary of revenues, costs, and expenses." printableId="pl-report-content">
+        <ReportCard title="Profit & Loss Statement" description="A summary of revenues, costs, and expenses.">
             <CardContent className="space-y-4">
                 <div className="rounded-lg border p-4 grid gap-4">
                     <div className="flex justify-between">
@@ -470,11 +415,11 @@ export default function ReportsPage() {
             </CardContent>
         </ReportCard>
 
-        <ReportCard title="Ledger Report" description="View transactions within a specific date range." printableId="ledger-report-content">
+        <ReportCard title="Ledger Report" description="View transactions within a specific date range.">
             <LedgerReportContent />
         </ReportCard>
         
-        <ReportCard title="Salary Payment History" description="Review all past salary payments." printableId="salary-report-content">
+        <ReportCard title="Salary Payment History" description="Review all past salary payments.">
             <SalaryReportContent />
         </ReportCard>
       </div>

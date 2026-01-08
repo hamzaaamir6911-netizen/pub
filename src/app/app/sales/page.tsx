@@ -1,7 +1,7 @@
 
 "use client";
 
-import { useState, useMemo, useEffect } from "react";
+import { useState, useMemo } from "react";
 import { MoreHorizontal, Trash2, Edit, Printer, PlusCircle, FileText } from "lucide-react";
 import {
   Table,
@@ -83,82 +83,110 @@ function SaleDetailsView({ sale }: { sale: Sale }) {
                 </div>
             </DialogHeader>
 
-            <div id="printable-area" className="flex-grow overflow-y-auto">
+            <div id="printable-area" className="flex-grow overflow-y-auto bg-gray-50">
                 {/* INVOICE VIEW - default */}
-                <div id="printable-invoice" className="p-6">
-                    <div>
-                        <div className="text-center mb-8">
-                            <h1 className="text-3xl font-bold font-headline mb-1">ARCO Aluminium Company</h1>
-                            <h2 className="text-2xl font-semibold">INVOICE</h2>
-                            <p>B-5, PLOT 59, Industrial Estate, Hayatabad, Peshawar</p>
+                <div id="printable-invoice" className="p-8 bg-white text-black">
+                     <div className="flex justify-between items-start mb-10">
+                        <div>
+                            <h1 className="text-4xl font-bold text-gray-800">ARCO Aluminium</h1>
+                            <p className="text-sm text-gray-500">Factory Management System</p>
                         </div>
-                        <div className="grid grid-cols-2 gap-8 mb-8">
-                            <div>
-                                <h3 className="font-semibold text-gray-600 mb-1">Bill To:</h3>
-                                <p className="font-bold text-lg">{sale.customerName}</p>
+                        <div className="text-right">
+                            <h2 className="text-2xl font-semibold uppercase text-gray-500">Invoice</h2>
+                            <div className="grid grid-cols-2 gap-x-4 mt-2 text-sm">
+                                <span className="font-semibold text-gray-600">Date:</span>
+                                <span>{formatDate(sale.date)}</span>
+                                <span className="font-semibold text-gray-600">Invoice #:</span>
+                                <span>{sale.id}</span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div className="grid grid-cols-2 gap-8 mb-12">
+                        <div className="space-y-4">
+                            <div className="bg-teal-600 text-white font-bold text-sm uppercase px-4 py-2 rounded-md inline-block">From</div>
+                            <div className="text-sm text-gray-700">
+                                <p className="font-bold">ARCO Aluminium Company</p>
+                                <p>B-5, PLOT 59, Industrial Estate,</p>
+                                <p>Hayatabad, Peshawar</p>
+                                <p>+92 333 4646356</p>
+                            </div>
+                        </div>
+                        <div className="space-y-4">
+                             <div className="bg-teal-600 text-white font-bold text-sm uppercase px-4 py-2 rounded-md inline-block">To</div>
+                            <div className="text-sm text-gray-700">
+                                <p className="font-bold">{sale.customerName}</p>
                                 {customer?.address && <p>{customer.address}</p>}
                                 {customer?.phoneNumber && <p>{customer.phoneNumber}</p>}
                             </div>
-                            <div className="text-right">
-                                <p><span className="font-semibold text-gray-600">Invoice #:</span> {sale.id}</p>
-                                <p><span className="font-semibold text-gray-600">Date:</span> {formatDate(sale.date)}</p>
-                            </div>
                         </div>
-                        <Table>
-                            <TableHeader>
-                                <TableRow className="bg-gray-100">
-                                    <TableHead className="font-bold text-black">Description</TableHead>
-                                    <TableHead className="text-right font-bold text-black">Feet</TableHead>
-                                    <TableHead className="text-right font-bold text-black">Qty</TableHead>
-                                    <TableHead className="text-right font-bold text-black">Rate</TableHead>
-                                    <TableHead className="text-right font-bold text-black">Amount</TableHead>
-                                </TableRow>
-                            </TableHeader>
-                            <TableBody>
-                            {sale.items.map((item, index) => {
-                                const itemSubtotal = (item.feet || 1) * item.price * item.quantity;
-                                return (
-                                <TableRow key={index}>
-                                    <TableCell className="font-medium">{item.itemName} <span className="text-gray-500">({item.thickness} - {item.color})</span></TableCell>
-                                    <TableCell className="text-right">{item.feet ? item.feet.toFixed(2) : '-'}</TableCell>
-                                    <TableCell className="text-right">{item.quantity}</TableCell>
-                                    <TableCell className="text-right">{formatCurrency(item.price)}</TableCell>
-                                    <TableCell className="text-right font-medium">{formatCurrency(itemSubtotal)}</TableCell>
-                                </TableRow>
-                                );
-                            })}
-                            </TableBody>
-                        </Table>
-                        <div className="flex justify-end mt-6">
-                            <div className="w-full max-w-sm space-y-2">
-                                <div className="flex justify-between"><span className="text-gray-600">Subtotal</span><span>{formatCurrency(subtotal)}</span></div>
-                                <div className="flex justify-between"><span className="text-gray-600">Overall Discount ({sale.discount}%)</span><span>- {formatCurrency(overallDiscountAmount)}</span></div>
-                                <div className="flex justify-between font-bold text-lg border-t-2 border-black pt-2 mt-2"><span>Grand Total</span><span>{formatCurrency(grandTotal)}</span></div>
-                            </div>
+                    </div>
+
+
+                    <Table className="text-sm">
+                        <TableHeader>
+                            <TableRow className="bg-teal-600 hover:bg-teal-700">
+                                <TableHead className="font-bold text-white uppercase w-[50%]">Description</TableHead>
+                                <TableHead className="text-right font-bold text-white uppercase">Qty</TableHead>
+                                <TableHead className="text-right font-bold text-white uppercase">Rate</TableHead>
+                                <TableHead className="text-right font-bold text-white uppercase">Total</TableHead>
+                            </TableRow>
+                        </TableHeader>
+                        <TableBody>
+                        {sale.items.map((item, index) => {
+                            const itemTotal = (item.feet || 1) * item.price * item.quantity;
+                            return (
+                            <TableRow key={index} className="border-gray-200">
+                                <TableCell className="font-medium text-gray-800">
+                                    {item.itemName}
+                                    <span className="text-gray-500 text-xs block">
+                                        {item.thickness} - {item.color} {item.feet ? `| ${item.feet.toFixed(2)} ft` : ''}
+                                    </span>
+                                </TableCell>
+                                <TableCell className="text-right text-gray-600">{item.quantity}</TableCell>
+                                <TableCell className="text-right text-gray-600">{formatCurrency(item.price)}</TableCell>
+                                <TableCell className="text-right font-medium text-gray-800">{formatCurrency(itemTotal)}</TableCell>
+                            </TableRow>
+                            );
+                        })}
+                        </TableBody>
+                    </Table>
+
+                    <div className="flex justify-between items-start mt-8">
+                         <div className="w-1/2">
+                            <div className="bg-teal-600 text-white font-bold text-sm uppercase px-4 py-2 rounded-md inline-block">Notes</div>
+                            <p className="text-xs text-gray-500 mt-4">
+                                Thank you for your business. Please contact us for any queries regarding this invoice.
+                            </p>
+                        </div>
+                        <div className="w-full max-w-xs space-y-2 text-sm">
+                            <div className="flex justify-between text-gray-600"><span >Subtotal</span><span>{formatCurrency(subtotal)}</span></div>
+                            <div className="flex justify-between text-gray-600"><span>Overall Discount ({sale.discount}%)</span><span>- {formatCurrency(overallDiscountAmount)}</span></div>
+                            <div className="flex justify-between font-bold text-lg border-t-2 border-gray-800 pt-2 mt-2"><span>Grand Total</span><span>{formatCurrency(grandTotal)}</span></div>
                         </div>
                     </div>
                 </div>
 
                 {/* CHALLAN VIEW - hidden by default */}
-                <div id="printable-challan" className="p-6">
+                <div id="printable-challan" className="p-8 bg-white text-black">
                      <div>
-                        <div className="text-center mb-4">
-                            <h1 className="text-xl font-extrabold font-headline">ARCO Aluminium Company</h1>
-                            <p className="mt-1 text-lg font-extrabold">Delivery Challan</p>
+                        <div className="text-center mb-6">
+                            <h1 className="text-2xl font-bold font-headline">ARCO Aluminium Company</h1>
+                            <p className="mt-1 text-lg font-bold">Delivery Challan</p>
                         </div>
-                        <div className="grid grid-cols-2 gap-4 mb-4">
+                        <div className="grid grid-cols-2 gap-4 mb-6 text-sm">
                             <div>
-                                <p className="font-bold">Customer:</p>
+                                <p className="font-semibold">Customer:</p>
                                 <p>{sale.customerName}</p>
                                 {customer?.address && <p>{customer.address}</p>}
                                 {customer?.phoneNumber && <p>{customer.phoneNumber}</p>}
                             </div>
                             <div className="text-right">
-                                <p className="font-bold">Challan No: <span className="font-normal">{sale.id}</span></p>
-                                <p className="font-bold">Date: <span className="font-normal">{formatDate(sale.date)}</span></p>
+                                <p className="font-semibold">Challan No: <span className="font-normal">{sale.id}</span></p>
+                                <p className="font-semibold">Date: <span className="font-normal">{formatDate(sale.date)}</span></p>
                             </div>
                         </div>
-                        <Table>
+                        <Table className="text-sm">
                             <TableHeader>
                                 <TableRow className="bg-gray-100">
                                     <TableHead className="w-[40%] font-bold text-black">Item</TableHead>
@@ -180,9 +208,9 @@ function SaleDetailsView({ sale }: { sale: Sale }) {
                                 ))}
                             </TableBody>
                         </Table>
-                         <div className="mt-16 grid grid-cols-2 gap-4 text-center text-sm">
-                            <div className="border-t-2 border-black pt-2 font-bold"><p>Receiver's Signature</p></div>
-                            <div className="border-t-2 border-black pt-2 font-bold"><p>Driver's Signature</p></div>
+                         <div className="mt-24 grid grid-cols-2 gap-8 text-sm">
+                            <div className="border-t-2 border-black pt-2 font-semibold text-center"><p>Receiver's Signature</p></div>
+                            <div className="border-t-2 border-black pt-2 font-semibold text-center"><p>Driver's Signature</p></div>
                         </div>
                     </div>
                 </div>

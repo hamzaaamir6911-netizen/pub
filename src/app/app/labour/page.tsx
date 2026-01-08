@@ -3,7 +3,7 @@
 "use client";
 
 import { useState } from "react";
-import { MoreHorizontal, PlusCircle, Printer } from "lucide-react";
+import { MoreHorizontal, PlusCircle } from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -126,12 +126,6 @@ export default function LabourPage() {
     setModalOpen(false);
     setEditingLabourer(null);
   }
-  
-  const handlePrint = () => {
-    document.body.classList.add('printing-now');
-    window.print();
-    document.body.classList.remove('printing-now');
-  };
 
 
   return (
@@ -141,9 +135,6 @@ export default function LabourPage() {
         description="Manage your workforce information."
       >
         <div className="flex items-center gap-2 no-print">
-            <Button variant="outline" onClick={handlePrint}>
-                <Printer className="mr-2 h-4 w-4" /> Print
-            </Button>
             <Dialog open={isModalOpen} onOpenChange={setModalOpen}>
                 <DialogTrigger asChild>
                     <Button onClick={() => handleOpenModal()}>
@@ -160,10 +151,6 @@ export default function LabourPage() {
         </div>
       </PageHeader>
       <div className="rounded-lg border shadow-sm printable-area">
-        <div className="hidden print:block text-center my-6">
-            <h1 className="text-2xl font-bold font-headline">ARCO Aluminium Company</h1>
-            <p className="text-lg font-semibold mt-1">Labour Report</p>
-        </div>
         <Table>
           <TableHeader>
             <TableRow>
