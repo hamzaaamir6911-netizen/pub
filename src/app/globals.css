@@ -53,10 +53,11 @@ h1, h2, h3, h4, h5, h6 {
   body * {
     visibility: hidden;
   }
-  #printable-invoice, #printable-invoice * {
+  #printable-invoice, #printable-invoice *,
+  #printable-challan, #printable-challan * {
     visibility: visible;
   }
-  #printable-invoice {
+  #printable-invoice, #printable-challan {
     position: absolute;
     left: 0;
     top: 0;

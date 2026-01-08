@@ -27,7 +27,7 @@ import { useData } from "@/firebase/data/data-provider";
 import { Badge } from "@/components/ui/badge";
 import { useCollection, useFirestore, useMemoFirebase, useUser } from "@/firebase";
 import { collection, orderBy, query } from "firebase/firestore";
-import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
@@ -66,6 +66,91 @@ function ReceivePaymentForm({ sale, onPaymentReceived, onOpenChange }: { sale: S
     );
 }
 
+function ChallanPrintView({ saleId, onBack }: { saleId: string; onBack: () => void }) {
+    const { sales, customers, loading } = useData();
+    const sale = sales.find(s => s.id === saleId);
+    const customer = sale ? customers.find(c => c.id === sale.customerId) : null;
+
+    if (loading) {
+        return <div className="p-10 text-center text-lg font-semibold">Loading challan...</div>;
+    }
+
+    if (!sale) {
+        return <div className="p-10 text-center text-lg font-semibold">Challan not found.</div>;
+    }
+
+    return (
+        <>
+            <PageHeader title={`Challan: ${sale.id}`} description={`Delivery challan for ${sale.customerName}`}>
+                <div className="flex flex-wrap gap-2">
+                    <Button variant="outline" onClick={onBack}>
+                        <ArrowLeft className="mr-2 h-4 w-4" />
+                        Back to Sales List
+                    </Button>
+                    <Button onClick={() => window.print()}>
+                        <Printer className="mr-2 h-4 w-4" />
+                        Print Challan
+                    </Button>
+                </div>
+            </PageHeader>
+            <div id="printable-challan" className="bg-background text-foreground p-4 sm:p-8 font-sans text-sm rounded-lg border shadow-sm">
+                 <div className="text-center mb-4">
+                    <h1 className="text-4xl font-extrabold font-headline">ARCO Aluminium Company</h1>
+                    <p className="mt-1 text-3xl font-extrabold">Delivery Challan</p>
+                </div>
+                <div className="grid grid-cols-2 gap-4 mb-4">
+                    <div>
+                        <p className="font-extrabold text-2xl">Customer:</p>
+                        <p className="font-bold text-2xl">{sale.customerName}</p>
+                        <p className="font-bold text-xl">{customer?.address}</p>
+                        <p className="font-bold text-xl">{customer?.phoneNumber}</p>
+                    </div>
+                    <div className="text-right">
+                        <p className="font-extrabold text-2xl">Challan No:</p>
+                        <p className="font-bold text-2xl">{sale.id}</p>
+                        <p className="mt-2 font-extrabold text-2xl">Date:</p>
+                        <p className="font-bold text-2xl">{formatDate(sale.date)}</p>
+                    </div>
+                </div>
+                <Table>
+                    <TableHeader>
+                        <TableRow>
+                            <TableHead className="font-extrabold text-2xl w-[40%]">Item</TableHead>
+                            <TableHead className="font-extrabold text-2xl">Colour</TableHead>
+                            <TableHead className="font-extrabold text-2xl">Thickness</TableHead>
+                            <TableHead className="text-right font-extrabold text-2xl">Feet</TableHead>
+                            <TableHead className="text-right font-extrabold text-2xl">Quantity</TableHead>
+                        </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                        {sale.items.map((item, index) => (
+                            <TableRow key={index} className="font-bold text-xl">
+                                <TableCell>{item.itemName}</TableCell>
+                                <TableCell>{item.color}</TableCell>
+                                <TableCell>{item.thickness || '-'}</TableCell>
+                                <TableCell className="text-right">{item.feet ? item.feet.toFixed(2) : '-'}</TableCell>
+                                <TableCell className="text-right">{item.quantity}</TableCell>
+                            </TableRow>
+                        ))}
+                    </TableBody>
+                </Table>
+                <div className="mt-16 grid grid-cols-2 gap-4 text-center">
+                    <div className="border-t-2 border-black pt-2 font-extrabold text-2xl">
+                        <p>Receiver's Signature</p>
+                    </div>
+                    <div className="border-t-2 border-black pt-2 font-extrabold text-2xl">
+                        <p>Driver's Signature</p>
+                    </div>
+                </div>
+                <div className="mt-8 text-center text-lg text-gray-500 border-t pt-2">
+                    <p className="font-bold">Industrial Estate, Hayatabad Road B-5 PLOT 59 PESHAWAR</p>
+                    <p className="font-bold">Phone: +923334646356</p>
+                </div>
+            </div>
+        </>
+    )
+}
+
 export default function SalesPage() {
   const { customers, addTransaction, deleteSale, postSale, unpostSale, loading: isDataLoading } = useData();
   const firestore = useFirestore();
@@ -84,6 +169,7 @@ export default function SalesPage() {
   
   const [selectedSaleForPayment, setSelectedSaleForPayment] = useState<Sale | null>(null);
   const [viewingSale, setViewingSale] = useState<Sale | null>(null);
+  const [viewingChallanId, setViewingChallanId] = useState<string | null>(null);
 
   const sortedSales = useMemo(() => {
     return [...sales].sort((a, b) => {
@@ -101,7 +187,6 @@ export default function SalesPage() {
       const saleToPost = sales.find(s => s.id === saleId);
       if (saleToPost) {
         postSale(saleToPost);
-        // Refresh the viewing sale to show the updated status
         setViewingSale({ ...saleToPost, status: 'posted' });
       }
   }
@@ -110,7 +195,6 @@ export default function SalesPage() {
       const saleToUnpost = sales.find(s => s.id === saleId);
       if(saleToUnpost) {
         unpostSale(saleToUnpost);
-        // Refresh the viewing sale to show the updated status
         setViewingSale({ ...saleToUnpost, status: 'draft' });
       }
   }
@@ -132,8 +216,18 @@ export default function SalesPage() {
   };
   
   const handlePrintChallan = (saleId: string) => {
-    window.open(`/print/challan/${saleId}`, '_blank');
+    setViewingSale(null);
+    setViewingChallanId(saleId);
   };
+
+  const handleBackToSalesList = () => {
+    setViewingSale(null);
+    setViewingChallanId(null);
+  }
+
+  if (viewingChallanId) {
+    return <ChallanPrintView saleId={viewingChallanId} onBack={handleBackToSalesList} />
+  }
 
   if (viewingSale) {
     const customerForInvoice = customers.find(c => c.id === viewingSale.customerId);
@@ -143,7 +237,7 @@ export default function SalesPage() {
                 title={`Invoice: ${viewingSale.id}`}
                 description={`Details for invoice sent to ${viewingSale.customerName}`}
             >
-                <div className="flex flex-wrap gap-2">
+                <div className="flex flex-wrap gap-2 print-hidden">
                     <Button variant="outline" onClick={() => setViewingSale(null)}>
                         <ArrowLeft className="mr-2 h-4 w-4" />
                         Back to Sales List
