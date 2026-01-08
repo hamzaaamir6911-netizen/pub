@@ -48,6 +48,93 @@ import { useCollection, useFirestore, useMemoFirebase, useUser } from "@/firebas
 import { collection, orderBy, query } from "firebase/firestore";
 import { Checkbox } from "@/components/ui/checkbox";
 
+function ManualInvoiceForm({ onTransactionAdded, onOpenChange }: { onTransactionAdded: (newTransaction: Omit<Transaction, 'id'>) => Promise<void>, onOpenChange: (open: boolean) => void }) {
+  const [description, setDescription] = useState('Manual Invoice Entry');
+  const [amount, setAmount] = useState(0);
+  const [date, setDate] = useState(new Date().toISOString().split('T')[0]);
+  const [selectedCustomerId, setSelectedCustomerId] = useState<string | undefined>(undefined);
+  const { customers } = useData();
+  const { toast } = useToast();
+
+  const handleSubmit = async (event: FormEvent) => {
+    event.preventDefault(); 
+    if (!selectedCustomerId || amount <= 0 || !date) {
+      toast({ variant: 'destructive', title: 'Please select a customer and enter a valid amount.' });
+      return;
+    }
+    
+    const customer = customers.find(c => c.id === selectedCustomerId);
+    if (!customer) return;
+
+    const newTransaction: Omit<Transaction, 'id'> = {
+      description,
+      amount,
+      type: 'debit',
+      category: 'Sale',
+      date: new Date(date),
+      customerId: selectedCustomerId,
+      customerName: customer.customerName,
+    };
+
+    try {
+        await onTransactionAdded(newTransaction);
+        toast({ title: 'Manual Invoice Added!', description: `A debit of ${formatCurrency(amount)} has been recorded for ${customer.customerName}.` });
+        
+        setDescription('Manual Invoice Entry');
+        setAmount(0);
+        setDate(new Date().toISOString().split('T')[0]);
+        setSelectedCustomerId(undefined);
+        onOpenChange(false);
+    } catch(e) {
+        console.error("Failed to add transaction: ", e);
+        toast({ variant: 'destructive', title: 'Error', description: "Could not save the transaction." });
+    }
+  };
+
+  return (
+    <DialogContent>
+      <DialogHeader>
+        <DialogTitle>Add Manual Invoice / Debit Entry</DialogTitle>
+      </DialogHeader>
+      <form onSubmit={handleSubmit}>
+        <div className="space-y-4 py-4">
+           <div className="space-y-2">
+              <Label htmlFor="customer">Customer</Label>
+              <Select onValueChange={setSelectedCustomerId} value={selectedCustomerId}>
+                  <SelectTrigger id="customer">
+                      <SelectValue placeholder="Select a customer" />
+                  </SelectTrigger>
+                  <SelectContent>
+                      {customers.map(c => <SelectItem key={c.id} value={c.id}>{c.customerName}</SelectItem>)}
+                  </SelectContent>
+              </Select>
+          </div>
+           <div className="space-y-2">
+            <Label htmlFor="date">Invoice Date</Label>
+            <Input id="date" type="date" value={date} onChange={(e) => setDate(e.target.value)} />
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="amount">Total Amount</Label>
+            <Input id="amount" type="number" value={amount} onChange={(e) => setAmount(parseFloat(e.target.value) || 0)} placeholder="Amount in PKR"/>
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="description">Description</Label>
+            <Input 
+              id="description" 
+              value={description} 
+              onChange={(e) => setDescription(e.target.value)} 
+            />
+          </div>
+        </div>
+        <DialogFooter>
+          <Button type="submit">Add Entry</Button>
+        </DialogFooter>
+      </form>
+    </DialogContent>
+  );
+}
+
+
 function ReceivePaymentForm({ sale, onPaymentReceived, onOpenChange }: { sale: Sale, onPaymentReceived: (sale: Sale, amount: number, date: Date) => void, onOpenChange: (open: boolean) => void }) {
     const [amount, setAmount] = useState(sale.total);
     const [date, setDate] = useState(new Date());
@@ -583,6 +670,7 @@ export default function SalesPage() {
   const [selectedRows, setSelectedRows] = useState<Set<string>>(new Set());
   const [paymentSale, setPaymentSale] = useState<Sale | null>(null);
   const [isPaymentModalOpen, setPaymentModalOpen] = useState(false);
+  const [isManualInvoiceModalOpen, setManualInvoiceModalOpen] = useState(false);
 
 
   const sortedSales = [...sales].sort((a, b) => {
@@ -683,6 +771,10 @@ export default function SalesPage() {
       toast({ title: "Payment Received", description: `Recorded ${formatCurrency(amount)} from ${sale.customerName}.` });
   }
 
+   const handleManualTransactionAdded = async (newTransaction: Omit<Transaction, 'id'>) => {
+    await addTransaction(newTransaction);
+  }
+
   useEffect(() => {
       if (activeTab !== 'new') {
           setEditingSale(null);
@@ -695,10 +787,18 @@ export default function SalesPage() {
         title="Sales"
         description="Record new sales and view sales history."
       >
-        <Button onClick={handlePrintSelected} disabled={selectedRows.size === 0}>
-            <Printer className="mr-2 h-4 w-4" />
-            Print Selected
-        </Button>
+        <div className="flex items-center gap-2">
+            <Dialog open={isManualInvoiceModalOpen} onOpenChange={setManualInvoiceModalOpen}>
+                <DialogTrigger asChild>
+                    <Button variant="outline">Add Manual Invoice</Button>
+                </DialogTrigger>
+                <ManualInvoiceForm onTransactionAdded={handleManualTransactionAdded} onOpenChange={setManualInvoiceModalOpen} />
+            </Dialog>
+            <Button onClick={handlePrintSelected} disabled={selectedRows.size === 0}>
+                <Printer className="mr-2 h-4 w-4" />
+                Print Selected
+            </Button>
+        </div>
       </PageHeader>
       <Tabs value={activeTab} onValueChange={setActiveTab}>
         <TabsList className="w-full sm:w-auto grid grid-cols-2 no-print">
