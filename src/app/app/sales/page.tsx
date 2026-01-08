@@ -601,13 +601,13 @@ export default function SalesPage() {
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end">
                             <DropdownMenuLabel>Actions</DropdownMenuLabel>
+                            <DropdownMenuItem onSelect={() => handlePrint(sale.id, 'challan')}>
+                                <FileText className="mr-2 h-4 w-4"/>
+                                Print Challan
+                            </DropdownMenuItem>
                             <DropdownMenuItem onSelect={() => handlePrint(sale.id, 'invoice')}>
                                 <Printer className="mr-2 h-4 w-4"/>
                                 Print Invoice
-                            </DropdownMenuItem>
-                             <DropdownMenuItem onSelect={() => handlePrint(sale.id, 'challan')}>
-                                <FileText className="mr-2 h-4 w-4"/>
-                                Print Challan
                             </DropdownMenuItem>
                              <DropdownMenuItem onSelect={() => setSelectedSaleForPayment(sale)} disabled={sale.status !== 'posted'}>
                                 <DollarSign className="mr-2 h-4 w-4" />
