@@ -93,7 +93,7 @@ function AddCustomerForm({ onCustomerAdded, onOpenChange }: { onCustomerAdded: (
 }
 
 
-export function NewSaleForm({ initialData, onSuccess }: { initialData?: Sale | null; onSuccess: () => void; }) {
+export function NewSaleForm({ initialData, onSaleAdded, onSaleUpdated }: { initialData?: Sale | null; onSaleAdded: () => void; onSaleUpdated: () => void; }) {
     const { toast } = useToast();
     const { customers, items: allItems, addCustomer, addSale, updateSale } = useData();
     
@@ -216,11 +216,12 @@ export function NewSaleForm({ initialData, onSuccess }: { initialData?: Sale | n
         if (isEditMode && initialData) {
             await updateSale(initialData.id, saleData);
             toast({ title: "Sale Updated!", description: `Sale ${initialData.id} has been updated.` });
+            onSaleUpdated();
         } else {
             await addSale(saleData);
             toast({ title: "Sale Draft Saved!", description: `Sale has been saved as a draft.` });
+            onSaleAdded();
         }
-        onSuccess();
     }
     
     const handleCustomerAdded = async (newCustomer: Omit<Customer, 'id'| 'createdAt'>) => {
@@ -236,8 +237,7 @@ export function NewSaleForm({ initialData, onSuccess }: { initialData?: Sale | n
     }));
 
     return (
-      <DialogContent className="max-w-6xl">
-        <Card className="border-0 shadow-none">
+        <Card>
             <CardHeader className="flex flex-row items-center justify-between">
                 <CardTitle>{isEditMode ? `Edit Sale ${initialData?.id}` : 'Create New Sale'}</CardTitle>
                  {!isEditMode && (
@@ -394,6 +394,5 @@ export function NewSaleForm({ initialData, onSuccess }: { initialData?: Sale | n
                 <Button onClick={handleSave}>{isEditMode ? 'Update Sale' : 'Save Draft'}</Button>
             </CardFooter>
         </Card>
-      </DialogContent>
     )
 }

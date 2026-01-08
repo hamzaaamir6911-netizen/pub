@@ -49,10 +49,10 @@ h1, h2, h3, h4, h5, h6 {
 }
 
 @media print {
-    body.printing-now {
+    body {
         background: white !important;
         color: black !important;
-        visibility: hidden !important;
+        visibility: hidden;
     }
 
     .no-print, 
@@ -60,11 +60,11 @@ h1, h2, h3, h4, h5, h6 {
         display: none !important;
     }
     
-    .printable-area, .printable-area * {
+    #printable-area, #printable-area * {
         visibility: visible !important;
     }
     
-    .printable-area {
+    #printable-area {
         position: absolute !important;
         left: 0 !important;
         top: 0 !important;
@@ -75,6 +75,7 @@ h1, h2, h3, h4, h5, h6 {
         background: white !important;
     }
     
+    /* This makes the dialog content itself take over the page */
     [data-radix-dialog-content] {
         width: 100% !important;
         max-width: none !important;
@@ -90,7 +91,7 @@ h1, h2, h3, h4, h5, h6 {
         animation: none !important;
     }
     
-    tr, thead, tbody, tfoot, table {
+    tr, thead, tbody, tfoot, table, .break-inside-avoid {
       break-inside: avoid !important;
     }
 
