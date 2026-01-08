@@ -399,7 +399,7 @@ function NewSaleForm({ onSaleAdded, onSaleUpdated, initialData }: { onSaleAdded:
                         <Input
                             id="date"
                             type="date"
-                            value={saleDate.toISOString().split('T')[0]}
+                            value={saleDate ? saleDate.toISOString().split('T')[0] : ''}
                             onChange={(e) => setSaleDate(new Date(e.target.value))}
                         />
                     </div>
@@ -800,5 +800,3 @@ export default function SalesPage() {
     </>
   );
 }
-
-    
