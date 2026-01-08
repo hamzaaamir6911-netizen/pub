@@ -45,11 +45,6 @@ function AddCustomerForm({ onCustomerAdded, onOpenChange }: { onCustomerAdded: (
     };
     await onCustomerAdded(newCustomer);
     toast({ title: 'Customer Added!', description: `${customerName} has been added.` });
-    setCustomerName('');
-    setPhoneNumber('');
-    setAddress('');
-    setOpeningBalance(0);
-    setBalanceType('debit');
     onOpenChange(false);
   };
 
@@ -117,7 +112,6 @@ export function NewSaleForm({ initialData, onSuccess }: { initialData?: Sale | n
             setOverallDiscount(initialData.discount || 0);
             setSaleDate(new Date(initialData.date));
         } else {
-            // This is for new sales, clear the form.
              clearForm();
         }
     }, [initialData]);
@@ -225,9 +219,8 @@ export function NewSaleForm({ initialData, onSuccess }: { initialData?: Sale | n
         } else {
             await addSale(saleData);
             toast({ title: "Sale Draft Saved!", description: `Sale has been saved as a draft.` });
-            clearForm();
         }
-        onSuccess();
+        onSuccess(); // Call the success callback to switch tabs
     }
     
     const handleCustomerAdded = async (newCustomer: Omit<Customer, 'id'| 'createdAt'>) => {

@@ -50,59 +50,63 @@ h1, h2, h3, h4, h5, h6 {
 
 @media print {
     body {
-        background-color: white !important;
+        background: white !important;
         color: black !important;
     }
 
-    .no-print, .no-print * {
+    .no-print, 
+    .no-print * {
         display: none !important;
     }
 
-    /* Force the dialog overlay to disappear */
-    [data-radix-dialog-overlay] {
-      display: none !important;
-    }
-
-    /* Force the dialog content to behave like a normal document */
-    [data-radix-dialog-content] {
-      position: static !important;
-      width: 100% !important;
-      max-width: 100% !important;
-      height: auto !important;
-      max-height: none !important;
-      overflow: visible !important;
-      transform: none !important;
-      animation: none !important;
-      box-shadow: none !important;
-      border: none !important;
-      padding: 0 !important;
+    /* Hide everything on the page by default */
+    body > *, body > [data-radix-portal] {
+        visibility: hidden !important;
     }
     
-    /* Make the printable area visible and everything else inside the dialog hidden */
+    /* Make only the printable area and its contents visible */
+    #printable-area, #printable-area * {
+        visibility: visible !important;
+    }
+    
+    /* Position the printable area at the top-left of the page */
     #printable-area {
-      display: block !important;
-      visibility: visible !important;
+        position: absolute !important;
+        left: 0 !important;
+        top: 0 !important;
+        width: 100% !important;
+        height: auto !important;
+        padding: 1rem !important; /* Add some padding for the print */
+        margin: 0 !important;
     }
     
-    body > *, body > [data-radix-portal] > [data-radix-dialog-overlay] + * {
-      visibility: hidden;
+    /* Ensure the dialog content itself doesn't constrain the printable area */
+    [data-radix-dialog-content] {
+        width: 100% !important;
+        max-width: none !important;
+        height: auto !important;
+        max-height: none !important;
+        overflow: visible !important;
+        box-shadow: none !important;
+        border: none !important;
+        padding: 0 !important;
+        margin: 0 !important;
+        position: static !important;
+        transform: none !important;
+        animation: none !important;
     }
     
-    [data-radix-dialog-content] #printable-area, 
-    [data-radix-dialog-content] #printable-area * {
-        visibility: visible;
+    /* Ensure table rows and headers don't break across pages */
+    tr, thead, tbody, tfoot, table {
+      break-inside: avoid !important;
     }
 
-    /* Ensure table rows don't break across pages */
-    tr, thead, tbody {
-      break-inside: avoid-page;
-    }
-
+    /* Specific view toggling for invoice/challan */
     body[data-print-view="invoice"] #printable-challan {
-        display: none;
+        display: none !important;
     }
     
     body[data-print-view="challan"] #printable-invoice {
-        display: none;
+        display: none !important;
     }
 }

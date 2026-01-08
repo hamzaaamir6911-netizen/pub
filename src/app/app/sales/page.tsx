@@ -2,7 +2,7 @@
 "use client";
 
 import { useState, useMemo, useEffect } from "react";
-import { MoreHorizontal, Trash2, Edit, Printer, PlusCircle } from "lucide-react";
+import { MoreHorizontal, Trash2, Edit, Printer, PlusCircle, FileText } from "lucide-react";
 import {
   Table,
   TableBody,
@@ -86,11 +86,27 @@ function SaleDetailsView({ sale, customer, onClose }: { sale: Sale; customer: Cu
                             </div>
                         </div>
                         <Table>
-                            <TableHeader><TableRow><TableHead className="font-bold">Description</TableHead><TableHead className="text-right font-bold">Feet</TableHead><TableHead className="text-right font-bold">Qty</TableHead><TableHead className="text-right font-bold">Rate</TableHead><TableHead className="text-right font-bold">Amount</TableHead></TableRow></TableHeader>
+                            <TableHeader>
+                                <TableRow>
+                                    <TableHead className="font-bold">Description</TableHead>
+                                    <TableHead className="text-right font-bold">Feet</TableHead>
+                                    <TableHead className="text-right font-bold">Qty</TableHead>
+                                    <TableHead className="text-right font-bold">Rate</TableHead>
+                                    <TableHead className="text-right font-bold">Amount</TableHead>
+                                </TableRow>
+                            </TableHeader>
                             <TableBody>
                             {sale.items.map((item, index) => {
                                 const itemSubtotal = (item.feet || 1) * item.price * item.quantity;
-                                return (<TableRow key={index}><TableCell className="font-medium">{item.itemName} <span className="text-gray-500">({item.thickness} - {item.color})</span></TableCell><TableCell className="text-right">{item.feet ? item.feet.toFixed(2) : '-'}</TableCell><TableCell className="text-right">{item.quantity}</TableCell><TableCell className="text-right">{formatCurrency(item.price)}</TableCell><TableCell className="text-right font-medium">{formatCurrency(itemSubtotal)}</TableCell></TableRow>);
+                                return (
+                                <TableRow key={index}>
+                                    <TableCell className="font-medium">{item.itemName} <span className="text-gray-500">({item.thickness} - {item.color})</span></TableCell>
+                                    <TableCell className="text-right">{item.feet ? item.feet.toFixed(2) : '-'}</TableCell>
+                                    <TableCell className="text-right">{item.quantity}</TableCell>
+                                    <TableCell className="text-right">{formatCurrency(item.price)}</TableCell>
+                                    <TableCell className="text-right font-medium">{formatCurrency(itemSubtotal)}</TableCell>
+                                </TableRow>
+                                );
                             })}
                             </TableBody>
                         </Table>
@@ -202,6 +218,12 @@ export default function SalesPage() {
     setActiveTab("new");
   };
 
+  const handleFormSuccess = () => {
+    setActiveTab("history");
+    setEditingSale(null); // Clear editing state on success
+  };
+
+  // When switching back to the history tab, always clear the editing state
   useEffect(() => {
     if (activeTab === "history") {
       setEditingSale(null);
@@ -271,8 +293,8 @@ export default function SalesPage() {
                         <DropdownMenuContent align="end">
                             <DropdownMenuLabel>Actions</DropdownMenuLabel>
                             <DropdownMenuItem onSelect={() => setViewingSale(sale)}>
-                                <Printer className="mr-2 h-4 w-4"/>
-                                View / Print
+                                <FileText className="mr-2 h-4 w-4"/>
+                                View Details
                             </DropdownMenuItem>
                             <DropdownMenuSeparator />
                             <DropdownMenuItem onSelect={() => handleEditClick(sale)} disabled={sale.status === 'posted'}>
@@ -301,7 +323,7 @@ export default function SalesPage() {
             <div className="mt-4">
               <NewSaleForm 
                   initialData={editingSale} 
-                  onSuccess={() => setActiveTab("history")}
+                  onSuccess={handleFormSuccess}
               />
             </div>
         </TabsContent>
