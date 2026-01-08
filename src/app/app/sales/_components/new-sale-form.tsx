@@ -220,7 +220,7 @@ export function NewSaleForm({ initialData, onSuccess }: { initialData?: Sale | n
             await addSale(saleData);
             toast({ title: "Sale Draft Saved!", description: `Sale has been saved as a draft.` });
         }
-        onSuccess(); // Call the success callback to switch tabs
+        onSuccess();
     }
     
     const handleCustomerAdded = async (newCustomer: Omit<Customer, 'id'| 'createdAt'>) => {
@@ -236,7 +236,8 @@ export function NewSaleForm({ initialData, onSuccess }: { initialData?: Sale | n
     }));
 
     return (
-        <Card>
+      <DialogContent className="max-w-6xl">
+        <Card className="border-0 shadow-none">
             <CardHeader className="flex flex-row items-center justify-between">
                 <CardTitle>{isEditMode ? `Edit Sale ${initialData?.id}` : 'Create New Sale'}</CardTitle>
                  {!isEditMode && (
@@ -393,5 +394,6 @@ export function NewSaleForm({ initialData, onSuccess }: { initialData?: Sale | n
                 <Button onClick={handleSave}>{isEditMode ? 'Update Sale' : 'Save Draft'}</Button>
             </CardFooter>
         </Card>
+      </DialogContent>
     )
 }
