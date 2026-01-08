@@ -35,7 +35,6 @@ import {
   DialogContent,
   DialogHeader,
   DialogTitle,
-  DialogTrigger,
 } from "@/components/ui/dialog"
 import { Button } from "@/components/ui/button";
 import { PageHeader } from "@/components/page-header";
@@ -86,8 +85,8 @@ function SaleDetailsView({ sale }: { sale: Sale }) {
 
             <div id="printable-area" className="flex-grow overflow-y-auto">
                 {/* INVOICE VIEW - default */}
-                <div id="printable-invoice">
-                    <div className="p-6">
+                <div id="printable-invoice" className="p-6">
+                    <div>
                         <div className="text-center mb-8">
                             <h1 className="text-3xl font-bold font-headline mb-1">ARCO Aluminium Company</h1>
                             <h2 className="text-2xl font-semibold">INVOICE</h2>
@@ -141,8 +140,8 @@ function SaleDetailsView({ sale }: { sale: Sale }) {
                 </div>
 
                 {/* CHALLAN VIEW - hidden by default */}
-                <div id="printable-challan">
-                     <div className="p-6">
+                <div id="printable-challan" className="p-6">
+                     <div>
                         <div className="text-center mb-4">
                             <h1 className="text-xl font-extrabold font-headline">ARCO Aluminium Company</h1>
                             <p className="mt-1 text-lg font-extrabold">Delivery Challan</p>
