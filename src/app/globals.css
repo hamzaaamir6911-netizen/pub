@@ -47,24 +47,3 @@ h1, h2, h3, h4, h5, h6 {
     @apply bg-background text-foreground;
   }
 }
-
-
-@media print {
-  body * {
-    visibility: hidden;
-  }
-  #printable-invoice, #printable-invoice *,
-  #printable-challan, #printable-challan * {
-    visibility: visible;
-  }
-  #printable-invoice, #printable-challan {
-    position: absolute;
-    left: 0;
-    top: 0;
-    width: 100%;
-  }
-  .print-hidden, .no-print {
-    display: none !important;
-  }
-}
-    

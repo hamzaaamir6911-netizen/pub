@@ -2,7 +2,7 @@
 "use client";
 
 import { useState, FormEvent, useMemo, useEffect } from "react";
-import { MoreHorizontal, Trash2, CheckCircle, FileText, Undo2, ArrowLeft, Printer, DollarSign, Edit, PlusCircle, RotateCcw, Calendar as CalendarIcon } from "lucide-react";
+import { MoreHorizontal, Trash2, CheckCircle, FileText, Undo2, ArrowLeft, Printer, Edit, PlusCircle, RotateCcw, Calendar as CalendarIcon } from "lucide-react";
 import {
   Table,
   TableBody,
@@ -39,38 +39,132 @@ import { Calendar } from "@/components/ui/calendar";
 import { format } from "date-fns";
 
 
-function ReceivePaymentForm({ sale, onPaymentReceived, onOpenChange }: { sale: Sale; onPaymentReceived: (saleId: string, amount: number, date: Date) => void; onOpenChange: (open: boolean) => void; }) {
-    const [amount, setAmount] = useState(sale.total);
-    const [date, setDate] = useState(new Date());
+function SaleDetailsView({ sale, customer, onClose }: { sale: Sale; customer: Customer | undefined; onClose: () => void }) {
+    
+    const handlePrint = (type: 'invoice' | 'challan') => {
+        const printableArea = document.getElementById(type === 'invoice' ? 'printable-invoice' : 'printable-challan');
+        if (printableArea) {
+            const printContents = printableArea.innerHTML;
+            const originalContents = document.body.innerHTML;
 
-    const handleSubmit = () => {
-        onPaymentReceived(sale.id, amount, date);
-        onOpenChange(false);
+            document.body.innerHTML = printContents;
+            window.print();
+            document.body.innerHTML = originalContents;
+            // We need to reload to re-attach React components and event listeners
+            window.location.reload();
+        }
     };
 
+    const subtotal = sale.items.reduce((acc, item) => {
+        const itemTotal = (item.feet || 1) * item.price * item.quantity;
+        const discountAmount = itemTotal * ((item.discount || 0) / 100);
+        return acc + (itemTotal - discountAmount);
+    }, 0);
+    const overallDiscountAmount = (subtotal * sale.discount) / 100;
+    const grandTotal = subtotal - overallDiscountAmount;
+
     return (
-        <DialogContent>
-            <DialogHeader>
-                <DialogTitle>Receive Payment for Invoice {sale.id}</DialogTitle>
-            </DialogHeader>
-            <div className="space-y-4 py-4">
-                <p>Customer: <span className="font-semibold">{sale.customerName}</span></p>
-                <p>Invoice Total: <span className="font-semibold">{formatCurrency(sale.total)}</span></p>
-                <div className="space-y-2">
-                    <Label htmlFor="date">Payment Date</Label>
-                    <Input id="date" type="date" value={date.toISOString().split('T')[0]} onChange={(e) => setDate(new Date(e.target.value))} />
+        <Dialog open={true} onOpenChange={(open) => !open && onClose()}>
+            <DialogContent className="max-w-4xl max-h-[90vh] flex flex-col">
+                <DialogHeader>
+                    <DialogTitle>Details for Sale: {sale.id}</DialogTitle>
+                    <div className="flex items-center gap-2 pt-4">
+                        <Button variant="outline" onClick={() => handlePrint('invoice')}><Printer className="mr-2 h-4 w-4" /> Print Invoice</Button>
+                        <Button variant="outline" onClick={() => handlePrint('challan')}><Printer className="mr-2 h-4 w-4" /> Print Challan</Button>
+                    </div>
+                </DialogHeader>
+
+                <div className="flex-grow overflow-y-auto">
+                    {/* This is the printable area for the INVOICE */}
+                    <div id="printable-invoice" className="p-6 font-sans">
+                         <div className="text-center mb-8">
+                            <h1 className="text-3xl font-bold font-headline mb-1">ARCO Aluminium Company</h1>
+                            <h2 className="text-2xl font-semibold">INVOICE</h2>
+                            <p className="text-muted-foreground">B-5, PLOT 59, Industrial Estate, Hayatabad, Peshawar</p>
+                        </div>
+                        <div className="grid grid-cols-2 gap-8 mb-8">
+                            <div>
+                                <h3 className="font-semibold text-muted-foreground mb-1">Bill To:</h3>
+                                <p className="font-bold text-lg">{sale.customerName}</p>
+                                {customer?.address && <p>{customer.address}</p>}
+                                {customer?.phoneNumber && <p>{customer.phoneNumber}</p>}
+                            </div>
+                            <div className="text-right">
+                                <p><span className="font-semibold text-muted-foreground">Invoice #:</span> {sale.id}</p>
+                                <p><span className="font-semibold text-muted-foreground">Date:</span> {formatDate(sale.date)}</p>
+                            </div>
+                        </div>
+                        <Table>
+                            <TableHeader><TableRow><TableHead className="font-bold">Description</TableHead><TableHead className="text-right font-bold">Qty</TableHead><TableHead className="text-right font-bold">Rate</TableHead><TableHead className="text-right font-bold">Amount</TableHead></TableRow></TableHeader>
+                            <TableBody>
+                            {sale.items.map((item, index) => {
+                                const itemSubtotal = (item.feet || 1) * item.price * item.quantity;
+                                return (<TableRow key={index}><TableCell className="font-medium">{item.itemName} <span className="text-gray-500">({item.thickness} - {item.color})</span></TableCell><TableCell className="text-right">{item.quantity}</TableCell><TableCell className="text-right">{formatCurrency(item.price)}</TableCell><TableCell className="text-right font-medium">{formatCurrency(itemSubtotal)}</TableCell></TableRow>);
+                            })}
+                            </TableBody>
+                        </Table>
+                         <div className="flex justify-end mt-6">
+                            <div className="w-full max-w-xs space-y-2">
+                                <div className="flex justify-between"><span className="text-muted-foreground">Subtotal</span><span>{formatCurrency(subtotal)}</span></div>
+                                <div className="flex justify-between"><span className="text-muted-foreground">Overall Discount ({sale.discount}%)</span><span>- {formatCurrency(overallDiscountAmount)}</span></div>
+                                <div className="flex justify-between font-bold text-lg border-t-2 border-black pt-2 mt-2"><span>Grand Total</span><span>{formatCurrency(grandTotal)}</span></div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    {/* This is the printable area for the CHALLAN, hidden by default */}
+                    <div id="printable-challan" className="hidden">
+                        <div className="p-4 font-sans text-sm">
+                            <div className="text-center mb-4">
+                                <h1 className="text-xl font-extrabold font-headline">ARCO Aluminium Company</h1>
+                                <p className="mt-1 text-lg font-extrabold">Delivery Challan</p>
+                            </div>
+                            <div className="grid grid-cols-2 gap-4 mb-4">
+                                <div>
+                                    <p className="font-bold">Customer:</p>
+                                    <p>{sale.customerName}</p>
+                                    <p>{customer?.address}</p>
+                                    <p>{customer?.phoneNumber}</p>
+                                </div>
+                                <div className="text-right">
+                                    <p className="font-bold">Challan No: <span className="font-normal">{sale.id}</span></p>
+                                    <p className="font-bold">Date: <span className="font-normal">{formatDate(sale.date)}</span></p>
+                                </div>
+                            </div>
+                            <Table>
+                                <TableHeader>
+                                    <TableRow>
+                                        <TableHead className="w-[40%]">Item</TableHead>
+                                        <TableHead>Colour</TableHead>
+                                        <TableHead>Thickness</TableHead>
+                                        <TableHead className="text-right">Feet</TableHead>
+                                        <TableHead className="text-right">Quantity</TableHead>
+                                    </TableRow>
+                                </TableHeader>
+                                <TableBody>
+                                    {sale.items.map((item, index) => (
+                                        <TableRow key={index}>
+                                            <TableCell>{item.itemName}</TableCell>
+                                            <TableCell>{item.color}</TableCell>
+                                            <TableCell>{item.thickness || '-'}</TableCell>
+                                            <TableCell className="text-right">{item.feet ? item.feet.toFixed(2) : '-'}</TableCell>
+                                            <TableCell className="text-right">{item.quantity}</TableCell>
+                                        </TableRow>
+                                    ))}
+                                </TableBody>
+                            </Table>
+                             <div className="mt-16 grid grid-cols-2 gap-4 text-center text-sm">
+                                <div className="border-t-2 border-black pt-2 font-bold"><p>Receiver's Signature</p></div>
+                                <div className="border-t-2 border-black pt-2 font-bold"><p>Driver's Signature</p></div>
+                            </div>
+                        </div>
+                    </div>
                 </div>
-                <div className="space-y-2">
-                    <Label htmlFor="amount">Amount Received</Label>
-                    <Input id="amount" type="number" value={amount} onChange={(e) => setAmount(parseFloat(e.target.value) || 0)} />
-                </div>
-            </div>
-            <DialogFooter>
-                <Button onClick={handleSubmit}>Receive Payment</Button>
-            </DialogFooter>
-        </DialogContent>
+            </DialogContent>
+        </Dialog>
     );
 }
+
 
 function NewSaleForm({ onSaleAdded, onSaleUpdated, initialData, onDoneEditing }: { onSaleAdded: (newSale: Omit<Sale, 'id' | 'total' | 'status'>) => void, onSaleUpdated: (saleId: string, updatedSale: Omit<Sale, 'id' | 'total' | 'status'>) => void, initialData?: Sale | null, onDoneEditing: () => void }) {
     const { toast } = useToast();
@@ -451,7 +545,7 @@ function AddCustomerForm({ onCustomerAdded }: { onCustomerAdded: (newCustomer: O
 
 
 export default function SalesPage() {
-  const { updateSale, deleteSale, postSale, unpostSale, loading: isDataLoading, addTransaction, addSale } = useData();
+  const { customers, updateSale, deleteSale, postSale, unpostSale, loading: isDataLoading, addTransaction, addSale } = useData();
   const firestore = useFirestore();
   const { user } = useUser();
   const shouldFetch = !!user;
@@ -466,9 +560,8 @@ export default function SalesPage() {
   const transactions = transactionsData || [];
   
   const [editingSale, setEditingSale] = useState<Sale | null>(null);
-  const [selectedSaleForPayment, setSelectedSaleForPayment] = useState<Sale | null>(null);
+  const [viewingSale, setViewingSale] = useState<Sale | null>(null);
   const [activeTab, setActiveTab] = useState("history");
-  const { toast } = useToast();
 
   useEffect(() => {
       if (activeTab !== 'new') {
@@ -518,26 +611,6 @@ export default function SalesPage() {
     setEditingSale(null);
   };
 
-  const handlePaymentReceived = (saleId: string, amount: number, date: Date) => {
-    const sale = sales.find(s => s.id === saleId);
-    if (!sale) return;
-
-    addTransaction({
-        description: `Payment received for Invoice ${saleId}`,
-        amount,
-        type: 'credit',
-        category: 'Customer Payment',
-        customerId: sale.customerId,
-        customerName: sale.customerName,
-        date,
-    });
-    toast({ title: 'Payment Received', description: `Payment of ${formatCurrency(amount)} for ${sale.customerName} has been recorded.` });
-  };
-  
-  const handlePrint = (saleId: string, type: 'invoice' | 'challan') => {
-      window.open(`/app/print/${type}/${saleId}`, '_blank');
-  }
-
   return (
     <>
       <PageHeader
@@ -547,14 +620,14 @@ export default function SalesPage() {
       </PageHeader>
       
        <Tabs value={activeTab} onValueChange={setActiveTab}>
-        <TabsList className="w-full sm:w-auto grid grid-cols-2 no-print">
+        <TabsList className="w-full sm:w-auto grid grid-cols-2">
           <TabsTrigger value="history">Sales History</TabsTrigger>
           <TabsTrigger value="new">
             {editingSale ? "Edit Sale" : "New Sale"}
           </TabsTrigger>
         </TabsList>
         <TabsContent value="history">
-            <div className="rounded-lg border shadow-sm mt-4 overflow-x-auto no-print">
+            <div className="rounded-lg border shadow-sm mt-4 overflow-x-auto">
             <Table>
             <TableHeader>
                 <TableRow>
@@ -601,17 +674,9 @@ export default function SalesPage() {
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end">
                             <DropdownMenuLabel>Actions</DropdownMenuLabel>
-                            <DropdownMenuItem onSelect={() => handlePrint(sale.id, 'challan')}>
+                            <DropdownMenuItem onSelect={() => setViewingSale(sale)}>
                                 <FileText className="mr-2 h-4 w-4"/>
-                                Print Challan
-                            </DropdownMenuItem>
-                            <DropdownMenuItem onSelect={() => handlePrint(sale.id, 'invoice')}>
-                                <Printer className="mr-2 h-4 w-4"/>
-                                Print Invoice
-                            </DropdownMenuItem>
-                             <DropdownMenuItem onSelect={() => setSelectedSaleForPayment(sale)} disabled={sale.status !== 'posted'}>
-                                <DollarSign className="mr-2 h-4 w-4" />
-                                Receive Payment
+                                View Details
                             </DropdownMenuItem>
                             <DropdownMenuItem onSelect={() => handleEditClick(sale)} disabled={sale.status === 'posted'}>
                                 <Edit className="mr-2 h-4 w-4"/>
@@ -657,15 +722,13 @@ export default function SalesPage() {
              </div>
         </TabsContent>
       </Tabs>
-      <Dialog open={!!selectedSaleForPayment} onOpenChange={(open) => !open && setSelectedSaleForPayment(null)}>
-        {selectedSaleForPayment && (
-            <ReceivePaymentForm
-                sale={selectedSaleForPayment}
-                onPaymentReceived={handlePaymentReceived}
-                onOpenChange={(open) => !open && setSelectedSaleForPayment(null)}
-            />
-        )}
-      </Dialog>
+      {viewingSale && (
+          <SaleDetailsView 
+            sale={viewingSale}
+            customer={customers.find(c => c.id === viewingSale.customerId)}
+            onClose={() => setViewingSale(null)}
+          />
+      )}
     </>
   );
 }
