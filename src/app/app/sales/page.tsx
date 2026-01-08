@@ -84,23 +84,23 @@ function SaleDetailsView({ sale }: { sale: Sale }) {
                 </div>
             </DialogHeader>
 
-            <div id="printable-area" className="flex-grow overflow-visible">
+            <div id="printable-area">
                 {/* INVOICE VIEW - default */}
                 <div id="printable-invoice" className="bg-white text-black">
                      <div className="p-8 bg-teal-600 text-white font-bold">
                         <div className="flex justify-between items-start">
                             <div>
                                 <h1 className="text-4xl font-extrabold">ARCO Aluminium Company</h1>
-                                <p className="text-sm text-teal-100">B-5, PLOT 59, Industrial Estate, Hayatabad, Peshawar</p>
-                                <p className="text-sm text-teal-100">+92 333 4646356</p>
+                                <p className="text-sm text-teal-100 font-semibold">B-5, PLOT 59, Industrial Estate, Hayatabad, Peshawar</p>
+                                <p className="text-sm text-teal-100 font-semibold">+92 333 4646356</p>
                             </div>
                             <div className="text-right">
                                 <h2 className="text-2xl font-bold uppercase">Invoice</h2>
                                 <div className="grid grid-cols-2 gap-x-4 mt-2 text-sm">
                                     <span className="font-bold">Date:</span>
-                                    <span>{formatDate(sale.date)}</span>
+                                    <span className="font-semibold">{formatDate(sale.date)}</span>
                                     <span className="font-bold">Invoice #:</span>
-                                    <span>{sale.id}</span>
+                                    <span className="font-semibold">{sale.id}</span>
                                 </div>
                             </div>
                         </div>
