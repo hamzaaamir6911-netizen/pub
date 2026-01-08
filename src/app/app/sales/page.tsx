@@ -84,13 +84,14 @@ function SaleDetailsView({ sale }: { sale: Sale }) {
                 </div>
             </DialogHeader>
 
-            <div id="printable-area" className="flex-grow overflow-y-auto bg-gray-50">
+            <div id="printable-area" className="flex-grow bg-gray-50 overflow-visible">
                 {/* INVOICE VIEW - default */}
                 <div id="printable-invoice" className="p-8 bg-white text-black">
                      <div className="flex justify-between items-start mb-10">
                         <div>
-                            <h1 className="text-4xl font-bold text-gray-800">ARCO Aluminium</h1>
-                            <p className="text-sm text-gray-500">Factory Management System</p>
+                            <h1 className="text-4xl font-bold text-gray-800">ARCO Aluminium Company</h1>
+                            <p className="text-sm text-gray-500">B-5, PLOT 59, Industrial Estate, Hayatabad, Peshawar</p>
+                            <p className="text-sm text-gray-500">+92 333 4646356</p>
                         </div>
                         <div className="text-right">
                             <h2 className="text-2xl font-semibold uppercase text-gray-500">Invoice</h2>

@@ -54,13 +54,13 @@ h1, h2, h3, h4, h5, h6 {
         margin: 0;
     }
 
-    body {
+    body.printing-now {
         visibility: hidden !important;
         background: white !important;
         padding: 0 !important;
         margin: 0 !important;
     }
-    
+
     .no-print, .no-print * {
         display: none !important;
     }
@@ -69,13 +69,13 @@ h1, h2, h3, h4, h5, h6 {
         display: none !important;
     }
     
-    [data-radix-dialog-content] {
+    body.printing-now [data-radix-dialog-content] {
         visibility: visible !important;
         position: absolute !important;
         left: 0 !important;
         top: 0 !important;
         width: 100% !important;
-        height: 100% !important;
+        height: auto !important;
         max-width: none !important;
         max-height: none !important;
         transform: none !important;
@@ -87,11 +87,12 @@ h1, h2, h3, h4, h5, h6 {
         animation: none !important;
     }
     
-    #printable-area, #printable-area * {
+    body.printing-now #printable-area, 
+    body.printing-now #printable-area * {
         visibility: visible !important;
     }
     
-    #printable-area {
+    body.printing-now #printable-area {
         margin: 0;
         width: 100%;
         height: auto;
