@@ -42,17 +42,12 @@ import { format } from "date-fns";
 function SaleDetailsView({ sale, customer, onClose }: { sale: Sale; customer: Customer | undefined; onClose: () => void }) {
     
     const handlePrint = (type: 'invoice' | 'challan') => {
-        const printableArea = document.getElementById(type === 'invoice' ? 'printable-invoice' : 'printable-challan');
-        if (printableArea) {
-            const printContents = printableArea.innerHTML;
-            const originalContents = document.body.innerHTML;
-
-            document.body.innerHTML = printContents;
-            window.print();
-            document.body.innerHTML = originalContents;
-            // We need to reload to re-attach React components and event listeners
-            window.location.reload();
-        }
+        
+        document.body.setAttribute('data-print-view', type);
+        
+        window.print();
+        
+        document.body.removeAttribute('data-print-view');
     };
 
     const subtotal = sale.items.reduce((acc, item) => {
@@ -66,7 +61,7 @@ function SaleDetailsView({ sale, customer, onClose }: { sale: Sale; customer: Cu
     return (
         <Dialog open={true} onOpenChange={(open) => !open && onClose()}>
             <DialogContent className="max-w-4xl max-h-[90vh] flex flex-col">
-                <DialogHeader>
+                <DialogHeader className="no-print">
                     <DialogTitle>Details for Sale: {sale.id}</DialogTitle>
                     <div className="flex items-center gap-2 pt-4">
                         <Button variant="outline" onClick={() => handlePrint('invoice')}><Printer className="mr-2 h-4 w-4" /> Print Invoice</Button>
@@ -95,11 +90,11 @@ function SaleDetailsView({ sale, customer, onClose }: { sale: Sale; customer: Cu
                             </div>
                         </div>
                         <Table>
-                            <TableHeader><TableRow><TableHead className="font-bold">Description</TableHead><TableHead className="text-right font-bold">Qty</TableHead><TableHead className="text-right font-bold">Rate</TableHead><TableHead className="text-right font-bold">Amount</TableHead></TableRow></TableHeader>
+                            <TableHeader><TableRow><TableHead className="font-bold">Description</TableHead><TableHead className="text-right font-bold">Feet</TableHead><TableHead className="text-right font-bold">Qty</TableHead><TableHead className="text-right font-bold">Rate</TableHead><TableHead className="text-right font-bold">Amount</TableHead></TableRow></TableHeader>
                             <TableBody>
                             {sale.items.map((item, index) => {
                                 const itemSubtotal = (item.feet || 1) * item.price * item.quantity;
-                                return (<TableRow key={index}><TableCell className="font-medium">{item.itemName} <span className="text-gray-500">({item.thickness} - {item.color})</span></TableCell><TableCell className="text-right">{item.quantity}</TableCell><TableCell className="text-right">{formatCurrency(item.price)}</TableCell><TableCell className="text-right font-medium">{formatCurrency(itemSubtotal)}</TableCell></TableRow>);
+                                return (<TableRow key={index}><TableCell className="font-medium">{item.itemName} <span className="text-gray-500">({item.thickness} - {item.color})</span></TableCell><TableCell className="text-right">{item.feet ? item.feet.toFixed(2) : '-'}</TableCell><TableCell className="text-right">{item.quantity}</TableCell><TableCell className="text-right">{formatCurrency(item.price)}</TableCell><TableCell className="text-right font-medium">{formatCurrency(itemSubtotal)}</TableCell></TableRow>);
                             })}
                             </TableBody>
                         </Table>
@@ -112,51 +107,49 @@ function SaleDetailsView({ sale, customer, onClose }: { sale: Sale; customer: Cu
                         </div>
                     </div>
                     
-                    {/* This is the printable area for the CHALLAN, hidden by default */}
-                    <div id="printable-challan" className="hidden">
-                        <div className="p-4 font-sans text-sm">
-                            <div className="text-center mb-4">
-                                <h1 className="text-xl font-extrabold font-headline">ARCO Aluminium Company</h1>
-                                <p className="mt-1 text-lg font-extrabold">Delivery Challan</p>
+                    {/* This is the printable area for the CHALLAN */}
+                    <div id="printable-challan" className="p-4 font-sans text-sm">
+                        <div className="text-center mb-4">
+                            <h1 className="text-xl font-extrabold font-headline">ARCO Aluminium Company</h1>
+                            <p className="mt-1 text-lg font-extrabold">Delivery Challan</p>
+                        </div>
+                        <div className="grid grid-cols-2 gap-4 mb-4">
+                            <div>
+                                <p className="font-bold">Customer:</p>
+                                <p>{sale.customerName}</p>
+                                <p>{customer?.address}</p>
+                                <p>{customer?.phoneNumber}</p>
                             </div>
-                            <div className="grid grid-cols-2 gap-4 mb-4">
-                                <div>
-                                    <p className="font-bold">Customer:</p>
-                                    <p>{sale.customerName}</p>
-                                    <p>{customer?.address}</p>
-                                    <p>{customer?.phoneNumber}</p>
-                                </div>
-                                <div className="text-right">
-                                    <p className="font-bold">Challan No: <span className="font-normal">{sale.id}</span></p>
-                                    <p className="font-bold">Date: <span className="font-normal">{formatDate(sale.date)}</span></p>
-                                </div>
+                            <div className="text-right">
+                                <p className="font-bold">Challan No: <span className="font-normal">{sale.id}</span></p>
+                                <p className="font-bold">Date: <span className="font-normal">{formatDate(sale.date)}</span></p>
                             </div>
-                            <Table>
-                                <TableHeader>
-                                    <TableRow>
-                                        <TableHead className="w-[40%]">Item</TableHead>
-                                        <TableHead>Colour</TableHead>
-                                        <TableHead>Thickness</TableHead>
-                                        <TableHead className="text-right">Feet</TableHead>
-                                        <TableHead className="text-right">Quantity</TableHead>
+                        </div>
+                        <Table>
+                            <TableHeader>
+                                <TableRow>
+                                    <TableHead className="w-[40%]">Item</TableHead>
+                                    <TableHead>Colour</TableHead>
+                                    <TableHead>Thickness</TableHead>
+                                    <TableHead className="text-right">Feet</TableHead>
+                                    <TableHead className="text-right">Quantity</TableHead>
+                                </TableRow>
+                            </TableHeader>
+                            <TableBody>
+                                {sale.items.map((item, index) => (
+                                    <TableRow key={index}>
+                                        <TableCell>{item.itemName}</TableCell>
+                                        <TableCell>{item.color}</TableCell>
+                                        <TableCell>{item.thickness || '-'}</TableCell>
+                                        <TableCell className="text-right">{item.feet ? item.feet.toFixed(2) : '-'}</TableCell>
+                                        <TableCell className="text-right">{item.quantity}</TableCell>
                                     </TableRow>
-                                </TableHeader>
-                                <TableBody>
-                                    {sale.items.map((item, index) => (
-                                        <TableRow key={index}>
-                                            <TableCell>{item.itemName}</TableCell>
-                                            <TableCell>{item.color}</TableCell>
-                                            <TableCell>{item.thickness || '-'}</TableCell>
-                                            <TableCell className="text-right">{item.feet ? item.feet.toFixed(2) : '-'}</TableCell>
-                                            <TableCell className="text-right">{item.quantity}</TableCell>
-                                        </TableRow>
-                                    ))}
-                                </TableBody>
-                            </Table>
-                             <div className="mt-16 grid grid-cols-2 gap-4 text-center text-sm">
-                                <div className="border-t-2 border-black pt-2 font-bold"><p>Receiver's Signature</p></div>
-                                <div className="border-t-2 border-black pt-2 font-bold"><p>Driver's Signature</p></div>
-                            </div>
+                                ))}
+                            </TableBody>
+                        </Table>
+                         <div className="mt-16 grid grid-cols-2 gap-4 text-center text-sm">
+                            <div className="border-t-2 border-black pt-2 font-bold"><p>Receiver's Signature</p></div>
+                            <div className="border-t-2 border-black pt-2 font-bold"><p>Driver's Signature</p></div>
                         </div>
                     </div>
                 </div>
@@ -545,19 +538,15 @@ function AddCustomerForm({ onCustomerAdded }: { onCustomerAdded: (newCustomer: O
 
 
 export default function SalesPage() {
-  const { customers, updateSale, deleteSale, postSale, unpostSale, loading: isDataLoading, addTransaction, addSale } = useData();
+  const { customers, updateSale, deleteSale, postSale, unpostSale, loading: isDataLoading, addSale } = useData();
   const firestore = useFirestore();
   const { user } = useUser();
   const shouldFetch = !!user;
 
   const salesCol = useMemoFirebase(() => shouldFetch ? query(collection(firestore, 'sales'), orderBy('date', 'desc')) : null, [firestore, shouldFetch]);
-  const transactionsCol = useMemoFirebase(() => shouldFetch ? collection(firestore, 'transactions') : null, [firestore, shouldFetch]);
-
   const { data: salesData, isLoading: isSalesLoading } = useCollection<Sale>(salesCol);
-  const { data: transactionsData } = useCollection<Transaction>(transactionsCol);
   
   const sales = salesData || [];
-  const transactions = transactionsData || [];
   
   const [editingSale, setEditingSale] = useState<Sale | null>(null);
   const [viewingSale, setViewingSale] = useState<Sale | null>(null);
@@ -578,6 +567,7 @@ export default function SalesPage() {
   }, [sales]);
   
   const handleDelete = (sale: Sale) => {
+    const transactions: Transaction[] = []; // Placeholder for now
     deleteSale(sale, transactions);
   };
 
@@ -620,7 +610,7 @@ export default function SalesPage() {
       </PageHeader>
       
        <Tabs value={activeTab} onValueChange={setActiveTab}>
-        <TabsList className="w-full sm:w-auto grid grid-cols-2">
+        <TabsList className="w-full sm:w-auto grid grid-cols-2 no-print">
           <TabsTrigger value="history">Sales History</TabsTrigger>
           <TabsTrigger value="new">
             {editingSale ? "Edit Sale" : "New Sale"}
@@ -732,3 +722,4 @@ export default function SalesPage() {
     </>
   );
 }
+
