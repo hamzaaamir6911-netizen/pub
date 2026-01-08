@@ -6,7 +6,6 @@ import { useParams } from "next/navigation";
 import { useData } from "@/firebase/data/data-provider";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { formatCurrency, formatDate } from "@/lib/utils";
-import { Badge } from "@/components/ui/badge";
 
 export default function PrintInvoicePage() {
   const { id } = useParams();
@@ -33,13 +32,18 @@ export default function PrintInvoicePage() {
     return <div>Invoice not found.</div>;
   }
 
-  const subtotal = sale.items.reduce((acc, item) => {
-      const itemTotal = (item.feet || 1) * item.price * item.quantity;
-      const discountAmount = itemTotal * ((item.discount || 0) / 100);
-      return acc + (itemTotal - discountAmount);
+  const grossAmount = sale.items.reduce((acc, item) => {
+    return acc + (item.feet || 1) * item.price * item.quantity;
   }, 0);
-  const overallDiscountAmount = (subtotal * sale.discount) / 100;
-  const grandTotal = subtotal - overallDiscountAmount;
+
+  const totalItemDiscount = sale.items.reduce((acc, item) => {
+    const itemTotal = (item.feet || 1) * item.price * item.quantity;
+    return acc + (itemTotal * ((item.discount || 0) / 100));
+  }, 0);
+
+  const overallDiscountAmount = (grossAmount - totalItemDiscount) * (sale.discount / 100);
+  const totalDiscount = totalItemDiscount + overallDiscountAmount;
+  const netAmount = grossAmount - totalDiscount;
 
   return (
     <div className="bg-white text-black font-semibold">
@@ -87,16 +91,19 @@ export default function PrintInvoicePage() {
           <Table className="text-sm font-bold">
               <TableHeader>
                   <TableRow className="bg-gray-100 hover:bg-gray-100">
-                      <TableHead className="font-extrabold text-gray-800 uppercase w-[40%]">Description</TableHead>
+                      <TableHead className="font-extrabold text-gray-800 uppercase w-[35%]">Description</TableHead>
                       <TableHead className="text-right font-extrabold text-gray-800 uppercase">Feet</TableHead>
                       <TableHead className="text-right font-extrabold text-gray-800 uppercase">Qty</TableHead>
                       <TableHead className="text-right font-extrabold text-gray-800 uppercase">Rate</TableHead>
-                      <TableHead className="text-right font-extrabold text-gray-800 uppercase">Total</TableHead>
+                      <TableHead className="text-right font-extrabold text-gray-800 uppercase">Discount</TableHead>
+                      <TableHead className="text-right font-extrabold text-gray-800 uppercase">Amount</TableHead>
                   </TableRow>
               </TableHeader>
               <TableBody>
               {sale.items.map((item, index) => {
                   const itemTotal = (item.feet || 1) * item.price * item.quantity;
+                  const discountAmount = itemTotal * ((item.discount || 0) / 100);
+                  const finalAmount = itemTotal - discountAmount;
                   return (
                   <TableRow key={index} className="border-gray-200">
                       <TableCell className="font-bold text-gray-800">
@@ -108,7 +115,8 @@ export default function PrintInvoicePage() {
                       <TableCell className="text-right text-gray-600 font-bold">{item.feet ? item.feet.toFixed(2) : '-'}</TableCell>
                       <TableCell className="text-right text-gray-600 font-bold">{item.quantity}</TableCell>
                       <TableCell className="text-right text-gray-600 font-bold">{formatCurrency(item.price)}</TableCell>
-                      <TableCell className="text-right font-bold text-gray-800">{formatCurrency(itemTotal)}</TableCell>
+                      <TableCell className="text-right text-gray-600 font-bold">{formatCurrency(discountAmount)}</TableCell>
+                      <TableCell className="text-right font-bold text-gray-800">{formatCurrency(finalAmount)}</TableCell>
                   </TableRow>
                   );
               })}
@@ -122,10 +130,10 @@ export default function PrintInvoicePage() {
                       Thank you for your business. Please contact us for any queries regarding this invoice.
                   </p>
               </div>
-              <div className="w-full max-w-xs space-y-2 text-sm font-semibold">
-                  <div className="flex justify-between text-gray-600"><span >Subtotal</span><span>{formatCurrency(subtotal)}</span></div>
-                  <div className="flex justify-between text-gray-600"><span>Overall Discount ({sale.discount}%)</span><span>- {formatCurrency(overallDiscountAmount)}</span></div>
-                  <div className="flex justify-between font-bold text-lg border-t-2 border-gray-800 pt-2 mt-2"><span>Grand Total</span><span>{formatCurrency(grandTotal)}</span></div>
+              <div className="w-full max-w-sm space-y-2 text-sm font-semibold">
+                  <div className="flex justify-between text-gray-600"><span >Gross Amount</span><span>{formatCurrency(grossAmount)}</span></div>
+                  <div className="flex justify-between text-gray-600"><span>Discount</span><span>- {formatCurrency(totalDiscount)}</span></div>
+                  <div className="flex justify-between font-bold text-lg border-t-2 border-gray-800 pt-2 mt-2"><span>Net Amount</span><span>{formatCurrency(netAmount)}</span></div>
               </div>
           </div>
       </div>
