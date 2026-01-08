@@ -243,6 +243,10 @@ export default function LedgerPage() {
         description="A record of all financial transactions."
       >
         <div className="flex items-center gap-2 no-print">
+            <Button variant="outline" onClick={() => window.print()}>
+              <Printer className="mr-2 h-4 w-4" />
+              Print
+            </Button>
             <Dialog open={isAddModalOpen} onOpenChange={setAddModalOpen}>
                 <DialogTrigger asChild>
                     <Button>
@@ -285,7 +289,10 @@ export default function LedgerPage() {
       
       <div className="hidden print:block text-center my-6">
           <h1 className="text-2xl font-bold font-headline">ARCO Aluminium Company</h1>
-          <p className="text-lg font-semibold mt-1">Ledger Report</p>
+          <p className="text-lg font-semibold mt-1">
+            {hasFilter ? `Ledger Report for ${selectedCustomerId ? customers.find(c=>c.id === selectedCustomerId)?.customerName : vendors.find(v=>v.id===selectedVendorId)?.name}` : 'General Ledger'}
+          </p>
+          <p className="text-sm text-muted-foreground">As of {formatDate(new Date())}</p>
       </div>
 
       <div className="rounded-lg border shadow-sm">
