@@ -27,7 +27,7 @@ import { ChartConfig, ChartContainer, ChartTooltipContent } from "@/components/u
 import { useData } from "@/firebase/data/data-provider"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
 import { Button } from "@/components/ui/button"
-import { Calendar as CalendarIcon, FileText, X, Printer } from "lucide-react"
+import { Calendar as CalendarIcon, FileText, X, Printer, Trophy } from "lucide-react"
 import { Calendar } from "@/components/ui/calendar"
 import { addDays, format } from "date-fns"
 import type { DateRange } from "react-day-picker"
@@ -304,6 +304,80 @@ function SalaryReportContent() {
     );
 }
 
+function ItemSalesReportContent() {
+    const { sales, items } = useData();
+
+    const reportData = useMemo(() => {
+        const itemSales: { [key: string]: { itemName: string; thickness: string; totalSold: number; unit: string; } } = {};
+
+        sales.filter(s => s.status === 'posted').forEach(sale => {
+            sale.items.forEach(saleItem => {
+                const itemDetails = items.find(i => i.id === saleItem.itemId);
+                const key = `${saleItem.itemName}-${saleItem.thickness}`;
+
+                if (!itemSales[key]) {
+                    itemSales[key] = {
+                        itemName: saleItem.itemName,
+                        thickness: saleItem.thickness,
+                        totalSold: 0,
+                        unit: itemDetails?.category === 'Aluminium' ? 'ft' : 'pcs'
+                    };
+                }
+
+                if (itemDetails?.category === 'Aluminium') {
+                    itemSales[key].totalSold += (saleItem.feet || 1) * saleItem.quantity;
+                } else {
+                    itemSales[key].totalSold += saleItem.quantity;
+                }
+            });
+        });
+
+        return Object.values(itemSales).sort((a, b) => b.totalSold - a.totalSold);
+    }, [sales, items]);
+
+    return (
+        <CardContent>
+            <div className="rounded-lg border">
+                <Table>
+                    <TableHeader>
+                        <TableRow>
+                            <TableHead>Item / Section</TableHead>
+                            <TableHead>Thickness</TableHead>
+                            <TableHead className="text-right">Total Sold</TableHead>
+                        </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                        {reportData.length === 0 ? (
+                            <TableRow>
+                                <TableCell colSpan={3} className="h-24 text-center">
+                                    No sales data available.
+                                </TableCell>
+                            </TableRow>
+                        ) : (
+                            reportData.map((item, index) => (
+                                <TableRow key={index}>
+                                    <TableCell className="font-medium flex items-center">
+                                         {index < 3 && <Trophy className={cn("mr-2 h-4 w-4", {
+                                             "text-yellow-500": index === 0,
+                                             "text-gray-400": index === 1,
+                                             "text-yellow-700": index === 2,
+                                         })} />}
+                                        {item.itemName}
+                                    </TableCell>
+                                    <TableCell>{item.thickness}</TableCell>
+                                    <TableCell className="text-right font-bold">
+                                        {item.totalSold.toFixed(2)} {item.unit}
+                                    </TableCell>
+                                </TableRow>
+                            ))
+                        )}
+                    </TableBody>
+                </Table>
+            </div>
+        </CardContent>
+    );
+}
+
 export default function ReportsPage() {
     const firestore = useFirestore();
     const { user } = useUser();
@@ -419,6 +493,10 @@ export default function ReportsPage() {
                     </div>
                 </div>
             </CardContent>
+        </ReportCard>
+
+        <ReportCard title="Top Selling Items" description="Items sold the most by quantity." onPrint={() => window.print()}>
+            <ItemSalesReportContent />
         </ReportCard>
 
         <ReportCard title="Ledger Report" description="View transactions within a specific date range." onPrint={() => window.print()}>
