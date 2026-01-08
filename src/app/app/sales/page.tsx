@@ -31,13 +31,150 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { PageHeader } from "@/components/page-header";
 import { formatCurrency, formatDate } from "@/lib/utils";
-import type { Sale, Transaction } from "@/lib/types";
+import type { Sale, Transaction, Customer } from "@/lib/types";
 import { useToast } from "@/hooks/use-toast";
 import { useData } from "@/firebase/data/data-provider";
 import { Badge } from "@/components/ui/badge";
 import { useCollection, useFirestore, useMemoFirebase, useUser } from "@/firebase";
 import { collection, orderBy, query } from "firebase/firestore";
 import { Checkbox } from "@/components/ui/checkbox";
+
+function SaleInvoice({ sale, onPost, onUnpost }: { sale: Sale, onPost: (saleId: string) => void, onUnpost: (saleId: string) => void }) {
+    const { customers } = useData();
+    const customer = customers.find(c => c.id === sale.customerId);
+    const { toast } = useToast();
+    
+    let subtotal = sale.items.reduce((acc, item) => {
+        const itemTotal = (item.feet || 1) * item.price * item.quantity;
+        const discountAmount = itemTotal * ((item.discount || 0) / 100);
+        return acc + (itemTotal - discountAmount);
+    }, 0);
+    const overallDiscountAmount = (subtotal * sale.discount) / 100;
+    const grandTotal = subtotal - overallDiscountAmount;
+
+    const handlePrint = () => {
+        document.body.classList.add('printing-now');
+        const printableArea = document.getElementById('printable-invoice-area');
+        if (printableArea) {
+             printableArea.classList.add('printable-area');
+        }
+        window.print();
+        if (printableArea) {
+             printableArea.classList.remove('printable-area');
+        }
+        document.body.classList.remove('printing-now');
+    }
+
+    const handlePost = () => {
+        onPost(sale.id);
+        toast({ title: 'Sale Posted!', description: `Sale ${sale.id} has been posted to the ledger.`});
+    }
+
+    const handleUnpost = () => {
+        onUnpost(sale.id);
+        toast({ variant: 'destructive', title: 'Sale Unposted!', description: `Sale ${sale.id} has been reverted to draft.`});
+    }
+
+    return (
+        <DialogContent className="max-w-4xl max-h-[90vh] flex flex-col">
+            <DialogHeader className="flex-shrink-0 no-print">
+                <DialogTitle>Sale Invoice: {sale.id}</DialogTitle>
+            </DialogHeader>
+            <div id="printable-invoice-area" className="flex-grow overflow-y-auto">
+                 <div className="bg-white text-black p-8 font-sans text-sm">
+                      <div className="grid grid-cols-2 gap-8 mb-8">
+                        <div>
+                          <h1 className="text-3xl font-bold font-headline mb-1">ARCO Aluminium Company</h1>
+                          <p className="text-muted-foreground">B-5, PLOT 59, Industrial Estate, Hayatabad, Peshawar</p>
+                          <p className="text-muted-foreground">+92 333 4646356</p>
+                        </div>
+                        <div className="text-right">
+                          <h2 className="text-4xl font-bold uppercase text-gray-800">INVOICE</h2>
+                          <div className="mt-2">
+                            <p><span className="font-semibold text-muted-foreground">Invoice #:</span> {sale.id}</p>
+                            <p><span className="font-semibold text-muted-foreground">Date:</span> {formatDate(sale.date)}</p>
+                          </div>
+                        </div>
+                      </div>
+                      
+                      <div className="mb-8">
+                          <h3 className="font-semibold text-muted-foreground mb-1">Bill To:</h3>
+                          <p className="font-bold text-lg">{sale.customerName}</p>
+                          {customer?.address && <p>{customer.address}</p>}
+                          {customer?.phoneNumber && <p>{customer.phoneNumber}</p>}
+                      </div>
+
+                      <Table>
+                        <TableHeader>
+                          <TableRow className="bg-gray-100">
+                            <TableHead className="font-bold">Description</TableHead>
+                            <TableHead className="font-bold">Thickness</TableHead>
+                            <TableHead className="text-right font-bold">Feet</TableHead>
+                            <TableHead className="text-right font-bold">Qty</TableHead>
+                            <TableHead className="text-right font-bold">Rate</TableHead>
+                            <TableHead className="text-right font-bold">Amount</TableHead>
+                          </TableRow>
+                        </TableHeader>
+                        <TableBody>
+                          {sale.items.map((item, index) => {
+                            const itemSubtotal = (item.feet || 1) * item.price * item.quantity;
+                            return (
+                              <TableRow key={index}>
+                                <TableCell className="font-medium">{item.itemName} <span className="text-gray-500">({item.color})</span></TableCell>
+                                <TableCell>{item.thickness || '-'}</TableCell>
+                                <TableCell className="text-right">{item.feet?.toFixed(2) ?? '-'}</TableCell>
+                                <TableCell className="text-right">{item.quantity}</TableCell>
+                                <TableCell className="text-right">{formatCurrency(item.price)}</TableCell>
+                                <TableCell className="text-right font-medium">{formatCurrency(itemSubtotal)}</TableCell>
+                              </TableRow>
+                            );
+                          })}
+                        </TableBody>
+                      </Table>
+                      
+                      <div className="flex justify-end mt-6">
+                        <div className="w-full max-w-xs space-y-2">
+                          <div className="flex justify-between">
+                            <span className="text-muted-foreground">Subtotal</span>
+                            <span>{formatCurrency(subtotal)}</span>
+                          </div>
+                          <div className="flex justify-between">
+                            <span className="text-muted-foreground">Overall Discount ({sale.discount}%)</span>
+                            <span>- {formatCurrency(overallDiscountAmount)}</span>
+                          </div>
+                          <div className="flex justify-between font-bold text-lg border-t-2 border-black pt-2 mt-2">
+                            <span>Grand Total</span>
+                            <span>{formatCurrency(grandTotal)}</span>
+                          </div>
+                        </div>
+                      </div>
+                      
+                      <div className="mt-20 text-center text-xs text-gray-500 border-t pt-4">
+                        <p>Thank you for your business!</p>
+                      </div>
+
+                    </div>
+            </div>
+             <DialogFooter className="mt-4 flex-shrink-0 no-print">
+                 <Button variant="outline" onClick={handlePrint}>
+                    <Printer className="mr-2 h-4 w-4" />
+                    Print Invoice
+                </Button>
+                {sale.status === 'draft' ? (
+                    <Button onClick={handlePost}>
+                        <CheckCircle className="mr-2 h-4 w-4" />
+                        Post to Ledger
+                    </Button>
+                ) : (
+                    <Button variant="destructive" onClick={handleUnpost}>
+                        <Undo2 className="mr-2 h-4 w-4" />
+                        Unpost from Ledger
+                    </Button>
+                )}
+            </DialogFooter>
+        </DialogContent>
+    )
+}
 
 function ManualInvoiceForm({ onManualSaleAdded, onOpenChange }: { onManualSaleAdded: (sale: Omit<Sale, 'id' | 'total' | 'status' | 'items' | 'discount'>) => Promise<void>, onOpenChange: (open: boolean) => void }) {
   const [description, setDescription] = useState('Manual Invoice Entry');
@@ -207,7 +344,7 @@ function DeliveryChallan({ sale, onOpenChange }: { sale: Sale, onOpenChange: (op
 }
 
 export default function SalesPage() {
-  const { addSale, deleteSale, postSale, unpostSale, addTransaction, addManualSale } = useData();
+  const { addManualSale, addTransaction, deleteSale, postSale, unpostSale } = useData();
   const firestore = useFirestore();
   const { user } = useUser();
   const { toast } = useToast();
@@ -222,7 +359,7 @@ export default function SalesPage() {
   const sales = salesData || [];
   const transactions = transactionsData || [];
   
-  const [selectedSale, setSelectedSale] = useState<Sale | null>(null);
+  const [selectedSaleForDetails, setSelectedSaleForDetails] = useState<Sale | null>(null);
   const [selectedChallan, setSelectedChallan] = useState<Sale | null>(null);
   const [selectedRows, setSelectedRows] = useState<Set<string>>(new Set());
   const [paymentSale, setPaymentSale] = useState<Sale | null>(null);
@@ -260,17 +397,6 @@ export default function SalesPage() {
     }
   };
 
-  const handleViewInvoice = (saleId: string) => {
-    const printWindow = window.open(`/print/invoice/${saleId}`, '_blank', 'noopener,noreferrer');
-    if (!printWindow) {
-      toast({
-        variant: "destructive",
-        title: "Print Failed",
-        description: "Please allow pop-ups for this site to print the invoice."
-      });
-    }
-  };
-
   const handleSelectRow = (id: string) => {
     const newSelectedRows = new Set(selectedRows);
     if (newSelectedRows.has(id)) {
@@ -297,14 +423,20 @@ export default function SalesPage() {
     addManualSale(manualSale);
   }
 
-  const handlePostSale = (sale: Sale) => {
-      postSale(sale);
-      toast({ title: 'Sale Posted!', description: `Sale ${sale.id} has been posted to the ledger.`});
+  const handlePostSale = (saleId: string) => {
+      const saleToPost = sales.find(s => s.id === saleId);
+      if (saleToPost) {
+        postSale(saleToPost);
+        setSelectedSaleForDetails(null);
+      }
   }
 
-   const handleUnpostSale = (sale: Sale) => {
-      unpostSale(sale);
-      toast({ variant: 'destructive', title: 'Sale Unposted!', description: `Sale ${sale.id} has been reverted to draft.`});
+   const handleUnpostSale = (saleId: string) => {
+      const saleToUnpost = sales.find(s => s.id === saleId);
+      if(saleToUnpost) {
+        unpostSale(saleToUnpost);
+        setSelectedSaleForDetails(null);
+      }
   }
 
   const handleOpenPaymentModal = (sale: Sale) => {
@@ -394,7 +526,7 @@ export default function SalesPage() {
                     {formatCurrency(sale.total)}
                   </TableCell>
                   <TableCell className="no-print">
-                    <Dialog onOpenChange={(open) => { if (!open) setSelectedChallan(null) }}>
+                    <Dialog onOpenChange={(open) => { if (!open) setSelectedChallan(null); if (!open) setSelectedSaleForDetails(null); }}>
                       <DropdownMenu>
                         <DropdownMenuTrigger asChild>
                           <Button aria-haspopup="true" size="icon" variant="ghost">
@@ -404,10 +536,12 @@ export default function SalesPage() {
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end">
                           <DropdownMenuLabel>Actions</DropdownMenuLabel>
-                          <DropdownMenuItem onSelect={() => handleViewInvoice(sale.id)}>
-                              <FileText className="mr-2 h-4 w-4"/>
-                              View/Print Invoice
-                          </DropdownMenuItem>
+                          <DialogTrigger asChild>
+                              <DropdownMenuItem onSelect={() => setSelectedSaleForDetails(sale)}>
+                                  <FileText className="mr-2 h-4 w-4"/>
+                                  View Details
+                              </DropdownMenuItem>
+                          </DialogTrigger>
                           <DialogTrigger asChild>
                             <DropdownMenuItem onSelect={() => setSelectedChallan(sale)}>
                                 <Truck className="mr-2 h-4 w-4"/>
@@ -418,17 +552,7 @@ export default function SalesPage() {
                               <DollarSign className="mr-2 h-4 w-4" />
                               Receive Payment
                           </DropdownMenuItem>
-                          {sale.status === 'draft' ? (
-                            <DropdownMenuItem onSelect={() => handlePostSale(sale)}>
-                              <CheckCircle className="mr-2 h-4 w-4" />
-                              Post to Ledger
-                            </DropdownMenuItem>
-                          ) : (
-                            <DropdownMenuItem onSelect={() => handleUnpostSale(sale)}>
-                              <Undo2 className="mr-2 h-4 w-4" />
-                              Unpost from Ledger
-                            </DropdownMenuItem>
-                          )}
+                          
                           <DropdownMenuItem
                             onSelect={() => handleDelete(sale)}
                             className="text-red-500 focus:bg-red-500/10 focus:text-red-500"
@@ -440,6 +564,9 @@ export default function SalesPage() {
                       </DropdownMenu>
                       {selectedChallan && selectedChallan.id === sale.id && (
                           <DeliveryChallan sale={selectedChallan} onOpenChange={(open) => !open && setSelectedChallan(null)} />
+                      )}
+                      {selectedSaleForDetails && selectedSaleForDetails.id === sale.id && (
+                          <SaleInvoice sale={selectedSaleForDetails} onPost={handlePostSale} onUnpost={handleUnpostSale} />
                       )}
                     </Dialog>
                   </TableCell>

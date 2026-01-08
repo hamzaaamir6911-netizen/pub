@@ -10,32 +10,38 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 function InvoicePrintPage({ params }: { params: { id: string } }) {
   const { sales, customers, loading } = useData();
   const [sale, setSale] = useState<Sale | null>(null);
-  const [isDataReady, setIsDataReady] = useState(false);
 
+  // Effect to find the sale and trigger print
   useEffect(() => {
+    // Only proceed if data has finished loading
     if (!loading && sales.length > 0) {
       const foundSale = sales.find(s => s.id === params.id);
       setSale(foundSale || null);
-      setIsDataReady(true);
-    }
-  }, [loading, sales, params.id]);
-  
-  useEffect(() => {
-    // This effect runs when isDataReady becomes true, ensuring data is loaded.
-    if (isDataReady) {
-        // A short timeout can help ensure the DOM is fully painted before printing.
-        const timeoutId = setTimeout(() => {
-            window.print();
-            window.onafterprint = () => window.close();
-        }, 100); // 100ms delay
 
-        return () => clearTimeout(timeoutId);
+      // If the sale is found, the page will re-render with the sale data.
+      // A second effect will handle the printing after the render.
+      if (!foundSale) {
+        console.error(`Invoice with ID '${params.id}' not found.`);
+      }
     }
-  }, [isDataReady]);
+  }, [loading, sales, params.id]); // Rerun when loading status or sales data changes
+
+  // Effect to print *after* the state has been updated and the component has re-rendered
+  useEffect(() => {
+    if (sale) {
+      // Use a timeout to ensure the DOM is fully painted before printing
+      const timer = setTimeout(() => {
+        window.print();
+        window.onafterprint = () => window.close();
+      }, 500); // 500ms delay as a safeguard
+
+      return () => clearTimeout(timer); // Cleanup timer on unmount
+    }
+  }, [sale]); // This effect runs only when the 'sale' state changes from null to a sale object
 
   const customer = sale ? customers.find(c => c.id === sale.customerId) : null;
   
-  if (!isDataReady) {
+  if (loading || !sale) {
     return <div className="p-10 text-center text-lg font-semibold">Loading invoice...</div>;
   }
   
@@ -89,7 +95,6 @@ function InvoicePrintPage({ params }: { params: { id: string } }) {
         <TableBody>
           {sale.items.map((item, index) => {
             const itemSubtotal = (item.feet || 1) * item.price * item.quantity;
-            const finalAmount = itemSubtotal * (1 - ((item.discount || 0) / 100));
             return (
               <TableRow key={index}>
                 <TableCell className="font-medium">{item.itemName} <span className="text-gray-500">({item.color})</span></TableCell>
