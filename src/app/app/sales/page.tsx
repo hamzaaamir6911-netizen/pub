@@ -84,22 +84,22 @@ function SaleDetailsView({ sale }: { sale: Sale }) {
                 </div>
             </DialogHeader>
 
-            <div id="printable-area" className="flex-grow bg-gray-50 overflow-visible">
+            <div id="printable-area" className="flex-grow overflow-visible">
                 {/* INVOICE VIEW - default */}
                 <div id="printable-invoice" className="bg-white text-black">
-                     <div className="p-8 bg-teal-600 text-white">
+                     <div className="p-8 bg-teal-600 text-white font-bold">
                         <div className="flex justify-between items-start">
                             <div>
-                                <h1 className="text-4xl font-bold">ARCO Aluminium Company</h1>
+                                <h1 className="text-4xl font-extrabold">ARCO Aluminium Company</h1>
                                 <p className="text-sm text-teal-100">B-5, PLOT 59, Industrial Estate, Hayatabad, Peshawar</p>
                                 <p className="text-sm text-teal-100">+92 333 4646356</p>
                             </div>
                             <div className="text-right">
-                                <h2 className="text-2xl font-semibold uppercase">Invoice</h2>
+                                <h2 className="text-2xl font-bold uppercase">Invoice</h2>
                                 <div className="grid grid-cols-2 gap-x-4 mt-2 text-sm">
-                                    <span className="font-semibold">Date:</span>
+                                    <span className="font-bold">Date:</span>
                                     <span>{formatDate(sale.date)}</span>
-                                    <span className="font-semibold">Invoice #:</span>
+                                    <span className="font-bold">Invoice #:</span>
                                     <span>{sale.id}</span>
                                 </div>
                             </div>
@@ -110,7 +110,7 @@ function SaleDetailsView({ sale }: { sale: Sale }) {
                         <div className="grid grid-cols-2 gap-8 mb-12">
                             <div className="space-y-4">
                                 <div className="font-bold text-sm uppercase text-gray-500">From</div>
-                                <div className="text-sm text-gray-700">
+                                <div className="text-sm text-gray-700 font-semibold">
                                     <p className="font-bold">ARCO Aluminium Company</p>
                                     <p>B-5, PLOT 59, Industrial Estate,</p>
                                     <p>Hayatabad, Peshawar</p>
@@ -119,8 +119,8 @@ function SaleDetailsView({ sale }: { sale: Sale }) {
                             </div>
                             <div className="space-y-4">
                                  <div className="font-bold text-sm uppercase text-gray-500">To</div>
-                                <div className="text-sm text-gray-700">
-                                    <p className="font-bold">{sale.customerName}</p>
+                                <div className="text-sm text-gray-700 font-semibold">
+                                    <p className="font-extrabold">{sale.customerName}</p>
                                     {customer?.address && <p>{customer.address}</p>}
                                     {customer?.phoneNumber && <p>{customer.phoneNumber}</p>}
                                 </div>
@@ -128,7 +128,7 @@ function SaleDetailsView({ sale }: { sale: Sale }) {
                         </div>
 
 
-                        <Table className="text-sm">
+                        <Table className="text-sm font-semibold">
                             <TableHeader>
                                 <TableRow className="bg-gray-100 hover:bg-gray-100">
                                     <TableHead className="font-bold text-gray-600 uppercase w-[40%]">Description</TableHead>
@@ -143,16 +143,16 @@ function SaleDetailsView({ sale }: { sale: Sale }) {
                                 const itemTotal = (item.feet || 1) * item.price * item.quantity;
                                 return (
                                 <TableRow key={index} className="border-gray-200">
-                                    <TableCell className="font-medium text-gray-800">
+                                    <TableCell className="font-bold text-gray-800">
                                         {item.itemName}
-                                        <span className="text-gray-500 text-xs block">
+                                        <span className="text-gray-500 text-xs block font-semibold">
                                             {item.thickness} - {item.color}
                                         </span>
                                     </TableCell>
-                                    <TableCell className="text-right text-gray-600">{item.feet ? item.feet.toFixed(2) : '-'}</TableCell>
-                                    <TableCell className="text-right text-gray-600">{item.quantity}</TableCell>
-                                    <TableCell className="text-right text-gray-600">{formatCurrency(item.price)}</TableCell>
-                                    <TableCell className="text-right font-medium text-gray-800">{formatCurrency(itemTotal)}</TableCell>
+                                    <TableCell className="text-right text-gray-600 font-bold">{item.feet ? item.feet.toFixed(2) : '-'}</TableCell>
+                                    <TableCell className="text-right text-gray-600 font-bold">{item.quantity}</TableCell>
+                                    <TableCell className="text-right text-gray-600 font-bold">{formatCurrency(item.price)}</TableCell>
+                                    <TableCell className="text-right font-bold text-gray-800">{formatCurrency(itemTotal)}</TableCell>
                                 </TableRow>
                                 );
                             })}
@@ -162,11 +162,11 @@ function SaleDetailsView({ sale }: { sale: Sale }) {
                         <div className="flex justify-between items-start mt-8">
                              <div className="w-1/2">
                                 <div className="font-bold text-sm uppercase text-gray-500">Notes</div>
-                                <p className="text-xs text-gray-500 mt-2">
+                                <p className="text-xs text-gray-500 mt-2 font-semibold">
                                     Thank you for your business. Please contact us for any queries regarding this invoice.
                                 </p>
                             </div>
-                            <div className="w-full max-w-xs space-y-2 text-sm">
+                            <div className="w-full max-w-xs space-y-2 text-sm font-semibold">
                                 <div className="flex justify-between text-gray-600"><span >Subtotal</span><span>{formatCurrency(subtotal)}</span></div>
                                 <div className="flex justify-between text-gray-600"><span>Overall Discount ({sale.discount}%)</span><span>- {formatCurrency(overallDiscountAmount)}</span></div>
                                 <div className="flex justify-between font-bold text-lg border-t-2 border-gray-800 pt-2 mt-2"><span>Grand Total</span><span>{formatCurrency(grandTotal)}</span></div>
@@ -176,32 +176,32 @@ function SaleDetailsView({ sale }: { sale: Sale }) {
                 </div>
 
                 {/* CHALLAN VIEW - hidden by default */}
-                <div id="printable-challan" className="p-8 bg-white text-black">
+                <div id="printable-challan" className="p-8 bg-white text-black font-semibold">
                      <div>
                         <div className="text-center mb-6">
-                            <h1 className="text-2xl font-bold font-headline">ARCO Aluminium Company</h1>
+                            <h1 className="text-2xl font-extrabold font-headline">ARCO Aluminium Company</h1>
                             <p className="mt-1 text-lg font-bold">Delivery Challan</p>
                         </div>
                         <div className="grid grid-cols-2 gap-4 mb-6 text-sm">
                             <div>
-                                <p className="font-semibold">Customer:</p>
+                                <p className="font-bold">Customer:</p>
                                 <p>{sale.customerName}</p>
                                 {customer?.address && <p>{customer.address}</p>}
                                 {customer?.phoneNumber && <p>{customer.phoneNumber}</p>}
                             </div>
                             <div className="text-right">
-                                <p className="font-semibold">Challan No: <span className="font-normal">{sale.id}</span></p>
-                                <p className="font-semibold">Date: <span className="font-normal">{formatDate(sale.date)}</span></p>
+                                <p className="font-bold">Challan No: <span className="font-semibold">{sale.id}</span></p>
+                                <p className="font-bold">Date: <span className="font-semibold">{formatDate(sale.date)}</span></p>
                             </div>
                         </div>
-                        <Table className="text-sm">
+                        <Table className="text-sm font-semibold">
                             <TableHeader>
                                 <TableRow className="bg-gray-100">
-                                    <TableHead className="w-[40%] font-bold text-black">Item</TableHead>
-                                    <TableHead className="font-bold text-black">Colour</TableHead>
-                                    <TableHead className="font-bold text-black">Thickness</TableHead>
-                                    <TableHead className="text-right font-bold text-black">Feet</TableHead>
-                                    <TableHead className="text-right font-bold text-black">Quantity</TableHead>
+                                    <TableHead className="w-[40%] font-extrabold text-black">Item</TableHead>
+                                    <TableHead className="font-extrabold text-black">Colour</TableHead>
+                                    <TableHead className="font-extrabold text-black">Thickness</TableHead>
+                                    <TableHead className="text-right font-extrabold text-black">Feet</TableHead>
+                                    <TableHead className="text-right font-extrabold text-black">Quantity</TableHead>
                                 </TableRow>
                             </TableHeader>
                             <TableBody>
@@ -217,8 +217,8 @@ function SaleDetailsView({ sale }: { sale: Sale }) {
                             </TableBody>
                         </Table>
                          <div className="mt-24 grid grid-cols-2 gap-8 text-sm">
-                            <div className="border-t-2 border-black pt-2 font-semibold text-center"><p>Receiver's Signature</p></div>
-                            <div className="border-t-2 border-black pt-2 font-semibold text-center"><p>Driver's Signature</p></div>
+                            <div className="border-t-2 border-black pt-2 font-bold text-center"><p>Receiver's Signature</p></div>
+                            <div className="border-t-2 border-black pt-2 font-bold text-center"><p>Driver's Signature</p></div>
                         </div>
                     </div>
                 </div>
@@ -366,6 +366,7 @@ export default function SalesPage() {
                                <AlertDialogTrigger asChild>
                                 <DropdownMenuItem
                                   className="text-red-500 focus:bg-red-500/10 focus:text-red-500"
+                                  disabled={sale.status === 'posted'}
                                 >
                                 <Trash2 className="mr-2 h-4 w-4"/>
                                 Delete
