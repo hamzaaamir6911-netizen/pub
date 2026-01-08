@@ -1,9 +1,8 @@
 
-
 "use client";
 
 import { useState, useRef, useEffect } from "react";
-import { MoreHorizontal, PlusCircle, Trash2, RotateCcw, FileText, CheckCircle, Edit, Calendar as CalendarIcon, Undo2, Printer, Truck, X } from "lucide-react";
+import { MoreHorizontal, PlusCircle, Trash2, RotateCcw, FileText, CheckCircle, Edit, Undo2, Printer, Truck } from "lucide-react";
 import {
   Table,
   TableBody,
@@ -27,9 +26,6 @@ import {
   DropdownMenuLabel,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
-import { Calendar } from "@/components/ui/calendar"
-import type { DateRange } from "react-day-picker"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   Select,
@@ -43,15 +39,13 @@ import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import { PageHeader } from "@/components/page-header";
-import { formatCurrency, formatDate, cn } from "@/lib/utils";
+import { formatCurrency, formatDate } from "@/lib/utils";
 import type { Sale, SaleItem, Customer, Item, Transaction } from "@/lib/types";
 import { useToast } from "@/hooks/use-toast";
 import { useData } from "@/firebase/data/data-provider";
 import { Badge } from "@/components/ui/badge";
 import { useCollection, useFirestore, useMemoFirebase, useUser } from "@/firebase";
 import { collection, orderBy, query } from "firebase/firestore";
-import { addDays, format } from "date-fns";
-import { Checkbox } from "@/components/ui/checkbox";
 
 
 function DeliveryChallan({ sale }: { sale: Sale }) {
@@ -531,28 +525,8 @@ export default function SalesPage() {
   const [selectedSale, setSelectedSale] = useState<Sale | null>(null);
   const [selectedChallan, setSelectedChallan] = useState<Sale | null>(null);
   const [editingSale, setEditingSale] = useState<Sale | null>(null);
-  const [selectedSaleIds, setSelectedSaleIds] = useState<string[]>([]);
-  const [date, setDate] = useState<DateRange | undefined>({
-    from: addDays(new Date(), -30),
-    to: new Date(),
-  });
-  const { toast } = useToast();
 
-  const filteredSales = sales.filter(sale => {
-    if (!date?.from) return true; // Show all if no start date
-    const saleDate = sale.date;
-    const fromDate = date.from;
-    // If there's no 'to' date, use the 'from' date for both ends of the range
-    const toDate = date.to ?? date.from;
-    
-    // Adjust to include the full day
-    const startOfDay = new Date(fromDate.setHours(0, 0, 0, 0));
-    const endOfDay = new Date(toDate.setHours(23, 59, 59, 999));
-
-    return saleDate >= startOfDay && saleDate <= endOfDay;
-  });
-
-  const sortedSales = [...filteredSales].sort((a, b) => {
+  const sortedSales = [...sales].sort((a, b) => {
     const numA = parseInt(a.id.split('-')[1] || '0', 10);
     const numB = parseInt(b.id.split('-')[1] || '0', 10);
     
@@ -560,56 +534,9 @@ export default function SalesPage() {
         return numB - numA;
     }
     
-    return b.date.getTime() - a.date.getTime();
+    return new Date(b.date).getTime() - new Date(a.date).getTime();
   });
   
-  useEffect(() => {
-    // Clear selection when date filter changes
-    setSelectedSaleIds([]);
-  }, [date]);
-
-  const handlePrintAll = () => {
-    const queryParams = new URLSearchParams();
-    
-    if (selectedSaleIds.length > 0) {
-        queryParams.append('ids', selectedSaleIds.join(','));
-    } else {
-        toast({
-          variant: "destructive",
-          title: "No Sales Selected",
-          description: "Please select at least one sale to print a report."
-        });
-        return;
-    }
-    
-    const url = `/print/sales-report?${queryParams.toString()}`;
-
-    const printWindow = window.open(url, '_blank', 'noopener,noreferrer');
-    if (!printWindow) {
-      toast({
-        variant: "destructive",
-        title: "Print Failed",
-        description: "Please allow pop-ups for this site to print the report."
-      });
-    }
-  };
-
-  const handleSelectAll = (checked: boolean) => {
-    if (checked) {
-        setSelectedSaleIds(sortedSales.map(s => s.id));
-    } else {
-        setSelectedSaleIds([]);
-    }
-  };
-
-  const handleSelectRow = (id: string, checked: boolean) => {
-    if (checked) {
-        setSelectedSaleIds(prev => [...prev, id]);
-    } else {
-        setSelectedSaleIds(prev => prev.filter(saleId => saleId !== id));
-    }
-  };
-
   const handleDelete = (sale: Sale) => {
     deleteSale(sale, transactions);
   };
@@ -651,47 +578,17 @@ export default function SalesPage() {
       <PageHeader
         title="Sales"
         description="Record new sales and view sales history."
-      >
-        <Button onClick={handlePrintAll} variant="outline" disabled={selectedSaleIds.length === 0}>
-          <Printer className="mr-2 h-4 w-4" />
-          Print Selected ({selectedSaleIds.length})
-        </Button>
-      </PageHeader>
+      />
       <Tabs value={activeTab} onValueChange={setActiveTab}>
         <TabsList className="w-full sm:w-auto grid grid-cols-2 no-print">
           <TabsTrigger value="history">Sales History</TabsTrigger>
           <TabsTrigger value="new">{editingSale ? 'Edit Sale' : 'New Sale'}</TabsTrigger>
         </TabsList>
         <TabsContent value="history">
-          <div className="flex flex-wrap items-center gap-4 my-4 p-4 bg-muted/50 rounded-lg no-print">
-             <Popover>
-                <PopoverTrigger asChild>
-                    <Button
-                        id="date"
-                        variant={"outline"}
-                        className={cn("w-full sm:w-[300px] justify-start text-left font-normal bg-background", !date && "text-muted-foreground")}
-                    >
-                        <CalendarIcon className="mr-2 h-4 w-4" />
-                        {date?.from ? (date.to ? `${format(date.from, "LLL dd, y")} - ${format(date.to, "LLL dd, y")}` : format(date.from, "LLL dd, y")) : <span>Pick a date</span>}
-                    </Button>
-                </PopoverTrigger>
-                <PopoverContent className="w-auto p-0" align="start">
-                    <Calendar initialFocus mode="range" defaultMonth={date?.from} selected={date} onSelect={setDate} numberOfMonths={2} />
-                </PopoverContent>
-            </Popover>
-             <Button variant="ghost" size="sm" onClick={() => setDate(undefined)}><X className="mr-2 h-4 w-4" /> Clear Filter</Button>
-          </div>
           <div className="rounded-lg border shadow-sm mt-4 overflow-x-auto">
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead className="w-[50px]">
-                    <Checkbox
-                        checked={sortedSales.length > 0 && selectedSaleIds.length === sortedSales.length}
-                        onCheckedChange={handleSelectAll}
-                        aria-label="Select all"
-                    />
-                  </TableHead>
                   <TableHead>Sale ID</TableHead>
                   <TableHead>Customer</TableHead>
                   <TableHead>Date</TableHead>
@@ -705,18 +602,11 @@ export default function SalesPage() {
               <TableBody>
                 {sortedSales.length === 0 ? (
                   <TableRow>
-                    <TableCell colSpan={7} className="text-center h-24">No sales recorded in this date range.</TableCell>
+                    <TableCell colSpan={6} className="text-center h-24">No sales recorded in this date range.</TableCell>
                   </TableRow>
                 ) : (
                   sortedSales.map((sale) => (
-                    <TableRow key={sale.id} data-state={selectedSaleIds.includes(sale.id) && "selected"}>
-                      <TableCell>
-                         <Checkbox
-                            checked={selectedSaleIds.includes(sale.id)}
-                            onCheckedChange={(checked) => handleSelectRow(sale.id, !!checked)}
-                            aria-label={`Select sale ${sale.id}`}
-                         />
-                      </TableCell>
+                    <TableRow key={sale.id}>
                       <TableCell className="font-medium">{sale.id}</TableCell>
                       <TableCell>{sale.customerName}</TableCell>
                       <TableCell>{formatDate(sale.date)}</TableCell>
