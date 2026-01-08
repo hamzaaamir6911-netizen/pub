@@ -33,91 +33,6 @@ import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
 
 
-function SaleInvoice({ sale, customer }: { sale: Sale, customer: Customer | null | undefined}) {
-    const subtotal = sale.items.reduce((acc, item) => {
-        const itemTotal = (item.feet || 1) * item.price * item.quantity;
-        const discountAmount = itemTotal * ((item.discount || 0) / 100);
-        return acc + (itemTotal - discountAmount);
-    }, 0);
-    const overallDiscountAmount = (subtotal * sale.discount) / 100;
-    const grandTotal = subtotal - overallDiscountAmount;
-
-    return (
-        <div id="printable-invoice" className="bg-background text-foreground p-4 sm:p-8 font-sans text-sm rounded-lg border shadow-sm">
-            <div className="grid grid-cols-2 gap-8 mb-8">
-                <div>
-                <h1 className="text-3xl font-bold font-headline mb-1">ARCO Aluminium Company</h1>
-                <p className="text-muted-foreground">B-5, PLOT 59, Industrial Estate, Hayatabad, Peshawar</p>
-                <p className="text-muted-foreground">+92 333 4646356</p>
-                </div>
-                <div className="text-right">
-                <h2 className="text-4xl font-bold uppercase text-gray-800">INVOICE</h2>
-                <div className="mt-2">
-                    <p><span className="font-semibold text-muted-foreground">Invoice #:</span> {sale.id}</p>
-                    <p><span className="font-semibold text-muted-foreground">Date:</span> {formatDate(sale.date)}</p>
-                </div>
-                </div>
-            </div>
-            
-            <div className="mb-8">
-                <h3 className="font-semibold text-muted-foreground mb-1">Bill To:</h3>
-                <p className="font-bold text-lg">{sale.customerName}</p>
-                {customer?.address && <p>{customer.address}</p>}
-                {customer?.phoneNumber && <p>{customer.phoneNumber}</p>}
-            </div>
-
-            <Table>
-                <TableHeader>
-                <TableRow className="bg-gray-100 dark:bg-muted/50">
-                    <TableHead className="font-bold">Description</TableHead>
-                    <TableHead className="font-bold">Thickness</TableHead>
-                    <TableHead className="text-right font-bold">Feet</TableHead>
-                    <TableHead className="text-right font-bold">Qty</TableHead>
-                    <TableHead className="text-right font-bold">Rate</TableHead>
-                    <TableHead className="text-right font-bold">Amount</TableHead>
-                </TableRow>
-                </TableHeader>
-                <TableBody>
-                {sale.items.map((item, index) => {
-                    const itemSubtotal = (item.feet || 1) * item.price * item.quantity;
-                    return (
-                    <TableRow key={index}>
-                        <TableCell className="font-medium">{item.itemName} <span className="text-gray-500">({item.color})</span></TableCell>
-                        <TableCell>{item.thickness || '-'}</TableCell>
-                        <TableCell className="text-right">{item.feet?.toFixed(2) ?? '-'}</TableCell>
-                        <TableCell className="text-right">{item.quantity}</TableCell>
-                        <TableCell className="text-right">{formatCurrency(item.price)}</TableCell>
-                        <TableCell className="text-right font-medium">{formatCurrency(itemSubtotal)}</TableCell>
-                    </TableRow>
-                    );
-                })}
-                </TableBody>
-            </Table>
-            
-            <div className="flex justify-end mt-6">
-                <div className="w-full max-w-xs space-y-2">
-                <div className="flex justify-between">
-                    <span className="text-muted-foreground">Subtotal</span>
-                    <span>{formatCurrency(subtotal)}</span>
-                </div>
-                <div className="flex justify-between">
-                    <span className="text-muted-foreground">Overall Discount ({sale.discount}%)</span>
-                    <span>- {formatCurrency(overallDiscountAmount)}</span>
-                </div>
-                <div className="flex justify-between font-bold text-lg border-t-2 border-black dark:border-white pt-2 mt-2">
-                    <span>Grand Total</span>
-                    <span>{formatCurrency(grandTotal)}</span>
-                </div>
-                </div>
-            </div>
-            
-            <div className="mt-20 text-center text-xs text-gray-500 border-t pt-4">
-                <p>Thank you for your business!</p>
-            </div>
-        </div>
-    );
-}
-
 function ReceivePaymentForm({ sale, onPaymentReceived, onOpenChange }: { sale: Sale; onPaymentReceived: (saleId: string, amount: number, date: Date) => void; onOpenChange: (open: boolean) => void; }) {
     const [amount, setAmount] = useState(sale.total);
     const [date, setDate] = useState(new Date());
@@ -172,10 +87,9 @@ export default function SalesPage() {
 
   const sortedSales = useMemo(() => {
     return [...sales].sort((a, b) => {
-        // Simple numeric sort on the ID part after 'INV-'
         const numA = parseInt(a.id.split('-')[1] || '0', 10);
         const numB = parseInt(b.id.split('-')[1] || '0', 10);
-        return numB - numA; // Sort descending
+        return numB - numA; 
     });
   }, [sales]);
   
@@ -213,10 +127,12 @@ export default function SalesPage() {
     toast({ title: 'Payment Received', description: `Payment of ${formatCurrency(amount)} for ${sale.customerName} has been recorded.` });
   };
   
-  const handlePrint = () => {
-    document.body.classList.add('printing-invoice');
-    window.print();
-    document.body.classList.remove('printing-invoice');
+  const handlePrintInvoice = (saleId: string) => {
+    window.open(`/print/invoice/${saleId}`, '_blank');
+  };
+
+  const handlePrintChallan = (saleId: string) => {
+    window.open(`/print/challan/${saleId}`, '_blank');
   };
 
   if (viewingSale) {
@@ -232,13 +148,84 @@ export default function SalesPage() {
                         <ArrowLeft className="mr-2 h-4 w-4" />
                         Back to Sales List
                     </Button>
-                    <Button onClick={handlePrint}>
+                    <Button onClick={() => window.print()}>
                         <Printer className="mr-2 h-4 w-4" />
                         Print this Invoice
                     </Button>
                 </div>
             </PageHeader>
-            <SaleInvoice sale={viewingSale} customer={customerForInvoice} />
+             <div id="printable-invoice" className="bg-background text-foreground p-4 sm:p-8 font-sans text-sm rounded-lg border shadow-sm">
+                <div className="grid grid-cols-2 gap-8 mb-8">
+                    <div>
+                    <h1 className="text-3xl font-bold font-headline mb-1">ARCO Aluminium Company</h1>
+                    <p className="text-muted-foreground">B-5, PLOT 59, Industrial Estate, Hayatabad, Peshawar</p>
+                    <p className="text-muted-foreground">+92 333 4646356</p>
+                    </div>
+                    <div className="text-right">
+                    <h2 className="text-4xl font-bold uppercase text-gray-800">INVOICE</h2>
+                    <div className="mt-2">
+                        <p><span className="font-semibold text-muted-foreground">Invoice #:</span> {viewingSale.id}</p>
+                        <p><span className="font-semibold text-muted-foreground">Date:</span> {formatDate(viewingSale.date)}</p>
+                    </div>
+                    </div>
+                </div>
+                
+                <div className="mb-8">
+                    <h3 className="font-semibold text-muted-foreground mb-1">Bill To:</h3>
+                    <p className="font-bold text-lg">{viewingSale.customerName}</p>
+                    {customerForInvoice?.address && <p>{customerForInvoice.address}</p>}
+                    {customerForInvoice?.phoneNumber && <p>{customerForInvoice.phoneNumber}</p>}
+                </div>
+
+                <Table>
+                    <TableHeader>
+                    <TableRow className="bg-gray-100 dark:bg-muted/50">
+                        <TableHead className="font-bold">Description</TableHead>
+                        <TableHead className="font-bold">Thickness</TableHead>
+                        <TableHead className="text-right font-bold">Feet</TableHead>
+                        <TableHead className="text-right font-bold">Qty</TableHead>
+                        <TableHead className="text-right font-bold">Rate</TableHead>
+                        <TableHead className="text-right font-bold">Amount</TableHead>
+                    </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                    {viewingSale.items.map((item, index) => {
+                        const itemSubtotal = (item.feet || 1) * item.price * item.quantity;
+                        return (
+                        <TableRow key={index}>
+                            <TableCell className="font-medium">{item.itemName} <span className="text-gray-500">({item.color})</span></TableCell>
+                            <TableCell>{item.thickness || '-'}</TableCell>
+                            <TableCell className="text-right">{item.feet?.toFixed(2) ?? '-'}</TableCell>
+                            <TableCell className="text-right">{item.quantity}</TableCell>
+                            <TableCell className="text-right">{formatCurrency(item.price)}</TableCell>
+                            <TableCell className="text-right font-medium">{formatCurrency(itemSubtotal)}</TableCell>
+                        </TableRow>
+                        );
+                    })}
+                    </TableBody>
+                </Table>
+                
+                <div className="flex justify-end mt-6">
+                    <div className="w-full max-w-xs space-y-2">
+                    <div className="flex justify-between">
+                        <span className="text-muted-foreground">Subtotal</span>
+                        <span>{formatCurrency(viewingSale.items.reduce((acc, item) => acc + (item.feet || 1) * item.price * item.quantity, 0))}</span>
+                    </div>
+                    <div className="flex justify-between">
+                        <span className="text-muted-foreground">Overall Discount ({viewingSale.discount}%)</span>
+                        <span>- {formatCurrency((viewingSale.items.reduce((acc, item) => acc + (item.feet || 1) * item.price * item.quantity, 0)) * viewingSale.discount / 100)}</span>
+                    </div>
+                    <div className="flex justify-between font-bold text-lg border-t-2 border-black dark:border-white pt-2 mt-2">
+                        <span>Grand Total</span>
+                        <span>{formatCurrency(viewingSale.total)}</span>
+                    </div>
+                    </div>
+                </div>
+                
+                <div className="mt-20 text-center text-xs text-gray-500 border-t pt-4">
+                    <p>Thank you for your business!</p>
+                </div>
+            </div>
         </>
     )
   }
@@ -302,6 +289,14 @@ export default function SalesPage() {
                          <DropdownMenuItem onSelect={() => setViewingSale(sale)}>
                             <FileText className="mr-2 h-4 w-4"/>
                             View Invoice
+                        </DropdownMenuItem>
+                        <DropdownMenuItem onSelect={() => handlePrintInvoice(sale.id)}>
+                            <Printer className="mr-2 h-4 w-4"/>
+                            Print Invoice
+                        </DropdownMenuItem>
+                         <DropdownMenuItem onSelect={() => handlePrintChallan(sale.id)}>
+                            <Printer className="mr-2 h-4 w-4"/>
+                            Print Challan
                         </DropdownMenuItem>
                         <DropdownMenuItem onSelect={() => setSelectedSaleForPayment(sale)}>
                             Receive Payment

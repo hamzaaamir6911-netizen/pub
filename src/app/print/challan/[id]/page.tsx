@@ -2,40 +2,36 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { useSearchParams } from 'next/navigation';
 import { useData } from '@/firebase/data/data-provider';
 import type { Sale } from '@/lib/types';
 import { formatDate } from '@/lib/utils';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 
 function ChallanPrintPage({ params }: { params: { id: string } }) {
-  const { sales, customers } = useData();
+  const { sales, customers, loading } = useData();
   const [sale, setSale] = useState<Sale | null>(null);
-  const searchParams = useSearchParams();
-  const isPreview = searchParams.get('preview') === 'true';
 
   useEffect(() => {
-    if (sales.length > 0) {
+    if (!loading && sales.length > 0) {
       const foundSale = sales.find(s => s.id === params.id);
-      if (foundSale) {
-        setSale(foundSale);
-      }
+      setSale(foundSale || null);
     }
-  }, [sales, params.id]);
-  
+  }, [loading, sales, params.id]);
+
   useEffect(() => {
-    if (sale && !isPreview) {
-      setTimeout(() => {
+    if (sale) {
+      const timer = setTimeout(() => {
         window.print();
         window.onafterprint = () => window.close();
       }, 500); 
+      return () => clearTimeout(timer); 
     }
-  }, [sale, isPreview]);
+  }, [sale]);
 
   const customer = sale ? customers.find(c => c.id === sale.customerId) : null;
   
-  if (!sale) {
-    return <div className="p-10 text-center">Loading challan...</div>;
+  if (loading || !sale) {
+    return <div className="p-10 text-center text-lg font-semibold">Loading challan...</div>;
   }
 
   return (

@@ -50,29 +50,20 @@ h1, h2, h3, h4, h5, h6 {
 
 
 @media print {
-  .print-hidden {
-    display: none !important;
+  body * {
+    visibility: hidden;
   }
-  
-  body.printing-invoice .print-hidden {
-    display: none !important;
+  #printable-invoice, #printable-invoice * {
+    visibility: visible;
   }
-
-  body.printing-invoice #printable-invoice {
-    display: block !important;
+  #printable-invoice {
     position: absolute;
     left: 0;
     top: 0;
     width: 100%;
-    height: 100%;
-    margin: 0;
-    padding: 0;
-    border: none;
-    box-shadow: none;
   }
-  
-  body:not(.printing-invoice) #printable-invoice {
-     display: block;
+  .print-hidden, .no-print {
+    display: none !important;
   }
 }
     
