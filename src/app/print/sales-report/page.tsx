@@ -7,7 +7,7 @@ import { useCollection, useFirestore, useMemoFirebase, useUser } from '@/firebas
 import type { Sale } from '@/lib/types';
 import { formatCurrency, formatDate } from '@/lib/utils';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow, TableFooter } from '@/components/ui/table';
-import { collection, orderBy, query, where, Timestamp } from 'firebase/firestore';
+import { collection, query, where, Timestamp, orderBy } from 'firebase/firestore';
 import { Badge } from '@/components/ui/badge';
 
 function SalesReportPage() {
@@ -16,23 +16,51 @@ function SalesReportPage() {
   const searchParams = useSearchParams();
   
   const ids = searchParams.get('ids');
+  const fromDateStr = searchParams.get('from');
+  const toDateStr = searchParams.get('to');
 
   const shouldFetch = !!user;
 
   const salesCol = useMemoFirebase(() => {
     if (!shouldFetch) return null;
-    return query(collection(firestore, 'sales'), orderBy('date', 'desc'));
+    
+    let q = query(collection(firestore, 'sales'), orderBy('date', 'desc'));
+
+    // The date filtering logic is now handled client-side after fetching
+    // because Firestore queries on date ranges can be complex with other filters.
+    // This is acceptable for a reasonable number of sales.
+
+    return q;
   }, [firestore, shouldFetch]);
 
   const { data: sales, isLoading } = useCollection<Sale>(salesCol);
 
   const filteredSales = useMemo(() => {
     if (!sales) return [];
-    if (!ids) return sales;
     
-    const selectedIds = new Set(ids.split(','));
-    return sales.filter(sale => selectedIds.has(sale.id));
-  }, [sales, ids]);
+    let anaylzedSales = sales.map(s => ({...s, date: s.date ? new Date(s.date) : new Date()}));
+
+    if (ids) {
+        const selectedIds = new Set(ids.split(','));
+        return anaylzedSales.filter(sale => selectedIds.has(sale.id));
+    }
+    
+    if (fromDateStr) {
+        const fromDate = new Date(fromDateStr);
+        const toDate = toDateStr ? new Date(toDateStr) : fromDate;
+        
+        // Adjust to include the full day
+        const startOfDay = new Date(fromDate.setHours(0, 0, 0, 0));
+        const endOfDay = new Date(toDate.setHours(23, 59, 59, 999));
+
+        return anaylzedSales.filter(sale => {
+            const saleDate = sale.date;
+            return saleDate >= startOfDay && saleDate <= endOfDay;
+        });
+    }
+
+    return anaylzedSales; // Return all if no filters
+  }, [sales, ids, fromDateStr, toDateStr]);
 
   useEffect(() => {
     if (filteredSales.length > 0 && !isLoading) {
@@ -56,7 +84,7 @@ function SalesReportPage() {
         <h1 className="text-3xl font-bold font-headline mb-1">ARCO Aluminium Company</h1>
         <h2 className="text-2xl font-semibold">Sales Report</h2>
         <p className="text-muted-foreground">
-            {ids ? `Report for selected sales` : 'Report for all sales'}
+            {fromDateStr ? `From: ${formatDate(new Date(fromDateStr))} To: ${formatDate(new Date(toDateStr || fromDateStr))}` : 'Report for selected sales'}
         </p>
       </div>
 
