@@ -187,27 +187,24 @@ export default function LedgerPage() {
 
   const handleDelete = async (transaction: Transaction) => {
     if (transaction.category === 'Sale' && transaction.description.includes('Invoice:')) {
-        const sale = sales.find(s => transaction.description.includes(s.id));
-        if (sale) {
-            await unpostSale(sale);
-            toast({ title: 'Sale Un-posted', description: `Sale ${sale.id} has been reverted to draft.` });
-        } else {
-             const invoiceId = transaction.description.split('Invoice: ')[1]?.slice(0, -1);
-             toast({ variant: 'destructive', title: 'Sale not found', description: `Could not find sale with ID ${invoiceId}. It might be on a different page or already deleted.`});
-        }
+        toast({
+            variant: 'destructive',
+            title: 'Action Not Allowed',
+            description: 'To delete a sale entry, please "Unpost" the sale from the Sales page. This will automatically remove it from the ledger.',
+        });
         return;
     }
     
-    if (transaction.category === 'Salary') {
+    if (transaction.category === 'Salary' || transaction.category === 'Opening Balance') {
       toast({
         variant: 'destructive',
         title: 'Deletion Not Allowed',
-        description: 'System-generated transactions cannot be deleted from the ledger directly.',
+        description: 'System-generated transactions (like Salaries or Opening Balances) cannot be deleted directly to maintain ledger integrity.',
       });
       return;
     }
     deleteTransaction(transaction.id);
-    toast({ title: "Transaction Deleted" });
+    toast({ title: "Transaction Deleted", description: `The transaction for ${formatCurrency(transaction.amount)} has been removed.` });
   }
 
   const filteredTransactions = useMemo(() => {
@@ -349,21 +346,13 @@ export default function LedgerPage() {
                               <Edit className="mr-2 h-4 w-4" />
                               Edit
                           </DropdownMenuItem>
-                           {transaction.category === 'Sale' && transaction.description.includes('Invoice:') ? (
-                                <DropdownMenuItem onSelect={() => handleDelete(transaction)} className="text-blue-500 focus:bg-blue-500/10 focus:text-blue-500">
-                                    <Undo2 className="mr-2 h-4 w-4" />
-                                    Unpost Sale
-                                </DropdownMenuItem>
-                           ) : (
-                            <DropdownMenuItem
-                                onSelect={() => handleDelete(transaction)}
-                                className="text-red-500 focus:bg-red-500/10 focus:text-red-500"
-                                disabled={transaction.category === 'Salary'}
-                            >
-                                <Trash2 className="mr-2 h-4 w-4"/>
-                                Delete
-                            </DropdownMenuItem>
-                           )}
+                          <DropdownMenuItem
+                            onSelect={() => handleDelete(transaction)}
+                            className="text-red-500 focus:bg-red-500/10 focus:text-red-500"
+                          >
+                              <Trash2 className="mr-2 h-4 w-4"/>
+                              Delete
+                          </DropdownMenuItem>
                         </DropdownMenuContent>
                       </DropdownMenu>
                     </TableCell>
@@ -388,7 +377,3 @@ export default function LedgerPage() {
     </>
   );
 }
-
-    
-
-    
