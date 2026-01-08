@@ -21,16 +21,10 @@ function SalesReportPage() {
 
   const shouldFetch = !!user;
 
+  // This query is now simpler. It just gets all sales. Filtering happens client-side.
   const salesCol = useMemoFirebase(() => {
     if (!shouldFetch) return null;
-    
-    let q = query(collection(firestore, 'sales'), orderBy('date', 'desc'));
-
-    // The date filtering logic is now handled client-side after fetching
-    // because Firestore queries on date ranges can be complex with other filters.
-    // This is acceptable for a reasonable number of sales.
-
-    return q;
+    return query(collection(firestore, 'sales'), orderBy('date', 'desc'));
   }, [firestore, shouldFetch]);
 
   const { data: sales, isLoading } = useCollection<Sale>(salesCol);
@@ -38,44 +32,49 @@ function SalesReportPage() {
   const filteredSales = useMemo(() => {
     if (!sales) return [];
     
-    let anaylzedSales = sales.map(s => ({...s, date: s.date ? new Date(s.date) : new Date()}));
+    // The date is already a Date object because of the updated DataProvider
+    let analyzedSales = sales;
 
     if (ids) {
         const selectedIds = new Set(ids.split(','));
-        return anaylzedSales.filter(sale => selectedIds.has(sale.id));
+        return analyzedSales.filter(sale => selectedIds.has(sale.id));
     }
     
     if (fromDateStr) {
         const fromDate = new Date(fromDateStr);
         const toDate = toDateStr ? new Date(toDateStr) : fromDate;
         
-        // Adjust to include the full day
         const startOfDay = new Date(fromDate.setHours(0, 0, 0, 0));
         const endOfDay = new Date(toDate.setHours(23, 59, 59, 999));
 
-        return anaylzedSales.filter(sale => {
-            const saleDate = sale.date;
+        return analyzedSales.filter(sale => {
+            const saleDate = sale.date; // sale.date is now a Date object
             return saleDate >= startOfDay && saleDate <= endOfDay;
         });
     }
 
-    return anaylzedSales; // Return all if no filters
+    return analyzedSales;
   }, [sales, ids, fromDateStr, toDateStr]);
 
   useEffect(() => {
-    if (filteredSales.length > 0 && !isLoading) {
+    // We only print when data has finished loading AND there's something to print
+    if (!isLoading && filteredSales.length > 0) {
       const timeoutId = setTimeout(() => {
         window.print();
         window.onafterprint = () => window.close();
-      }, 500);
+      }, 500); // Small delay to ensure rendering
       return () => clearTimeout(timeoutId);
     }
   }, [filteredSales, isLoading]);
 
-  if (isLoading || !sales) {
+  if (isLoading) {
     return <div className="p-10 text-center text-lg font-semibold">Loading sales report...</div>;
   }
   
+  if (sales && filteredSales.length === 0) {
+    return <div className="p-10 text-center text-lg font-semibold">No sales found for the selected criteria.</div>;
+  }
+
   const totalAmount = filteredSales.reduce((acc, sale) => acc + sale.total, 0);
 
   return (
