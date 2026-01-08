@@ -13,7 +13,6 @@ function InvoicePrintPage({ params }: { params: { id: string } }) {
 
   // Effect to find the sale and trigger print
   useEffect(() => {
-    // Only proceed if data has finished loading
     if (!loading && sales.length > 0) {
       const foundSale = sales.find(s => s.id === params.id);
       setSale(foundSale || null);
@@ -22,31 +21,26 @@ function InvoicePrintPage({ params }: { params: { id: string } }) {
         console.error(`Invoice with ID '${params.id}' not found.`);
       }
     }
-  }, [loading, sales, params.id]); // Rerun when loading status or sales data changes
+  }, [loading, sales, params.id]); 
 
   // Effect to print *after* the state has been updated and the component has re-rendered
   useEffect(() => {
     if (sale) {
-      // Use a timeout to ensure the DOM is fully painted before printing
       const timer = setTimeout(() => {
         window.print();
         window.onafterprint = () => window.close();
-      }, 500); // 500ms delay as a safeguard
+      }, 500); 
 
-      return () => clearTimeout(timer); // Cleanup timer on unmount
+      return () => clearTimeout(timer); 
     }
-  }, [sale]); // This effect runs only when the 'sale' state changes from null to a sale object
+  }, [sale]);
 
   const customer = sale ? customers.find(c => c.id === sale.customerId) : null;
   
-  if (loading) {
+  if (loading || !sale) {
     return <div className="p-10 text-center text-lg font-semibold">Loading invoice...</div>;
   }
   
-  if (!sale) {
-    return <div className="p-10 text-center text-lg font-semibold">Invoice with ID '{params.id}' not found.</div>;
-  }
-
   const subtotal = sale.items.reduce((acc, item) => {
     const itemTotal = (item.feet || 1) * item.price * item.quantity;
     const discountAmount = itemTotal * ((item.discount || 0) / 100);
