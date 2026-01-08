@@ -105,6 +105,8 @@ export function NewSaleForm({ initialData, onSuccess }: { initialData?: Sale | n
 
     const isEditMode = !!initialData;
 
+    // This effect now ONLY runs when the form is opened for editing.
+    // It is the single source of truth for populating the form.
     useEffect(() => {
         if (initialData) {
             setSelectedCustomer(initialData.customerId);
@@ -112,9 +114,10 @@ export function NewSaleForm({ initialData, onSuccess }: { initialData?: Sale | n
             setOverallDiscount(initialData.discount || 0);
             setSaleDate(new Date(initialData.date));
         } else {
+            // This is for a new sale, so we clear the form
              clearForm();
         }
-    }, [initialData]);
+    }, [initialData]); // This dependency array is key. It only runs when initialData changes.
 
 
     const handleAddItem = () => {
@@ -160,7 +163,6 @@ export function NewSaleForm({ initialData, onSuccess }: { initialData?: Sale | n
     }
 
     const clearForm = () => {
-        if (isEditMode) return; // Don't clear in edit mode
         setSelectedCustomer("");
         setSaleItems([{itemId: "", quantity: 1, feet: 1, discount: 0, color: '', thickness: ''}]);
         setOverallDiscount(0);
@@ -220,7 +222,7 @@ export function NewSaleForm({ initialData, onSuccess }: { initialData?: Sale | n
             await addSale(saleData);
             toast({ title: "Sale Draft Saved!", description: `Sale has been saved as a draft.` });
         }
-        onSuccess();
+        onSuccess(); // Call this to close the dialog and refresh data
     }
     
     const handleCustomerAdded = async (newCustomer: Omit<Customer, 'id'| 'createdAt'>) => {
