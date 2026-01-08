@@ -31,7 +31,6 @@ export default function PrintLayout({
           fontBody.variable,
           fontHeadline.variable
         )}>
-        {/* FirebaseClientProvider now contains DataProvider */}
         <FirebaseClientProvider>
             {children}
         </FirebaseClientProvider>

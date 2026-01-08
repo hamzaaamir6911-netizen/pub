@@ -18,8 +18,6 @@ function InvoicePrintPage({ params }: { params: { id: string } }) {
       const foundSale = sales.find(s => s.id === params.id);
       setSale(foundSale || null);
 
-      // If the sale is found, the page will re-render with the sale data.
-      // A second effect will handle the printing after the render.
       if (!foundSale) {
         console.error(`Invoice with ID '${params.id}' not found.`);
       }
@@ -41,7 +39,7 @@ function InvoicePrintPage({ params }: { params: { id: string } }) {
 
   const customer = sale ? customers.find(c => c.id === sale.customerId) : null;
   
-  if (loading || !sale) {
+  if (loading) {
     return <div className="p-10 text-center text-lg font-semibold">Loading invoice...</div>;
   }
   
