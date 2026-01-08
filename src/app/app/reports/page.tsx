@@ -27,7 +27,7 @@ import { ChartConfig, ChartContainer, ChartTooltipContent } from "@/components/u
 import { useData } from "@/firebase/data/data-provider"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
 import { Button } from "@/components/ui/button"
-import { Calendar as CalendarIcon, FileText, X } from "lucide-react"
+import { Calendar as CalendarIcon, FileText, X, Printer } from "lucide-react"
 import { Calendar } from "@/components/ui/calendar"
 import { addDays, format } from "date-fns"
 import type { DateRange } from "react-day-picker"
@@ -51,7 +51,7 @@ const chartConfig = {
   },
 } satisfies ChartConfig
 
-function ReportCard({ title, description, children }: { title: string, description: string, children: React.ReactNode }) {
+function ReportCard({ title, description, children, onPrint }: { title: string, description: string, children: React.ReactNode, onPrint?: () => void }) {
     
     return (
         <Card className="mt-4 break-inside-avoid">
@@ -61,6 +61,12 @@ function ReportCard({ title, description, children }: { title: string, descripti
                         <CardTitle>{title}</CardTitle>
                         <CardDescription>{description}</CardDescription>
                     </div>
+                    {onPrint && (
+                        <Button variant="ghost" size="icon" onClick={onPrint} className="no-print">
+                            <Printer className="h-4 w-4" />
+                            <span className="sr-only">Print</span>
+                        </Button>
+                    )}
                 </div>
             </CardHeader>
             {children}
@@ -363,8 +369,8 @@ export default function ReportsPage() {
         description="Analyze your factory's financial performance."
       />
 
-      <div className="columns-1 md:columns-2 gap-4">
-        <ReportCard title="Daily Report" description={formatDate(new Date())}>
+      <div className="columns-1 md:columns-2 gap-4" id="reports-container">
+        <ReportCard title="Daily Report" description={formatDate(new Date())} onPrint={() => window.print()}>
             <CardContent>
                 <ChartContainer config={chartConfig} className="min-h-[200px] w-full">
                     <BarChart accessibilityLayer data={dailyReportData}>
@@ -380,7 +386,7 @@ export default function ReportsPage() {
             </CardContent>
         </ReportCard>
         
-        <ReportCard title="Monthly Performance" description="Revenue and expenses over recent months.">
+        <ReportCard title="Monthly Performance" description="Revenue and expenses over recent months." onPrint={() => window.print()}>
             <CardContent>
                 <ChartContainer config={chartConfig} className="min-h-[300px] w-full">
                     <BarChart accessibilityLayer data={monthlyData}>
@@ -396,7 +402,7 @@ export default function ReportsPage() {
             </CardContent>
         </ReportCard>
 
-        <ReportCard title="Profit & Loss Statement" description="A summary of revenues, costs, and expenses.">
+        <ReportCard title="Profit & Loss Statement" description="A summary of revenues, costs, and expenses." onPrint={() => window.print()}>
             <CardContent className="space-y-4">
                 <div className="rounded-lg border p-4 grid gap-4">
                     <div className="flex justify-between">
@@ -415,11 +421,11 @@ export default function ReportsPage() {
             </CardContent>
         </ReportCard>
 
-        <ReportCard title="Ledger Report" description="View transactions within a specific date range.">
+        <ReportCard title="Ledger Report" description="View transactions within a specific date range." onPrint={() => window.print()}>
             <LedgerReportContent />
         </ReportCard>
         
-        <ReportCard title="Salary Payment History" description="Review all past salary payments.">
+        <ReportCard title="Salary Payment History" description="Review all past salary payments." onPrint={() => window.print()}>
             <SalaryReportContent />
         </ReportCard>
       </div>

@@ -33,22 +33,12 @@ export default function PrintChallanPage() {
   }
 
   return (
-    <div className="p-8 font-sans bg-white text-black text-sm">
-       <style>
-        {`
-          @media print {
-            body {
-              -webkit-print-color-adjust: exact;
-              color-adjust: exact;
-            }
-          }
-        `}
-      </style>
-        <div className="text-center mb-4">
-            <h1 className="text-xl font-extrabold font-headline">ARCO Aluminium Company</h1>
-            <p className="mt-1 text-lg font-extrabold">Delivery Challan</p>
+    <div className="p-8 font-sans bg-white text-black text-sm font-semibold">
+        <div className="text-center mb-6">
+            <h1 className="text-2xl font-extrabold font-headline">ARCO Aluminium Company</h1>
+            <p className="mt-1 text-lg font-bold">Delivery Challan</p>
         </div>
-        <div className="grid grid-cols-2 gap-4 mb-4">
+        <div className="grid grid-cols-2 gap-4 mb-6 text-sm">
             <div>
                 <p className="font-bold">Customer:</p>
                 <p>{sale.customerName}</p>
@@ -56,18 +46,18 @@ export default function PrintChallanPage() {
                 {customer?.phoneNumber && <p>{customer.phoneNumber}</p>}
             </div>
             <div className="text-right">
-                <p className="font-bold">Challan No: <span className="font-normal">{sale.id}</span></p>
-                <p className="font-bold">Date: <span className="font-normal">{formatDate(sale.date)}</span></p>
+                <p className="font-bold">Challan No: <span className="font-semibold">{sale.id}</span></p>
+                <p className="font-bold">Date: <span className="font-semibold">{formatDate(sale.date)}</span></p>
             </div>
         </div>
-        <Table>
+        <Table className="text-sm font-semibold">
             <TableHeader>
                 <TableRow className="bg-gray-100">
-                    <TableHead className="w-[40%] font-bold text-black">Item</TableHead>
-                    <TableHead className="font-bold text-black">Colour</TableHead>
-                    <TableHead className="font-bold text-black">Thickness</TableHead>
-                    <TableHead className="text-right font-bold text-black">Feet</TableHead>
-                    <TableHead className="text-right font-bold text-black">Quantity</TableHead>
+                    <TableHead className="w-[40%] font-extrabold text-black">Item</TableHead>
+                    <TableHead className="font-extrabold text-black">Colour</TableHead>
+                    <TableHead className="font-extrabold text-black">Thickness</TableHead>
+                    <TableHead className="text-right font-extrabold text-black">Feet</TableHead>
+                    <TableHead className="text-right font-extrabold text-black">Quantity</TableHead>
                 </TableRow>
             </TableHeader>
             <TableBody>
@@ -82,9 +72,9 @@ export default function PrintChallanPage() {
                 ))}
             </TableBody>
         </Table>
-            <div className="mt-16 grid grid-cols-2 gap-4 text-center text-sm">
-            <div className="border-t-2 border-black pt-2 font-bold"><p>Receiver's Signature</p></div>
-            <div className="border-t-2 border-black pt-2 font-bold"><p>Driver's Signature</p></div>
+            <div className="mt-24 grid grid-cols-2 gap-8 text-sm">
+            <div className="border-t-2 border-black pt-2 font-bold text-center"><p>Receiver's Signature</p></div>
+            <div className="border-t-2 border-black pt-2 font-bold text-center"><p>Driver's Signature</p></div>
         </div>
     </div>
   );

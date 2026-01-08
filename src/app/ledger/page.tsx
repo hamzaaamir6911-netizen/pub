@@ -54,7 +54,7 @@ function AddTransactionForm({ onTransactionAdded }: { onTransactionAdded: (newTr
     if (type === 'credit' && customerId) {
         const customer = customers.find(c => c.id === customerId);
         if (customer) {
-            setDescription(`Cash received from ${customer.name}`);
+            setDescription(`Cash received from ${customer.customerName}`);
             setCategory('Customer Payment');
         }
     } else if (type === 'debit' && vendorId) {
@@ -85,7 +85,7 @@ function AddTransactionForm({ onTransactionAdded }: { onTransactionAdded: (newTr
       type,
       category: category || (type === 'credit' ? 'Cash Received' : 'Payment'),
       customerId: customerId,
-      customerName: customer?.name,
+      customerName: customer?.customerName,
       vendorId: vendorId,
       vendorName: vendor?.name,
     };
@@ -125,7 +125,7 @@ function AddTransactionForm({ onTransactionAdded }: { onTransactionAdded: (newTr
                         <SelectValue placeholder="Select a customer" />
                     </SelectTrigger>
                     <SelectContent>
-                        {customers.map(c => <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>)}
+                        {customers.map(c => <SelectItem key={c.id} value={c.id}>{c.customerName}</SelectItem>)}
                     </SelectContent>
                 </Select>
             </div>
@@ -254,7 +254,7 @@ export default function LedgerPage() {
             <Select onValueChange={(value) => { setSelectedCustomerId(value || null); setSelectedVendorId(null); }} value={selectedCustomerId || ''}>
                 <SelectTrigger id="customer-filter" className="w-[200px]"><SelectValue placeholder="Select Customer" /></SelectTrigger>
                 <SelectContent>
-                    {customers.map(c => <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>)}
+                    {customers.map(c => <SelectItem key={c.id} value={c.id}>{c.customerName}</SelectItem>)}
                 </SelectContent>
             </Select>
         </div>
