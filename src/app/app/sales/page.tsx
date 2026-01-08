@@ -2,7 +2,7 @@
 "use client";
 
 import { useState, FormEvent, useMemo, useEffect } from "react";
-import { MoreHorizontal, Trash2, CheckCircle, FileText, Undo2, ArrowLeft, Printer } from "lucide-react";
+import { MoreHorizontal, Trash2, CheckCircle, FileText, Undo2, ArrowLeft, Printer, DollarSign } from "lucide-react";
 import {
   Table,
   TableBody,
@@ -101,6 +101,8 @@ export default function SalesPage() {
       const saleToPost = sales.find(s => s.id === saleId);
       if (saleToPost) {
         postSale(saleToPost);
+        // Refresh the viewing sale to show the updated status
+        setViewingSale({ ...saleToPost, status: 'posted' });
       }
   }
 
@@ -108,6 +110,8 @@ export default function SalesPage() {
       const saleToUnpost = sales.find(s => s.id === saleId);
       if(saleToUnpost) {
         unpostSale(saleToUnpost);
+        // Refresh the viewing sale to show the updated status
+        setViewingSale({ ...saleToUnpost, status: 'draft' });
       }
   }
   
@@ -127,10 +131,6 @@ export default function SalesPage() {
     toast({ title: 'Payment Received', description: `Payment of ${formatCurrency(amount)} for ${sale.customerName} has been recorded.` });
   };
   
-  const handlePrintInvoice = (saleId: string) => {
-    window.open(`/print/invoice/${saleId}`, '_blank');
-  };
-
   const handlePrintChallan = (saleId: string) => {
     window.open(`/print/challan/${saleId}`, '_blank');
   };
@@ -143,19 +143,27 @@ export default function SalesPage() {
                 title={`Invoice: ${viewingSale.id}`}
                 description={`Details for invoice sent to ${viewingSale.customerName}`}
             >
-                <div className="flex gap-2">
+                <div className="flex flex-wrap gap-2">
                     <Button variant="outline" onClick={() => setViewingSale(null)}>
                         <ArrowLeft className="mr-2 h-4 w-4" />
                         Back to Sales List
                     </Button>
                     <Button onClick={() => window.print()}>
                         <Printer className="mr-2 h-4 w-4" />
-                        Print this Invoice
+                        Print Invoice
+                    </Button>
+                    <Button variant="outline" onClick={() => handlePrintChallan(viewingSale.id)}>
+                        <Printer className="mr-2 h-4 w-4" />
+                        Print Challan
+                    </Button>
+                    <Button variant="outline" onClick={() => setSelectedSaleForPayment(viewingSale)}>
+                        <DollarSign className="mr-2 h-4 w-4" />
+                        Receive Payment
                     </Button>
                 </div>
             </PageHeader>
              <div id="printable-invoice" className="bg-background text-foreground p-4 sm:p-8 font-sans text-sm rounded-lg border shadow-sm">
-                <div className="grid grid-cols-2 gap-8 mb-8">
+                <div className="flex justify-between items-start mb-8">
                     <div>
                     <h1 className="text-3xl font-bold font-headline mb-1">ARCO Aluminium Company</h1>
                     <p className="text-muted-foreground">B-5, PLOT 59, Industrial Estate, Hayatabad, Peshawar</p>
@@ -166,6 +174,7 @@ export default function SalesPage() {
                     <div className="mt-2">
                         <p><span className="font-semibold text-muted-foreground">Invoice #:</span> {viewingSale.id}</p>
                         <p><span className="font-semibold text-muted-foreground">Date:</span> {formatDate(viewingSale.date)}</p>
+                        <p><span className="font-semibold text-muted-foreground">Status:</span> <Badge variant={viewingSale.status === 'posted' ? 'default' : 'secondary'}>{viewingSale.status}</Badge></p>
                     </div>
                     </div>
                 </div>
@@ -289,17 +298,6 @@ export default function SalesPage() {
                          <DropdownMenuItem onSelect={() => setViewingSale(sale)}>
                             <FileText className="mr-2 h-4 w-4"/>
                             View Invoice
-                        </DropdownMenuItem>
-                        <DropdownMenuItem onSelect={() => handlePrintInvoice(sale.id)}>
-                            <Printer className="mr-2 h-4 w-4"/>
-                            Print Invoice
-                        </DropdownMenuItem>
-                         <DropdownMenuItem onSelect={() => handlePrintChallan(sale.id)}>
-                            <Printer className="mr-2 h-4 w-4"/>
-                            Print Challan
-                        </DropdownMenuItem>
-                        <DropdownMenuItem onSelect={() => setSelectedSaleForPayment(sale)}>
-                            Receive Payment
                         </DropdownMenuItem>
                         {sale.status === 'draft' && (
                             <DropdownMenuItem onSelect={() => handlePostSale(sale.id)}>
