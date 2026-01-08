@@ -51,6 +51,7 @@ import { Badge } from "@/components/ui/badge";
 import { useCollection, useFirestore, useMemoFirebase, useUser } from "@/firebase";
 import { collection, orderBy, query } from "firebase/firestore";
 import { addDays, format } from "date-fns";
+import { Checkbox } from "@/components/ui/checkbox";
 
 
 function DeliveryChallan({ sale }: { sale: Sale }) {
@@ -530,6 +531,7 @@ export default function SalesPage() {
   const [selectedSale, setSelectedSale] = useState<Sale | null>(null);
   const [selectedChallan, setSelectedChallan] = useState<Sale | null>(null);
   const [editingSale, setEditingSale] = useState<Sale | null>(null);
+  const [selectedSaleIds, setSelectedSaleIds] = useState<string[]>([]);
   const [date, setDate] = useState<DateRange | undefined>({
     from: addDays(new Date(), -30),
     to: new Date(),
@@ -537,9 +539,17 @@ export default function SalesPage() {
   const { toast } = useToast();
 
   const filteredSales = sales.filter(sale => {
-    if (!date?.from || !date?.to) return true;
-    const saleDate = new Date(sale.date);
-    return saleDate >= date.from && saleDate <= date.to;
+    if (!date?.from) return true; // Show all if no start date
+    const saleDate = sale.date;
+    const fromDate = date.from;
+    // If there's no 'to' date, use the 'from' date for both ends of the range
+    const toDate = date.to ?? date.from;
+    
+    // Adjust to include the full day
+    const startOfDay = new Date(fromDate.setHours(0, 0, 0, 0));
+    const endOfDay = new Date(toDate.setHours(23, 59, 59, 999));
+
+    return saleDate >= startOfDay && saleDate <= endOfDay;
   });
 
   const sortedSales = [...filteredSales].sort((a, b) => {
@@ -550,16 +560,27 @@ export default function SalesPage() {
         return numB - numA;
     }
     
-    return new Date(b.date).getTime() - new Date(a.date).getTime();
+    return b.date.getTime() - a.date.getTime();
   });
+  
+  useEffect(() => {
+    // Clear selection when date filter changes
+    setSelectedSaleIds([]);
+  }, [date]);
 
   const handlePrintAll = () => {
-    const from = date?.from?.toISOString();
-    const to = date?.to?.toISOString();
-
     const queryParams = new URLSearchParams();
-    if (from) queryParams.append('from', from);
-    if (to) queryParams.append('to', to);
+    
+    if (selectedSaleIds.length > 0) {
+        queryParams.append('ids', selectedSaleIds.join(','));
+    } else {
+        toast({
+          variant: "destructive",
+          title: "No Sales Selected",
+          description: "Please select at least one sale to print a report."
+        });
+        return;
+    }
     
     const url = `/print/sales-report?${queryParams.toString()}`;
 
@@ -570,6 +591,22 @@ export default function SalesPage() {
         title: "Print Failed",
         description: "Please allow pop-ups for this site to print the report."
       });
+    }
+  };
+
+  const handleSelectAll = (checked: boolean) => {
+    if (checked) {
+        setSelectedSaleIds(sortedSales.map(s => s.id));
+    } else {
+        setSelectedSaleIds([]);
+    }
+  };
+
+  const handleSelectRow = (id: string, checked: boolean) => {
+    if (checked) {
+        setSelectedSaleIds(prev => [...prev, id]);
+    } else {
+        setSelectedSaleIds(prev => prev.filter(saleId => saleId !== id));
     }
   };
 
@@ -615,9 +652,9 @@ export default function SalesPage() {
         title="Sales"
         description="Record new sales and view sales history."
       >
-        <Button onClick={handlePrintAll} variant="outline">
+        <Button onClick={handlePrintAll} variant="outline" disabled={selectedSaleIds.length === 0}>
           <Printer className="mr-2 h-4 w-4" />
-          Print Report
+          Print Selected ({selectedSaleIds.length})
         </Button>
       </PageHeader>
       <Tabs value={activeTab} onValueChange={setActiveTab}>
@@ -648,6 +685,13 @@ export default function SalesPage() {
             <Table>
               <TableHeader>
                 <TableRow>
+                  <TableHead className="w-[50px]">
+                    <Checkbox
+                        checked={sortedSales.length > 0 && selectedSaleIds.length === sortedSales.length}
+                        onCheckedChange={handleSelectAll}
+                        aria-label="Select all"
+                    />
+                  </TableHead>
                   <TableHead>Sale ID</TableHead>
                   <TableHead>Customer</TableHead>
                   <TableHead>Date</TableHead>
@@ -661,11 +705,18 @@ export default function SalesPage() {
               <TableBody>
                 {sortedSales.length === 0 ? (
                   <TableRow>
-                    <TableCell colSpan={6} className="text-center h-24">No sales recorded in this date range.</TableCell>
+                    <TableCell colSpan={7} className="text-center h-24">No sales recorded in this date range.</TableCell>
                   </TableRow>
                 ) : (
                   sortedSales.map((sale) => (
-                    <TableRow key={sale.id}>
+                    <TableRow key={sale.id} data-state={selectedSaleIds.includes(sale.id) && "selected"}>
+                      <TableCell>
+                         <Checkbox
+                            checked={selectedSaleIds.includes(sale.id)}
+                            onCheckedChange={(checked) => handleSelectRow(sale.id, !!checked)}
+                            aria-label={`Select sale ${sale.id}`}
+                         />
+                      </TableCell>
                       <TableCell className="font-medium">{sale.id}</TableCell>
                       <TableCell>{sale.customerName}</TableCell>
                       <TableCell>{formatDate(sale.date)}</TableCell>

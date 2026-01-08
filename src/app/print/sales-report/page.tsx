@@ -15,38 +15,24 @@ function SalesReportPage() {
   const { user } = useUser();
   const searchParams = useSearchParams();
   
-  const fromDate = searchParams.get('from');
-  const toDate = searchParams.get('to');
+  const ids = searchParams.get('ids');
 
   const shouldFetch = !!user;
 
   const salesCol = useMemoFirebase(() => {
     if (!shouldFetch) return null;
-    
-    let q = query(collection(firestore, 'sales'), orderBy('date', 'desc'));
-    
-    // This is tricky because Firestore queries on timestamps are precise.
-    // We'll filter on the client side for simplicity, but for large datasets,
-    // this should be handled with proper timestamp queries.
-    return q;
+    return query(collection(firestore, 'sales'), orderBy('date', 'desc'));
   }, [firestore, shouldFetch]);
 
   const { data: sales, isLoading } = useCollection<Sale>(salesCol);
 
   const filteredSales = useMemo(() => {
     if (!sales) return [];
-    if (!fromDate || !toDate) return sales;
+    if (!ids) return sales;
     
-    const from = new Date(fromDate);
-    const to = new Date(toDate);
-    // Set 'to' date to the end of the day
-    to.setHours(23, 59, 59, 999);
-
-    return sales.filter(sale => {
-        const saleDate = new Date(sale.date);
-        return saleDate >= from && saleDate <= to;
-    });
-  }, [sales, fromDate, toDate]);
+    const selectedIds = new Set(ids.split(','));
+    return sales.filter(sale => selectedIds.has(sale.id));
+  }, [sales, ids]);
 
   useEffect(() => {
     if (filteredSales.length > 0 && !isLoading) {
@@ -69,13 +55,9 @@ function SalesReportPage() {
       <div className="text-center mb-8">
         <h1 className="text-3xl font-bold font-headline mb-1">ARCO Aluminium Company</h1>
         <h2 className="text-2xl font-semibold">Sales Report</h2>
-        {fromDate && toDate ? (
-            <p className="text-muted-foreground">
-                From {formatDate(new Date(fromDate))} to {formatDate(new Date(toDate))}
-            </p>
-        ) : (
-            <p className="text-muted-foreground">For All Dates</p>
-        )}
+        <p className="text-muted-foreground">
+            {ids ? `Report for selected sales` : 'Report for all sales'}
+        </p>
       </div>
 
       <Table>
