@@ -12,6 +12,7 @@ import { deleteDocumentNonBlocking, updateDocumentNonBlocking } from '../non-blo
 interface DataContextProps {
   items: Item[];
   customers: Customer[];
+  sales: Sale[];
   vendors: Vendor[];
   labourers: Labour[];
   loading: boolean; // This will now represent loading of all core data
@@ -239,20 +240,23 @@ export const DataProvider = ({ children }: { children: ReactNode }) => {
 
     const itemsCol = useMemoFirebase(() => shouldFetch ? collection(firestore, 'items') : null, [firestore, shouldFetch]);
     const customersCol = useMemoFirebase(() => shouldFetch ? collection(firestore, 'customers') : null, [firestore, shouldFetch]);
+    const salesCol = useMemoFirebase(() => shouldFetch ? collection(firestore, 'sales') : null, [firestore, shouldFetch]);
     const vendorsCol = useMemoFirebase(() => shouldFetch ? collection(firestore, 'vendors') : null, [firestore, shouldFetch]);
     const labourCol = useMemoFirebase(() => shouldFetch ? collection(firestore, 'labour') : null, [firestore, shouldFetch]);
     
     const { data: itemsData, isLoading: itemsLoading } = useCollection<Item>(itemsCol);
     const { data: customersData, isLoading: customersLoading } = useCollection<Customer>(customersCol);
+    const { data: salesData, isLoading: salesLoading } = useCollection<Sale>(salesCol);
     const { data: vendorsData, isLoading: vendorsLoading } = useCollection<Vendor>(vendorsCol);
     const { data: labourData, isLoading: labourLoading } = useCollection<Labour>(labourCol);
 
     const items = itemsData?.map(item => ({ ...item, quantity: item.quantity ?? 0, createdAt: toDate(item.createdAt) as Date })) || [];
     const customers = customersData?.map(customer => ({ ...customer, createdAt: toDate(customer.createdAt) as Date })) || [];
+    const sales = salesData?.map(sale => ({ ...sale, date: toDate(sale.date) as Date })) || [];
     const vendors = vendorsData?.map(vendor => ({ ...vendor, createdAt: toDate(vendor.createdAt) as Date })) || [];
     const labourers = labourData?.map(labourer => ({ ...labourer, createdAt: toDate(labourer.createdAt) as Date })) || [];
 
-    const loading = isUserLoading || itemsLoading || customersLoading || vendorsLoading || labourLoading;
+    const loading = isUserLoading || itemsLoading || customersLoading || salesLoading || vendorsLoading || labourLoading;
 
     const addItem = async (item: Omit<Item, 'id' | 'createdAt'>) => {
         if (!itemsCol) throw new Error("Items collection not available");
@@ -736,7 +740,7 @@ export const DataProvider = ({ children }: { children: ReactNode }) => {
     };
     
     const value = {
-        items, customers, vendors, labourers, loading,
+        items, customers, sales, vendors, labourers, loading,
         addItem, deleteItem, updateItemStock,
         addCustomer, updateCustomer, deleteCustomer,
         addVendor, deleteVendor,
