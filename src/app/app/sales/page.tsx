@@ -72,119 +72,7 @@ function ReceivePaymentForm({ sale, onPaymentReceived, onOpenChange }: { sale: S
     );
 }
 
-function InvoiceView({ sale, onBack, onReceivePayment }: { sale: Sale; onBack: () => void; onReceivePayment: (sale: Sale) => void; }) {
-    const { customers } = useData();
-    const customerForInvoice = customers.find(c => c.id === sale.customerId);
-    
-    const handlePrintChallan = (saleId: string) => {
-        window.open(`/app/print/challan/${saleId}`, '_blank');
-    }
-    
-    return (
-        <>
-            <PageHeader
-                title={`Invoice: ${sale.id}`}
-                description={`Details for invoice sent to ${sale.customerName}`}
-            >
-                <div className="flex flex-wrap gap-2 no-print">
-                    <Button variant="outline" onClick={onBack}>
-                        <ArrowLeft className="mr-2 h-4 w-4" />
-                        Back to Sales List
-                    </Button>
-                    <Button onClick={() => window.print()}>
-                        <Printer className="mr-2 h-4 w-4" />
-                        Print Invoice
-                    </Button>
-                    <Button variant="outline" onClick={() => handlePrintChallan(sale.id)}>
-                        <FileText className="mr-2 h-4 w-4" />
-                        Print Challan
-                    </Button>
-                    {sale.status === 'posted' && (
-                        <Button variant="outline" onClick={() => onReceivePayment(sale)}>
-                            <DollarSign className="mr-2 h-4 w-4" />
-                            Receive Payment
-                        </Button>
-                    )}
-                </div>
-            </PageHeader>
-            <div id="printable-area" className="bg-background text-foreground p-4 sm:p-8 font-sans text-sm rounded-lg border shadow-sm">
-                <div className="flex justify-between items-start mb-8">
-                    <div>
-                    <h1 className="text-3xl font-bold font-headline mb-1">ARCO Aluminium Company</h1>
-                    <p className="text-muted-foreground">B-5, PLOT 59, Industrial Estate, Hayatabad, Peshawar</p>
-                    <p className="text-muted-foreground">+92 333 4646356</p>
-                    </div>
-                    <div className="text-right">
-                    <h2 className="text-4xl font-bold uppercase text-gray-800">INVOICE</h2>
-                    <div className="mt-2">
-                        <p><span className="font-semibold text-muted-foreground">Invoice #:</span> {sale.id}</p>
-                        <p><span className="font-semibold text-muted-foreground">Date:</span> {formatDate(sale.date)}</p>
-                        <p><span className="font-semibold text-muted-foreground">Status:</span> <Badge variant={sale.status === 'posted' ? 'default' : 'secondary'}>{sale.status}</Badge></p>
-                    </div>
-                    </div>
-                </div>
-                
-                <div className="mb-8">
-                    <h3 className="font-semibold text-muted-foreground mb-1">Bill To:</h3>
-                    <p className="font-bold text-lg">{sale.customerName}</p>
-                    {customerForInvoice?.address && <p>{customerForInvoice.address}</p>}
-                    {customerForInvoice?.phoneNumber && <p>{customerForInvoice.phoneNumber}</p>}
-                </div>
-
-                <Table>
-                    <TableHeader>
-                    <TableRow className="bg-gray-100 dark:bg-muted/50">
-                        <TableHead className="font-bold">Description</TableHead>
-                        <TableHead className="font-bold">Thickness</TableHead>
-                        <TableHead className="text-right font-bold">Feet</TableHead>
-                        <TableHead className="text-right font-bold">Qty</TableHead>
-                        <TableHead className="text-right font-bold">Rate</TableHead>
-                        <TableHead className="text-right font-bold">Amount</TableHead>
-                    </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                    {sale.items.map((item, index) => {
-                        const itemSubtotal = (item.feet || 1) * item.price * item.quantity;
-                        return (
-                        <TableRow key={index}>
-                            <TableCell className="font-medium">{item.itemName} <span className="text-gray-500">({item.color})</span></TableCell>
-                            <TableCell>{item.thickness || '-'}</TableCell>
-                            <TableCell className="text-right">{item.feet?.toFixed(2) ?? '-'}</TableCell>
-                            <TableCell className="text-right">{item.quantity}</TableCell>
-                            <TableCell className="text-right">{formatCurrency(item.price)}</TableCell>
-                            <TableCell className="text-right font-medium">{formatCurrency(itemSubtotal)}</TableCell>
-                        </TableRow>
-                        );
-                    })}
-                    </TableBody>
-                </Table>
-                
-                <div className="flex justify-end mt-6">
-                    <div className="w-full max-w-xs space-y-2">
-                    <div className="flex justify-between">
-                        <span className="text-muted-foreground">Subtotal</span>
-                        <span>{formatCurrency(sale.items.reduce((acc, item) => acc + (item.feet || 1) * item.price * item.quantity, 0))}</span>
-                    </div>
-                    <div className="flex justify-between">
-                        <span className="text-muted-foreground">Overall Discount ({sale.discount}%)</span>
-                        <span>- {formatCurrency((sale.items.reduce((acc, item) => acc + (item.feet || 1) * item.price * item.quantity, 0)) * sale.discount / 100)}</span>
-                    </div>
-                    <div className="flex justify-between font-bold text-lg border-t-2 border-black dark:border-white pt-2 mt-2">
-                        <span>Grand Total</span>
-                        <span>{formatCurrency(sale.total)}</span>
-                    </div>
-                    </div>
-                </div>
-                
-                <div className="mt-20 text-center text-xs text-gray-500 border-t pt-4">
-                    <p>Thank you for your business!</p>
-                </div>
-            </div>
-        </>
-    );
-}
-
-function NewSaleForm({ onSaleAdded, onSaleUpdated, initialData }: { onSaleAdded: (newSale: Omit<Sale, 'id' | 'total' | 'status'>) => void, onSaleUpdated: (saleId: string, updatedSale: Omit<Sale, 'id' | 'total' | 'status'>) => void, initialData?: Sale | null }) {
+function NewSaleForm({ onSaleAdded, onSaleUpdated, initialData, onDoneEditing }: { onSaleAdded: (newSale: Omit<Sale, 'id' | 'total' | 'status'>) => void, onSaleUpdated: (saleId: string, updatedSale: Omit<Sale, 'id' | 'total' | 'status'>) => void, initialData?: Sale | null, onDoneEditing: () => void }) {
     const { toast } = useToast();
     const { customers, items: allItems, addCustomer } = useData();
     
@@ -312,6 +200,7 @@ function NewSaleForm({ onSaleAdded, onSaleUpdated, initialData }: { onSaleAdded:
             toast({ title: "Sale Draft Saved!", description: `Sale has been saved as a draft.` });
             clearForm();
         }
+        onDoneEditing();
     }
     
     const handleCustomerAdded = async (newCustomer: Omit<Customer, 'id'| 'createdAt'>) => {
@@ -347,9 +236,9 @@ function NewSaleForm({ onSaleAdded, onSaleUpdated, initialData }: { onSaleAdded:
                         </Select>
                         <Dialog open={isCustomerModalOpen} onOpenChange={setCustomerModalOpen}>
                             <DialogTrigger asChild>
-                                <Button variant="outline" size="icon" disabled><PlusCircle className="h-4 w-4" /></Button>
+                                <Button variant="outline" size="icon"><PlusCircle className="h-4 w-4" /></Button>
                             </DialogTrigger>
-                            {/* <AddCustomerForm onCustomerAdded={handleCustomerAdded} /> */}
+                             <AddCustomerForm onCustomerAdded={handleCustomerAdded} />
                         </Dialog>
                         </div>
                     </div>
@@ -487,8 +376,82 @@ function NewSaleForm({ onSaleAdded, onSaleUpdated, initialData }: { onSaleAdded:
     )
 }
 
+function AddCustomerForm({ onCustomerAdded }: { onCustomerAdded: (newCustomer: Omit<Customer, 'id' | 'createdAt'>) => void }) {
+  const [customerName, setCustomerName] = useState('');
+  const [phoneNumber, setPhoneNumber] = useState('');
+  const [address, setAddress] = useState('');
+  const [openingBalance, setOpeningBalance] = useState(0);
+  const [balanceType, setBalanceType] = useState<'debit' | 'credit'>('debit');
+  const { toast } = useToast();
+
+  const handleSubmit = async () => {
+    if (!customerName || !phoneNumber || !address) {
+      toast({ variant: 'destructive', title: 'Please fill all fields.' });
+      return;
+    }
+    const newCustomer: Omit<Customer, 'id' | 'createdAt'> = {
+      customerName,
+      phoneNumber,
+      address,
+      openingBalance,
+      balanceType
+    };
+    await onCustomerAdded(newCustomer);
+    toast({ title: 'Customer Added!', description: `${customerName} has been added.` });
+    setCustomerName('');
+    setPhoneNumber('');
+    setAddress('');
+    setOpeningBalance(0);
+    setBalanceType('debit');
+  };
+
+  return (
+    <DialogContent>
+      <DialogHeader>
+        <DialogTitle>Add New Customer</DialogTitle>
+      </DialogHeader>
+      <div className="space-y-4 py-4">
+        <div className="space-y-2">
+          <Label htmlFor="name">Customer Name</Label>
+          <Input id="name" value={customerName} onChange={(e) => setCustomerName(e.target.value)} placeholder="John Doe" />
+        </div>
+        <div className="space-y-2">
+          <Label htmlFor="phone">Phone Number</Label>
+          <Input id="phone" value={phoneNumber} onChange={(e) => setPhoneNumber(e.target.value)} placeholder="0300-1234567" />
+        </div>
+        <div className="space-y-2">
+          <Label htmlFor="address">Address</Label>
+          <Input id="address" value={address} onChange={(e) => setAddress(e.target.value)} placeholder="123, Main Street, City" />
+        </div>
+        <div className="grid grid-cols-2 gap-4">
+            <div className="space-y-2">
+                <Label htmlFor="openingBalance">Opening Balance</Label>
+                <Input id="openingBalance" type="number" value={openingBalance} onChange={(e) => setOpeningBalance(parseFloat(e.target.value) || 0)} placeholder="0" />
+            </div>
+            <div className="space-y-2">
+                <Label htmlFor="balanceType">Balance Type</Label>
+                <Select onValueChange={(v: 'debit' | 'credit') => setBalanceType(v)} value={balanceType}>
+                    <SelectTrigger id="balanceType">
+                        <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                        <SelectItem value="debit">Debit (Owed by Customer)</SelectItem>
+                        <SelectItem value="credit">Credit (Paid by Customer)</SelectItem>
+                    </SelectContent>
+                </Select>
+            </div>
+        </div>
+      </div>
+      <DialogFooter>
+        <Button onClick={handleSubmit}>Add Customer</Button>
+      </DialogFooter>
+    </DialogContent>
+  );
+}
+
+
 export default function SalesPage() {
-  const { customers, updateSale, deleteSale, postSale, unpostSale, loading: isDataLoading, addTransaction, addSale } = useData();
+  const { updateSale, deleteSale, postSale, unpostSale, loading: isDataLoading, addTransaction, addSale } = useData();
   const firestore = useFirestore();
   const { user } = useUser();
   const shouldFetch = !!user;
@@ -502,7 +465,6 @@ export default function SalesPage() {
   const sales = salesData || [];
   const transactions = transactionsData || [];
   
-  const [viewingSale, setViewingSale] = useState<Sale | null>(null);
   const [editingSale, setEditingSale] = useState<Sale | null>(null);
   const [selectedSaleForPayment, setSelectedSaleForPayment] = useState<Sale | null>(null);
   const [activeTab, setActiveTab] = useState("history");
@@ -513,7 +475,6 @@ export default function SalesPage() {
           setEditingSale(null);
       }
   }, [activeTab]);
-
 
   const sortedSales = useMemo(() => {
     return [...sales].sort((a, b) => {
@@ -531,9 +492,6 @@ export default function SalesPage() {
       const saleToPost = sales.find(s => s.id === saleId);
       if (saleToPost) {
         postSale(saleToPost);
-        if (viewingSale?.id === saleId) {
-            setViewingSale({ ...saleToPost, status: 'posted' });
-        }
       }
   }
 
@@ -541,9 +499,6 @@ export default function SalesPage() {
       const saleToUnpost = sales.find(s => s.id === saleId);
       if(saleToUnpost) {
         unpostSale(saleToUnpost);
-         if (viewingSale?.id === saleId) {
-            setViewingSale({ ...saleToUnpost, status: 'draft' });
-        }
       }
   }
 
@@ -579,12 +534,8 @@ export default function SalesPage() {
     toast({ title: 'Payment Received', description: `Payment of ${formatCurrency(amount)} for ${sale.customerName} has been recorded.` });
   };
   
-  const handleBackToSales = () => {
-    setViewingSale(null);
-  }
-
-  if (viewingSale) {
-    return <InvoiceView sale={viewingSale} onBack={handleBackToSales} onReceivePayment={setSelectedSaleForPayment} />;
+  const handlePrint = (saleId: string, type: 'invoice' | 'challan') => {
+      window.open(`/app/print/${type}/${saleId}`, '_blank');
   }
 
   return (
@@ -650,9 +601,17 @@ export default function SalesPage() {
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end">
                             <DropdownMenuLabel>Actions</DropdownMenuLabel>
-                            <DropdownMenuItem onSelect={() => setViewingSale(sale)}>
+                            <DropdownMenuItem onSelect={() => handlePrint(sale.id, 'invoice')}>
+                                <Printer className="mr-2 h-4 w-4"/>
+                                Print Invoice
+                            </DropdownMenuItem>
+                             <DropdownMenuItem onSelect={() => handlePrint(sale.id, 'challan')}>
                                 <FileText className="mr-2 h-4 w-4"/>
-                                View Invoice
+                                Print Challan
+                            </DropdownMenuItem>
+                             <DropdownMenuItem onSelect={() => setSelectedSaleForPayment(sale)} disabled={sale.status !== 'posted'}>
+                                <DollarSign className="mr-2 h-4 w-4" />
+                                Receive Payment
                             </DropdownMenuItem>
                             <DropdownMenuItem onSelect={() => handleEditClick(sale)} disabled={sale.status === 'posted'}>
                                 <Edit className="mr-2 h-4 w-4"/>
@@ -693,6 +652,7 @@ export default function SalesPage() {
                     initialData={editingSale} 
                     onSaleUpdated={handleSaleUpdated}
                     onSaleAdded={handleSaleAdded}
+                    onDoneEditing={() => setActiveTab('history')}
                 />
              </div>
         </TabsContent>
