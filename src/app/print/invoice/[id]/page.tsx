@@ -8,43 +8,45 @@ import type { Sale } from '@/lib/types';
 import { formatCurrency, formatDate } from '@/lib/utils';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 
-// This is a client component that fetches data based on the ID from the URL
 function InvoicePrintPage({ params }: { params: { id: string } }) {
   const { sales, customers } = useData();
   const [sale, setSale] = useState<Sale | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
   const searchParams = useSearchParams();
   const isPreview = searchParams.get('preview') === 'true';
 
   useEffect(() => {
     if (sales.length > 0) {
       const foundSale = sales.find(s => s.id === params.id);
-      if (foundSale) {
-        setSale(foundSale);
-      }
+      setSale(foundSale || null);
+      setIsLoading(false);
+    } else if (!sales.length && !isLoading) {
+      // If sales have loaded and are empty, stop loading
+      setIsLoading(false);
     }
-  }, [sales, params.id]);
-  
-  // Trigger print dialog once the sale data is loaded and rendered
+  }, [sales, params.id, isLoading]);
+
   useEffect(() => {
-    // Only print if data is loaded and it's not a preview
     if (sale && !isPreview) {
       const timeoutId = setTimeout(() => {
         window.print();
         window.onafterprint = () => window.close();
-      }, 500); // A small delay to ensure content is fully rendered in all browsers
+      }, 500); 
       
-      // Cleanup the timeout if the component unmounts
       return () => clearTimeout(timeoutId);
     }
   }, [sale, isPreview]);
 
   const customer = sale ? customers.find(c => c.id === sale.customerId) : null;
   
-  if (!sale) {
+  if (isLoading) {
     return <div className="p-10 text-center text-lg font-semibold">Loading invoice...</div>;
   }
+  
+  if (!sale) {
+    return <div className="p-10 text-center text-lg font-semibold">Invoice with ID '{params.id}' not found.</div>;
+  }
 
-  // Calculate totals
   const subtotal = sale.items.reduce((acc, item) => {
     const itemTotal = (item.feet || 1) * item.price * item.quantity;
     const discountAmount = itemTotal * ((item.discount || 0) / 100);
@@ -91,7 +93,6 @@ function InvoicePrintPage({ params }: { params: { id: string } }) {
         <TableBody>
           {sale.items.map((item, index) => {
             const itemSubtotal = (item.feet || 1) * item.price * item.quantity;
-            // Item-level discount is for estimates, here we calculate the final amount for display
             const finalAmount = itemSubtotal * (1 - ((item.discount || 0) / 100));
             return (
               <TableRow key={index}>
@@ -132,11 +133,8 @@ function InvoicePrintPage({ params }: { params: { id: string } }) {
   );
 }
 
-// We need to wrap the default export in the DataProvider to access the data hooks
 export default function InvoicePrintPageWrapper({ params }: { params: { id: string } }) {
     return (
         <InvoicePrintPage params={params} />
     )
 }
-
-    

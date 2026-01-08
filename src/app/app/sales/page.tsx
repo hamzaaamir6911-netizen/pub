@@ -1,8 +1,8 @@
 
 "use client";
 
-import { useState, useRef, useEffect, FormEvent } from "react";
-import { MoreHorizontal, PlusCircle, Trash2, RotateCcw, FileText, CheckCircle, Edit, Undo2, Printer, Truck, DollarSign } from "lucide-react";
+import { useState, useEffect, FormEvent } from "react";
+import { MoreHorizontal, PlusCircle, Trash2, Edit, Undo2, Printer, Truck, DollarSign, FileText, CheckCircle } from "lucide-react";
 import {
   Table,
   TableBody,
@@ -26,21 +26,12 @@ import {
   DropdownMenuLabel,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Card, CardContent, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import { PageHeader } from "@/components/page-header";
 import { formatCurrency, formatDate } from "@/lib/utils";
-import type { Sale, SaleItem, Customer, Item, Transaction } from "@/lib/types";
+import type { Sale, Transaction } from "@/lib/types";
 import { useToast } from "@/hooks/use-toast";
 import { useData } from "@/firebase/data/data-provider";
 import { Badge } from "@/components/ui/badge";
@@ -94,14 +85,10 @@ function ManualInvoiceForm({ onManualSaleAdded, onOpenChange }: { onManualSaleAd
         <div className="space-y-4 py-4">
            <div className="space-y-2">
               <Label htmlFor="customer">Customer</Label>
-              <Select onValueChange={setSelectedCustomerId} value={selectedCustomerId}>
-                  <SelectTrigger id="customer">
-                      <SelectValue placeholder="Select a customer" />
-                  </SelectTrigger>
-                  <SelectContent>
-                      {customers.map(c => <SelectItem key={c.id} value={c.id}>{c.customerName}</SelectItem>)}
-                  </SelectContent>
-              </Select>
+              <select onChange={(e) => setSelectedCustomerId(e.target.value)} value={selectedCustomerId} className="w-full p-2 border rounded-md">
+                  <option value="">Select a customer</option>
+                  {customers.map(c => <option key={c.id} value={c.id}>{c.customerName}</option>)}
+              </select>
           </div>
            <div className="space-y-2">
             <Label htmlFor="date">Invoice Date</Label>
@@ -127,7 +114,6 @@ function ManualInvoiceForm({ onManualSaleAdded, onOpenChange }: { onManualSaleAd
     </DialogContent>
   );
 }
-
 
 function ReceivePaymentForm({ sale, onPaymentReceived, onOpenChange }: { sale: Sale, onPaymentReceived: (sale: Sale, amount: number, date: Date) => void, onOpenChange: (open: boolean) => void }) {
     const [amount, setAmount] = useState(sale.total);
@@ -183,7 +169,7 @@ function ReceivePaymentForm({ sale, onPaymentReceived, onOpenChange }: { sale: S
     )
 }
 
-function DeliveryChallan({ sale }: { sale: Sale }) {
+function DeliveryChallan({ sale, onOpenChange }: { sale: Sale, onOpenChange: (open: boolean) => void }) {
     const { toast } = useToast();
     
     const handlePrint = () => {
@@ -195,6 +181,7 @@ function DeliveryChallan({ sale }: { sale: Sale }) {
           description: "Please allow pop-ups for this site to print the challan."
         });
       }
+      onOpenChange(false);
     };
 
     return (
@@ -202,7 +189,6 @@ function DeliveryChallan({ sale }: { sale: Sale }) {
             <DialogHeader className="flex-shrink-0 no-print">
                 <DialogTitle>Delivery Challan Preview: {sale.id}</DialogTitle>
             </DialogHeader>
-
             <div className="flex-grow overflow-y-auto bg-gray-50 rounded-sm">
                  <iframe 
                     src={`/print/challan/${sale.id}?preview=true`}
@@ -210,7 +196,6 @@ function DeliveryChallan({ sale }: { sale: Sale }) {
                     title={`Challan Preview ${sale.id}`}
                  />
             </div>
-
             <DialogFooter className="mt-4 flex-shrink-0 no-print">
                  <Button variant="outline" onClick={handlePrint}>
                     <Printer className="mr-2 h-4 w-4" />
@@ -221,428 +206,8 @@ function DeliveryChallan({ sale }: { sale: Sale }) {
     );
 }
 
-function SaleInvoice({ sale, onPost, onUnpost }: { sale: Sale, onPost: (sale: Sale) => void, onUnpost: (sale: Sale) => void }) {
-    const { toast } = useToast();
-    
-    const handlePost = () => {
-        onPost(sale);
-        toast({ title: 'Sale Posted!', description: `Sale ${sale.id} has been posted to the ledger.`});
-    }
-
-    const handleUnpost = () => {
-        onUnpost(sale);
-        toast({ variant: 'destructive', title: 'Sale Unposted!', description: `Sale ${sale.id} has been reverted to draft.`});
-    }
-    
-    const handlePrint = () => {
-      const printWindow = window.open(`/print/invoice/${sale.id}`, '_blank', 'noopener,noreferrer');
-      if (!printWindow) {
-        toast({
-          variant: "destructive",
-          title: "Print Failed",
-          description: "Please allow pop-ups for this site to print invoices."
-        });
-      }
-    };
-
-    return (
-        <DialogContent className="max-w-5xl max-h-[90vh] flex flex-col">
-            <DialogHeader className="flex-shrink-0 pt-4 no-print">
-                <DialogTitle>Sale Invoice Preview: {sale.id}</DialogTitle>
-            </DialogHeader>
-
-            <div className="flex-grow overflow-y-auto bg-gray-50 rounded-sm">
-                 <iframe 
-                    src={`/print/invoice/${sale.id}?preview=true`}
-                    className="w-full h-full border-none"
-                    title={`Invoice Preview ${sale.id}`}
-                 />
-            </div>
-
-            <DialogFooter className="mt-4 flex-shrink-0 no-print">
-                 <Button variant="outline" onClick={handlePrint}>
-                    <Printer className="mr-2 h-4 w-4" />
-                    Print Invoice
-                </Button>
-                {sale.status === 'draft' ? (
-                    <Button onClick={handlePost}>
-                        <CheckCircle className="mr-2 h-4 w-4" />
-                        Post to Ledger
-                    </Button>
-                ) : (
-                    <Button variant="destructive" onClick={handleUnpost}>
-                        <Undo2 className="mr-2 h-4 w-4" />
-                        Unpost from Ledger
-                    </Button>
-                )}
-            </DialogFooter>
-        </DialogContent>
-    )
-}
-
-function AddCustomerForm({ onCustomerAdded }: { onCustomerAdded: (newCustomer: Omit<Customer, 'id' | 'createdAt'>) => void }) {
-  const [customerName, setCustomerName] = useState('');
-  const [phoneNumber, setPhoneNumber] = useState('');
-  const [address, setAddress] = useState('');
-  const [openingBalance, setOpeningBalance] = useState(0);
-  const [balanceType, setBalanceType] = useState<'debit' | 'credit'>('debit');
-  const { toast } = useToast();
-
-  const handleSubmit = async () => {
-    if (!customerName || !phoneNumber || !address) {
-      toast({ variant: 'destructive', title: 'Please fill all fields.' });
-      return;
-    }
-    const newCustomer: Omit<Customer, 'id' | 'createdAt'> = {
-      customerName,
-      phoneNumber,
-      address,
-      openingBalance,
-      balanceType
-    };
-    await onCustomerAdded(newCustomer);
-    toast({ title: 'Customer Added!', description: `${customerName} has been added.` });
-    setCustomerName('');
-    setPhoneNumber('');
-    setAddress('');
-    setOpeningBalance(0);
-    setBalanceType('debit');
-  };
-
-  return (
-    <DialogContent>
-      <DialogHeader>
-        <DialogTitle>Add New Customer</DialogTitle>
-      </DialogHeader>
-      <div className="space-y-4 py-4">
-        <div className="space-y-2">
-          <Label htmlFor="name">Customer Name</Label>
-          <Input id="name" value={customerName} onChange={(e) => setCustomerName(e.target.value)} placeholder="John Doe" />
-        </div>
-        <div className="space-y-2">
-          <Label htmlFor="phone">Phone Number</Label>
-          <Input id="phone" value={phoneNumber} onChange={(e) => setPhoneNumber(e.target.value)} placeholder="0300-1234567" />
-        </div>
-        <div className="space-y-2">
-          <Label htmlFor="address">Address</Label>
-          <Input id="address" value={address} onChange={(e) => setAddress(e.target.value)} placeholder="123, Main Street, City" />
-        </div>
-        <div className="grid grid-cols-2 gap-4">
-            <div className="space-y-2">
-                <Label htmlFor="openingBalance">Opening Balance</Label>
-                <Input id="openingBalance" type="number" value={openingBalance} onChange={(e) => setOpeningBalance(parseFloat(e.target.value) || 0)} placeholder="0" />
-            </div>
-            <div className="space-y-2">
-                <Label htmlFor="balanceType">Balance Type</Label>
-                <Select onValueChange={(v: 'debit' | 'credit') => setBalanceType(v)} value={balanceType}>
-                    <SelectTrigger id="balanceType">
-                        <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                        <SelectItem value="debit">Debit (Owed by Customer)</SelectItem>
-                        <SelectItem value="credit">Credit (Paid by Customer)</SelectItem>
-                    </SelectContent>
-                </Select>
-            </div>
-        </div>
-      </div>
-      <DialogFooter>
-        <Button onClick={handleSubmit}>Add Customer</Button>
-      </DialogFooter>
-    </DialogContent>
-  );
-}
-
-
-function NewSaleForm({ onSaleAdded, onSaleUpdated, initialData }: { onSaleAdded: (newSale: Omit<Sale, 'id' | 'total' | 'status'>) => void, onSaleUpdated: (saleId: string, updatedSale: Omit<Sale, 'id' | 'total' | 'status'>) => void, initialData?: Sale | null }) {
-    const { toast } = useToast();
-    const { customers, items: allItems, addCustomer } = useData();
-    
-    const [selectedCustomer, setSelectedCustomer] = useState("");
-    const [saleItems, setSaleItems] = useState<Partial<SaleItem>[]>([{itemId: "", quantity: 1, feet: 1, discount: 0, color: '', thickness: '' }]);
-    const [overallDiscount, setOverallDiscount] = useState(0);
-    const [isCustomerModalOpen, setCustomerModalOpen] = useState(false);
-    const [saleDate, setSaleDate] = useState<Date>(new Date());
-
-    const isEditMode = !!initialData;
-
-    useEffect(() => {
-        if (initialData) {
-            setSelectedCustomer(initialData.customerId);
-            setSaleItems(initialData.items.map(item => ({ ...item })));
-            setOverallDiscount(initialData.discount || 0);
-            setSaleDate(new Date(initialData.date));
-        } else {
-            clearForm();
-        }
-    }, [initialData]);
-
-
-    const handleAddItem = () => {
-        setSaleItems([...saleItems, {itemId: "", quantity: 1, feet: 1, discount: 0, color: '', thickness: '' }]);
-    }
-
-    const handleRemoveItem = (index: number) => {
-        setSaleItems(saleItems.filter((_, i) => i !== index));
-    }
-
-    const handleItemChange = (index: number, key: keyof SaleItem, value: any) => {
-        const newItems = [...saleItems];
-        const currentItem = { ...newItems[index] };
-        (currentItem as any)[key] = value;
-        
-        if (key === 'itemId') {
-            const itemDetails = allItems.find(i => i.id === value);
-            if (itemDetails) {
-                currentItem.color = itemDetails.color;
-                currentItem.thickness = itemDetails.thickness;
-            }
-        }
-
-        newItems[index] = currentItem;
-        setSaleItems(newItems);
-    }
-
-    const calculateTotal = () => {
-        const subtotal = saleItems.reduce((total, currentItem) => {
-            if (!currentItem.itemId) return total;
-            const itemDetails = allItems.find(i => i.id === currentItem.itemId);
-            if (!itemDetails) return total;
-
-            const feet = currentItem.feet || 1;
-            const itemTotal = feet * itemDetails.salePrice * (currentItem.quantity || 1);
-            const discountAmount = itemTotal * ((currentItem.discount || 0) / 100);
-            
-            return total + (itemTotal - discountAmount);
-        }, 0);
-        
-        const overallDiscountAmount = (subtotal * overallDiscount) / 100;
-        return subtotal - overallDiscountAmount;
-    }
-
-    const clearForm = () => {
-        if (isEditMode) return; // Don't clear in edit mode
-        setSelectedCustomer("");
-        setSaleItems([{itemId: "", quantity: 1, feet: 1, discount: 0, color: '', thickness: ''}]);
-        setOverallDiscount(0);
-        setSaleDate(new Date());
-    }
-    
-    const handleSave = async () => {
-        if (!selectedCustomer) {
-            toast({ variant: "destructive", title: "Please select a customer." });
-            return;
-        }
-        if (!saleDate) {
-            toast({ variant: "destructive", title: "Please select a sale date." });
-            return;
-        }
-        if (saleItems.some(item => !item.itemId || (item.quantity || 0) <= 0)) {
-            toast({ variant: "destructive", title: "Please fill all item details correctly." });
-            return;
-        }
-
-        const customer = customers.find(c => c.id === selectedCustomer);
-        if (!customer) return;
-
-        const finalSaleItems = saleItems.map(si => {
-            const item = allItems.find(i => i.id === si.itemId)!;
-            
-            let feet = si.feet || 1;
-            if (item.category !== 'Aluminium') {
-                feet = 1;
-            }
-            
-            return {
-                itemId: item.id,
-                itemName: item.name,
-                quantity: si.quantity || 1,
-                price: item.salePrice,
-                color: si.color || item.color,
-                weight: item.weight,
-                thickness: si.thickness || '',
-                feet: feet,
-                discount: si.discount || 0,
-            }
-        }) as SaleItem[];
-
-        const saleData: Omit<Sale, 'id' | 'total' | 'status'> = {
-            customerId: selectedCustomer,
-            customerName: customer.customerName,
-            items: finalSaleItems,
-            discount: overallDiscount,
-            date: saleDate,
-        };
-
-        if (isEditMode && initialData) {
-            await onSaleUpdated(initialData.id, saleData);
-            toast({ title: "Sale Updated!", description: `Sale ${initialData.id} has been updated.` });
-        } else {
-            await onSaleAdded(saleData);
-            toast({ title: "Sale Draft Saved!", description: `Sale has been saved as a draft.` });
-            clearForm();
-        }
-    }
-    
-    const handleCustomerAdded = async (newCustomer: Omit<Customer, 'id'| 'createdAt'>) => {
-        const addedCustomer = await addCustomer(newCustomer);
-        if (addedCustomer?.id) {
-            setSelectedCustomer(addedCustomer.id);
-        }
-        setCustomerModalOpen(false);
-    }
-
-    return (
-        <>
-         <Card>
-            <CardHeader className="flex flex-row items-center justify-between">
-                <CardTitle>{isEditMode ? `Edit Sale ${initialData.id}` : 'Create New Sale'}</CardTitle>
-                 <Button variant="ghost" size="icon" onClick={clearForm} disabled={isEditMode}>
-                    <RotateCcw className="h-4 w-4" />
-                    <span className="sr-only">Clear Form</span>
-                </Button>
-            </CardHeader>
-            <CardContent className="space-y-6">
-                <div className="grid md:grid-cols-3 gap-4">
-                    <div className="space-y-2">
-                        <Label htmlFor="customer">Customer</Label>
-                        <div className="flex gap-2">
-                        <Select onValueChange={setSelectedCustomer} value={selectedCustomer}>
-                            <SelectTrigger id="customer">
-                                <SelectValue placeholder="Select a customer" />
-                            </SelectTrigger>
-                            <SelectContent>
-                                {customers.map(c => <SelectItem key={c.id} value={c.id}>{c.customerName}</SelectItem>)}
-                            </SelectContent>
-                        </Select>
-                        <Dialog open={isCustomerModalOpen} onOpenChange={setCustomerModalOpen}>
-                            <DialogTrigger asChild>
-                                <Button variant="outline" size="icon"><PlusCircle className="h-4 w-4" /></Button>
-                            </DialogTrigger>
-                            <AddCustomerForm onCustomerAdded={handleCustomerAdded} />
-                        </Dialog>
-                        </div>
-                    </div>
-                     <div className="space-y-2">
-                        <Label htmlFor="date">Sale Date</Label>
-                        <Input
-                            id="date"
-                            type="date"
-                            value={saleDate ? saleDate.toISOString().split('T')[0] : ''}
-                            onChange={(e) => setSaleDate(new Date(e.target.value))}
-                        />
-                    </div>
-                    <div className="space-y-2">
-                        <Label htmlFor="discount">Overall Discount (%)</Label>
-                        <Input 
-                            id="discount"
-                            type="number"
-                            placeholder="e.g. 5"
-                            value={overallDiscount}
-                            onChange={(e) => setOverallDiscount(parseFloat(e.target.value) || 0)}
-                        />
-                    </div>
-                </div>
-                
-                <div className="space-y-4">
-                    <Label>Items</Label>
-                    {saleItems.map((saleItem, index) => {
-                         const itemDetails = allItems.find(i => i.id === saleItem.itemId);
-                         return (
-                         <div key={index} className="grid grid-cols-1 md:grid-cols-7 gap-2 items-end p-3 border rounded-md">
-                            <div className="md:col-span-2 space-y-2">
-                                <Label>Item</Label>
-                                <Select onValueChange={(value) => handleItemChange(index, "itemId", value)} value={saleItem.itemId}>
-                                    <SelectTrigger>
-                                        <SelectValue placeholder="Select an item" />
-                                    </SelectTrigger>
-                                    <SelectContent>
-                                        {allItems.map(i => <SelectItem key={i.id} value={i.id}>{i.name} {i.thickness ? `(${i.thickness})` : ''} - {i.color}</SelectItem>)}
-                                    </SelectContent>
-                                </Select>
-                            </div>
-                            
-                            <div className="space-y-2">
-                                <Label>Colour</Label>
-                                <Select onValueChange={(value) => handleItemChange(index, "color", value)} value={saleItem.color}>
-                                    <SelectTrigger>
-                                        <SelectValue placeholder="Select a color" />
-                                    </SelectTrigger>
-                                    <SelectContent>
-                                        <SelectItem value="9016">9016</SelectItem>
-                                        <SelectItem value="Black">Black</SelectItem>
-                                    </SelectContent>
-                                </Select>
-                            </div>
-
-                             <div className="space-y-2">
-                                <Label>Thickness</Label>
-                                <Input 
-                                    placeholder="e.g. 1.2mm" 
-                                    value={saleItem.thickness}
-                                    onChange={(e) => handleItemChange(index, "thickness", e.target.value)}
-                                />
-                            </div>
-
-                            {itemDetails?.category === "Aluminium" ? (
-                                <div className="space-y-2">
-                                    <Label>Feet</Label>
-                                    <Input 
-                                        type="number" 
-                                        placeholder="e.g. 12.5" 
-                                        value={saleItem.feet}
-                                        onChange={(e) => handleItemChange(index, "feet", parseFloat(e.target.value))}
-                                    />
-                                </div>
-                            ) : <div className="md:col-span-1"/> }
-                           
-                            <div className="space-y-2">
-                                <Label>Discount (%)</Label>
-                                <Input 
-                                    type="number" 
-                                    placeholder="%" 
-                                    value={saleItem.discount}
-                                    onChange={(e) => handleItemChange(index, "discount", parseInt(e.target.value) || 0)}
-                                    min="0"
-                                />
-                            </div>
-                            <div className="flex gap-2 items-end">
-                                <div className="flex-grow space-y-2">
-                                    <Label>Qty</Label>
-                                    <Input 
-                                        type="number" 
-                                        placeholder="Qty" 
-                                        value={saleItem.quantity}
-                                        onChange={(e) => handleItemChange(index, "quantity", parseInt(e.target.value) || 1)}
-                                        min="1"
-                                    />
-                                </div>
-                                <Button variant="ghost" size="icon" onClick={() => handleRemoveItem(index)} disabled={saleItems.length === 1}>
-                                    <Trash2 className="h-4 w-4 text-destructive" />
-                                </Button>
-                            </div>
-                        </div>
-                         )
-                    })}
-                    <Button variant="outline" size="sm" onClick={handleAddItem}>
-                        <PlusCircle className="mr-2 h-4 w-4" /> Add Item
-                    </Button>
-                </div>
-
-            </CardContent>
-            <CardFooter className="flex justify-between items-center bg-muted/50 p-4 rounded-b-lg">
-                <div className="text-xl font-bold">
-                    Total: {formatCurrency(calculateTotal())}
-                </div>
-                <Button onClick={handleSave}>{isEditMode ? 'Update Sale' : 'Save Draft'}</Button>
-            </CardFooter>
-        </Card>
-        </>
-    )
-}
-
 export default function SalesPage() {
-  const { addSale, updateSale, deleteSale, postSale, unpostSale, addTransaction, addManualSale } = useData();
+  const { addSale, deleteSale, postSale, unpostSale, addTransaction, addManualSale } = useData();
   const firestore = useFirestore();
   const { user } = useUser();
   const { toast } = useToast();
@@ -657,15 +222,12 @@ export default function SalesPage() {
   const sales = salesData || [];
   const transactions = transactionsData || [];
   
-  const [activeTab, setActiveTab] = useState("history");
   const [selectedSale, setSelectedSale] = useState<Sale | null>(null);
   const [selectedChallan, setSelectedChallan] = useState<Sale | null>(null);
-  const [editingSale, setEditingSale] = useState<Sale | null>(null);
   const [selectedRows, setSelectedRows] = useState<Set<string>>(new Set());
   const [paymentSale, setPaymentSale] = useState<Sale | null>(null);
   const [isPaymentModalOpen, setPaymentModalOpen] = useState(false);
   const [isManualInvoiceModalOpen, setManualInvoiceModalOpen] = useState(false);
-
 
   const sortedSales = [...sales].sort((a, b) => {
     const numA = parseInt(a.id.split('-')[1] || '0', 10);
@@ -698,6 +260,17 @@ export default function SalesPage() {
     }
   };
 
+  const handleViewInvoice = (saleId: string) => {
+    const printWindow = window.open(`/print/invoice/${saleId}`, '_blank', 'noopener,noreferrer');
+    if (!printWindow) {
+      toast({
+        variant: "destructive",
+        title: "Print Failed",
+        description: "Please allow pop-ups for this site to print the invoice."
+      });
+    }
+  };
+
   const handleSelectRow = (id: string) => {
     const newSelectedRows = new Set(selectedRows);
     if (newSelectedRows.has(id)) {
@@ -720,34 +293,18 @@ export default function SalesPage() {
     deleteSale(sale, transactions);
   };
   
-  const handleSaleAdded = (newSale: Omit<Sale, 'id' |'total'|'status'>) => {
-    addSale(newSale);
-    setActiveTab("history");
-  }
-  
   const handleManualSaleAdded = (manualSale: Omit<Sale, 'id' | 'total' | 'status' | 'items' | 'discount'>) => {
     addManualSale(manualSale);
   }
 
-  const handleSaleUpdated = (saleId: string, updatedSale: Omit<Sale, 'id'|'total'|'status'>) => {
-    updateSale(saleId, updatedSale);
-    setActiveTab("history");
-    setEditingSale(null);
-  }
-
   const handlePostSale = (sale: Sale) => {
       postSale(sale);
-      setSelectedSale(null);
+      toast({ title: 'Sale Posted!', description: `Sale ${sale.id} has been posted to the ledger.`});
   }
 
    const handleUnpostSale = (sale: Sale) => {
       unpostSale(sale);
-      setSelectedSale(null);
-  }
-
-  const handleEditClick = (sale: Sale) => {
-    setEditingSale(sale);
-    setActiveTab("new");
+      toast({ variant: 'destructive', title: 'Sale Unposted!', description: `Sale ${sale.id} has been reverted to draft.`});
   }
 
   const handleOpenPaymentModal = (sale: Sale) => {
@@ -769,12 +326,6 @@ export default function SalesPage() {
       toast({ title: "Payment Received", description: `Recorded ${formatCurrency(amount)} from ${sale.customerName}.` });
   }
 
-  useEffect(() => {
-      if (activeTab !== 'new') {
-          setEditingSale(null);
-      }
-  }, [activeTab]);
-
   return (
     <>
       <PageHeader
@@ -794,132 +345,111 @@ export default function SalesPage() {
             </Button>
         </div>
       </PageHeader>
-      <Tabs value={activeTab} onValueChange={setActiveTab}>
-        <TabsList className="w-full sm:w-auto grid grid-cols-2 no-print">
-          <TabsTrigger value="history">Sales History</TabsTrigger>
-          <TabsTrigger value="new">{editingSale ? 'Edit Sale' : 'New Sale'}</TabsTrigger>
-        </TabsList>
-        <TabsContent value="history">
-          <div className="rounded-lg border shadow-sm mt-4 overflow-x-auto">
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead className="w-[50px]">
-                    <Checkbox
-                        checked={selectedRows.size > 0 && selectedRows.size === sortedSales.length}
-                        onCheckedChange={handleSelectAll}
-                        aria-label="Select all rows"
-                    />
-                  </TableHead>
-                  <TableHead>Sale ID</TableHead>
-                  <TableHead>Customer</TableHead>
-                  <TableHead>Date</TableHead>
-                  <TableHead>Status</TableHead>
-                  <TableHead className="text-right">Total Amount</TableHead>
-                  <TableHead className="no-print">
-                    <span className="sr-only">Actions</span>
-                  </TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {sortedSales.length === 0 ? (
-                  <TableRow>
-                    <TableCell colSpan={7} className="text-center h-24">No sales recorded in this date range.</TableCell>
-                  </TableRow>
-                ) : (
-                  sortedSales.map((sale) => (
-                    <TableRow key={sale.id} data-state={selectedRows.has(sale.id) && "selected"}>
-                      <TableCell>
-                         <Checkbox
-                            checked={selectedRows.has(sale.id)}
-                            onCheckedChange={() => handleSelectRow(sale.id)}
-                            aria-label={`Select row ${sale.id}`}
-                        />
-                      </TableCell>
-                      <TableCell className="font-medium">{sale.id}</TableCell>
-                      <TableCell>{sale.customerName}</TableCell>
-                      <TableCell>{formatDate(sale.date)}</TableCell>
-                       <TableCell>
-                          <Badge variant={sale.status === 'posted' ? 'default' : 'secondary'}>
-                            {sale.status}
-                          </Badge>
-                       </TableCell>
-                      <TableCell className="text-right">
-                        {formatCurrency(sale.total)}
-                      </TableCell>
-                      <TableCell className="no-print">
-                        <Dialog onOpenChange={(open) => {
-                            if (!open) {
-                                setSelectedSale(null);
-                                setSelectedChallan(null);
-                            }
-                        }}>
-                          <DropdownMenu>
-                            <DropdownMenuTrigger asChild>
-                              <Button aria-haspopup="true" size="icon" variant="ghost">
-                                <MoreHorizontal className="h-4 w-4" />
-                                <span className="sr-only">Toggle menu</span>
-                              </Button>
-                            </DropdownMenuTrigger>
-                            <DropdownMenuContent align="end">
-                              <DropdownMenuLabel>Actions</DropdownMenuLabel>
-                               <DialogTrigger asChild>
-                                <DropdownMenuItem onSelect={() => setSelectedSale(sale)}>
-                                    <FileText className="mr-2 h-4 w-4"/>
-                                    View Invoice
-                                </DropdownMenuItem>
-                              </DialogTrigger>
-                              <DialogTrigger asChild>
-                                <DropdownMenuItem onSelect={() => setSelectedChallan(sale)}>
-                                    <Truck className="mr-2 h-4 w-4"/>
-                                    Delivery Challan
-                                </DropdownMenuItem>
-                              </DialogTrigger>
-                              <DropdownMenuItem onSelect={() => handleOpenPaymentModal(sale)}>
-                                  <DollarSign className="mr-2 h-4 w-4" />
-                                  Receive Payment
-                              </DropdownMenuItem>
-                              <DropdownMenuItem
-                                onSelect={() => handleEditClick(sale)}
-                                disabled={sale.status === 'posted'}
-                              >
-                                <Edit className="mr-2 h-4 w-4" />
-                                Edit
-                              </DropdownMenuItem>
-                              <DropdownMenuItem
-                                onSelect={() => handleDelete(sale)}
-                                className="text-red-500 focus:bg-red-500/10 focus:text-red-500"
-                              >
-                                <Trash2 className="mr-2 h-4 w-4"/>
-                                Delete
-                              </DropdownMenuItem>
-                            </DropdownMenuContent>
-                          </DropdownMenu>
-                          {selectedSale && selectedSale.id === sale.id && (
-                              <SaleInvoice sale={selectedSale} onPost={handlePostSale} onUnpost={handleUnpostSale} />
-                          )}
-                          {selectedChallan && selectedChallan.id === sale.id && (
-                              <DeliveryChallan sale={selectedChallan} />
-                          )}
-                        </Dialog>
-                      </TableCell>
-                    </TableRow>
-                  ))
-                )}
-              </TableBody>
-            </Table>
-          </div>
-        </TabsContent>
-        <TabsContent value="new">
-            <div className="mt-4">
-                <NewSaleForm 
-                    onSaleAdded={handleSaleAdded} 
-                    onSaleUpdated={handleSaleUpdated}
-                    initialData={editingSale} 
+      
+      <div className="rounded-lg border shadow-sm mt-4 overflow-x-auto">
+        <Table>
+          <TableHeader>
+            <TableRow>
+              <TableHead className="w-[50px]">
+                <Checkbox
+                    checked={selectedRows.size > 0 && selectedRows.size === sortedSales.length}
+                    onCheckedChange={handleSelectAll}
+                    aria-label="Select all rows"
                 />
-            </div>
-        </TabsContent>
-      </Tabs>
+              </TableHead>
+              <TableHead>Sale ID</TableHead>
+              <TableHead>Customer</TableHead>
+              <TableHead>Date</TableHead>
+              <TableHead>Status</TableHead>
+              <TableHead className="text-right">Total Amount</TableHead>
+              <TableHead className="no-print">
+                <span className="sr-only">Actions</span>
+              </TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {sortedSales.length === 0 ? (
+              <TableRow>
+                <TableCell colSpan={7} className="text-center h-24">No sales recorded.</TableCell>
+              </TableRow>
+            ) : (
+              sortedSales.map((sale) => (
+                <TableRow key={sale.id} data-state={selectedRows.has(sale.id) && "selected"}>
+                  <TableCell>
+                      <Checkbox
+                        checked={selectedRows.has(sale.id)}
+                        onCheckedChange={() => handleSelectRow(sale.id)}
+                        aria-label={`Select row ${sale.id}`}
+                    />
+                  </TableCell>
+                  <TableCell className="font-medium">{sale.id}</TableCell>
+                  <TableCell>{sale.customerName}</TableCell>
+                  <TableCell>{formatDate(sale.date)}</TableCell>
+                    <TableCell>
+                      <Badge variant={sale.status === 'posted' ? 'default' : 'secondary'}>
+                        {sale.status}
+                      </Badge>
+                    </TableCell>
+                  <TableCell className="text-right">
+                    {formatCurrency(sale.total)}
+                  </TableCell>
+                  <TableCell className="no-print">
+                    <Dialog onOpenChange={(open) => { if (!open) setSelectedChallan(null) }}>
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button aria-haspopup="true" size="icon" variant="ghost">
+                            <MoreHorizontal className="h-4 w-4" />
+                            <span className="sr-only">Toggle menu</span>
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end">
+                          <DropdownMenuLabel>Actions</DropdownMenuLabel>
+                          <DropdownMenuItem onSelect={() => handleViewInvoice(sale.id)}>
+                              <FileText className="mr-2 h-4 w-4"/>
+                              View/Print Invoice
+                          </DropdownMenuItem>
+                          <DialogTrigger asChild>
+                            <DropdownMenuItem onSelect={() => setSelectedChallan(sale)}>
+                                <Truck className="mr-2 h-4 w-4"/>
+                                Delivery Challan
+                            </DropdownMenuItem>
+                          </DialogTrigger>
+                          <DropdownMenuItem onSelect={() => handleOpenPaymentModal(sale)}>
+                              <DollarSign className="mr-2 h-4 w-4" />
+                              Receive Payment
+                          </DropdownMenuItem>
+                          {sale.status === 'draft' ? (
+                            <DropdownMenuItem onSelect={() => handlePostSale(sale)}>
+                              <CheckCircle className="mr-2 h-4 w-4" />
+                              Post to Ledger
+                            </DropdownMenuItem>
+                          ) : (
+                            <DropdownMenuItem onSelect={() => handleUnpostSale(sale)}>
+                              <Undo2 className="mr-2 h-4 w-4" />
+                              Unpost from Ledger
+                            </DropdownMenuItem>
+                          )}
+                          <DropdownMenuItem
+                            onSelect={() => handleDelete(sale)}
+                            className="text-red-500 focus:bg-red-500/10 focus:text-red-500"
+                          >
+                            <Trash2 className="mr-2 h-4 w-4"/>
+                            Delete
+                          </DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
+                      {selectedChallan && selectedChallan.id === sale.id && (
+                          <DeliveryChallan sale={selectedChallan} onOpenChange={(open) => !open && setSelectedChallan(null)} />
+                      )}
+                    </Dialog>
+                  </TableCell>
+                </TableRow>
+              ))
+            )}
+          </TableBody>
+        </Table>
+      </div>
+
       {paymentSale && (
         <Dialog open={isPaymentModalOpen} onOpenChange={setPaymentModalOpen}>
             <ReceivePaymentForm 
