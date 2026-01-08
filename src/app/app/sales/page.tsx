@@ -36,6 +36,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog"
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import { PageHeader } from "@/components/page-header";
 import { formatCurrency, formatDate } from "@/lib/utils";
@@ -231,8 +232,8 @@ export default function SalesPage() {
   
   const sales = salesData || [];
   
+  const [activeTab, setActiveTab] = useState("history");
   const [isDetailsOpen, setDetailsOpen] = useState(false);
-  const [isFormOpen, setFormOpen] = useState(false);
   const [selectedSale, setSelectedSale] = useState<Sale | null>(null);
   const [editingSale, setEditingSale] = useState<Sale | null>(null);
 
@@ -251,7 +252,7 @@ export default function SalesPage() {
 
   const handleEditClick = (sale: Sale) => {
     setEditingSale(sale);
-    setFormOpen(true);
+    setActiveTab("new");
   };
   
   const handleViewDetails = (sale: Sale) => {
@@ -260,7 +261,12 @@ export default function SalesPage() {
   }
   
   const handleFormSuccess = () => {
-    setFormOpen(false);
+    setActiveTab("history");
+    setEditingSale(null); // Clear editing state
+  }
+
+  const handleCancelEdit = () => {
+    setActiveTab("history");
     setEditingSale(null);
   }
 
@@ -269,115 +275,119 @@ export default function SalesPage() {
       <PageHeader
         title="Sales"
         description="Record new sales and view sales history."
-      >
-        <Button onClick={() => { setEditingSale(null); setFormOpen(true); }}>
-          <PlusCircle className="mr-2 h-4 w-4" />
-          Create New Sale
-        </Button>
-      </PageHeader>
+      />
       
-      <div className="rounded-lg border shadow-sm mt-4 overflow-x-auto">
-        <Table>
-        <TableHeader>
-            <TableRow>
-            <TableHead>Sale ID</TableHead>
-            <TableHead>Customer</TableHead>
-            <TableHead>Date</TableHead>
-            <TableHead>Status</TableHead>
-            <TableHead className="text-right">Total Amount</TableHead>
-            <TableHead>
-                <span className="sr-only">Actions</span>
-            </TableHead>
-            </TableRow>
-        </TableHeader>
-        <TableBody>
-            {isSalesLoading || isDataLoading ? (
+      <Tabs value={activeTab} onValueChange={setActiveTab}>
+        <TabsList className="grid w-full grid-cols-2">
+          <TabsTrigger value="history">Sales History</TabsTrigger>
+          <TabsTrigger value="new">{editingSale ? 'Edit Sale' : 'New Sale'}</TabsTrigger>
+        </TabsList>
+        <TabsContent value="history">
+          <div className="rounded-lg border shadow-sm mt-4 overflow-x-auto">
+            <Table>
+            <TableHeader>
                 <TableRow>
-                    <TableCell colSpan={6} className="text-center h-24">Loading sales...</TableCell>
+                <TableHead>Sale ID</TableHead>
+                <TableHead>Customer</TableHead>
+                <TableHead>Date</TableHead>
+                <TableHead>Status</TableHead>
+                <TableHead className="text-right">Total Amount</TableHead>
+                <TableHead>
+                    <span className="sr-only">Actions</span>
+                </TableHead>
                 </TableRow>
-            ) : sortedSales.length === 0 ? (
-            <TableRow>
-                <TableCell colSpan={6} className="text-center h-24">No sales recorded.</TableCell>
-            </TableRow>
-            ) : (
-            sortedSales.map((sale) => (
-                <TableRow key={sale.id}>
-                <TableCell className="font-medium">{sale.id}</TableCell>
-                <TableCell>{sale.customerName}</TableCell>
-                <TableCell>{formatDate(sale.date)}</TableCell>
-                    <TableCell>
-                    <Badge variant={sale.status === 'posted' ? 'default' : 'secondary'}>
-                        {sale.status}
-                    </Badge>
+            </TableHeader>
+            <TableBody>
+                {isSalesLoading || isDataLoading ? (
+                    <TableRow>
+                        <TableCell colSpan={6} className="text-center h-24">Loading sales...</TableCell>
+                    </TableRow>
+                ) : sortedSales.length === 0 ? (
+                <TableRow>
+                    <TableCell colSpan={6} className="text-center h-24">No sales recorded.</TableCell>
+                </TableRow>
+                ) : (
+                sortedSales.map((sale) => (
+                    <TableRow key={sale.id}>
+                    <TableCell className="font-medium">{sale.id}</TableCell>
+                    <TableCell>{sale.customerName}</TableCell>
+                    <TableCell>{formatDate(sale.date)}</TableCell>
+                        <TableCell>
+                        <Badge variant={sale.status === 'posted' ? 'default' : 'secondary'}>
+                            {sale.status}
+                        </Badge>
+                        </TableCell>
+                    <TableCell className="text-right">
+                        {formatCurrency(sale.total)}
                     </TableCell>
-                <TableCell className="text-right">
-                    {formatCurrency(sale.total)}
-                </TableCell>
-                <TableCell>
-                  <AlertDialog>
-                    <DropdownMenu>
-                      <DropdownMenuTrigger asChild>
-                          <Button aria-haspopup="true" size="icon" variant="ghost">
-                          <MoreHorizontal className="h-4 w-4" />
-                          <span className="sr-only">Toggle menu</span>
-                          </Button>
-                      </DropdownMenuTrigger>
-                      <DropdownMenuContent align="end">
-                          <DropdownMenuLabel>Actions</DropdownMenuLabel>
-                           <DropdownMenuItem onSelect={() => handleViewDetails(sale)}>
-                              <FileText className="mr-2 h-4 w-4"/>
-                              View Details
-                          </DropdownMenuItem>
-                          <DropdownMenuSeparator />
-                          <DropdownMenuItem onSelect={() => handleEditClick(sale)} disabled={sale.status === 'posted'}>
-                              <Edit className="mr-2 h-4 w-4"/>
-                              Edit
-                          </DropdownMenuItem>
-                          <DropdownMenuSeparator />
-                           <AlertDialogTrigger asChild>
-                            <DropdownMenuItem
-                              className="text-red-500 focus:bg-red-500/10 focus:text-red-500"
-                            >
-                            <Trash2 className="mr-2 h-4 w-4"/>
-                            Delete
-                            </DropdownMenuItem>
-                          </AlertDialogTrigger>
-                      </DropdownMenuContent>
-                    </DropdownMenu>
-                     <AlertDialogContent>
-                      <AlertDialogHeader>
-                        <AlertDialogTitle>Are you sure?</AlertDialogTitle>
-                        <AlertDialogDescription>
-                          This action cannot be undone. This will permanently delete the sale record {sale.id}. If the sale is 'posted', its corresponding ledger entry will also be removed.
-                        </AlertDialogDescription>
-                      </AlertDialogHeader>
-                      <AlertDialogFooter>
-                        <AlertDialogCancel>Cancel</AlertDialogCancel>
-                        <AlertDialogAction onClick={() => handleDelete(sale)}>Delete</AlertDialogAction>
-                      </AlertDialogFooter>
-                    </AlertDialogContent>
-                   </AlertDialog>
-                </TableCell>
-                </TableRow>
-            ))
-            )}
-        </TableBody>
-        </Table>
-      </div>
+                    <TableCell>
+                      <AlertDialog>
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild>
+                              <Button aria-haspopup="true" size="icon" variant="ghost">
+                              <MoreHorizontal className="h-4 w-4" />
+                              <span className="sr-only">Toggle menu</span>
+                              </Button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent align="end">
+                              <DropdownMenuLabel>Actions</DropdownMenuLabel>
+                               <DropdownMenuItem onSelect={() => handleViewDetails(sale)}>
+                                  <FileText className="mr-2 h-4 w-4"/>
+                                  View Details
+                              </DropdownMenuItem>
+                              <DropdownMenuSeparator />
+                              <DropdownMenuItem onSelect={() => handleEditClick(sale)} disabled={sale.status === 'posted'}>
+                                  <Edit className="mr-2 h-4 w-4"/>
+                                  Edit
+                              </DropdownMenuItem>
+                              <DropdownMenuSeparator />
+                               <AlertDialogTrigger asChild>
+                                <DropdownMenuItem
+                                  className="text-red-500 focus:bg-red-500/10 focus:text-red-500"
+                                >
+                                <Trash2 className="mr-2 h-4 w-4"/>
+                                Delete
+                                </DropdownMenuItem>
+                              </AlertDialogTrigger>
+                          </DropdownMenuContent>
+                        </DropdownMenu>
+                         <AlertDialogContent>
+                          <AlertDialogHeader>
+                            <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+                            <AlertDialogDescription>
+                              This action cannot be undone. This will permanently delete the sale record {sale.id}. If the sale is 'posted', its corresponding ledger entry will also be removed.
+                            </AlertDialogDescription>
+                          </AlertDialogHeader>
+                          <AlertDialogFooter>
+                            <AlertDialogCancel>Cancel</AlertDialogCancel>
+                            <AlertDialogAction onClick={() => handleDelete(sale)}>Delete</AlertDialogAction>
+                          </AlertDialogFooter>
+                        </AlertDialogContent>
+                       </AlertDialog>
+                    </TableCell>
+                    </TableRow>
+                ))
+                )}
+            </TableBody>
+            </Table>
+          </div>
+        </TabsContent>
+        <TabsContent value="new">
+            <div className="mt-4">
+                <NewSaleForm 
+                    key={editingSale?.id || 'new'}
+                    initialData={editingSale} 
+                    onSaleAdded={handleFormSuccess}
+                    onSaleUpdated={handleFormSuccess}
+                    onCancel={handleCancelEdit}
+                />
+            </div>
+        </TabsContent>
+      </Tabs>
 
       {/* Details View Dialog */}
       <Dialog open={isDetailsOpen} onOpenChange={setDetailsOpen}>
           {selectedSale && <SaleDetailsView sale={selectedSale} />}
-      </Dialog>
-
-      {/* New/Edit Form Dialog */}
-       <Dialog open={isFormOpen} onOpenChange={setFormOpen}>
-        <DialogContent className="max-w-6xl">
-           <NewSaleForm 
-              initialData={editingSale} 
-              onSuccess={handleFormSuccess}
-          />
-        </DialogContent>
       </Dialog>
     </>
   );

@@ -93,7 +93,12 @@ function AddCustomerForm({ onCustomerAdded, onOpenChange }: { onCustomerAdded: (
 }
 
 
-export function NewSaleForm({ initialData, onSuccess }: { initialData?: Sale | null; onSuccess: () => void; }) {
+export function NewSaleForm({ initialData, onSaleAdded, onSaleUpdated, onCancel }: { 
+    initialData?: Sale | null; 
+    onSaleAdded: () => void;
+    onSaleUpdated: () => void;
+    onCancel: () => void;
+}) {
     const { toast } = useToast();
     const { customers, items: allItems, addCustomer, addSale, updateSale } = useData();
     
@@ -105,8 +110,6 @@ export function NewSaleForm({ initialData, onSuccess }: { initialData?: Sale | n
 
     const isEditMode = !!initialData;
 
-    // This effect now ONLY runs when the form is opened for editing.
-    // It is the single source of truth for populating the form.
     useEffect(() => {
         if (initialData) {
             setSelectedCustomer(initialData.customerId);
@@ -114,10 +117,9 @@ export function NewSaleForm({ initialData, onSuccess }: { initialData?: Sale | n
             setOverallDiscount(initialData.discount || 0);
             setSaleDate(new Date(initialData.date));
         } else {
-            // This is for a new sale, so we clear the form
-             clearForm();
+            clearForm();
         }
-    }, [initialData]); // This dependency array is key. It only runs when initialData changes.
+    }, [initialData]);
 
 
     const handleAddItem = () => {
@@ -218,11 +220,13 @@ export function NewSaleForm({ initialData, onSuccess }: { initialData?: Sale | n
         if (isEditMode && initialData) {
             await updateSale(initialData.id, saleData);
             toast({ title: "Sale Updated!", description: `Sale ${initialData.id} has been updated.` });
+            onSaleUpdated();
         } else {
             await addSale(saleData);
             toast({ title: "Sale Draft Saved!", description: `Sale has been saved as a draft.` });
+            onSaleAdded();
         }
-        onSuccess(); // Call this to close the dialog and refresh data
+        clearForm();
     }
     
     const handleCustomerAdded = async (newCustomer: Omit<Customer, 'id'| 'createdAt'>) => {
@@ -241,12 +245,13 @@ export function NewSaleForm({ initialData, onSuccess }: { initialData?: Sale | n
         <Card>
             <CardHeader className="flex flex-row items-center justify-between">
                 <CardTitle>{isEditMode ? `Edit Sale ${initialData?.id}` : 'Create New Sale'}</CardTitle>
-                 {!isEditMode && (
+                <div className="flex items-center gap-2">
                     <Button variant="ghost" size="icon" onClick={clearForm}>
                         <RotateCcw className="h-4 w-4" />
                         <span className="sr-only">Clear Form</span>
                     </Button>
-                )}
+                    {isEditMode && <Button variant="outline" onClick={onCancel}>Cancel Edit</Button>}
+                </div>
             </CardHeader>
             <CardContent className="space-y-6">
                 <div className="grid md:grid-cols-3 gap-4">
