@@ -1,8 +1,8 @@
 
 "use client";
 
-import { useState, useEffect, FormEvent } from "react";
-import { MoreHorizontal, PlusCircle, Trash2, Edit, Undo2, Printer, Truck, DollarSign, FileText, CheckCircle } from "lucide-react";
+import { useState, FormEvent } from "react";
+import { MoreHorizontal, PlusCircle, Trash2, Undo2, Printer, CheckCircle, FileText } from "lucide-react";
 import {
   Table,
   TableBody,
@@ -31,7 +31,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { PageHeader } from "@/components/page-header";
 import { formatCurrency, formatDate } from "@/lib/utils";
-import type { Sale, Transaction, Customer } from "@/lib/types";
+import type { Sale, Transaction, Customer, SaleItem } from "@/lib/types";
 import { useToast } from "@/hooks/use-toast";
 import { useData } from "@/firebase/data/data-provider";
 import { Badge } from "@/components/ui/badge";
@@ -39,8 +39,7 @@ import { useCollection, useFirestore, useMemoFirebase, useUser } from "@/firebas
 import { collection, orderBy, query } from "firebase/firestore";
 import { Checkbox } from "@/components/ui/checkbox";
 
-function SaleInvoice({ sale, onPost, onUnpost }: { sale: Sale, onPost: (saleId: string) => void, onUnpost: (saleId: string) => void }) {
-    const { customers } = useData();
+function SaleInvoice({ sale, customers, onPost, onUnpost }: { sale: Sale, customers: Customer[], onPost: (saleId: string) => void, onUnpost: (saleId: string) => void }) {
     const customer = customers.find(c => c.id === sale.customerId);
     const { toast } = useToast();
     
@@ -53,16 +52,14 @@ function SaleInvoice({ sale, onPost, onUnpost }: { sale: Sale, onPost: (saleId: 
     const grandTotal = subtotal - overallDiscountAmount;
 
     const handlePrint = () => {
-        document.body.classList.add('printing-now');
         const printableArea = document.getElementById('printable-invoice-area');
         if (printableArea) {
-             printableArea.classList.add('printable-area');
+            document.body.classList.add('printing-now');
+            printableArea.classList.add('printable-area');
+            window.print();
+            printableArea.classList.remove('printable-area');
+            document.body.classList.remove('printing-now');
         }
-        window.print();
-        if (printableArea) {
-             printableArea.classList.remove('printable-area');
-        }
-        document.body.classList.remove('printing-now');
     }
 
     const handlePost = () => {
@@ -252,99 +249,8 @@ function ManualInvoiceForm({ onManualSaleAdded, onOpenChange }: { onManualSaleAd
   );
 }
 
-function ReceivePaymentForm({ sale, onPaymentReceived, onOpenChange }: { sale: Sale, onPaymentReceived: (sale: Sale, amount: number, date: Date) => void, onOpenChange: (open: boolean) => void }) {
-    const [amount, setAmount] = useState(sale.total);
-    const [date, setDate] = useState(new Date());
-
-    const handleSubmit = (e: FormEvent) => {
-        e.preventDefault();
-        onPaymentReceived(sale, amount, date);
-        onOpenChange(false);
-    }
-
-    return (
-        <DialogContent>
-            <DialogHeader>
-                <DialogTitle>Receive Payment for Invoice {sale.id}</DialogTitle>
-            </DialogHeader>
-            <form onSubmit={handleSubmit}>
-                <div className="space-y-4 py-4">
-                    <div className="space-y-1">
-                        <p className="text-sm font-medium">Customer</p>
-                        <p className="text-sm text-muted-foreground">{sale.customerName}</p>
-                    </div>
-                     <div className="space-y-1">
-                        <p className="text-sm font-medium">Invoice Total</p>
-                        <p className="text-sm text-muted-foreground">{formatCurrency(sale.total)}</p>
-                    </div>
-                     <div className="space-y-2">
-                        <Label htmlFor="date">Payment Date</Label>
-                        <Input 
-                            id="date"
-                            type="date"
-                            value={date.toISOString().split('T')[0]}
-                            onChange={(e) => setDate(new Date(e.target.value))}
-                            required
-                        />
-                    </div>
-                    <div className="space-y-2">
-                        <Label htmlFor="amount">Amount Received</Label>
-                        <Input 
-                            id="amount"
-                            type="number"
-                            value={amount}
-                            onChange={(e) => setAmount(parseFloat(e.target.value) || 0)}
-                            required
-                        />
-                    </div>
-                </div>
-                 <DialogFooter>
-                    <Button type="submit">Receive Payment</Button>
-                </DialogFooter>
-            </form>
-        </DialogContent>
-    )
-}
-
-function DeliveryChallan({ sale, onOpenChange }: { sale: Sale, onOpenChange: (open: boolean) => void }) {
-    const { toast } = useToast();
-    
-    const handlePrint = () => {
-      const printWindow = window.open(`/print/challan/${sale.id}`, '_blank', 'noopener,noreferrer');
-      if (!printWindow) {
-        toast({
-          variant: "destructive",
-          title: "Print Failed",
-          description: "Please allow pop-ups for this site to print the challan."
-        });
-      }
-      onOpenChange(false);
-    };
-
-    return (
-        <DialogContent className="max-w-4xl max-h-[90vh] flex flex-col">
-            <DialogHeader className="flex-shrink-0 no-print">
-                <DialogTitle>Delivery Challan Preview: {sale.id}</DialogTitle>
-            </DialogHeader>
-            <div className="flex-grow overflow-y-auto bg-gray-50 rounded-sm">
-                 <iframe 
-                    src={`/print/challan/${sale.id}?preview=true`}
-                    className="w-full h-full border-none"
-                    title={`Challan Preview ${sale.id}`}
-                 />
-            </div>
-            <DialogFooter className="mt-4 flex-shrink-0 no-print">
-                 <Button variant="outline" onClick={handlePrint}>
-                    <Printer className="mr-2 h-4 w-4" />
-                    Print Challan
-                </Button>
-            </DialogFooter>
-        </DialogContent>
-    );
-}
-
 export default function SalesPage() {
-  const { addManualSale, addTransaction, deleteSale, postSale, unpostSale } = useData();
+  const { customers, addManualSale, deleteSale, postSale, unpostSale } = useData();
   const firestore = useFirestore();
   const { user } = useUser();
   const { toast } = useToast();
@@ -360,10 +266,7 @@ export default function SalesPage() {
   const transactions = transactionsData || [];
   
   const [selectedSaleForDetails, setSelectedSaleForDetails] = useState<Sale | null>(null);
-  const [selectedChallan, setSelectedChallan] = useState<Sale | null>(null);
   const [selectedRows, setSelectedRows] = useState<Set<string>>(new Set());
-  const [paymentSale, setPaymentSale] = useState<Sale | null>(null);
-  const [isPaymentModalOpen, setPaymentModalOpen] = useState(false);
   const [isManualInvoiceModalOpen, setManualInvoiceModalOpen] = useState(false);
 
   const sortedSales = [...sales].sort((a, b) => {
@@ -439,25 +342,6 @@ export default function SalesPage() {
       }
   }
 
-  const handleOpenPaymentModal = (sale: Sale) => {
-      setPaymentSale(sale);
-      setPaymentModalOpen(true);
-  }
-  
-  const handlePaymentReceived = (sale: Sale, amount: number, date: Date) => {
-      const newTransaction: Omit<Transaction, 'id'> = {
-        description: `Payment received for Invoice: ${sale.id}`,
-        amount: amount,
-        type: 'credit',
-        category: 'Customer Payment',
-        customerId: sale.customerId,
-        customerName: sale.customerName,
-        date: date,
-      };
-      addTransaction(newTransaction);
-      toast({ title: "Payment Received", description: `Recorded ${formatCurrency(amount)} from ${sale.customerName}.` });
-  }
-
   return (
     <>
       <PageHeader
@@ -526,49 +410,28 @@ export default function SalesPage() {
                     {formatCurrency(sale.total)}
                   </TableCell>
                   <TableCell className="no-print">
-                    <Dialog onOpenChange={(open) => { if (!open) setSelectedChallan(null); if (!open) setSelectedSaleForDetails(null); }}>
-                      <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                          <Button aria-haspopup="true" size="icon" variant="ghost">
-                            <MoreHorizontal className="h-4 w-4" />
-                            <span className="sr-only">Toggle menu</span>
-                          </Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end">
-                          <DropdownMenuLabel>Actions</DropdownMenuLabel>
-                          <DialogTrigger asChild>
-                              <DropdownMenuItem onSelect={() => setSelectedSaleForDetails(sale)}>
-                                  <FileText className="mr-2 h-4 w-4"/>
-                                  View Details
-                              </DropdownMenuItem>
-                          </DialogTrigger>
-                          <DialogTrigger asChild>
-                            <DropdownMenuItem onSelect={() => setSelectedChallan(sale)}>
-                                <Truck className="mr-2 h-4 w-4"/>
-                                Delivery Challan
-                            </DropdownMenuItem>
-                          </DialogTrigger>
-                          <DropdownMenuItem onSelect={() => handleOpenPaymentModal(sale)}>
-                              <DollarSign className="mr-2 h-4 w-4" />
-                              Receive Payment
-                          </DropdownMenuItem>
-                          
-                          <DropdownMenuItem
-                            onSelect={() => handleDelete(sale)}
-                            className="text-red-500 focus:bg-red-500/10 focus:text-red-500"
-                          >
-                            <Trash2 className="mr-2 h-4 w-4"/>
-                            Delete
-                          </DropdownMenuItem>
-                        </DropdownMenuContent>
-                      </DropdownMenu>
-                      {selectedChallan && selectedChallan.id === sale.id && (
-                          <DeliveryChallan sale={selectedChallan} onOpenChange={(open) => !open && setSelectedChallan(null)} />
-                      )}
-                      {selectedSaleForDetails && selectedSaleForDetails.id === sale.id && (
-                          <SaleInvoice sale={selectedSaleForDetails} onPost={handlePostSale} onUnpost={handleUnpostSale} />
-                      )}
-                    </Dialog>
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <Button aria-haspopup="true" size="icon" variant="ghost">
+                          <MoreHorizontal className="h-4 w-4" />
+                          <span className="sr-only">Toggle menu</span>
+                        </Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="end">
+                        <DropdownMenuLabel>Actions</DropdownMenuLabel>
+                        <DropdownMenuItem onSelect={() => setSelectedSaleForDetails(sale)}>
+                            <FileText className="mr-2 h-4 w-4"/>
+                            View Details
+                        </DropdownMenuItem>
+                        <DropdownMenuItem
+                          onSelect={() => handleDelete(sale)}
+                          className="text-red-500 focus:bg-red-500/10 focus:text-red-500"
+                        >
+                          <Trash2 className="mr-2 h-4 w-4"/>
+                          Delete
+                        </DropdownMenuItem>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
                   </TableCell>
                 </TableRow>
               ))
@@ -577,15 +440,18 @@ export default function SalesPage() {
         </Table>
       </div>
 
-      {paymentSale && (
-        <Dialog open={isPaymentModalOpen} onOpenChange={setPaymentModalOpen}>
-            <ReceivePaymentForm 
-                sale={paymentSale} 
-                onPaymentReceived={handlePaymentReceived} 
-                onOpenChange={setPaymentModalOpen} 
-            />
-        </Dialog>
-      )}
+        {selectedSaleForDetails && (
+            <Dialog open={!!selectedSaleForDetails} onOpenChange={(open) => !open && setSelectedSaleForDetails(null)}>
+                <SaleInvoice
+                    sale={selectedSaleForDetails}
+                    customers={customers}
+                    onPost={handlePostSale}
+                    onUnpost={handleUnpostSale}
+                />
+            </Dialog>
+        )}
     </>
   );
 }
+
+    
