@@ -54,19 +54,47 @@ h1, h2, h3, h4, h5, h6 {
         color: black !important;
     }
 
-    .no-print {
+    .no-print, .no-print * {
         display: none !important;
     }
-    
-    /* Remove height/overflow constraints for printing */
-    .printable-content {
+
+    /* Force the dialog overlay to disappear */
+    [data-radix-dialog-overlay] {
+      display: none !important;
+    }
+
+    /* Force the dialog content to behave like a normal document */
+    [data-radix-dialog-content] {
+      position: static !important;
+      width: 100% !important;
+      max-width: 100% !important;
       height: auto !important;
       max-height: none !important;
       overflow: visible !important;
+      transform: none !important;
+      animation: none !important;
+      box-shadow: none !important;
+      border: none !important;
+      padding: 0 !important;
     }
     
+    /* Make the printable area visible and everything else inside the dialog hidden */
+    #printable-area {
+      display: block !important;
+      visibility: visible !important;
+    }
+    
+    body > *, body > [data-radix-portal] > [data-radix-dialog-overlay] + * {
+      visibility: hidden;
+    }
+    
+    [data-radix-dialog-content] #printable-area, 
+    [data-radix-dialog-content] #printable-area * {
+        visibility: visible;
+    }
+
     /* Ensure table rows don't break across pages */
-    .printable-content tr {
+    tr, thead, tbody {
       break-inside: avoid-page;
     }
 

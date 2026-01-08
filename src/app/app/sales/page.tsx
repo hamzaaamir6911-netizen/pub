@@ -59,7 +59,7 @@ function SaleDetailsView({ sale, customer, onClose }: { sale: Sale; customer: Cu
                     </div>
                 </DialogHeader>
 
-                <div className="flex-grow overflow-y-auto printable-content">
+                <div id="printable-area" className="flex-grow overflow-y-auto">
                     {/* This is the printable area for the INVOICE */}
                     <div id="printable-invoice" className="p-6 font-sans">
                          <div className="text-center mb-8">
