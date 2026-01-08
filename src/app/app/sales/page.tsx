@@ -1,8 +1,8 @@
 
 "use client";
 
-import { useState, useRef, useEffect } from "react";
-import { MoreHorizontal, PlusCircle, Trash2, RotateCcw, FileText, CheckCircle, Edit, Undo2, Printer, Truck } from "lucide-react";
+import { useState, useRef, useEffect, FormEvent } from "react";
+import { MoreHorizontal, PlusCircle, Trash2, RotateCcw, FileText, CheckCircle, Edit, Undo2, Printer, Truck, DollarSign } from "lucide-react";
 import {
   Table,
   TableBody,
@@ -48,6 +48,59 @@ import { useCollection, useFirestore, useMemoFirebase, useUser } from "@/firebas
 import { collection, orderBy, query } from "firebase/firestore";
 import { Checkbox } from "@/components/ui/checkbox";
 
+function ReceivePaymentForm({ sale, onPaymentReceived, onOpenChange }: { sale: Sale, onPaymentReceived: (sale: Sale, amount: number, date: Date) => void, onOpenChange: (open: boolean) => void }) {
+    const [amount, setAmount] = useState(sale.total);
+    const [date, setDate] = useState(new Date());
+
+    const handleSubmit = (e: FormEvent) => {
+        e.preventDefault();
+        onPaymentReceived(sale, amount, date);
+        onOpenChange(false);
+    }
+
+    return (
+        <DialogContent>
+            <DialogHeader>
+                <DialogTitle>Receive Payment for Invoice {sale.id}</DialogTitle>
+            </DialogHeader>
+            <form onSubmit={handleSubmit}>
+                <div className="space-y-4 py-4">
+                    <div className="space-y-1">
+                        <p className="text-sm font-medium">Customer</p>
+                        <p className="text-sm text-muted-foreground">{sale.customerName}</p>
+                    </div>
+                     <div className="space-y-1">
+                        <p className="text-sm font-medium">Invoice Total</p>
+                        <p className="text-sm text-muted-foreground">{formatCurrency(sale.total)}</p>
+                    </div>
+                     <div className="space-y-2">
+                        <Label htmlFor="date">Payment Date</Label>
+                        <Input 
+                            id="date"
+                            type="date"
+                            value={date.toISOString().split('T')[0]}
+                            onChange={(e) => setDate(new Date(e.target.value))}
+                            required
+                        />
+                    </div>
+                    <div className="space-y-2">
+                        <Label htmlFor="amount">Amount Received</Label>
+                        <Input 
+                            id="amount"
+                            type="number"
+                            value={amount}
+                            onChange={(e) => setAmount(parseFloat(e.target.value) || 0)}
+                            required
+                        />
+                    </div>
+                </div>
+                 <DialogFooter>
+                    <Button type="submit">Receive Payment</Button>
+                </DialogFooter>
+            </form>
+        </DialogContent>
+    )
+}
 
 function DeliveryChallan({ sale }: { sale: Sale }) {
     const { toast } = useToast();
@@ -508,7 +561,7 @@ function NewSaleForm({ onSaleAdded, onSaleUpdated, initialData }: { onSaleAdded:
 }
 
 export default function SalesPage() {
-  const { addSale, updateSale, deleteSale, postSale, unpostSale } = useData();
+  const { addSale, updateSale, deleteSale, postSale, unpostSale, addTransaction } = useData();
   const firestore = useFirestore();
   const { user } = useUser();
   const { toast } = useToast();
@@ -528,6 +581,9 @@ export default function SalesPage() {
   const [selectedChallan, setSelectedChallan] = useState<Sale | null>(null);
   const [editingSale, setEditingSale] = useState<Sale | null>(null);
   const [selectedRows, setSelectedRows] = useState<Set<string>>(new Set());
+  const [paymentSale, setPaymentSale] = useState<Sale | null>(null);
+  const [isPaymentModalOpen, setPaymentModalOpen] = useState(false);
+
 
   const sortedSales = [...sales].sort((a, b) => {
     const numA = parseInt(a.id.split('-')[1] || '0', 10);
@@ -607,7 +663,26 @@ export default function SalesPage() {
     setEditingSale(sale);
     setActiveTab("new");
   }
+
+  const handleOpenPaymentModal = (sale: Sale) => {
+      setPaymentSale(sale);
+      setPaymentModalOpen(true);
+  }
   
+  const handlePaymentReceived = (sale: Sale, amount: number, date: Date) => {
+      const newTransaction: Omit<Transaction, 'id'> = {
+        description: `Payment received for Invoice: ${sale.id}`,
+        amount: amount,
+        type: 'credit',
+        category: 'Customer Payment',
+        customerId: sale.customerId,
+        customerName: sale.customerName,
+        date: date,
+      };
+      addTransaction(newTransaction);
+      toast({ title: "Payment Received", description: `Recorded ${formatCurrency(amount)} from ${sale.customerName}.` });
+  }
+
   useEffect(() => {
       if (activeTab !== 'new') {
           setEditingSale(null);
@@ -706,6 +781,10 @@ export default function SalesPage() {
                                     Delivery Challan
                                 </DropdownMenuItem>
                               </DialogTrigger>
+                              <DropdownMenuItem onSelect={() => handleOpenPaymentModal(sale)}>
+                                  <DollarSign className="mr-2 h-4 w-4" />
+                                  Receive Payment
+                              </DropdownMenuItem>
                               <DropdownMenuItem
                                 onSelect={() => handleEditClick(sale)}
                                 disabled={sale.status === 'posted'}
@@ -747,6 +826,15 @@ export default function SalesPage() {
             </div>
         </TabsContent>
       </Tabs>
+      {paymentSale && (
+        <Dialog open={isPaymentModalOpen} onOpenChange={setPaymentModalOpen}>
+            <ReceivePaymentForm 
+                sale={paymentSale} 
+                onPaymentReceived={handlePaymentReceived} 
+                onOpenChange={setPaymentModalOpen} 
+            />
+        </Dialog>
+      )}
     </>
   );
 }
