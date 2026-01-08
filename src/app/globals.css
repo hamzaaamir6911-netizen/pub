@@ -49,10 +49,17 @@ h1, h2, h3, h4, h5, h6 {
 }
 
 @media print {
+    @page {
+        size: A4;
+        margin: 0;
+    }
+
     body {
         background: white !important;
         color: black !important;
         visibility: hidden;
+        margin: 0;
+        padding: 0;
     }
 
     .no-print, 
@@ -92,7 +99,7 @@ h1, h2, h3, h4, h5, h6 {
     }
     
     tr, thead, tbody, tfoot, table, .break-inside-avoid {
-      break-inside: avoid !important;
+      break-inside: avoid-page !important;
     }
 
     /* Specific view toggling for invoice/challan */
