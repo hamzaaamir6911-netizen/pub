@@ -49,13 +49,20 @@ const toDate = (timestamp: any): Date => {
     if (timestamp instanceof Timestamp) {
       return timestamp.toDate();
     }
-    if (timestamp && typeof timestamp.toDate === 'function') {
-        return timestamp.toDate();
-    }
+    // If it's already a Date object, just return it.
     if (timestamp instanceof Date) {
         return timestamp;
     }
-    return new Date(timestamp);
+    // Handle cases where it might be a string or number, or null/undefined
+    if (timestamp && typeof timestamp.toDate === 'function') {
+        return timestamp.toDate();
+    }
+    // Fallback for string/number representations, though Firestore shouldn't send these.
+    if (typeof timestamp === 'string' || typeof timestamp === 'number') {
+        return new Date(timestamp);
+    }
+    // Return a valid date object for null/undefined or other cases to prevent crashes
+    return new Date(); 
 };
 
 const sectionsData = [

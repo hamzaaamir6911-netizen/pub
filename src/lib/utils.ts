@@ -15,12 +15,15 @@ export function formatCurrency(amount: number) {
   }).format(amount);
 }
 
-const toDate = (date: Date | Timestamp | string | number): Date => {
+const toDate = (date: any): Date => {
     if (date instanceof Timestamp) {
       return date.toDate();
     }
     if (date instanceof Date) {
         return date;
+    }
+     if (date && typeof date.toDate === 'function') {
+        return date.toDate();
     }
     return new Date(date);
 };
