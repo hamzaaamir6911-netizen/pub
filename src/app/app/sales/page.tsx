@@ -1,4 +1,5 @@
 
+
 "use client";
 
 import { useState, useMemo } from "react";
@@ -82,7 +83,7 @@ function SaleDetailsView({ sale }: { sale: Sale }) {
                 </div>
             </DialogHeader>
 
-            <div className="overflow-y-auto">
+            <div className="overflow-visible">
                 <div id="printable-invoice" className="bg-white text-black font-semibold">
                      <div className="p-8 bg-teal-600 text-white font-bold">
                         <div className="flex justify-between items-start">
@@ -178,15 +179,7 @@ function SaleDetailsView({ sale }: { sale: Sale }) {
 
 
 export default function SalesPage() {
-  const { deleteSale, postSale, unpostSale, loading: isDataLoading } = useData();
-  const firestore = useFirestore();
-  const { user } = useUser();
-  const shouldFetch = !!user;
-
-  const salesCol = useMemoFirebase(() => shouldFetch ? query(collection(firestore, 'sales'), orderBy('date', 'desc')) : null, [firestore, shouldFetch]);
-  const { data: salesData, isLoading: isSalesLoading } = useCollection<Sale>(salesCol);
-  
-  const sales = salesData || [];
+  const { sales, deleteSale, postSale, unpostSale, loading: isDataLoading } = useData();
   
   const [activeTab, setActiveTab] = useState("history");
   const [isDetailsOpen, setDetailsOpen] = useState(false);
@@ -203,7 +196,7 @@ export default function SalesPage() {
   }, [sales]);
   
   const handleDelete = (sale: Sale) => {
-    deleteSale(sale, []);
+    deleteSale(sale);
   };
 
   const handleEditClick = (sale: Sale) => {
@@ -258,7 +251,7 @@ export default function SalesPage() {
                 </TableRow>
             </TableHeader>
             <TableBody>
-                {isSalesLoading || isDataLoading ? (
+                {isDataLoading ? (
                     <TableRow>
                         <TableCell colSpan={6} className="text-center h-24">Loading sales...</TableCell>
                     </TableRow>

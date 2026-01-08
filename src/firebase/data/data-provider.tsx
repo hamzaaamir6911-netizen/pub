@@ -15,6 +15,8 @@ interface DataContextProps {
   sales: Sale[];
   vendors: Vendor[];
   labourers: Labour[];
+  transactions: Transaction[];
+  salaryPayments: SalaryPayment[];
   loading: boolean; // This will now represent loading of all core data
   addItem: (item: Omit<Item, 'id' | 'createdAt'>) => Promise<any>;
   deleteItem: (id: string) => Promise<void>;
@@ -32,7 +34,7 @@ interface DataContextProps {
   updateSale: (saleId: string, sale: Omit<Sale, 'id' | 'total' | 'status'>) => Promise<void>;
   postSale: (sale: Sale) => Promise<void>;
   unpostSale: (sale: Sale) => Promise<void>;
-  deleteSale: (sale: Sale, transactions: Transaction[]) => Promise<void>;
+  deleteSale: (sale: Sale) => Promise<void>;
   addEstimate: (estimate: Omit<Estimate, 'id' | 'date' | 'total'>) => Promise<void>;
   deleteEstimate: (id: string) => Promise<void>;
   createSaleFromEstimate: (estimate: Estimate) => Promise<void>;
@@ -243,20 +245,26 @@ export const DataProvider = ({ children }: { children: ReactNode }) => {
     const salesCol = useMemoFirebase(() => shouldFetch ? collection(firestore, 'sales') : null, [firestore, shouldFetch]);
     const vendorsCol = useMemoFirebase(() => shouldFetch ? collection(firestore, 'vendors') : null, [firestore, shouldFetch]);
     const labourCol = useMemoFirebase(() => shouldFetch ? collection(firestore, 'labour') : null, [firestore, shouldFetch]);
+    const transactionsCol = useMemoFirebase(() => shouldFetch ? collection(firestore, 'transactions') : null, [firestore, shouldFetch]);
+    const salaryPaymentsCol = useMemoFirebase(() => shouldFetch ? collection(firestore, 'salaryPayments') : null, [firestore, shouldFetch]);
     
     const { data: itemsData, isLoading: itemsLoading } = useCollection<Item>(itemsCol);
     const { data: customersData, isLoading: customersLoading } = useCollection<Customer>(customersCol);
     const { data: salesData, isLoading: salesLoading } = useCollection<Sale>(salesCol);
     const { data: vendorsData, isLoading: vendorsLoading } = useCollection<Vendor>(vendorsCol);
     const { data: labourData, isLoading: labourLoading } = useCollection<Labour>(labourCol);
+    const { data: transactionsData, isLoading: transactionsLoading } = useCollection<Transaction>(transactionsCol);
+    const { data: salaryPaymentsData, isLoading: salaryPaymentsLoading } = useCollection<SalaryPayment>(salaryPaymentsCol);
 
     const items = itemsData?.map(item => ({ ...item, quantity: item.quantity ?? 0, createdAt: toDate(item.createdAt) as Date })) || [];
     const customers = customersData?.map(customer => ({ ...customer, createdAt: toDate(customer.createdAt) as Date })) || [];
     const sales = salesData?.map(sale => ({ ...sale, date: toDate(sale.date) as Date })) || [];
     const vendors = vendorsData?.map(vendor => ({ ...vendor, createdAt: toDate(vendor.createdAt) as Date })) || [];
     const labourers = labourData?.map(labourer => ({ ...labourer, createdAt: toDate(labourer.createdAt) as Date })) || [];
+    const transactions = transactionsData?.map(t => ({ ...t, date: toDate(t.date) as Date })) || [];
+    const salaryPayments = salaryPaymentsData?.map(p => ({ ...p, date: toDate(p.date) as Date })) || [];
 
-    const loading = isUserLoading || itemsLoading || customersLoading || salesLoading || vendorsLoading || labourLoading;
+    const loading = isUserLoading || itemsLoading || customersLoading || salesLoading || vendorsLoading || labourLoading || transactionsLoading || salaryPaymentsLoading;
 
     const addItem = async (item: Omit<Item, 'id' | 'createdAt'>) => {
         if (!itemsCol) throw new Error("Items collection not available");
@@ -618,7 +626,7 @@ export const DataProvider = ({ children }: { children: ReactNode }) => {
         }
     };
 
-    const deleteSale = async (sale: Sale, transactions: Transaction[]) => {
+    const deleteSale = async (sale: Sale) => {
         if (!user) throw new Error("User not authenticated");
         if (!sale) return;
     
@@ -740,7 +748,7 @@ export const DataProvider = ({ children }: { children: ReactNode }) => {
     };
     
     const value = {
-        items, customers, sales, vendors, labourers, loading,
+        items, customers, sales, vendors, labourers, transactions, salaryPayments, loading,
         addItem, deleteItem, updateItemStock,
         addCustomer, updateCustomer, deleteCustomer,
         addVendor, deleteVendor,

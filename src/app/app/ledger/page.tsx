@@ -39,8 +39,6 @@ import { formatCurrency, formatDate } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { cn } from "@/lib/utils";
-import { useCollection, useFirestore, useMemoFirebase, useUser } from "@/firebase";
-import { collection, orderBy, query } from "firebase/firestore";
 
 
 function AddPaymentForm({ onTransactionAdded, onOpenChange }: { onTransactionAdded: (newTransaction: Omit<Transaction, 'id'>) => Promise<void>, onOpenChange: (open: boolean) => void }) {
@@ -162,20 +160,7 @@ function AddPaymentForm({ onTransactionAdded, onOpenChange }: { onTransactionAdd
 
 
 export default function LedgerPage() {
-  const { customers, vendors, addTransaction, unpostSale, deleteTransaction } = useData();
-  const firestore = useFirestore();
-  const { user } = useUser();
-  const shouldFetch = !!user;
-
-  const transactionsCol = useMemoFirebase(() => shouldFetch ? query(collection(firestore, 'transactions'), orderBy('date', 'asc')) : null, [firestore, shouldFetch]);
-  const salesCol = useMemoFirebase(() => shouldFetch ? collection(firestore, 'sales') : null, [firestore, shouldFetch]);
-
-  const { data: transactionsData } = useCollection<Transaction>(transactionsCol);
-  const { data: salesData } = useCollection<Sale>(salesCol);
-
-  const transactions = transactionsData || [];
-  const sales = salesData || [];
-
+  const { customers, vendors, transactions, addTransaction, unpostSale, deleteTransaction } = useData();
   const [selectedCustomerId, setSelectedCustomerId] = useState<string | null>(null);
   const [selectedVendorId, setSelectedVendorId] = useState<string | null>(null);
   const [isAddModalOpen, setAddModalOpen] = useState(false);
@@ -214,7 +199,7 @@ export default function LedgerPage() {
     } else if (selectedVendorId) {
         filtered = transactions.filter(t => t.vendorId === selectedVendorId);
     }
-    return filtered;
+    return filtered.sort((a,b) => new Date(a.date).getTime() - new Date(b.date).getTime());
   }, [transactions, selectedCustomerId, selectedVendorId]);
 
   let runningBalance = 0;
