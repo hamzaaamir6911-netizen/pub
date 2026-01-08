@@ -1,8 +1,8 @@
 
 "use client";
 
-import { useState, useMemo, useEffect } from "react";
-import { MoreHorizontal, Trash2, CheckCircle, FileText, Undo2, ArrowLeft, Printer, Edit } from "lucide-react";
+import { useState, useMemo } from "react";
+import { MoreHorizontal, Trash2, CheckCircle, FileText, Undo2, Edit, Printer, PlusCircle } from "lucide-react";
 import {
   Table,
   TableBody,
@@ -23,12 +23,11 @@ import { Button } from "@/components/ui/button";
 import { PageHeader } from "@/components/page-header";
 import { formatCurrency, formatDate } from "@/lib/utils";
 import type { Sale, Transaction, Customer } from "@/lib/types";
-import { useToast } from "@/hooks/use-toast";
 import { useData } from "@/firebase/data/data-provider";
 import { Badge } from "@/components/ui/badge";
 import { useCollection, useFirestore, useMemoFirebase, useUser } from "@/firebase";
 import { collection, orderBy, query } from "firebase/firestore";
-import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { NewSaleForm } from "./_components/new-sale-form";
 
 
@@ -159,15 +158,9 @@ export default function SalesPage() {
   
   const sales = salesData || [];
   
+  const [isFormOpen, setIsFormOpen] = useState(false);
   const [editingSale, setEditingSale] = useState<Sale | null>(null);
   const [viewingSale, setViewingSale] = useState<Sale | null>(null);
-  const [activeTab, setActiveTab] = useState("history");
-
-  useEffect(() => {
-      if (activeTab === 'history') {
-          setEditingSale(null);
-      }
-  }, [activeTab]);
 
   const sortedSales = useMemo(() => {
     if (!sales) return [];
@@ -199,11 +192,16 @@ export default function SalesPage() {
 
   const handleEditClick = (sale: Sale) => {
     setEditingSale(sale);
-    setActiveTab("new");
+    setIsFormOpen(true);
   };
 
+  const handleCreateClick = () => {
+    setEditingSale(null);
+    setIsFormOpen(true);
+  }
+
   const handleFormSuccess = () => {
-    setActiveTab("history");
+    setIsFormOpen(false);
     setEditingSale(null);
   }
 
@@ -213,12 +211,20 @@ export default function SalesPage() {
         title="Sales"
         description="Record new sales and view sales history."
       >
+        <Button onClick={handleCreateClick}>
+            <PlusCircle className="mr-2 h-4 w-4" />
+            Create New Sale
+        </Button>
       </PageHeader>
-      
-       <NewSaleForm 
-            initialData={editingSale} 
-            onSuccess={handleFormSuccess}
-        />
+
+      <Dialog open={isFormOpen} onOpenChange={setIsFormOpen}>
+        <DialogContent className="max-w-6xl">
+           <NewSaleForm 
+                initialData={editingSale} 
+                onSuccess={handleFormSuccess}
+            />
+        </DialogContent>
+      </Dialog>
       
       <div className="rounded-lg border shadow-sm mt-8 overflow-x-auto">
         <Table>

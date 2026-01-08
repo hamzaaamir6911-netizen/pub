@@ -243,13 +243,15 @@ export function NewSaleForm({ initialData, onSuccess }: { initialData?: Sale | n
 
     return (
         <>
-         <Card>
+         <Card className="shadow-none border-none">
             <CardHeader className="flex flex-row items-center justify-between">
                 <CardTitle>{isEditMode ? `Edit Sale ${initialData?.id}` : 'Create New Sale'}</CardTitle>
-                 <Button variant="ghost" size="icon" onClick={clearForm} disabled={isEditMode}>
-                    <RotateCcw className="h-4 w-4" />
-                    <span className="sr-only">Clear Form</span>
-                </Button>
+                 {!isEditMode && (
+                    <Button variant="ghost" size="icon" onClick={clearForm}>
+                        <RotateCcw className="h-4 w-4" />
+                        <span className="sr-only">Clear Form</span>
+                    </Button>
+                )}
             </CardHeader>
             <CardContent className="space-y-6">
                 <div className="grid md:grid-cols-3 gap-4">
