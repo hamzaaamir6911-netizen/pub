@@ -95,6 +95,7 @@ export default function PrintInvoicePage() {
                       <TableHead className="text-right font-extrabold text-gray-800 uppercase">Feet</TableHead>
                       <TableHead className="text-right font-extrabold text-gray-800 uppercase">Qty</TableHead>
                       <TableHead className="text-right font-extrabold text-gray-800 uppercase">Rate</TableHead>
+                      <TableHead className="text-right font-extrabold text-gray-800 uppercase">Disc. %</TableHead>
                       <TableHead className="text-right font-extrabold text-gray-800 uppercase">Discount</TableHead>
                       <TableHead className="text-right font-extrabold text-gray-800 uppercase">Amount</TableHead>
                   </TableRow>
@@ -115,6 +116,7 @@ export default function PrintInvoicePage() {
                       <TableCell className="text-right text-gray-600 font-bold">{item.feet ? item.feet.toFixed(2) : '-'}</TableCell>
                       <TableCell className="text-right text-gray-600 font-bold">{item.quantity}</TableCell>
                       <TableCell className="text-right text-gray-600 font-bold">{formatCurrency(item.price)}</TableCell>
+                      <TableCell className="text-right text-gray-600 font-bold">{item.discount || 0}%</TableCell>
                       <TableCell className="text-right text-gray-600 font-bold">{formatCurrency(discountAmount)}</TableCell>
                       <TableCell className="text-right font-bold text-gray-800">{formatCurrency(finalAmount)}</TableCell>
                   </TableRow>
