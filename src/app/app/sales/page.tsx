@@ -526,6 +526,7 @@ export default function SalesPage() {
   const [selectedSale, setSelectedSale] = useState<Sale | null>(null);
   const [selectedChallan, setSelectedChallan] = useState<Sale | null>(null);
   const [editingSale, setEditingSale] = useState<Sale | null>(null);
+  const { toast } = useToast();
 
   const sortedSales = [...sales].sort((a, b) => {
     const numA = parseInt(a.id.split('-')[1] || '0', 10);
@@ -537,6 +538,17 @@ export default function SalesPage() {
     
     return new Date(b.date).getTime() - new Date(a.date).getTime();
   });
+
+  const handlePrintAll = () => {
+    const printWindow = window.open('/print/sales-report', '_blank', 'noopener,noreferrer');
+    if (!printWindow) {
+      toast({
+        variant: "destructive",
+        title: "Print Failed",
+        description: "Please allow pop-ups for this site to print the report."
+      });
+    }
+  };
 
   const handleDelete = (sale: Sale) => {
     deleteSale(sale, transactions);
@@ -579,7 +591,12 @@ export default function SalesPage() {
       <PageHeader
         title="Sales"
         description="Record new sales and view sales history."
-      />
+      >
+        <Button onClick={handlePrintAll} variant="outline">
+          <Printer className="mr-2 h-4 w-4" />
+          Print Report
+        </Button>
+      </PageHeader>
       <Tabs value={activeTab} onValueChange={setActiveTab}>
         <TabsList className="w-full sm:w-auto grid grid-cols-2 no-print">
           <TabsTrigger value="history">Sales History</TabsTrigger>
