@@ -86,7 +86,7 @@ function SaleDetailsView({ sale }: { sale: Sale }) {
 
             <div id="printable-area">
                 {/* INVOICE VIEW - default */}
-                <div id="printable-invoice" className="bg-white text-black">
+                <div id="printable-invoice" className="bg-white text-black font-semibold">
                      <div className="p-8 bg-teal-600 text-white font-bold">
                         <div className="flex justify-between items-start">
                             <div>
@@ -128,14 +128,14 @@ function SaleDetailsView({ sale }: { sale: Sale }) {
                         </div>
 
 
-                        <Table className="text-sm font-semibold">
+                        <Table className="text-sm font-bold">
                             <TableHeader>
                                 <TableRow className="bg-gray-100 hover:bg-gray-100">
-                                    <TableHead className="font-bold text-gray-600 uppercase w-[40%]">Description</TableHead>
-                                    <TableHead className="text-right font-bold text-gray-600 uppercase">Feet</TableHead>
-                                    <TableHead className="text-right font-bold text-gray-600 uppercase">Qty</TableHead>
-                                    <TableHead className="text-right font-bold text-gray-600 uppercase">Rate</TableHead>
-                                    <TableHead className="text-right font-bold text-gray-600 uppercase">Total</TableHead>
+                                    <TableHead className="font-extrabold text-gray-800 uppercase w-[40%]">Description</TableHead>
+                                    <TableHead className="text-right font-extrabold text-gray-800 uppercase">Feet</TableHead>
+                                    <TableHead className="text-right font-extrabold text-gray-800 uppercase">Qty</TableHead>
+                                    <TableHead className="text-right font-extrabold text-gray-800 uppercase">Rate</TableHead>
+                                    <TableHead className="text-right font-extrabold text-gray-800 uppercase">Total</TableHead>
                                 </TableRow>
                             </TableHeader>
                             <TableBody>
