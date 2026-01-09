@@ -47,6 +47,7 @@ import { Badge } from "@/components/ui/badge";
 import { useCollection, useFirestore, useMemoFirebase, useUser } from "@/firebase";
 import { collection, orderBy, query } from "firebase/firestore";
 import { NewSaleForm } from "./_components/new-sale-form";
+import { Checkbox } from "@/components/ui/checkbox";
 
 
 function SaleDetailsView({ sale }: { sale: Sale }) {
@@ -196,6 +197,7 @@ export default function SalesPage() {
   const [isDetailsOpen, setDetailsOpen] = useState(false);
   const [selectedSale, setSelectedSale] = useState<Sale | null>(null);
   const [editingSale, setEditingSale] = useState<Sale | null>(null);
+  const [selectedRows, setSelectedRows] = useState<string[]>([]);
 
   const sortedSales = useMemo(() => {
     if (!sales) return [];
@@ -234,6 +236,26 @@ export default function SalesPage() {
     window.open(`/print/${view}/${saleId}`, '_blank');
   };
 
+  const handleSelectRow = (id: string) => {
+    setSelectedRows(prev => 
+      prev.includes(id) ? prev.filter(rowId => rowId !== id) : [...prev, id]
+    );
+  };
+
+  const handleSelectAll = () => {
+    if (selectedRows.length === sortedSales.length) {
+      setSelectedRows([]);
+    } else {
+      setSelectedRows(sortedSales.map(s => s.id));
+    }
+  };
+
+  const handlePrintSelected = () => {
+    selectedRows.forEach(id => {
+      window.open(`/print/invoice/${id}`, '_blank');
+    });
+  };
+
   return (
     <>
       <PageHeader
@@ -247,10 +269,24 @@ export default function SalesPage() {
           <TabsTrigger value="new">{editingSale ? 'Edit Sale' : 'New Sale'}</TabsTrigger>
         </TabsList>
         <TabsContent value="history">
+          <div className="my-4">
+              {selectedRows.length > 0 && (
+                  <Button onClick={handlePrintSelected}>
+                      <Printer className="mr-2 h-4 w-4" />
+                      Print Selected ({selectedRows.length})
+                  </Button>
+              )}
+          </div>
           <div className="rounded-lg border shadow-sm mt-4 overflow-x-auto">
             <Table>
             <TableHeader>
                 <TableRow>
+                <TableHead className="w-[50px]">
+                    <Checkbox
+                        checked={selectedRows.length === sortedSales.length && sortedSales.length > 0}
+                        onCheckedChange={handleSelectAll}
+                    />
+                </TableHead>
                 <TableHead>Sale ID</TableHead>
                 <TableHead>Customer</TableHead>
                 <TableHead>Date</TableHead>
@@ -264,15 +300,21 @@ export default function SalesPage() {
             <TableBody>
                 {isDataLoading ? (
                     <TableRow>
-                        <TableCell colSpan={6} className="text-center h-24">Loading sales...</TableCell>
+                        <TableCell colSpan={7} className="text-center h-24">Loading sales...</TableCell>
                     </TableRow>
                 ) : sortedSales.length === 0 ? (
                 <TableRow>
-                    <TableCell colSpan={6} className="text-center h-24">No sales recorded.</TableCell>
+                    <TableCell colSpan={7} className="text-center h-24">No sales recorded.</TableCell>
                 </TableRow>
                 ) : (
                 sortedSales.map((sale) => (
-                    <TableRow key={sale.id}>
+                    <TableRow key={sale.id} data-state={selectedRows.includes(sale.id) && "selected"}>
+                    <TableCell>
+                        <Checkbox
+                            checked={selectedRows.includes(sale.id)}
+                            onCheckedChange={() => handleSelectRow(sale.id)}
+                        />
+                    </TableCell>
                     <TableCell className="font-medium">{sale.id}</TableCell>
                     <TableCell>{sale.customerName}</TableCell>
                     <TableCell>{formatDate(sale.date)}</TableCell>
