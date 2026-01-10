@@ -781,11 +781,12 @@ export const DataProvider = ({ children }: { children: ReactNode }) => {
         
         const batch = writeBatch(firestore);
         
-        // Update the salary payment document itself
         const paymentRef = doc(firestore, 'salaryPayments', paymentId);
-        batch.update(paymentRef, paymentData);
+        batch.update(paymentRef, {
+            ...paymentData,
+            date: serverTimestamp() 
+        });
 
-        // Find and update the associated Expense
         const searchDescription = `Salary for ${paymentData.month} ${paymentData.year}`;
         const expenseToUpdate = expenses.find(e => e.category === 'Salary' && e.title === searchDescription);
         if (expenseToUpdate) {
@@ -793,7 +794,6 @@ export const DataProvider = ({ children }: { children: ReactNode }) => {
             batch.update(expenseRef, { amount: paymentData.totalAmountPaid });
         }
 
-        // Find and update the associated Transaction
         const searchDescriptionLedger = `Salary payment for ${paymentData.month} ${paymentData.year}`;
         const transactionToUpdate = transactions.find(t => t.category === 'Salary' && t.description === searchDescriptionLedger);
         if (transactionToUpdate) {
