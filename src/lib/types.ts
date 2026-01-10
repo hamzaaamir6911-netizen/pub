@@ -117,4 +117,5 @@ export type SalaryPayment = {
     date: Date;
     labourers: SalaryLabourer[];
     totalAmountPaid: number;
+    expenseId?: string; // Link to the corresponding expense entry
 };

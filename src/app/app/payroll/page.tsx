@@ -1,4 +1,5 @@
 
+
 "use client";
 
 import { useState, useMemo, useEffect } from "react";
@@ -43,7 +44,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardFooter, CardDescription }
 import { Label } from "@/components/ui/label";
 import { PageHeader } from "@/components/page-header";
 import { formatCurrency, formatDate } from "@/lib/utils";
-import type { SalaryLabourer, SalaryPayment, Expense, Transaction } from "@/lib/types";
+import type { SalaryLabourer, SalaryPayment } from "@/lib/types";
 import { useToast } from "@/hooks/use-toast";
 import { useData } from "@/firebase/data/data-provider";
 import { Combobox } from "@/components/ui/combobox";
@@ -228,7 +229,7 @@ function NewPayslipForm({
     };
 
     if (isEditMode && existingPayslip) {
-        await updateSalaryPayment(existingPayslip.id, paymentData, expenses, transactions);
+        await updateSalaryPayment(existingPayslip.id, paymentData, existingPayslip);
         toast({ title: "Payslip Updated!", description: `Salary for ${selectedMonth} ${selectedYear} has been updated.` });
     } else {
         await addSalaryPayment(paymentData);
@@ -354,16 +355,9 @@ export default function PayrollPage() {
   const shouldFetch = !!user;
 
   const salaryPaymentsCol = useMemoFirebase(() => shouldFetch ? query(collection(firestore, 'salaryPayments'), orderBy('date', 'desc')) : null, [firestore, shouldFetch]);
-  const expensesCol = useMemoFirebase(() => shouldFetch ? collection(firestore, 'expenses') : null, [firestore, shouldFetch]);
-  const transactionsCol = useMemoFirebase(() => shouldFetch ? collection(firestore, 'transactions') : null, [firestore, shouldFetch]);
-  
   const { data: salaryPaymentsData } = useCollection<SalaryPayment>(salaryPaymentsCol);
-  const { data: expensesData } = useCollection<Expense>(expensesCol);
-  const { data: transactionsData } = useCollection<Transaction>(transactionsCol);
   
   const salaryPayments = salaryPaymentsData || [];
-  const expenses = expensesData || [];
-  const transactions = transactionsData || [];
 
   const { toast } = useToast();
   const [activeTab, setActiveTab] = useState("new");
@@ -381,7 +375,7 @@ export default function PayrollPage() {
   }
 
   const handleDelete = (payment: SalaryPayment) => {
-    deleteSalaryPayment(payment, expenses, transactions);
+    deleteSalaryPayment(payment);
     toast({ title: "Payslip Deleted", description: "The salary payment has been removed." });
   }
 

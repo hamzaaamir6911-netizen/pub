@@ -44,8 +44,8 @@ interface DataContextProps {
   updateTransaction: (id: string, transaction: Partial<Omit<Transaction, 'id'>>) => Promise<void>;
   deleteTransaction: (id: string) => Promise<void>;
   addSalaryPayment: (payment: Omit<SalaryPayment, 'id' | 'date'>) => Promise<void>;
-  updateSalaryPayment: (paymentId: string, payment: Omit<SalaryPayment, 'id' | 'date'>, expenses: Expense[], transactions: Transaction[]) => Promise<void>;
-  deleteSalaryPayment: (payment: SalaryPayment, expenses: Expense[], transactions: Transaction[]) => Promise<void>;
+  updateSalaryPayment: (paymentId: string, paymentData: Omit<SalaryPayment, 'id' | 'date'>, existingPayment: SalaryPayment) => Promise<void>;
+  deleteSalaryPayment: (payment: SalaryPayment) => Promise<void>;
 }
 
 const DataContext = createContext<DataContextProps | undefined>(undefined);
@@ -751,9 +751,7 @@ export const DataProvider = ({ children }: { children: ReactNode }) => {
         const batch = writeBatch(firestore);
         
         const newPaymentRef = doc(collection(firestore, 'salaryPayments'));
-        const newPaymentData = { ...payment, date: serverTimestamp() };
-        batch.set(newPaymentRef, newPaymentData);
-
+        
         const expenseRef = doc(collection(firestore, 'expenses'));
         const expenseData: Omit<Expense, 'id'> = {
             title: `Salary for ${payment.month} ${payment.year}`,
@@ -762,6 +760,9 @@ export const DataProvider = ({ children }: { children: ReactNode }) => {
             date: serverTimestamp() as Timestamp,
         };
         batch.set(expenseRef, expenseData);
+        
+        const newPaymentData = { ...payment, date: serverTimestamp(), expenseId: expenseRef.id };
+        batch.set(newPaymentRef, newPaymentData);
         
         const transactionRef = doc(collection(firestore, 'transactions'));
         const transactionData: Omit<Transaction, 'id'> = {
@@ -776,7 +777,7 @@ export const DataProvider = ({ children }: { children: ReactNode }) => {
         await batch.commit();
     };
 
-    const updateSalaryPayment = async (paymentId: string, paymentData: Omit<SalaryPayment, 'id' | 'date'>, expenses: Expense[], transactions: Transaction[]) => {
+    const updateSalaryPayment = async (paymentId: string, paymentData: Omit<SalaryPayment, 'id' | 'date'>, existingPayment: SalaryPayment) => {
         if (!user) throw new Error("User not authenticated");
         
         const batch = writeBatch(firestore);
@@ -787,25 +788,27 @@ export const DataProvider = ({ children }: { children: ReactNode }) => {
             date: serverTimestamp() 
         });
 
-        const searchDescription = `Salary for ${paymentData.month} ${paymentData.year}`;
-        const expenseToUpdate = expenses.find(e => e.category === 'Salary' && e.title === searchDescription);
-        if (expenseToUpdate) {
-            const expenseRef = doc(firestore, 'expenses', expenseToUpdate.id);
+        if (existingPayment.expenseId) {
+            const expenseRef = doc(firestore, 'expenses', existingPayment.expenseId);
             batch.update(expenseRef, { amount: paymentData.totalAmountPaid });
-        }
 
-        const searchDescriptionLedger = `Salary payment for ${paymentData.month} ${paymentData.year}`;
-        const transactionToUpdate = transactions.find(t => t.category === 'Salary' && t.description === searchDescriptionLedger);
-        if (transactionToUpdate) {
-            const transactionRef = doc(firestore, 'transactions', transactionToUpdate.id);
-            batch.update(transactionRef, { amount: paymentData.totalAmountPaid });
+            const q = query(
+                collection(firestore, 'transactions'),
+                where("category", "==", "Salary"),
+                where("description", "==", `Salary payment for ${existingPayment.month} ${existingPayment.year}`)
+            );
+            
+            const querySnapshot = await getDocs(q);
+            querySnapshot.forEach((doc) => {
+                batch.update(doc.ref, { amount: paymentData.totalAmountPaid });
+            });
         }
-
+        
         await batch.commit();
     };
 
 
-    const deleteSalaryPayment = async (payment: SalaryPayment, expenses: Expense[], transactions: Transaction[]) => {
+    const deleteSalaryPayment = async (payment: SalaryPayment) => {
         if (!user) throw new Error("User not authenticated");
         if (!payment) return;
     
@@ -814,18 +817,20 @@ export const DataProvider = ({ children }: { children: ReactNode }) => {
         const paymentRef = doc(firestore, 'salaryPayments', payment.id);
         batch.delete(paymentRef);
     
-        const searchDescription = `Salary for ${payment.month} ${payment.year}`;
-        const searchDescriptionLedger = `Salary payment for ${payment.month} ${payment.year}`;
-
-        const expenseToDelete = expenses.find(e => e.category === 'Salary' && e.title === searchDescription);
-        if (expenseToDelete) {
-            batch.delete(doc(firestore, 'expenses', expenseToDelete.id));
+        if (payment.expenseId) {
+            const expenseRef = doc(firestore, 'expenses', payment.expenseId);
+            batch.delete(expenseRef);
         }
 
-        const transactionToDelete = transactions.find(t => t.category === 'Salary' && t.description === searchDescriptionLedger);
-        if (transactionToDelete) {
-            batch.delete(doc(firestore, 'transactions', transactionToDelete.id));
-        }
+        const q = query(
+            collection(firestore, "transactions"),
+            where("category", "==", "Salary"),
+            where("description", "==", `Salary payment for ${payment.month} ${payment.year}`)
+        );
+        const querySnapshot = await getDocs(q);
+        querySnapshot.forEach((doc) => {
+            batch.delete(doc.ref);
+        });
     
         await batch.commit();
     };
