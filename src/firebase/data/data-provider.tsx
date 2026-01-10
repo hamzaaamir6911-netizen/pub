@@ -5,7 +5,7 @@
 import React, { createContext, useContext, ReactNode, useEffect, useState } from 'react';
 import type { Item, Customer, Sale, Expense, Transaction, Vendor, Estimate, Labour, SalaryPayment, SaleItem } from '@/lib/types';
 import { useCollection, useFirestore, useMemoFirebase, useUser } from '@/firebase';
-import { collection, doc, writeBatch, serverTimestamp, Timestamp, query, where, getDocs, runTransaction, addDoc, getDoc, deleteDoc, updateDoc, onSnapshot, orderBy } from 'firebase/firestore';
+import { collection, doc, writeBatch, serverTimestamp, Timestamp, query, where, getDocs, runTransaction, addDoc, getDoc, deleteDoc, updateDoc, onSnapshot, orderBy, setDoc } from 'firebase/firestore';
 import { deleteDocumentNonBlocking, updateDocumentNonBlocking } from '../non-blocking-updates';
 
 
@@ -237,6 +237,45 @@ export const DataProvider = ({ children }: { children: ReactNode }) => {
 
         seedData();
     }, [firestore, isSeeding]);
+
+    useEffect(() => {
+        const recoverInvoice = async () => {
+            if (!firestore) return;
+            const invoiceRef = doc(firestore, 'sales', 'INV-079');
+            const invoiceDoc = await getDoc(invoiceRef);
+
+            if (!invoiceDoc.exists()) {
+                const recoveredInvoice: Sale = {
+                    id: "INV-079",
+                    customerId: "CUST-001", // Placeholder, adjust if needed
+                    customerName: "John Doe", // Placeholder
+                    items: [
+                      {
+                        itemId: "ITEM-001", // Placeholder
+                        itemName: "D 40",
+                        quantity: 10,
+                        price: 495,
+                        color: "Silver",
+                        thickness: "1.2mm",
+                        feet: 12,
+                        discount: 0
+                      }
+                    ],
+                    total: 59400,
+                    date: new Date("2024-05-23T10:00:00.000Z"),
+                    discount: 0,
+                    status: "posted"
+                };
+                try {
+                    await setDoc(invoiceRef, recoveredInvoice);
+                    console.log("Successfully recovered INV-079.");
+                } catch (error) {
+                    console.error("Error recovering INV-079:", error);
+                }
+            }
+        };
+        recoverInvoice();
+    }, [firestore]);
 
     const shouldFetch = !!user;
 
