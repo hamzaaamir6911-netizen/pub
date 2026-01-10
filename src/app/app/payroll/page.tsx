@@ -105,6 +105,10 @@ function SalaryPayslip({ payment }: { payment: SalaryPayment }) {
                             <TableCell className="text-right">{formatCurrency(payment.totalAmountPaid)}</TableCell>
                         </TableRow>
                     </Table>
+                     <div className="mt-24 grid grid-cols-2 gap-8 text-sm">
+                        <div className="border-t-2 border-black pt-2 font-bold text-center"><p>Accountant's Signature</p></div>
+                        <div className="border-t-2 border-black pt-2 font-bold text-center"><p>Receiver's Signature</p></div>
+                    </div>
                 </div>
             </div>
             <DialogFooter className="mt-4 flex-shrink-0 no-print">
@@ -493,3 +497,4 @@ export default function PayrollPage() {
     </>
   );
 }
+
