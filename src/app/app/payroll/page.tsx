@@ -1,9 +1,8 @@
 
-
 "use client";
 
-import { useState, useMemo } from "react";
-import { PlusCircle, Trash2, DollarSign, FileText, Printer, MoreHorizontal } from "lucide-react";
+import { useState, useMemo, useEffect } from "react";
+import { PlusCircle, Trash2, DollarSign, FileText, Printer, MoreHorizontal, Edit } from "lucide-react";
 import {
   Table,
   TableBody,
@@ -116,14 +115,36 @@ function SalaryPayslip({ payment }: { payment: SalaryPayment }) {
     );
 }
 
-function NewPayslipForm({ onPayslipGenerated }: { onPayslipGenerated: () => void }) {
+function NewPayslipForm({ 
+  onPayslipGenerated,
+  existingPayslip,
+  onCancelEdit,
+}: { 
+  onPayslipGenerated: () => void,
+  existingPayslip?: SalaryPayment | null,
+  onCancelEdit: () => void,
+}) {
   const { toast } = useToast();
-  const { labourers, addSalaryPayment } = useData();
+  const { labourers, addSalaryPayment, updateSalaryPayment } = useData();
+  
+  const isEditMode = !!existingPayslip;
 
   const [selectedMonth, setSelectedMonth] = useState<string>(months[new Date().getMonth()]);
   const [selectedYear, setSelectedYear] = useState<number>(currentYear);
   const [salaryItems, setSalaryItems] = useState<Partial<SalaryLabourer>[]>([]);
   const [selectedLabourer, setSelectedLabourer] = useState("");
+
+  useEffect(() => {
+    if (isEditMode && existingPayslip) {
+      setSelectedMonth(existingPayslip.month);
+      setSelectedYear(existingPayslip.year);
+      setSalaryItems(existingPayslip.labourers.map(l => ({ ...l }))); // Create a deep copy
+    } else {
+      setSalaryItems([]);
+      setSelectedMonth(months[new Date().getMonth()]);
+      setSelectedYear(currentYear);
+    }
+  }, [existingPayslip, isEditMode]);
 
   const labourerOptions = useMemo(() => 
     labourers.map(l => ({
@@ -143,19 +164,18 @@ function NewPayslipForm({ onPayslipGenerated }: { onPayslipGenerated: () => void
     
     const labourerDetails = labourers.find(l => l.id === selectedLabourer);
     if (labourerDetails) {
-        // Calculate overtime rate based on monthly salary for a 12-hour shift
         const hourlyRate = labourerDetails.monthlySalary / 30 / 12;
 
         setSalaryItems([...salaryItems, {
             labourerId: labourerDetails.id,
             labourerName: labourerDetails.name,
             monthlySalary: labourerDetails.monthlySalary,
-            daysWorked: 30, // Default working days
+            daysWorked: 30,
             overtimeHours: 0,
             overtimeRate: hourlyRate,
             deductions: 0,
         }]);
-        setSelectedLabourer(""); // Reset selector
+        setSelectedLabourer("");
     }
   }
 
@@ -172,7 +192,7 @@ function NewPayslipForm({ onPayslipGenerated }: { onPayslipGenerated: () => void
   }
 
   const calculateTotalPayable = (item: Partial<SalaryLabourer>): number => {
-      const perDaySalary = (item.monthlySalary || 0) / 30; // Based on a 30-day month
+      const perDaySalary = (item.monthlySalary || 0) / 30;
       const baseSalary = (item.daysWorked || 0) * perDaySalary;
       const overtimePay = (item.overtimeHours || 0) * (item.overtimeRate || 0);
       const totalDeductions = item.deductions || 0;
@@ -182,12 +202,12 @@ function NewPayslipForm({ onPayslipGenerated }: { onPayslipGenerated: () => void
   const calculateGrandTotal = () => {
       return salaryItems.reduce((total, item) => {
           const itemPayable = calculateTotalPayable(item);
-          item.totalPayable = itemPayable; // Update the item with calculated total
+          item.totalPayable = itemPayable;
           return total + itemPayable;
       }, 0);
   }
 
-  const handleGeneratePayslip = async () => {
+  const handleSave = async () => {
     if (salaryItems.length === 0) {
       toast({ variant: "destructive", title: "Please add at least one labourer." });
       return;
@@ -200,28 +220,35 @@ function NewPayslipForm({ onPayslipGenerated }: { onPayslipGenerated: () => void
 
     const totalAmountPaid = finalSalaryItems.reduce((sum, item) => sum + item.totalPayable, 0);
 
-    await addSalaryPayment({
+    const paymentData = {
         month: selectedMonth,
         year: selectedYear,
         labourers: finalSalaryItems,
-        totalAmountPaid: totalAmountPaid
-    });
+        totalAmountPaid: totalAmountPaid,
+    };
 
-    toast({ title: "Payslip Generated!", description: `Salary for ${selectedMonth} ${selectedYear} has been processed.` });
-    setSalaryItems([]);
+    if (isEditMode && existingPayslip) {
+        await updateSalaryPayment(existingPayslip.id, paymentData, expenses, transactions);
+        toast({ title: "Payslip Updated!", description: `Salary for ${selectedMonth} ${selectedYear} has been updated.` });
+    } else {
+        await addSalaryPayment(paymentData);
+        toast({ title: "Payslip Generated!", description: `Salary for ${selectedMonth} ${selectedYear} has been processed.` });
+    }
+    
     onPayslipGenerated();
   };
   
   return (
        <Card>
-        <CardHeader>
-          <CardTitle>Generate Monthly Salaries</CardTitle>
+        <CardHeader className="flex flex-row items-center justify-between">
+          <CardTitle>{isEditMode ? 'Edit Payslip' : 'Generate Monthly Salaries'}</CardTitle>
+          {isEditMode && <Button variant="outline" onClick={onCancelEdit}>Cancel Edit</Button>}
         </CardHeader>
         <CardContent className="space-y-6">
           <div className="grid md:grid-cols-3 gap-4">
             <div className="space-y-2">
               <Label>Month</Label>
-              <Select value={selectedMonth} onValueChange={setSelectedMonth}>
+              <Select value={selectedMonth} onValueChange={setSelectedMonth} disabled={isEditMode}>
                 <SelectTrigger><SelectValue /></SelectTrigger>
                 <SelectContent>
                   {months.map(m => <SelectItem key={m} value={m}>{m}</SelectItem>)}
@@ -230,7 +257,7 @@ function NewPayslipForm({ onPayslipGenerated }: { onPayslipGenerated: () => void
             </div>
             <div className="space-y-2">
               <Label>Year</Label>
-              <Select value={String(selectedYear)} onValueChange={(v) => setSelectedYear(Number(v))}>
+              <Select value={String(selectedYear)} onValueChange={(v) => setSelectedYear(Number(v))} disabled={isEditMode}>
                 <SelectTrigger><SelectValue /></SelectTrigger>
                 <SelectContent>
                   {years.map(y => <SelectItem key={y} value={String(y)}>{y}</SelectItem>)}
@@ -311,9 +338,9 @@ function NewPayslipForm({ onPayslipGenerated }: { onPayslipGenerated: () => void
           <div className="text-xl font-bold">
             Grand Total: {formatCurrency(calculateGrandTotal())}
           </div>
-          <Button onClick={handleGeneratePayslip} disabled={salaryItems.length === 0}>
+          <Button onClick={handleSave} disabled={salaryItems.length === 0}>
             <DollarSign className="mr-2 h-4 w-4" />
-            Generate & Save Payslip
+            {isEditMode ? 'Update Payslip' : 'Generate & Save Payslip'}
           </Button>
         </CardFooter>
       </Card>
@@ -341,15 +368,27 @@ export default function PayrollPage() {
   const { toast } = useToast();
   const [activeTab, setActiveTab] = useState("new");
   const [selectedPayment, setSelectedPayment] = useState<SalaryPayment | null>(null);
+  const [editingPayslip, setEditingPayslip] = useState<SalaryPayment | null>(null);
 
   const handlePayslipGenerated = () => {
       setActiveTab("history");
+      setEditingPayslip(null);
+  }
+
+  const handleCancelEdit = () => {
+      setActiveTab("history");
+      setEditingPayslip(null);
   }
 
   const handleDelete = (payment: SalaryPayment) => {
     deleteSalaryPayment(payment, expenses, transactions);
     toast({ title: "Payslip Deleted", description: "The salary payment has been removed." });
   }
+
+  const handleEditClick = (payment: SalaryPayment) => {
+    setEditingPayslip(payment);
+    setActiveTab("new");
+  };
 
   return (
     <>
@@ -359,12 +398,16 @@ export default function PayrollPage() {
       />
       <Tabs value={activeTab} onValueChange={setActiveTab}>
         <TabsList className="grid w-full grid-cols-2 no-print">
-            <TabsTrigger value="new">New Payslip</TabsTrigger>
+            <TabsTrigger value="new">{editingPayslip ? "Edit Payslip" : "New Payslip"}</TabsTrigger>
             <TabsTrigger value="history">Payslip History</TabsTrigger>
         </TabsList>
         <TabsContent value="new">
             <div className="mt-4">
-              <NewPayslipForm onPayslipGenerated={handlePayslipGenerated} />
+              <NewPayslipForm 
+                onPayslipGenerated={handlePayslipGenerated} 
+                existingPayslip={editingPayslip}
+                onCancelEdit={handleCancelEdit}
+              />
             </div>
         </TabsContent>
         <TabsContent value="history">
@@ -413,6 +456,10 @@ export default function PayrollPage() {
                                                                 View Details
                                                             </DropdownMenuItem>
                                                           </DialogTrigger>
+                                                          <DropdownMenuItem onSelect={() => handleEditClick(payment)}>
+                                                            <Edit className="mr-2 h-4 w-4" />
+                                                            Edit
+                                                          </DropdownMenuItem>
                                                           <AlertDialogTrigger asChild>
                                                               <DropdownMenuItem className="text-red-500 focus:bg-red-500/10 focus:text-red-500">
                                                                   <Trash2 className="mr-2 h-4 w-4"/>
@@ -452,5 +499,3 @@ export default function PayrollPage() {
     </>
   );
 }
-
-    

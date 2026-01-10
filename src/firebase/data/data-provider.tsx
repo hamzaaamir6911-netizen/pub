@@ -44,6 +44,7 @@ interface DataContextProps {
   updateTransaction: (id: string, transaction: Partial<Omit<Transaction, 'id'>>) => Promise<void>;
   deleteTransaction: (id: string) => Promise<void>;
   addSalaryPayment: (payment: Omit<SalaryPayment, 'id' | 'date'>) => Promise<void>;
+  updateSalaryPayment: (paymentId: string, payment: Omit<SalaryPayment, 'id' | 'date'>, expenses: Expense[], transactions: Transaction[]) => Promise<void>;
   deleteSalaryPayment: (payment: SalaryPayment, expenses: Expense[], transactions: Transaction[]) => Promise<void>;
 }
 
@@ -775,6 +776,35 @@ export const DataProvider = ({ children }: { children: ReactNode }) => {
         await batch.commit();
     };
 
+    const updateSalaryPayment = async (paymentId: string, paymentData: Omit<SalaryPayment, 'id' | 'date'>, expenses: Expense[], transactions: Transaction[]) => {
+        if (!user) throw new Error("User not authenticated");
+        
+        const batch = writeBatch(firestore);
+        
+        // Update the salary payment document itself
+        const paymentRef = doc(firestore, 'salaryPayments', paymentId);
+        batch.update(paymentRef, paymentData);
+
+        // Find and update the associated Expense
+        const searchDescription = `Salary for ${paymentData.month} ${paymentData.year}`;
+        const expenseToUpdate = expenses.find(e => e.category === 'Salary' && e.title === searchDescription);
+        if (expenseToUpdate) {
+            const expenseRef = doc(firestore, 'expenses', expenseToUpdate.id);
+            batch.update(expenseRef, { amount: paymentData.totalAmountPaid });
+        }
+
+        // Find and update the associated Transaction
+        const searchDescriptionLedger = `Salary payment for ${paymentData.month} ${paymentData.year}`;
+        const transactionToUpdate = transactions.find(t => t.category === 'Salary' && t.description === searchDescriptionLedger);
+        if (transactionToUpdate) {
+            const transactionRef = doc(firestore, 'transactions', transactionToUpdate.id);
+            batch.update(transactionRef, { amount: paymentData.totalAmountPaid });
+        }
+
+        await batch.commit();
+    };
+
+
     const deleteSalaryPayment = async (payment: SalaryPayment, expenses: Expense[], transactions: Transaction[]) => {
         if (!user) throw new Error("User not authenticated");
         if (!payment) return;
@@ -810,7 +840,7 @@ export const DataProvider = ({ children }: { children: ReactNode }) => {
         addEstimate, deleteEstimate, createSaleFromEstimate,
         addExpense, deleteExpense,
         addTransaction, updateTransaction, deleteTransaction,
-        addSalaryPayment, deleteSalaryPayment,
+        addSalaryPayment, updateSalaryPayment, deleteSalaryPayment,
     };
 
     return (
