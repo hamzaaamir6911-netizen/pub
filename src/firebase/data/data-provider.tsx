@@ -629,19 +629,33 @@ export const DataProvider = ({ children }: { children: ReactNode }) => {
     const deleteSale = async (sale: Sale) => {
         if (!user) throw new Error("User not authenticated");
         if (!sale) return;
-    
+
         const batch = writeBatch(firestore);
-        const saleRef = doc(firestore, 'sales', sale.id);
-        batch.delete(saleRef);
-    
-        if (sale.status === 'posted') {
-            const transactionToDelete = transactions.find(t => 
-                t.category === 'Sale' && t.description === `Sale to ${sale.customerName} (Invoice: ${sale.id})`
+        const saleRef = doc(firestore, "sales", sale.id);
+
+        // If the sale is posted, find and delete the associated transaction first
+        if (sale.status === "posted") {
+            const q = query(
+                collection(firestore, "transactions"),
+                where("category", "==", "Sale"),
+                where("description", "==", `Sale to ${sale.customerName} (Invoice: ${sale.id})`),
+                where("customerId", "==", sale.customerId)
             );
-            if (transactionToDelete) {
-                batch.delete(doc(firestore, 'transactions', transactionToDelete.id));
-            }
+
+            const querySnapshot = await getDocs(q);
+            querySnapshot.forEach((doc) => {
+                // To be safe, let's also match the date
+                const transactionDate = toDate(doc.data().date);
+                const saleDate = toDate(sale.date);
+                if (transactionDate && saleDate && transactionDate.toDateString() === saleDate.toDateString()) {
+                    batch.delete(doc.ref);
+                }
+            });
         }
+        
+        // Finally, delete the sale itself
+        batch.delete(saleRef);
+
         await batch.commit();
     };
     

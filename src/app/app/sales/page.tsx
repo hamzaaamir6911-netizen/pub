@@ -197,6 +197,7 @@ export default function SalesPage() {
   const [selectedSale, setSelectedSale] = useState<Sale | null>(null);
   const [editingSale, setEditingSale] = useState<Sale | null>(null);
   const [selectedRows, setSelectedRows] = useState<string[]>([]);
+  const [actionSale, setActionSale] = useState<Sale | null>(null);
 
   const sortedSales = useMemo(() => {
     if (!sales) return [];
@@ -362,16 +363,17 @@ export default function SalesPage() {
                                     Print Challan
                                </DropdownMenuItem>
                               <DropdownMenuSeparator />
-                              {sale.status === 'draft' ? (
+                              {sale.status === 'draft' && (
                                 <AlertDialogTrigger asChild>
-                                  <DropdownMenuItem>
+                                  <DropdownMenuItem onSelect={() => setActionSale(sale)}>
                                       <Upload className="mr-2 h-4 w-4" />
                                       Post to Ledger
                                   </DropdownMenuItem>
                                 </AlertDialogTrigger>
-                               ) : (
+                               )}
+                               {sale.status === 'posted' && (
                                 <AlertDialogTrigger asChild>
-                                  <DropdownMenuItem>
+                                  <DropdownMenuItem onSelect={() => setActionSale(sale)}>
                                       <Undo className="mr-2 h-4 w-4" />
                                       Unpost from Ledger
                                   </DropdownMenuItem>
@@ -385,7 +387,7 @@ export default function SalesPage() {
                                <AlertDialogTrigger asChild>
                                 <DropdownMenuItem
                                   className="text-red-500 focus:bg-red-500/10 focus:text-red-500"
-                                  disabled={sale.status === 'posted'}
+                                  onSelect={() => setActionSale(sale)}
                                 >
                                 <Trash2 className="mr-2 h-4 w-4"/>
                                 Delete
@@ -393,45 +395,39 @@ export default function SalesPage() {
                               </AlertDialogTrigger>
                           </DropdownMenuContent>
                         </DropdownMenu>
-                         {sale.status === 'draft' ? (
-                            <AlertDialogContent>
-                                <AlertDialogHeader>
-                                    <AlertDialogTitle>Post to Ledger?</AlertDialogTitle>
-                                    <AlertDialogDescription>
-                                        This will post the sale to the ledger and create a debit entry for {sale.customerName}. This action can be reversed.
-                                    </AlertDialogDescription>
-                                </AlertDialogHeader>
-                                <AlertDialogFooter>
-                                    <AlertDialogCancel>Cancel</AlertDialogCancel>
-                                    <AlertDialogAction onClick={() => postSale(sale)}>Post</AlertDialogAction>
-                                </AlertDialogFooter>
-                            </AlertDialogContent>
-                          ) : (
-                            <AlertDialogContent>
-                              <AlertDialogHeader>
-                                <AlertDialogTitle>Are you sure?</AlertDialogTitle>
-                                {sale.status === 'posted' ? (
+                         
+                         {/* This AlertDialog is now generic */}
+                        <AlertDialogContent>
+                          <AlertDialogHeader>
+                            <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+                            {actionSale?.status === 'draft' ? (
                                 <AlertDialogDescription>
-                                  This action will unpost the sale from the ledger and remove the associated transaction.
+                                    This will post the sale to the ledger and create a debit entry for {actionSale.customerName}. This action can be reversed.
                                 </AlertDialogDescription>
-                                ) : (
+                            ) : actionSale?.status === 'posted' ? (
                                 <AlertDialogDescription>
-                                  This action cannot be undone. This will permanently delete the sale record {sale.id}.
+                                    This action will unpost the sale from the ledger and remove the associated transaction.
                                 </AlertDialogDescription>
-                                )}
-                              </AlertDialogHeader>
-                              <AlertDialogFooter>
-                                <AlertDialogCancel>Cancel</AlertDialogCancel>
-                                <AlertDialogAction onClick={() => {
-                                  if(sale.status === 'posted') {
-                                    unpostSale(sale)
-                                  } else {
-                                     handleDelete(sale)
-                                  }
-                                }}>Confirm</AlertDialogAction>
-                              </AlertDialogFooter>
-                            </AlertDialogContent>
-                          )}
+                            ) : (
+                                <AlertDialogDescription>
+                                    This action cannot be undone. This will permanently delete the sale record {actionSale?.id}
+                                    {actionSale?.status === 'posted' && " and its corresponding entry from the ledger"}.
+                                </AlertDialogDescription>
+                            )}
+                          </AlertDialogHeader>
+                          <AlertDialogFooter>
+                            <AlertDialogCancel onClick={() => setActionSale(null)}>Cancel</AlertDialogCancel>
+                            <AlertDialogAction onClick={() => {
+                              if (!actionSale) return;
+                              const currentAction = document.activeElement?.textContent;
+                              if (currentAction?.includes('Post')) postSale(actionSale);
+                              else if (currentAction?.includes('Unpost')) unpostSale(actionSale);
+                              else handleDelete(actionSale);
+                              setActionSale(null);
+                            }}>Confirm</AlertDialogAction>
+                          </AlertDialogFooter>
+                        </AlertDialogContent>
+
                        </AlertDialog>
                     </TableCell>
                     </TableRow>
