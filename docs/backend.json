@@ -360,6 +360,37 @@
           "description": "Stores sales transaction information."
         }
       },
+       {
+        "path": "/sales/INV-079",
+        "definition": {
+          "entityName": "sale",
+          "schema": {
+            "$ref": "#/backend/entities/Sale"
+          },
+          "description": "Lost invoice, recovered.",
+          "data": {
+            "id": "INV-079",
+            "customerId": "CUST-001",
+            "customerName": "John Doe",
+            "items": [
+              {
+                "itemId": "ITEM-001",
+                "itemName": "D 40",
+                "quantity": 10,
+                "price": 495,
+                "color": "Silver",
+                "thickness": "1.2mm",
+                "feet": 12,
+                "discount": 0
+              }
+            ],
+            "total": 59400,
+            "date": "2024-05-23T10:00:00.000Z",
+            "discount": 0,
+            "status": "draft"
+          }
+        }
+      },
       {
         "path": "/expenses/{expenseId}",
         "definition": {
