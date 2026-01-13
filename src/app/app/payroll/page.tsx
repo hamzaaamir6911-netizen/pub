@@ -85,6 +85,7 @@ function SalaryPayslip({ payment }: { payment: SalaryPayment }) {
                                 <TableHead className="text-right">Days Worked</TableHead>
                                 <TableHead className="text-right">Overtime (hrs)</TableHead>
                                 <TableHead className="text-right">Deductions</TableHead>
+                                <TableHead className="text-right">Allowances</TableHead>
                                 <TableHead className="text-right font-bold">Total Payable</TableHead>
                             </TableRow>
                         </TableHeader>
@@ -96,12 +97,13 @@ function SalaryPayslip({ payment }: { payment: SalaryPayment }) {
                                     <TableCell className="text-right">{l.daysWorked}</TableCell>
                                     <TableCell className="text-right">{l.overtimeHours}</TableCell>
                                     <TableCell className="text-right text-red-500">{formatCurrency(l.deductions)}</TableCell>
+                                    <TableCell className="text-right text-green-500">{formatCurrency(l.allowances || 0)}</TableCell>
                                     <TableCell className="text-right font-bold">{formatCurrency(l.totalPayable)}</TableCell>
                                 </TableRow>
                             ))}
                         </TableBody>
                          <TableRow className="bg-muted/50 font-bold">
-                            <TableCell colSpan={5} className="text-right">Grand Total Paid</TableCell>
+                            <TableCell colSpan={6} className="text-right">Grand Total Paid</TableCell>
                             <TableCell className="text-right">{formatCurrency(payment.totalAmountPaid)}</TableCell>
                         </TableRow>
                     </Table>
@@ -179,6 +181,7 @@ function NewPayslipForm({
             overtimeHours: 0,
             overtimeRate: hourlyRate,
             deductions: 0,
+            allowances: 0,
         }]);
         setSelectedLabourer("");
     }
@@ -201,7 +204,8 @@ function NewPayslipForm({
       const baseSalary = (item.daysWorked || 0) * perDaySalary;
       const overtimePay = (item.overtimeHours || 0) * (item.overtimeRate || 0);
       const totalDeductions = item.deductions || 0;
-      return baseSalary + overtimePay - totalDeductions;
+      const totalAllowances = item.allowances || 0;
+      return baseSalary + overtimePay - totalDeductions + totalAllowances;
   }
   
   const calculateGrandTotal = () => {
@@ -298,6 +302,7 @@ function NewPayslipForm({
                     <TableHead className="w-[120px]">Days Worked</TableHead>
                     <TableHead className="w-[120px]">Overtime (hrs)</TableHead>
                     <TableHead className="w-[120px]">Deductions</TableHead>
+                    <TableHead className="w-[120px]">Allowances</TableHead>
                     <TableHead className="text-right w-[150px]">Total Payable</TableHead>
                     <TableHead className="w-[50px]"><span className="sr-only">Remove</span></TableHead>
                   </TableRow>
@@ -305,7 +310,7 @@ function NewPayslipForm({
                 <TableBody>
                   {salaryItems.length === 0 ? (
                     <TableRow>
-                      <TableCell colSpan={6} className="h-24 text-center">No labourers added to the payslip yet.</TableCell>
+                      <TableCell colSpan={7} className="h-24 text-center">No labourers added to the payslip yet.</TableCell>
                     </TableRow>
                   ) : (
                     salaryItems.map((item, index) => (
@@ -322,6 +327,9 @@ function NewPayslipForm({
                         </TableCell>
                         <TableCell>
                           <Input type="number" value={item.deductions} onChange={(e) => handleItemChange(index, 'deductions', Number(e.target.value))} />
+                        </TableCell>
+                        <TableCell>
+                          <Input type="number" value={item.allowances || 0} onChange={(e) => handleItemChange(index, 'allowances', Number(e.target.value))} />
                         </TableCell>
                         <TableCell className="text-right font-bold">
                           {formatCurrency(calculateTotalPayable(item))}
@@ -497,4 +505,5 @@ export default function PayrollPage() {
     </>
   );
 }
+
 

@@ -107,6 +107,7 @@ export type SalaryLabourer = {
     overtimeHours: number;
     overtimeRate: number;
     deductions: number;
+    allowances?: number;
     totalPayable: number;
 }
 
