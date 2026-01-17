@@ -62,6 +62,7 @@ function SalesReportContent() {
                     <TableHead className="font-extrabold text-black">Invoice #</TableHead>
                     <TableHead className="font-extrabold text-black">Date</TableHead>
                     <TableHead className="font-extrabold text-black">Customer Name</TableHead>
+                    <TableHead className="font-extrabold text-black">Description</TableHead>
                     <TableHead className="text-right font-extrabold text-black">Amount</TableHead>
                 </TableRow>
             </TableHeader>
@@ -71,13 +72,14 @@ function SalesReportContent() {
                         <TableCell className="font-semibold">{sale.id}</TableCell>
                         <TableCell>{formatDate(sale.date)}</TableCell>
                         <TableCell>{sale.customerName}</TableCell>
+                        <TableCell>{sale.description || '-'}</TableCell>
                         <TableCell className="text-right font-bold">{formatCurrency(sale.total)}</TableCell>
                     </TableRow>
                 ))}
             </TableBody>
             <TableFooter>
                 <TableRow className="bg-gray-100">
-                    <TableCell colSpan={3} className="text-right font-extrabold text-lg">Grand Total</TableCell>
+                    <TableCell colSpan={4} className="text-right font-extrabold text-lg">Grand Total</TableCell>
                     <TableCell className="text-right font-extrabold text-lg">{formatCurrency(grandTotal)}</TableCell>
                 </TableRow>
             </TableFooter>
