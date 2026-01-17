@@ -22,6 +22,7 @@ import { useToast } from "@/hooks/use-toast";
 import { useData } from "@/firebase/data/data-provider";
 import { format } from "date-fns";
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Textarea } from "@/components/ui/textarea";
 
 function AddCustomerForm({ onCustomerAdded, onOpenChange }: { onCustomerAdded: (newCustomer: Omit<Customer, 'id' | 'createdAt'>) => void, onOpenChange: (open: boolean) => void }) {
   const [customerName, setCustomerName] = useState('');
@@ -107,6 +108,7 @@ export function NewSaleForm({ initialData, onSaleAdded, onSaleUpdated, onCancel 
     const [overallDiscount, setOverallDiscount] = useState(0);
     const [isCustomerModalOpen, setCustomerModalOpen] = useState(false);
     const [saleDate, setSaleDate] = useState<Date | undefined>(new Date());
+    const [description, setDescription] = useState("");
 
     const isEditMode = !!initialData;
 
@@ -116,6 +118,7 @@ export function NewSaleForm({ initialData, onSaleAdded, onSaleUpdated, onCancel 
             setSaleItems(initialData.items.map(item => ({ ...item })));
             setOverallDiscount(initialData.discount || 0);
             setSaleDate(new Date(initialData.date));
+            setDescription(initialData.description || "");
         } else {
             clearForm();
         }
@@ -169,6 +172,7 @@ export function NewSaleForm({ initialData, onSaleAdded, onSaleUpdated, onCancel 
         setSaleItems([{itemId: "", quantity: 1, feet: 1, discount: 0, color: '', thickness: ''}]);
         setOverallDiscount(0);
         setSaleDate(new Date());
+        setDescription("");
     }
     
     const handleSave = async () => {
@@ -215,6 +219,7 @@ export function NewSaleForm({ initialData, onSaleAdded, onSaleUpdated, onCancel 
             items: finalSaleItems,
             discount: overallDiscount,
             date: saleDate,
+            description: description,
         };
 
         if (isEditMode && initialData) {
@@ -309,6 +314,17 @@ export function NewSaleForm({ initialData, onSaleAdded, onSaleUpdated, onCancel 
                             onChange={(e) => setOverallDiscount(parseFloat(e.target.value) || 0)}
                         />
                     </div>
+                </div>
+
+                <div className="space-y-2">
+                    <Label htmlFor="description">Sale Description (Optional)</Label>
+                    <Textarea
+                        id="description"
+                        placeholder="Add any notes or description for this sale. This will be visible on the invoice."
+                        value={description}
+                        onChange={(e) => setDescription(e.target.value)}
+                        className="min-h-[60px]"
+                    />
                 </div>
                 
                 <div className="space-y-4">

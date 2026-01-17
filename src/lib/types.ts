@@ -56,6 +56,7 @@ export type Sale = {
   discount: number; // Overall discount percentage
   status: 'draft' | 'posted';
   estimateId?: string; // Link to the original estimate
+  description?: string;
 };
 
 export type Estimate = {

@@ -129,7 +129,7 @@ export default function PrintInvoicePage() {
                <div className="w-1/2">
                   <div className="font-bold text-sm uppercase text-gray-500">Notes</div>
                   <p className="text-xs text-gray-500 mt-2 font-semibold">
-                      Thank you for your business. Please contact us for any queries regarding this invoice.
+                      {sale.description || 'Thank you for your business. Please contact us for any queries regarding this invoice.'}
                   </p>
               </div>
               <div className="w-full max-w-sm space-y-2 text-sm font-semibold">
