@@ -347,7 +347,7 @@ export default function LedgerPage() {
                 <TableFooter>
                     <TableRow>
                         <TableCell colSpan={5} className="text-right font-bold">Final Balance</TableCell>
-                        <TableCell className={cn("text-right font-bold font-mono", runningBalance >= 0 ? "text-green-600" : "text-red-600")}>
+                        <TableCell className={cn("text-right font-bold font-mono", runningBalance >= 0 ? "text-red-600" : "text-green-600")}>
                             {formatCurrency(runningBalance)}
                         </TableCell>
                          <TableCell className="no-print"></TableCell>
