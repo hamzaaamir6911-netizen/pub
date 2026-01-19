@@ -40,6 +40,7 @@ export default function WeightCalculatorPage() {
   
   const [calculationMode, setCalculationMode] = useState<'inventory' | 'manual'>('inventory');
   const [selectedItemId, setSelectedItemId] = useState<string>("");
+  const [manualSectionName, setManualSectionName] = useState<string>("");
   const [manualWeight, setManualWeight] = useState<number>(0);
   const [lengthsInput, setLengthsInput] = useState<string>("");
   const [results, setResults] = useState<CalculationResult[]>([]);
@@ -69,7 +70,7 @@ export default function WeightCalculatorPage() {
             return;
         }
         weightPerFoot = manualWeight;
-        reportName = "Manual Section";
+        reportName = manualSectionName.trim() || "Manual Section";
     }
 
     const lengths = lengthsInput
@@ -99,6 +100,8 @@ export default function WeightCalculatorPage() {
     setTotalWeight(0);
     setLengthsInput("");
     setReportDetails(null);
+    setManualSectionName("");
+    setManualWeight(0);
   }
 
   return (
@@ -146,15 +149,26 @@ export default function WeightCalculatorPage() {
                         </Select>
                     </div>
                 ) : (
-                     <div className="space-y-2">
-                        <Label htmlFor="manual-weight">Weight per Foot (kg/ft)</Label>
-                        <Input
-                            id="manual-weight"
-                            type="number"
-                            placeholder="e.g. 0.49"
-                            value={manualWeight || ''}
-                            onChange={(e) => setManualWeight(parseFloat(e.target.value) || 0)}
-                        />
+                     <div className="space-y-4">
+                        <div className="space-y-2">
+                            <Label htmlFor="manual-name">Section Name (Optional)</Label>
+                            <Input
+                                id="manual-name"
+                                placeholder="e.g. Special Angle 2-inch"
+                                value={manualSectionName}
+                                onChange={(e) => setManualSectionName(e.target.value)}
+                            />
+                        </div>
+                        <div className="space-y-2">
+                            <Label htmlFor="manual-weight">Weight per Foot (kg/ft)</Label>
+                            <Input
+                                id="manual-weight"
+                                type="number"
+                                placeholder="e.g. 0.49"
+                                value={manualWeight || ''}
+                                onChange={(e) => setManualWeight(parseFloat(e.target.value) || 0)}
+                            />
+                        </div>
                     </div>
                 )}
                 
