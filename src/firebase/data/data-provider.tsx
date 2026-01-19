@@ -20,6 +20,7 @@ interface DataContextProps {
   loading: boolean; // This will now represent loading of all core data
   addItem: (item: Omit<Item, 'id' | 'createdAt'>) => Promise<any>;
   deleteItem: (id: string) => Promise<void>;
+  updateItem: (id: string, item: Partial<Omit<Item, 'id' | 'createdAt'>>) => Promise<void>;
   updateItemStock: (id: string, newQuantity: number) => Promise<void>;
   addCustomer: (customer: Omit<Customer, 'id' | 'createdAt'>) => Promise<any>;
   updateCustomer: (id: string, customer: Partial<Omit<Customer, 'id' | 'createdAt'>>) => Promise<void>;
@@ -315,6 +316,12 @@ export const DataProvider = ({ children }: { children: ReactNode }) => {
     const deleteItem = async (id: string) => {
         if (!user) throw new Error("User not authenticated");
         deleteDocumentNonBlocking(doc(firestore, 'items', id));
+    };
+
+    const updateItem = async (id: string, item: Partial<Omit<Item, 'id' | 'createdAt'>>) => {
+        if (!user) throw new Error("User not authenticated");
+        const itemRef = doc(firestore, 'items', id);
+        return updateDocumentNonBlocking(itemRef, item);
     };
 
     const updateItemStock = async (id: string, newQuantity: number) => {
@@ -837,7 +844,7 @@ export const DataProvider = ({ children }: { children: ReactNode }) => {
     
     const value = {
         items, customers, sales, vendors, labourers, transactions, salaryPayments, loading,
-        addItem, deleteItem, updateItemStock,
+        addItem, deleteItem, updateItem, updateItemStock,
         addCustomer, updateCustomer, deleteCustomer,
         addVendor, deleteVendor,
         addLabour, updateLabour, deleteLabour,

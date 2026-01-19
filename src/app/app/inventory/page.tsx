@@ -1,5 +1,4 @@
 
-
 "use client";
 
 import { useState } from "react";
@@ -140,9 +139,108 @@ function AddItemForm({ onItemAdded, existingItems }: { onItemAdded: (newItem: Om
     );
 }
 
+function EditItemForm({ item, onItemUpdated, onOpenChange }: { item: Item; onItemUpdated: (id: string, updatedItem: Partial<Omit<Item, 'id' | 'createdAt'>>) => void; onOpenChange: (open: boolean) => void; }) {
+    const [name, setName] = useState(item.name);
+    const [category, setCategory] = useState(item.category);
+    const [unit, setUnit] = useState(item.unit);
+    const [quantity, setQuantity] = useState(item.quantity);
+    const [purchasePrice, setPurchasePrice] = useState(item.purchasePrice);
+    const [salePrice, setSalePrice] = useState(item.salePrice);
+    const [color, setColor] = useState(item.color);
+    const [weight, setWeight] = useState(item.weight || 0);
+    const [thickness, setThickness] = useState(item.thickness);
+    const { toast } = useToast();
+
+    const handleSubmit = () => {
+        if (!name || !category || !unit || !color || !thickness) {
+            toast({ variant: "destructive", title: "Please fill all required fields." });
+            return;
+        }
+
+        const updatedItem: Partial<Omit<Item, 'id' | 'createdAt'>> = {
+            name, category, unit, quantity, purchasePrice, salePrice, color, weight, thickness,
+        };
+
+        onItemUpdated(item.id, updatedItem);
+        toast({ title: "Item Updated!", description: `${name} (${thickness}) has been updated.` });
+        onOpenChange(false);
+    };
+
+    return (
+        <DialogContent className="max-w-3xl">
+            <DialogHeader><DialogTitle>Edit Item: {item.name}</DialogTitle></DialogHeader>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 py-4">
+                <div className="space-y-2">
+                    <Label>Item Name</Label>
+                    <Input value={name} onChange={(e) => setName(e.target.value)} placeholder="e.g. D 40" />
+                </div>
+                <div className="space-y-2">
+                    <Label>Category</Label>
+                    <Select onValueChange={(v: any) => setCategory(v)} value={category}>
+                        <SelectTrigger><SelectValue /></SelectTrigger>
+                        <SelectContent>
+                            <SelectItem value="Aluminium">Aluminium</SelectItem>
+                            <SelectItem value="Glass">Glass</SelectItem>
+                            <SelectItem value="Accessories">Accessories</SelectItem>
+                        </SelectContent>
+                    </Select>
+                </div>
+                <div className="space-y-2">
+                    <Label>Unit</Label>
+                     <Select onValueChange={(v: any) => setUnit(v)} value={unit}>
+                        <SelectTrigger><SelectValue /></SelectTrigger>
+                        <SelectContent>
+                            <SelectItem value="Feet">Feet</SelectItem>
+                            <SelectItem value="Kg">Kg</SelectItem>
+                             <SelectItem value="Piece">Piece</SelectItem>
+                        </SelectContent>
+                    </Select>
+                </div>
+                <div className="space-y-2">
+                    <Label>Stock</Label>
+                    <Input type="number" value={quantity} onChange={(e) => setQuantity(parseInt(e.target.value) || 0)} />
+                </div>
+                <div className="space-y-2">
+                    <Label>Purchase Price</Label>
+                    <Input type="number" value={purchasePrice} onChange={(e) => setPurchasePrice(parseFloat(e.target.value) || 0)} />
+                </div>
+                <div className="space-y-2">
+                    <Label>Sale Price</Label>
+                    <Input type="number" value={salePrice} onChange={(e) => setSalePrice(parseFloat(e.target.value) || 0)} />
+                </div>
+                 <div className="space-y-2">
+                    <Label>Color</Label>
+                    <Select onValueChange={setColor} value={color}>
+                        <SelectTrigger>
+                            <SelectValue placeholder="Select a color" />
+                        </SelectTrigger>
+                        <SelectContent>
+                            <SelectItem value="9016">9016</SelectItem>
+                            <SelectItem value="Black">Black</SelectItem>
+                        </SelectContent>
+                    </Select>
+                </div>
+                 <div className="space-y-2">
+                    <Label>Weight (kg/ft)</Label>
+                    <Input type="number" value={weight} onChange={(e) => setWeight(parseFloat(e.target.value) || 0)} />
+                </div>
+                <div className="space-y-2">
+                    <Label>Thickness</Label>
+                    <Input value={thickness} onChange={(e) => setThickness(e.target.value)} placeholder="e.g. 1.2mm" />
+                </div>
+            </div>
+            <DialogFooter>
+                <Button onClick={handleSubmit}>Save Changes</Button>
+            </DialogFooter>
+        </DialogContent>
+    );
+}
+
 export default function InventoryPage() {
-  const { items, addItem, deleteItem } = useData();
+  const { items, addItem, deleteItem, updateItem } = useData();
   const [isItemModalOpen, setItemModalOpen] = useState(false);
+  const [isEditModalOpen, setEditModalOpen] = useState(false);
+  const [editingItem, setEditingItem] = useState<Item | null>(null);
   const [thicknessFilter, setThicknessFilter] = useState<string>("");
 
   const handleDelete = (id: string) => {
@@ -153,6 +251,17 @@ export default function InventoryPage() {
     addItem(newItem);
     setItemModalOpen(false);
   }
+
+  const handleEditClick = (item: Item) => {
+    setEditingItem(item);
+    setEditModalOpen(true);
+  };
+
+  const handleItemUpdated = (id: string, updatedItem: Partial<Omit<Item, 'id'|'createdAt'>>) => {
+    updateItem(id, updatedItem);
+    setEditModalOpen(false);
+    setEditingItem(null);
+  };
 
   const categoryVariant = {
     "Aluminium": "default",
@@ -243,7 +352,7 @@ export default function InventoryPage() {
                     </DropdownMenuTrigger>
                     <DropdownMenuContent align="end">
                         <DropdownMenuLabel>Actions</DropdownMenuLabel>
-                        <DropdownMenuItem>Edit</DropdownMenuItem>
+                        <DropdownMenuItem onSelect={() => handleEditClick(item)}>Edit</DropdownMenuItem>
                         <DropdownMenuSeparator />
                         <DropdownMenuItem
                             onSelect={() => handleDelete(item.id)}
@@ -259,8 +368,16 @@ export default function InventoryPage() {
           </TableBody>
         </Table>
       </div>
+
+      {editingItem && (
+        <Dialog open={isEditModalOpen} onOpenChange={setEditModalOpen}>
+          <EditItemForm 
+            item={editingItem} 
+            onItemUpdated={handleItemUpdated}
+            onOpenChange={setEditModalOpen}
+          />
+        </Dialog>
+      )}
     </>
   );
 }
-
-    
