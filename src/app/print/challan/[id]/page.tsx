@@ -72,7 +72,15 @@ export default function PrintChallanPage() {
                 ))}
             </TableBody>
         </Table>
-            <div className="mt-24 grid grid-cols-2 gap-8 text-sm">
+
+        {sale.description && (
+            <div className="mt-8 text-sm border-t pt-4">
+                <p className="font-extrabold text-gray-800">Notes / Description:</p>
+                <p className="mt-1 font-semibold text-gray-700 whitespace-pre-wrap">{sale.description}</p>
+            </div>
+        )}
+
+        <div className="mt-24 grid grid-cols-2 gap-8 text-sm">
             <div className="border-t-2 border-black pt-2 font-bold text-center"><p>Receiver's Signature</p></div>
             <div className="border-t-2 border-black pt-2 font-bold text-center"><p>Driver's Signature</p></div>
         </div>
