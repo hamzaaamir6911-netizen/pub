@@ -28,6 +28,7 @@ import { PageHeader } from "@/components/page-header";
 import { useToast } from "@/hooks/use-toast";
 import { useData } from "@/firebase/data/data-provider";
 import { Textarea } from "@/components/ui/textarea";
+import { formatCurrency } from "@/lib/utils";
 
 interface CalculationResult {
   length: number;
@@ -43,9 +44,15 @@ export default function WeightCalculatorPage() {
   const [manualSectionName, setManualSectionName] = useState<string>("");
   const [manualWeight, setManualWeight] = useState<number>(0);
   const [lengthsInput, setLengthsInput] = useState<string>("");
+  const [ratePerKg, setRatePerKg] = useState<number>(0);
+
   const [results, setResults] = useState<CalculationResult[]>([]);
   const [totalWeight, setTotalWeight] = useState<number>(0);
-  const [reportDetails, setReportDetails] = useState<{name: string, weight: number} | null>(null);
+  const [totalLength, setTotalLength] = useState<number>(0);
+  const [totalAmount, setTotalAmount] = useState<number>(0);
+  const [netRatePerFoot, setNetRatePerFoot] = useState<number>(0);
+
+  const [reportDetails, setReportDetails] = useState<{name: string, weight: number, rate: number} | null>(null);
 
   const aluminiumItems = useMemo(() => 
     items.filter(item => item.category === 'Aluminium' && item.weight && item.weight > 0)
@@ -73,6 +80,11 @@ export default function WeightCalculatorPage() {
         reportName = manualSectionName.trim() || "Manual Section";
     }
 
+    if (ratePerKg <= 0) {
+        toast({ variant: "destructive", title: "Please enter a valid rate per Kg." });
+        return;
+    }
+
     const lengths = lengthsInput
       .split(/[\s,;\n]+/) // Split by spaces, commas, semicolons, or newlines
       .map(s => parseFloat(s.trim()))
@@ -89,10 +101,16 @@ export default function WeightCalculatorPage() {
     }));
 
     const newTotalWeight = newResults.reduce((sum, result) => sum + result.weight, 0);
+    const newTotalLength = lengths.reduce((sum, len) => sum + len, 0);
+    const newTotalAmount = newTotalWeight * ratePerKg;
+    const newNetRatePerFoot = newTotalLength > 0 ? newTotalAmount / newTotalLength : 0;
 
     setResults(newResults);
     setTotalWeight(newTotalWeight);
-    setReportDetails({ name: reportName, weight: weightPerFoot! });
+    setTotalLength(newTotalLength);
+    setTotalAmount(newTotalAmount);
+    setNetRatePerFoot(newNetRatePerFoot);
+    setReportDetails({ name: reportName, weight: weightPerFoot!, rate: ratePerKg });
   };
 
   const clearReport = () => {
@@ -102,19 +120,23 @@ export default function WeightCalculatorPage() {
     setReportDetails(null);
     setManualSectionName("");
     setManualWeight(0);
+    setRatePerKg(0);
+    setTotalAmount(0);
+    setNetRatePerFoot(0);
+    setTotalLength(0);
   }
 
   return (
     <>
       <PageHeader
-        title="Section Weight Calculator"
-        description="Calculate the total weight of aluminium sections based on their lengths."
+        title="Section Cost & Weight Calculator"
+        description="Calculate weight and cost of aluminium sections based on their lengths."
       />
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         <Card className="lg:col-span-1">
             <CardHeader>
                 <CardTitle>Calculator</CardTitle>
-                <CardDescription>Select a mode and enter lengths to calculate weight.</CardDescription>
+                <CardDescription>Enter details to calculate weight and cost.</CardDescription>
             </CardHeader>
             <CardContent className="space-y-6">
                  <RadioGroup value={calculationMode} onValueChange={(value: 'inventory' | 'manual') => setCalculationMode(value)} className="grid grid-cols-2 gap-4">
@@ -173,6 +195,17 @@ export default function WeightCalculatorPage() {
                 )}
                 
                 <div className="space-y-2">
+                    <Label htmlFor="rate">Rate per Kg (PKR)</Label>
+                    <Input
+                        id="rate"
+                        type="number"
+                        placeholder="e.g. 1050"
+                        value={ratePerKg || ''}
+                        onChange={(e) => setRatePerKg(parseFloat(e.target.value) || 0)}
+                    />
+                </div>
+
+                <div className="space-y-2">
                     <Label htmlFor="lengths">Lengths (in feet)</Label>
                     <Textarea 
                         id="lengths"
@@ -185,7 +218,7 @@ export default function WeightCalculatorPage() {
 
                 <Button onClick={handleCalculate} className="w-full">
                     <Calculator className="mr-2 h-4 w-4" />
-                    Calculate Weight
+                    Calculate
                 </Button>
             </CardContent>
         </Card>
@@ -194,8 +227,8 @@ export default function WeightCalculatorPage() {
             <CardHeader>
                 <div className="flex justify-between items-center">
                     <div>
-                        <CardTitle>Weight Report</CardTitle>
-                        <CardDescription>Summary of the calculated weights.</CardDescription>
+                        <CardTitle>Calculation Report</CardTitle>
+                        <CardDescription>Summary of the calculated weights and costs.</CardDescription>
                     </div>
                     <div className="flex gap-2">
                         <Button variant="outline" onClick={() => window.print()} className="no-print" disabled={results.length === 0}>
@@ -210,8 +243,8 @@ export default function WeightCalculatorPage() {
             <CardContent>
                 <div className="hidden print:block text-center mb-6">
                     <h1 className="text-2xl font-bold font-headline">ARCO Aluminium Company</h1>
-                    <p className="text-lg font-semibold mt-1">Section Weight Report</p>
-                    {reportDetails && <p className="text-sm text-muted-foreground">{reportDetails.name} - {reportDetails.weight?.toFixed(3)} kg/ft</p>}
+                    <p className="text-lg font-semibold mt-1">Section Weight & Cost Report</p>
+                    {reportDetails && <p className="text-sm text-muted-foreground">{reportDetails.name} | Weight: {reportDetails.weight?.toFixed(3)} kg/ft | Rate: {formatCurrency(reportDetails.rate)}/kg</p>}
                 </div>
                 <div className="rounded-lg border">
                     <Table>
@@ -242,8 +275,20 @@ export default function WeightCalculatorPage() {
                         {results.length > 0 && (
                             <TableFooter>
                                 <TableRow>
-                                    <TableCell colSpan={2} className="text-right font-bold text-lg">Total Weight</TableCell>
-                                    <TableCell className="text-right font-bold text-lg font-mono">{totalWeight.toFixed(3)} kg</TableCell>
+                                    <TableCell colSpan={2} className="text-right font-bold">Total Length</TableCell>
+                                    <TableCell className="text-right font-mono">{totalLength.toFixed(2)} ft</TableCell>
+                                </TableRow>
+                                <TableRow>
+                                    <TableCell colSpan={2} className="text-right font-bold">Total Weight</TableCell>
+                                    <TableCell className="text-right font-mono">{totalWeight.toFixed(3)} kg</TableCell>
+                                </TableRow>
+                                 <TableRow>
+                                    <TableCell colSpan={2} className="text-right font-bold">Total Amount</TableCell>
+                                    <TableCell className="text-right font-mono">{formatCurrency(totalAmount)}</TableCell>
+                                </TableRow>
+                                <TableRow className="bg-muted/50">
+                                    <TableCell colSpan={2} className="text-right font-bold text-lg">Final Rate per Foot</TableCell>
+                                    <TableCell className="text-right font-bold text-lg font-mono">{formatCurrency(netRatePerFoot)}</TableCell>
                                 </TableRow>
                             </TableFooter>
                         )}
@@ -255,3 +300,5 @@ export default function WeightCalculatorPage() {
     </>
   );
 }
+
+    

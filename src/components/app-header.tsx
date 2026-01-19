@@ -25,7 +25,7 @@ const navItems = [
   { href: "/app/expenses", icon: CreditCard, label: "Expenses" },
   { href: "/app/ledger", icon: BookUser, label: "Ledger" },
   { href: "/app/reports", icon: BarChart3, label: "Reports" },
-  { href: "/app/weight-calculator", icon: Calculator, label: "Weight Calc" },
+  { href: "/app/weight-calculator", icon: Calculator, label: "Weight & Cost Calc" },
   { href: "/app/settings", icon: Settings, label: "Settings" },
 ];
 
@@ -123,3 +123,5 @@ export function AppHeader() {
     </header>
   )
 }
+
+    
