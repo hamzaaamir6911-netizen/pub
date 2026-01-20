@@ -53,7 +53,7 @@ function SaleDetailsView({ sale }: { sale: Sale }) {
     const { customers } = useData();
     const customer = customers.find(c => c.id === sale.customerId);
 
-    const handlePrint = (view: 'invoice' | 'challan') => {
+    const handlePrint = (view: 'invoice' | 'challan' | 'simple') => {
         window.open(`/print/${view}/${sale.id}`, '_blank');
     };
     
@@ -90,6 +90,10 @@ function SaleDetailsView({ sale }: { sale: Sale }) {
                         <Button variant="outline" onClick={() => handlePrint('invoice')}>
                             <Printer className="mr-2 h-4 w-4" />
                             Print Invoice
+                        </Button>
+                        <Button variant="outline" onClick={() => handlePrint('simple')}>
+                            <Printer className="mr-2 h-4 w-4" />
+                            Print Simple
                         </Button>
                          <Button variant="outline" onClick={() => handlePrint('challan')}>
                             <Printer className="mr-2 h-4 w-4" />
@@ -268,7 +272,7 @@ export default function SalesPage() {
     setEditingSale(null);
   }
 
-  const handlePrint = (view: 'invoice' | 'challan', saleId: string) => {
+  const handlePrint = (view: 'invoice' | 'challan' | 'simple', saleId: string) => {
     window.open(`/print/${view}/${saleId}`, '_blank');
   };
 
@@ -426,6 +430,10 @@ export default function SalesPage() {
                                <DropdownMenuItem onSelect={() => handlePrint('invoice', sale.id)}>
                                     <Printer className="mr-2 h-4 w-4" />
                                     Print Invoice
+                               </DropdownMenuItem>
+                               <DropdownMenuItem onSelect={() => handlePrint('simple', sale.id)}>
+                                    <Printer className="mr-2 h-4 w-4" />
+                                    Print Simple
                                </DropdownMenuItem>
                                <DropdownMenuItem onSelect={() => handlePrint('challan', sale.id)}>
                                     <Printer className="mr-2 h-4 w-4" />
