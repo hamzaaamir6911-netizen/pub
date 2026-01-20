@@ -2,7 +2,7 @@
 "use client";
 
 import { useState, useMemo } from "react";
-import { MoreHorizontal, Trash2, Edit, Printer, PlusCircle, FileText, Upload, Undo, FileSpreadsheet } from "lucide-react";
+import { MoreHorizontal, Trash2, Edit, Printer, PlusCircle, FileText, Upload, Undo, FileSpreadsheet, X } from "lucide-react";
 import {
   Table,
   TableBody,
@@ -40,13 +40,13 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import { PageHeader } from "@/components/page-header";
 import { formatCurrency, formatDate } from "@/lib/utils";
-import type { Sale, Customer } from "@/lib/types";
+import type { Sale } from "@/lib/types";
 import { useData } from "@/firebase/data/data-provider";
 import { Badge } from "@/components/ui/badge";
-import { useCollection, useFirestore, useMemoFirebase, useUser } from "@/firebase";
-import { collection, orderBy, query } from "firebase/firestore";
 import { NewSaleForm } from "./_components/new-sale-form";
 import { Checkbox } from "@/components/ui/checkbox";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Label } from "@/components/ui/label";
 
 
 function SaleDetailsView({ sale }: { sale: Sale }) {
@@ -214,22 +214,35 @@ function SaleDetailsView({ sale }: { sale: Sale }) {
 
 
 export default function SalesPage() {
-  const { sales, deleteSale, postSale, unpostSale, loading: isDataLoading } = useData();
+  const { customers, sales, deleteSale, postSale, unpostSale, loading: isDataLoading } = useData();
   
   const [activeTab, setActiveTab] = useState("history");
   const [isDetailsOpen, setDetailsOpen] = useState(false);
   const [selectedSale, setSelectedSale] = useState<Sale | null>(null);
   const [editingSale, setEditingSale] = useState<Sale | null>(null);
   const [selectedRows, setSelectedRows] = useState<string[]>([]);
+  const [customerFilter, setCustomerFilter] = useState<string>("");
+  const [statusFilter, setStatusFilter] = useState<"all" | "draft" | "posted">("all");
 
-  const sortedSales = useMemo(() => {
+  const filteredSales = useMemo(() => {
     if (!sales) return [];
-    return [...sales].sort((a, b) => {
+    
+    let filtered = [...sales];
+
+    if (customerFilter) {
+        filtered = filtered.filter(s => s.customerId === customerFilter);
+    }
+
+    if (statusFilter !== "all") {
+        filtered = filtered.filter(s => s.status === statusFilter);
+    }
+    
+    return filtered.sort((a, b) => {
         const numA = parseInt(a.id.split('-')[1] || '0', 10);
         const numB = parseInt(b.id.split('-')[1] || '0', 10);
         return numB - numA; 
     });
-  }, [sales]);
+  }, [sales, customerFilter, statusFilter]);
   
   const handleDelete = (sale: Sale) => {
     deleteSale(sale);
@@ -266,10 +279,10 @@ export default function SalesPage() {
   };
 
   const handleSelectAll = () => {
-    if (selectedRows.length === sortedSales.length) {
+    if (selectedRows.length === filteredSales.length) {
       setSelectedRows([]);
     } else {
-      setSelectedRows(sortedSales.map(s => s.id));
+      setSelectedRows(filteredSales.map(s => s.id));
     }
   };
 
@@ -299,7 +312,41 @@ export default function SalesPage() {
           <TabsTrigger value="new">{editingSale ? 'Edit Sale' : 'New Sale'}</TabsTrigger>
         </TabsList>
         <TabsContent value="history">
-          <div className="my-4 flex items-center gap-2">
+            <div className="flex flex-wrap items-center gap-4 my-4 p-4 bg-muted/50 rounded-lg">
+                <h3 className="text-sm font-medium">Filter By:</h3>
+                <div className="flex items-center gap-2">
+                    <Label htmlFor="customer-filter" className="text-sm">Customer</Label>
+                    <Select onValueChange={(value) => setCustomerFilter(value === "all" ? "" : value)} value={customerFilter}>
+                        <SelectTrigger id="customer-filter" className="w-[200px]">
+                            <SelectValue placeholder="All Customers" />
+                        </SelectTrigger>
+                        <SelectContent>
+                            <SelectItem value="all">All Customers</SelectItem>
+                            {customers.map(c => <SelectItem key={c.id} value={c.id}>{c.customerName}</SelectItem>)}
+                        </SelectContent>
+                    </Select>
+                </div>
+                <div className="flex items-center gap-2">
+                    <Label htmlFor="status-filter" className="text-sm">Status</Label>
+                    <Select onValueChange={(value: "all" | "draft" | "posted") => setStatusFilter(value)} value={statusFilter}>
+                        <SelectTrigger id="status-filter" className="w-[150px]">
+                            <SelectValue placeholder="All Statuses" />
+                        </SelectTrigger>
+                        <SelectContent>
+                            <SelectItem value="all">All Statuses</SelectItem>
+                            <SelectItem value="draft">Draft</SelectItem>
+                            <SelectItem value="posted">Posted</SelectItem>
+                        </SelectContent>
+                    </Select>
+                </div>
+                {(customerFilter || statusFilter !== 'all') && (
+                    <Button variant="ghost" size="sm" onClick={() => { setCustomerFilter(""); setStatusFilter("all"); }}>
+                        <X className="mr-2 h-4 w-4" /> Clear Filters
+                    </Button>
+                )}
+            </div>
+
+          <div className="flex items-center gap-2">
               {selectedRows.length > 0 && (
                 <>
                   <Button onClick={handlePrintSelected}>
@@ -319,7 +366,7 @@ export default function SalesPage() {
                 <TableRow>
                 <TableHead className="w-[50px]">
                     <Checkbox
-                        checked={selectedRows.length === sortedSales.length && sortedSales.length > 0}
+                        checked={selectedRows.length === filteredSales.length && filteredSales.length > 0}
                         onCheckedChange={handleSelectAll}
                     />
                 </TableHead>
@@ -338,12 +385,12 @@ export default function SalesPage() {
                     <TableRow>
                         <TableCell colSpan={7} className="text-center h-24">Loading sales...</TableCell>
                     </TableRow>
-                ) : sortedSales.length === 0 ? (
+                ) : filteredSales.length === 0 ? (
                 <TableRow>
-                    <TableCell colSpan={7} className="text-center h-24">No sales recorded.</TableCell>
+                    <TableCell colSpan={7} className="text-center h-24">No sales found for the selected filters.</TableCell>
                 </TableRow>
                 ) : (
-                sortedSales.map((sale) => (
+                filteredSales.map((sale) => (
                     <TableRow key={sale.id} data-state={selectedRows.includes(sale.id) && "selected"}>
                     <TableCell>
                         <Checkbox
