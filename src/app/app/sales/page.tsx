@@ -57,18 +57,29 @@ function SaleDetailsView({ sale }: { sale: Sale }) {
         window.open(`/print/${view}/${sale.id}`, '_blank');
     };
     
-    const grossAmount = sale.items.reduce((acc, item) => {
-        return acc + (item.feet || 1) * item.price * item.quantity;
-    }, 0);
+    let t1Total = 0;
+    let t2Total = 0;
+    let grossAmount = 0;
+    let totalItemDiscount = 0;
 
-    const totalItemDiscount = sale.items.reduce((acc, item) => {
-        const itemTotal = (item.feet || 1) * item.price * item.quantity;
-        return acc + (itemTotal * ((item.discount || 0) / 100));
-    }, 0);
+    sale.items.forEach(item => {
+        const itemGross = (item.feet || 1) * item.price * item.quantity;
+        const itemDiscountAmount = itemGross * ((item.discount || 0) / 100);
+        const finalAmount = itemGross - itemDiscountAmount;
+        
+        grossAmount += itemGross;
+        totalItemDiscount += itemDiscountAmount;
 
-    const overallDiscountAmount = (grossAmount - totalItemDiscount) * (sale.discount / 100);
-    const totalDiscount = totalItemDiscount + overallDiscountAmount;
-    const netAmount = grossAmount - totalDiscount;
+        if (item.itemName.trim().toLowerCase() === 'd 29') {
+            t1Total += finalAmount;
+        } else {
+            t2Total += finalAmount;
+        }
+    });
+
+    const subtotal = t1Total + t2Total;
+    const overallDiscountAmount = subtotal * (sale.discount / 100);
+    const netAmount = subtotal - overallDiscountAmount;
 
     return (
         <DialogContent className="max-w-4xl max-h-[90vh] flex flex-col">
@@ -176,8 +187,18 @@ function SaleDetailsView({ sale }: { sale: Sale }) {
                                 </p>
                             </div>
                             <div className="w-full max-w-sm space-y-2 text-sm font-semibold">
-                                <div className="flex justify-between text-gray-600"><span >Gross Amount</span><span>{formatCurrency(grossAmount)}</span></div>
-                                <div className="flex justify-between text-gray-600"><span>Discount</span><span>- {formatCurrency(totalDiscount)}</span></div>
+                                <div className="flex justify-between text-gray-600"><span>Gross Amount</span><span>{formatCurrency(grossAmount)}</span></div>
+                                <div className="flex justify-between text-gray-600"><span>Item Discounts</span><span>- {formatCurrency(totalItemDiscount)}</span></div>
+                                
+                                <div className="border-t my-2"></div>
+                                
+                                {t1Total > 0 && <div className="flex justify-between text-gray-800 font-bold"><span>D 29 Total (T1)</span><span>{formatCurrency(t1Total)}</span></div>}
+                                {t2Total > 0 && <div className="flex justify-between text-gray-800 font-bold"><span>Other Items Total (T2)</span><span>{formatCurrency(t2Total)}</span></div>}
+
+                                <div className="border-t my-2"></div>
+                                
+                                <div className="flex justify-between text-gray-600"><span>Subtotal</span><span>{formatCurrency(subtotal)}</span></div>
+                                <div className="flex justify-between text-gray-600"><span>Overall Discount ({sale.discount}%)</span><span>- {formatCurrency(overallDiscountAmount)}</span></div>
                                 <div className="flex justify-between font-bold text-lg border-t-2 border-gray-800 pt-2 mt-2"><span>Net Amount</span><span>{formatCurrency(netAmount)}</span></div>
                             </div>
                         </div>
