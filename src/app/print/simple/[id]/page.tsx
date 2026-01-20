@@ -1,10 +1,9 @@
-
 "use client";
 
 import { useEffect } from "react";
 import { useParams } from "next/navigation";
 import { useData } from "@/firebase/data/data-provider";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow, TableFooter } from "@/components/ui/table";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { formatCurrency, formatDate } from "@/lib/utils";
 
 export default function PrintSimpleInvoicePage() {
@@ -31,46 +30,47 @@ export default function PrintSimpleInvoicePage() {
     return <div>Invoice not found.</div>;
   }
 
-  const netAmount = sale.total;
+  // Check if color and thickness are uniform across all items
+  const isUniformColor = sale.items.length > 0 && sale.items.every(item => item.color === sale.items[0].color);
+  const isUniformThickness = sale.items.length > 0 && sale.items.every(item => item.thickness === sale.items[0].thickness);
 
   return (
-    <div className="p-4 bg-white text-black font-sans">
-      <div className="text-center mb-4">
-        <h1 className="text-xl font-bold">Invoice: {sale.id}</h1>
-        <p className="text-sm">{sale.customerName} - {formatDate(sale.date)}</p>
+    <div className="p-4 bg-white text-black font-sans text-xs">
+      <div className="mb-2">
+        <p>
+          {formatDate(sale.date)} | {sale.id} | {sale.customerName}
+        </p>
       </div>
+      {(isUniformColor || isUniformThickness) && (
+        <div className="mb-2">
+          <p>
+            {isUniformThickness && `Thickness: ${sale.items[0].thickness}`}
+            {isUniformColor && isUniformThickness && ', '}
+            {isUniformColor && `Color: ${sale.items[0].color}`}
+          </p>
+        </div>
+      )}
       <Table>
         <TableHeader>
           <TableRow>
-            <TableHead>Item</TableHead>
-            <TableHead>Colour</TableHead>
-            <TableHead>Thickness</TableHead>
+            <TableHead className="w-[50%]">Section Name</TableHead>
+            <TableHead className="text-right">Feet</TableHead>
+            <TableHead className="text-right">Qty</TableHead>
             <TableHead className="text-right">Rate</TableHead>
-            <TableHead className="text-right">Amount</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
           {sale.items.map((item, index) => {
-            const itemTotal = (item.feet || 1) * item.price * item.quantity;
-            const discountAmount = itemTotal * ((item.discount || 0) / 100);
-            const finalAmount = itemTotal - discountAmount;
             return (
               <TableRow key={index}>
                 <TableCell className="font-medium">{item.itemName}</TableCell>
-                <TableCell>{item.color}</TableCell>
-                <TableCell>{item.thickness}</TableCell>
+                <TableCell className="text-right">{item.feet ? item.feet.toFixed(2) : '-'}</TableCell>
+                <TableCell className="text-right">{item.quantity}</TableCell>
                 <TableCell className="text-right">{formatCurrency(item.price)}</TableCell>
-                <TableCell className="text-right font-medium">{formatCurrency(finalAmount)}</TableCell>
               </TableRow>
             );
           })}
         </TableBody>
-        <TableFooter>
-            <TableRow className="font-bold text-base">
-                <TableCell colSpan={4} className="text-right">Grand Total</TableCell>
-                <TableCell className="text-right">{formatCurrency(netAmount)}</TableCell>
-            </TableRow>
-        </TableFooter>
       </Table>
     </div>
   );
