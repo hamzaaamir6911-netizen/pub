@@ -36,20 +36,22 @@ export default function PrintSimpleInvoicePage() {
 
   return (
     <div className="p-4 bg-white text-black font-sans text-xs">
-      <div className="mb-2">
-        <p>
-          {formatDate(sale.date)} | {sale.id} | {sale.customerName}
-        </p>
-      </div>
-      {(isUniformColor || isUniformThickness) && (
+      <div className="text-right">
         <div className="mb-2">
           <p>
-            {isUniformThickness && `Thickness: ${sale.items[0].thickness}`}
-            {isUniformColor && isUniformThickness && ', '}
-            {isUniformColor && `Color: ${sale.items[0].color}`}
+            {formatDate(sale.date)} | {sale.id} | {sale.customerName}
           </p>
         </div>
-      )}
+        {(isUniformColor || isUniformThickness) && (
+          <div className="mb-2">
+            <p>
+              {isUniformThickness && `Thickness: ${sale.items[0].thickness}`}
+              {isUniformColor && isUniformThickness && ' | '}
+              {isUniformColor && `Color: ${sale.items[0].color}`}
+            </p>
+          </div>
+        )}
+      </div>
       <Table>
         <TableHeader>
           <TableRow>
