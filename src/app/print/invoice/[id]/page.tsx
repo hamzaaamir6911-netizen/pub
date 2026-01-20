@@ -52,7 +52,7 @@ export default function PrintInvoicePage() {
         }
     });
 
-    const subtotal = t1Total + t2Total;
+    const subtotal = grossAmount - totalItemDiscount;
     const overallDiscountAmount = subtotal * (sale.discount / 100);
     const netAmount = subtotal - overallDiscountAmount;
 
@@ -149,10 +149,13 @@ export default function PrintInvoicePage() {
                     
                     <div className="border-t my-2"></div>
                     
-                    {t1Total > 0 && <div className="flex justify-between text-gray-800 font-bold"><span>D 29 Total (T1)</span><span>{formatCurrency(t1Total)}</span></div>}
-                    {t2Total > 0 && <div className="flex justify-between text-gray-800 font-bold"><span>Other Items Total (T2)</span><span>{formatCurrency(t2Total)}</span></div>}
-
-                    <div className="border-t my-2"></div>
+                    {sale.showT1T2 ? (
+                        <>
+                            {t1Total > 0 && <div className="flex justify-between text-gray-800 font-bold"><span>D 29 Total (T1)</span><span>{formatCurrency(t1Total)}</span></div>}
+                            {t2Total > 0 && <div className="flex justify-between text-gray-800 font-bold"><span>Other Items Total (T2)</span><span>{formatCurrency(t2Total)}</span></div>}
+                            <div className="border-t my-2"></div>
+                        </>
+                    ) : null}
 
                     <div className="flex justify-between text-gray-600"><span>Subtotal</span><span>{formatCurrency(subtotal)}</span></div>
                     <div className="flex justify-between text-gray-600"><span>Overall Discount ({sale.discount}%)</span><span>- {formatCurrency(overallDiscountAmount)}</span></div>

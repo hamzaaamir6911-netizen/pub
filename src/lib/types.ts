@@ -57,6 +57,7 @@ export type Sale = {
   status: 'draft' | 'posted';
   estimateId?: string; // Link to the original estimate
   description?: string;
+  showT1T2?: boolean;
 };
 
 export type Estimate = {

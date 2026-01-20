@@ -23,6 +23,7 @@ import { useData } from "@/firebase/data/data-provider";
 import { format } from "date-fns";
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Textarea } from "@/components/ui/textarea";
+import { Checkbox } from "@/components/ui/checkbox";
 
 function AddCustomerForm({ onCustomerAdded, onOpenChange }: { onCustomerAdded: (newCustomer: Omit<Customer, 'id' | 'createdAt'>) => void, onOpenChange: (open: boolean) => void }) {
   const [customerName, setCustomerName] = useState('');
@@ -109,6 +110,8 @@ export function NewSaleForm({ initialData, onSaleAdded, onSaleUpdated, onCancel 
     const [isCustomerModalOpen, setCustomerModalOpen] = useState(false);
     const [saleDate, setSaleDate] = useState<Date | undefined>(new Date());
     const [description, setDescription] = useState("");
+    const [showT1T2, setShowT1T2] = useState(false);
+
 
     const isEditMode = !!initialData;
 
@@ -119,6 +122,7 @@ export function NewSaleForm({ initialData, onSaleAdded, onSaleUpdated, onCancel 
             setOverallDiscount(initialData.discount || 0);
             setSaleDate(new Date(initialData.date));
             setDescription(initialData.description || "");
+            setShowT1T2(initialData.showT1T2 || false);
         } else {
             clearForm();
         }
@@ -173,6 +177,7 @@ export function NewSaleForm({ initialData, onSaleAdded, onSaleUpdated, onCancel 
         setOverallDiscount(0);
         setSaleDate(new Date());
         setDescription("");
+        setShowT1T2(false);
     }
     
     const handleSave = async () => {
@@ -220,6 +225,7 @@ export function NewSaleForm({ initialData, onSaleAdded, onSaleUpdated, onCancel 
             discount: overallDiscount,
             date: saleDate,
             description: description,
+            showT1T2: showT1T2,
         };
 
         if (isEditMode && initialData) {
@@ -259,7 +265,7 @@ export function NewSaleForm({ initialData, onSaleAdded, onSaleUpdated, onCancel 
                 </div>
             </CardHeader>
             <CardContent className="space-y-6">
-                <div className="grid md:grid-cols-3 gap-4">
+                <div className="grid md:grid-cols-3 gap-4 items-end">
                     <div className="space-y-2">
                         <Label htmlFor="customer">Customer</Label>
                         <div className="flex gap-2">
@@ -316,15 +322,26 @@ export function NewSaleForm({ initialData, onSaleAdded, onSaleUpdated, onCancel 
                     </div>
                 </div>
 
-                <div className="space-y-2">
-                    <Label htmlFor="description">Sale Description (Optional)</Label>
-                    <Textarea
-                        id="description"
-                        placeholder="Add any notes or description for this sale. This will be visible on the invoice."
-                        value={description}
-                        onChange={(e) => setDescription(e.target.value)}
-                        className="min-h-[60px]"
-                    />
+                <div className="grid md:grid-cols-2 gap-4 items-start">
+                    <div className="space-y-2">
+                        <Label htmlFor="description">Sale Description (Optional)</Label>
+                        <Textarea
+                            id="description"
+                            placeholder="Add any notes or description for this sale. This will be visible on the invoice."
+                            value={description}
+                            onChange={(e) => setDescription(e.target.value)}
+                            className="min-h-[60px]"
+                        />
+                    </div>
+                     <div className="flex items-center space-x-2 pt-8">
+                        <Checkbox id="t1t2-checkbox" checked={showT1T2} onCheckedChange={(checked) => setShowT1T2(Boolean(checked))} />
+                        <label
+                            htmlFor="t1t2-checkbox"
+                            className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+                        >
+                            Show T1/T2 Totals on Invoice
+                        </label>
+                    </div>
                 </div>
                 
                 <div className="space-y-4">

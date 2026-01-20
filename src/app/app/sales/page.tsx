@@ -77,7 +77,7 @@ function SaleDetailsView({ sale }: { sale: Sale }) {
         }
     });
 
-    const subtotal = t1Total + t2Total;
+    const subtotal = grossAmount - totalItemDiscount;
     const overallDiscountAmount = subtotal * (sale.discount / 100);
     const netAmount = subtotal - overallDiscountAmount;
 
@@ -192,11 +192,14 @@ function SaleDetailsView({ sale }: { sale: Sale }) {
                                 
                                 <div className="border-t my-2"></div>
                                 
-                                {t1Total > 0 && <div className="flex justify-between text-gray-800 font-bold"><span>D 29 Total (T1)</span><span>{formatCurrency(t1Total)}</span></div>}
-                                {t2Total > 0 && <div className="flex justify-between text-gray-800 font-bold"><span>Other Items Total (T2)</span><span>{formatCurrency(t2Total)}</span></div>}
+                                {sale.showT1T2 ? (
+                                    <>
+                                        {t1Total > 0 && <div className="flex justify-between text-gray-800 font-bold"><span>D 29 Total (T1)</span><span>{formatCurrency(t1Total)}</span></div>}
+                                        {t2Total > 0 && <div className="flex justify-between text-gray-800 font-bold"><span>Other Items Total (T2)</span><span>{formatCurrency(t2Total)}</span></div>}
+                                        <div className="border-t my-2"></div>
+                                    </>
+                                ) : null}
 
-                                <div className="border-t my-2"></div>
-                                
                                 <div className="flex justify-between text-gray-600"><span>Subtotal</span><span>{formatCurrency(subtotal)}</span></div>
                                 <div className="flex justify-between text-gray-600"><span>Overall Discount ({sale.discount}%)</span><span>- {formatCurrency(overallDiscountAmount)}</span></div>
                                 <div className="flex justify-between font-bold text-lg border-t-2 border-gray-800 pt-2 mt-2"><span>Net Amount</span><span>{formatCurrency(netAmount)}</span></div>
