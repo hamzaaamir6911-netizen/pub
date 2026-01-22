@@ -10,7 +10,7 @@ import type { Sale, SaleItem } from "@/lib/types";
 
 // This component renders one copy of the invoice.
 const InvoiceCopy = ({ sale, groupedItems }: { sale: Sale, groupedItems: Record<string, SaleItem[]> }) => (
-    <div className="flex flex-col space-y-4">
+    <div className="w-1/2">
         {/* Header */}
         <div className="text-left font-bold mb-2">
             <p>{sale.customerName.toUpperCase()}</p>
@@ -47,6 +47,7 @@ const InvoiceCopy = ({ sale, groupedItems }: { sale: Sale, groupedItems: Record<
         </div>
     </div>
 );
+
 
 export default function PrintSimpleInvoicePage() {
   const { id } = useParams();
@@ -87,10 +88,8 @@ export default function PrintSimpleInvoicePage() {
   }
 
   return (
-     <div className="p-4 bg-white text-black font-sans text-xs flex justify-end">
-        <div className="w-1/2">
-             <InvoiceCopy sale={sale} groupedItems={groupedItems} />
-        </div>
+     <div className="p-4 bg-white text-black font-sans text-xs flex justify-start">
+        <InvoiceCopy sale={sale} groupedItems={groupedItems} />
     </div>
   );
 }
