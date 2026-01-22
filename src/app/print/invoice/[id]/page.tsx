@@ -66,12 +66,12 @@ export default function PrintInvoicePage() {
                   <p className="text-sm text-teal-100 font-semibold">+92 333 4646356</p>
               </div>
               <div className="text-right">
-                  <h2 className="text-2xl font-bold uppercase">Invoice</h2>
+                  <h2 className="text-2xl font-extrabold uppercase">Invoice</h2>
                   <div className="grid grid-cols-2 gap-x-4 mt-2 text-sm">
                       <span className="font-bold">Date:</span>
-                      <span className="font-semibold">{formatDate(sale.date)}</span>
+                      <span className="font-bold">{formatDate(sale.date)}</span>
                       <span className="font-bold">Invoice #:</span>
-                      <span className="font-semibold">{sale.id}</span>
+                      <span className="font-bold">{sale.id}</span>
                   </div>
               </div>
           </div>
