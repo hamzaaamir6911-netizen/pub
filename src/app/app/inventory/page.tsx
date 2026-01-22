@@ -104,11 +104,11 @@ function AddItemForm({ onItemAdded, existingItems }: { onItemAdded: (newItem: Om
                     <Input type="number" value={quantity} onChange={(e) => setQuantity(parseInt(e.target.value) || 0)} />
                 </div>
                 <div className="space-y-2">
-                    <Label>Purchase Price</Label>
+                    <Label>Purchase Rate</Label>
                     <Input type="number" value={purchasePrice} onChange={(e) => setPurchasePrice(parseFloat(e.target.value) || 0)} />
                 </div>
                 <div className="space-y-2">
-                    <Label>Sale Price</Label>
+                    <Label>Sale Rate</Label>
                     <Input type="number" value={salePrice} onChange={(e) => setSalePrice(parseFloat(e.target.value) || 0)} />
                 </div>
                  <div className="space-y-2">
@@ -201,11 +201,11 @@ function EditItemForm({ item, onItemUpdated, onOpenChange }: { item: Item; onIte
                     <Input type="number" value={quantity} onChange={(e) => setQuantity(parseInt(e.target.value) || 0)} />
                 </div>
                 <div className="space-y-2">
-                    <Label>Purchase Price</Label>
+                    <Label>Purchase Rate</Label>
                     <Input type="number" value={purchasePrice} onChange={(e) => setPurchasePrice(parseFloat(e.target.value) || 0)} />
                 </div>
                 <div className="space-y-2">
-                    <Label>Sale Price</Label>
+                    <Label>Sale Rate</Label>
                     <Input type="number" value={salePrice} onChange={(e) => setSalePrice(parseFloat(e.target.value) || 0)} />
                 </div>
                  <div className="space-y-2">
@@ -314,8 +314,8 @@ export default function InventoryPage() {
               <TableHead>Category</TableHead>
               <TableHead>Color</TableHead>
               <TableHead>Thickness</TableHead>
-              <TableHead className="text-right">Purchase Price</TableHead>
-              <TableHead className="text-right">Sale Price</TableHead>
+              <TableHead className="text-right">Purchase Rate</TableHead>
+              <TableHead className="text-right">Sale Rate</TableHead>
               <TableHead>
                 <span className="sr-only">Actions</span>
               </TableHead>
@@ -381,3 +381,5 @@ export default function InventoryPage() {
     </>
   );
 }
+
+    
