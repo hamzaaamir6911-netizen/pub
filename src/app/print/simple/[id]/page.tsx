@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useEffect } from "react";
@@ -5,6 +6,59 @@ import { useParams } from "next/navigation";
 import { useData } from "@/firebase/data/data-provider";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { formatCurrency, formatDate } from "@/lib/utils";
+import type { Sale } from "@/lib/types";
+
+// Component for a single copy of the invoice
+const InvoiceCopy = ({ sale }: { sale: Sale }) => {
+  if (!sale) return null;
+
+  const isUniformColor = sale.items.length > 0 && sale.items.every(item => item.color === sale.items[0].color);
+  const isUniformThickness = sale.items.length > 0 && sale.items.every(item => item.thickness === sale.items[0].thickness);
+
+  return (
+    <div className="w-full p-2">
+        <div className="text-right">
+            <div className="mb-2">
+            <p>
+                {formatDate(sale.date)} | {sale.id} | {sale.customerName}
+            </p>
+            </div>
+            {(isUniformColor || isUniformThickness) && (
+            <div className="mb-2">
+                <p>
+                {isUniformThickness && `Thickness: ${sale.items[0].thickness}`}
+                {isUniformColor && isUniformThickness && ' | '}
+                {isUniformColor && `Color: ${sale.items[0].color}`}
+                </p>
+            </div>
+            )}
+        </div>
+        <Table>
+            <TableHeader>
+            <TableRow>
+                <TableHead className="w-[50%] h-auto p-1">Section Name</TableHead>
+                <TableHead className="text-right h-auto p-1">Feet</TableHead>
+                <TableHead className="text-right h-auto p-1">Qty</TableHead>
+                <TableHead className="text-right h-auto p-1">Rate</TableHead>
+            </TableRow>
+            </TableHeader>
+            <TableBody>
+            {sale.items.map((item, index) => {
+                return (
+                <TableRow key={index}>
+                    <TableCell className="font-medium p-1">{item.itemName}</TableCell>
+                    <TableCell className="text-right p-1">{item.feet ? item.feet.toFixed(2) : '-'}</TableCell>
+                    <TableCell className="text-right p-1">{item.quantity}</TableCell>
+                    <TableCell className="text-right p-1">{formatCurrency(item.price)}</TableCell>
+                </TableRow>
+                );
+            })}
+            </TableBody>
+        </Table>
+    </div>
+  );
+}
+
 
 export default function PrintSimpleInvoicePage() {
   const { id } = useParams();
@@ -23,57 +77,27 @@ export default function PrintSimpleInvoicePage() {
   }, [isLoading]);
 
   if (isLoading) {
-    return <div>Loading invoice...</div>;
+    return <div className="p-4 text-center">Loading invoice...</div>;
   }
 
   if (!sale) {
-    return <div>Invoice not found.</div>;
+    return <div className="p-4 text-center">Invoice not found.</div>;
   }
-
-  // Check if color and thickness are uniform across all items
-  const isUniformColor = sale.items.length > 0 && sale.items.every(item => item.color === sale.items[0].color);
-  const isUniformThickness = sale.items.length > 0 && sale.items.every(item => item.thickness === sale.items[0].thickness);
-
+  
   return (
-    <div className="p-4 bg-white text-black font-sans text-xs">
-      <div className="text-right">
-        <div className="mb-2">
-          <p>
-            {formatDate(sale.date)} | {sale.id} | {sale.customerName}
-          </p>
+    <div className="p-4 bg-white text-black font-sans text-xs flex">
+        {/* Left Copy */}
+        <div className="w-1/2">
+            <InvoiceCopy sale={sale} />
         </div>
-        {(isUniformColor || isUniformThickness) && (
-          <div className="mb-2">
-            <p>
-              {isUniformThickness && `Thickness: ${sale.items[0].thickness}`}
-              {isUniformColor && isUniformThickness && ' | '}
-              {isUniformColor && `Color: ${sale.items[0].color}`}
-            </p>
-          </div>
-        )}
-      </div>
-      <Table>
-        <TableHeader>
-          <TableRow>
-            <TableHead className="w-[50%]">Section Name</TableHead>
-            <TableHead className="text-right">Feet</TableHead>
-            <TableHead className="text-right">Qty</TableHead>
-            <TableHead className="text-right">Rate</TableHead>
-          </TableRow>
-        </TableHeader>
-        <TableBody>
-          {sale.items.map((item, index) => {
-            return (
-              <TableRow key={index}>
-                <TableCell className="font-medium">{item.itemName}</TableCell>
-                <TableCell className="text-right">{item.feet ? item.feet.toFixed(2) : '-'}</TableCell>
-                <TableCell className="text-right">{item.quantity}</TableCell>
-                <TableCell className="text-right">{formatCurrency(item.price)}</TableCell>
-              </TableRow>
-            );
-          })}
-        </TableBody>
-      </Table>
+        
+        {/* Separator */}
+        <div className="border-l-2 border-dashed border-gray-400"></div>
+
+        {/* Right Copy */}
+        <div className="w-1/2">
+            <InvoiceCopy sale={sale} />
+        </div>
     </div>
   );
 }
