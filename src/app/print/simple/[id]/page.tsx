@@ -14,10 +14,12 @@ const ItemsTable = ({ items }: { items: SaleItem[] }) => {
     if (items.length === 0) {
         return null;
     }
+    // The parent div will have `columns-2`, so we render a single table.
+    // `break-inside-avoid` on the row prevents it from splitting across columns.
     return (
         <Table>
             <TableHeader>
-                <TableRow>
+                <TableRow className="break-inside-avoid">
                     <TableHead className="w-[50%] h-auto p-1">Section Name</TableHead>
                     <TableHead className="text-right h-auto p-1">Feet</TableHead>
                     <TableHead className="text-right h-auto p-1">Qty</TableHead>
@@ -26,7 +28,7 @@ const ItemsTable = ({ items }: { items: SaleItem[] }) => {
             </TableHeader>
             <TableBody>
                 {items.map((item, index) => (
-                    <TableRow key={index}>
+                    <TableRow key={index} className="break-inside-avoid">
                         <TableCell className="font-medium p-1">{item.itemName}</TableCell>
                         <TableCell className="text-right p-1">{item.feet ? item.feet.toFixed(2) : '-'}</TableCell>
                         <TableCell className="text-right p-1">{item.quantity}</TableCell>
@@ -65,11 +67,6 @@ export default function PrintSimpleInvoicePage() {
   
   const isUniformColor = sale.items.length > 0 && sale.items.every(item => item.color === sale.items[0].color);
   const isUniformThickness = sale.items.length > 0 && sale.items.every(item => item.thickness === sale.items[0].thickness);
-  
-  const midpoint = Math.ceil(sale.items.length / 2);
-  const leftItems = sale.items.slice(0, midpoint);
-  const rightItems = sale.items.slice(midpoint);
-
 
   return (
     <div className="p-4 bg-white text-black font-sans text-xs">
@@ -86,16 +83,8 @@ export default function PrintSimpleInvoicePage() {
             )}
         </div>
 
-        <div className="flex flex-row gap-4">
-            <div className="flex-1">
-                <ItemsTable items={leftItems} />
-            </div>
-            
-            {rightItems.length > 0 && <div className="border-l border-dashed border-gray-400"></div>}
-
-            <div className="flex-1">
-                 {rightItems.length > 0 && <ItemsTable items={rightItems} />}
-            </div>
+        <div className="columns-2 gap-x-8">
+             <ItemsTable items={sale.items} />
         </div>
     </div>
   );
