@@ -47,15 +47,18 @@ export default function PrintSimpleInvoicePage() {
 
   return (
     <div className="p-4 bg-white text-black font-sans text-xs">
-        <div className="text-center font-bold mb-4">
+        <div className="text-right font-bold mb-4">
             <p>
-                {sale.customerName.toUpperCase()} | {formatDate(sale.date)} | {sale.id}
+                {sale.customerName.toUpperCase()}
+            </p>
+            <p>
+                {formatDate(sale.date)} | {sale.id}
             </p>
         </div>
 
-        <div className="columns-2 gap-x-8">
+        <div>
             {Object.entries(groupedItems).map(([groupName, items]) => (
-                <div key={groupName} className="break-inside-avoid mb-4">
+                <div key={groupName} className="mb-4">
                     <h2 className="font-bold text-center mb-1 underline">{groupName}</h2>
                     <Table>
                         <TableHeader>
@@ -68,7 +71,7 @@ export default function PrintSimpleInvoicePage() {
                         </TableHeader>
                         <TableBody>
                             {items.map((item, index) => (
-                                <TableRow key={index} className="border-none break-inside-avoid">
+                                <TableRow key={index} className="border-none">
                                     <TableCell className="p-1 font-semibold">{item.itemName}</TableCell>
                                     <TableCell className="text-right p-1 font-semibold">{item.feet ? item.feet.toFixed(1) : '-'}</TableCell>
                                     <TableCell className="text-right p-1 font-semibold">{item.quantity}</TableCell>
