@@ -18,21 +18,18 @@ export default function PrintSimpleInvoicePage() {
   const groupedItems = useMemo(() => {
     if (!sale) return {};
     const sortedItems = [...sale.items].sort((a, b) => {
-        // First sort by thickness (assuming it's a string like '1.2mm')
         const thicknessA = parseFloat(a.thickness || '0');
         const thicknessB = parseFloat(b.thickness || '0');
         if (thicknessA !== thicknessB) {
             return thicknessA - thicknessB;
         }
-        // Then sort by color
         if (a.color !== b.color) {
             return (a.color || '').localeCompare(b.color || '');
         }
-        // Finally, sort by item name
         return a.itemName.localeCompare(b.itemName);
     });
     return sortedItems.reduce((acc, item) => {
-      const key = `${item.thickness || 'N/A'} ${item.color || 'N/A'}`.toUpperCase();
+      const key = `${item.thickness || 'N/A'}mm ${item.color || 'N/A'}`.toUpperCase();
       if (!acc[key]) {
         acc[key] = [];
       }
@@ -86,9 +83,9 @@ export default function PrintSimpleInvoicePage() {
                                 {items.map((item, index) => (
                                     <TableRow key={index} className="border-none">
                                         <TableCell className="p-1 font-semibold border-r">{item.itemName}</TableCell>
-                                        <TableCell className="text-right p-1 font-semibold border-r">{item.feet ? item.feet.toFixed(1) : '-'}</TableCell>
+                                        <TableCell className="text-right p-1 font-semibold border-r">{item.feet ? item.feet.toFixed(0) : '-'}</TableCell>
                                         <TableCell className="text-right p-1 font-semibold border-r">{item.quantity}</TableCell>
-                                        <TableCell className="text-right p-1 font-semibold">{item.price.toLocaleString()}</TableCell>
+                                        <TableCell className="text-right p-1 font-semibold">{item.price}</TableCell>
                                     </TableRow>
                                 ))}
                             </TableBody>
