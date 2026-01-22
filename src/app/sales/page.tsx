@@ -109,16 +109,16 @@ function SaleDetailsView({ sale }: { sale: Sale }) {
                         <div className="flex justify-between items-start">
                             <div>
                                 <h1 className="text-4xl font-extrabold">ARCO Aluminium Company</h1>
-                                <p className="text-sm text-teal-100 font-semibold">B-5, PLOT 59, Industrial Estate, Hayatabad, Peshawar</p>
-                                <p className="text-sm text-teal-100 font-semibold">+92 333 4646356</p>
+                                <p className="text-sm text-teal-100 font-extrabold">B-5, PLOT 59, Industrial Estate, Hayatabad, Peshawar</p>
+                                <p className="text-sm text-teal-100 font-extrabold">+92 333 4646356</p>
                             </div>
                             <div className="text-right">
                                 <h2 className="text-2xl font-extrabold uppercase">Invoice</h2>
                                 <div className="grid grid-cols-2 gap-x-4 mt-2 text-sm">
                                     <span className="font-bold">Date:</span>
-                                    <span className="font-bold">{formatDate(sale.date)}</span>
+                                    <span className="font-extrabold">{formatDate(sale.date)}</span>
                                     <span className="font-bold">Invoice #:</span>
-                                    <span className="font-bold">{sale.id}</span>
+                                    <span className="font-extrabold">{sale.id}</span>
                                 </div>
                             </div>
                         </div>
