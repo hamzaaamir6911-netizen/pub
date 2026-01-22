@@ -58,9 +58,9 @@ export default function PrintSimpleInvoicePage() {
             </p>
         </div>
 
-        <div className="flex flex-row items-start gap-4">
+        <div>
             {Object.values(groupedItems).map((group) => (
-                <div key={group.groupName} className="flex-shrink-0">
+                <div key={group.groupName} className="mb-4 break-inside-avoid">
                     <p className="font-bold text-center mb-1">{group.groupName}</p>
                     <Table>
                         <TableHeader>
