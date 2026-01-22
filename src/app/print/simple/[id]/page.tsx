@@ -17,8 +17,13 @@ export default function PrintSimpleInvoicePage() {
 
   const groupedItems = useMemo(() => {
     if (!sale) return {};
-    // Sort items first to ensure consistent order within groups
-    const sorted = [...sale.items].sort((a, b) => a.itemName.localeCompare(b.itemName));
+    const sorted = [...sale.items].sort((a, b) => {
+        const keyA = `${a.thickness || 'N/A'}-${a.color || 'N/A'}`;
+        const keyB = `${b.thickness || 'N/A'}-${b.color || 'N/A'}`;
+        if (keyA < keyB) return -1;
+        if (keyA > keyB) return 1;
+        return a.itemName.localeCompare(b.itemName);
+    });
 
     return sorted.reduce((acc, item) => {
         const key = `${item.thickness || 'N/A'}mm ${item.color || 'N/A'}`;
@@ -49,17 +54,16 @@ export default function PrintSimpleInvoicePage() {
   }
 
   return (
-     <div className="p-4 bg-white text-black font-sans text-xs">
-        {/* Header */}
-        <div className="text-left font-bold mb-4">
-            <p>{sale.customerName.toUpperCase()}</p>
-            <p>DATE: {formatDate(sale.date)} | BILL #: {sale.id}</p>
-        </div>
+     <div className="p-4 bg-white text-black font-sans text-xs flex justify-start">
+       <div className="w-auto">
+            {/* Header */}
+            <div className="text-left font-bold mb-4">
+                <p>{sale.customerName.toUpperCase()}</p>
+                <p>DATE: {formatDate(sale.date)} | BILL #: {sale.id}</p>
+            </div>
 
-        {/* Multi-column container */}
-        <div className="columns-2 gap-x-4">
             {Object.entries(groupedItems).map(([groupName, items]) => (
-                <div key={groupName} className="break-inside-avoid mb-2">
+                <div key={groupName} className="mb-2">
                     <p className="font-bold text-center border-y border-black">{groupName}</p>
                     <Table className="border-collapse table-fixed w-auto">
                          <TableHeader>
@@ -73,16 +77,16 @@ export default function PrintSimpleInvoicePage() {
                         <TableBody>
                             {items.map((item, index) => (
                                 <TableRow key={index} className="border-none">
-                                    <TableCell className="px-1 py-0.5 font-semibold border-x border-b border-black" style={{ width: '88px' }}>
+                                    <TableCell className="px-1 py-0.5 font-semibold border-x border-b border-black">
                                         {item.itemName}
                                     </TableCell>
-                                    <TableCell className="text-right px-1 py-0.5 font-semibold border-r border-b border-black" style={{ width: '33px' }}>
+                                    <TableCell className="text-right px-1 py-0.5 font-semibold border-r border-b border-black">
                                         {item.feet ? item.feet.toFixed(0) : '-'}
                                     </TableCell>
-                                    <TableCell className="text-right px-1 py-0.5 font-semibold border-r border-b border-black" style={{ width: '33px' }}>
+                                    <TableCell className="text-right px-1 py-0.5 font-semibold border-r border-b border-black">
                                         {item.quantity}
                                     </TableCell>
-                                    <TableCell className="text-right px-1 py-0.5 font-semibold border-r border-b border-black" style={{ width: '33px' }}>
+                                    <TableCell className="text-right px-1 py-0.5 font-semibold border-r border-b border-black">
                                         {item.price}
                                     </TableCell>
                                 </TableRow>
