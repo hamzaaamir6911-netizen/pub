@@ -12,7 +12,7 @@ import type { Sale, SaleItem } from "@/lib/types";
 const InvoiceCopy = ({ sale, groupedItems }: { sale: Sale, groupedItems: Record<string, SaleItem[]> }) => (
     <div className="w-full max-w-md">
         {/* Header */}
-        <div className="text-left font-bold mb-2">
+        <div className="text-left font-bold mb-4">
             <p>{sale.customerName.toUpperCase()}</p>
             <p>DATE: {formatDate(sale.date)} | BILL #: {sale.id}</p>
         </div>
@@ -25,10 +25,10 @@ const InvoiceCopy = ({ sale, groupedItems }: { sale: Sale, groupedItems: Record<
                     <Table className="border">
                         <TableHeader>
                             <TableRow className="border-b-2 border-black">
-                                <TableHead className="h-auto p-1 font-bold w-[40%] border-r">Section</TableHead>
-                                <TableHead className="text-right h-auto p-1 font-bold w-[20%] border-r">Feet</TableHead>
-                                <TableHead className="text-right h-auto p-1 font-bold w-[20%] border-r">Qty</TableHead>
-                                <TableHead className="text-right h-auto p-1 font-bold w-[20%]">Rate</TableHead>
+                                <TableHead className="h-auto p-1 font-bold w-[30%] border-r">Section</TableHead>
+                                <TableHead className="text-right h-auto p-1 font-bold w-[15%] border-r">Feet</TableHead>
+                                <TableHead className="text-right h-auto p-1 font-bold w-[15%] border-r">Qty</TableHead>
+                                <TableHead className="text-right h-auto p-1 font-bold w-[40%]">Rate</TableHead>
                             </TableRow>
                         </TableHeader>
                         <TableBody>
