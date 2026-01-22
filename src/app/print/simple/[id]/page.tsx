@@ -85,19 +85,8 @@ export default function PrintSimpleInvoicePage() {
   }
   
   return (
-    <div className="p-4 bg-white text-black font-sans text-xs flex">
-        {/* Left Copy */}
-        <div className="w-1/2">
-            <InvoiceCopy sale={sale} />
-        </div>
-        
-        {/* Separator */}
-        <div className="border-l-2 border-dashed border-gray-400"></div>
-
-        {/* Right Copy */}
-        <div className="w-1/2">
-            <InvoiceCopy sale={sale} />
-        </div>
+    <div className="p-4 bg-white text-black font-sans text-xs">
+        <InvoiceCopy sale={sale} />
     </div>
   );
 }
