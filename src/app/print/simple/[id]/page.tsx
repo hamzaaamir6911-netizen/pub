@@ -8,8 +8,9 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { formatDate } from "@/lib/utils";
 import type { Sale, SaleItem } from "@/lib/types";
 
+// This component renders one copy of the invoice.
 const InvoiceCopy = ({ sale, groupedItems }: { sale: Sale, groupedItems: Record<string, SaleItem[]> }) => (
-    <div className="w-1/2 px-1">
+    <div className="px-1">
         {/* Header */}
         <div className="text-left font-bold mb-2">
             <p>{sale.customerName.toUpperCase()} {formatDate(sale.date)} {sale.id}</p>
@@ -43,7 +44,6 @@ const InvoiceCopy = ({ sale, groupedItems }: { sale: Sale, groupedItems: Record<
         </div>
     </div>
 );
-
 
 export default function PrintSimpleInvoicePage() {
   const { id } = useParams();
@@ -84,10 +84,9 @@ export default function PrintSimpleInvoicePage() {
   }
 
   return (
-    <div className="p-2 bg-white text-black font-sans text-xs flex flex-row">
-        <InvoiceCopy sale={sale} groupedItems={groupedItems} />
-        <div className="border-l border-dashed border-gray-400 mx-1"></div>
+    <div className="p-2 bg-white text-black font-sans text-xs">
         <InvoiceCopy sale={sale} groupedItems={groupedItems} />
     </div>
   );
 }
+
