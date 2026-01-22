@@ -5,12 +5,12 @@ import { useEffect, useMemo } from "react";
 import { useParams } from "next/navigation";
 import { useData } from "@/firebase/data/data-provider";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { formatDate, formatCurrency } from "@/lib/utils";
+import { formatDate } from "@/lib/utils";
 import type { Sale, SaleItem } from "@/lib/types";
 
 // This component renders one copy of the invoice.
 const InvoiceCopy = ({ sale, groupedItems }: { sale: Sale, groupedItems: Record<string, SaleItem[]> }) => (
-    <div className="w-1/2">
+    <div className="w-full max-w-md">
         {/* Header */}
         <div className="text-left font-bold mb-2">
             <p>{sale.customerName.toUpperCase()}</p>
@@ -25,10 +25,10 @@ const InvoiceCopy = ({ sale, groupedItems }: { sale: Sale, groupedItems: Record<
                     <Table className="border">
                         <TableHeader>
                             <TableRow className="border-b-2 border-black">
-                                <TableHead className="h-auto p-1 font-bold w-[45%] border-r">Section</TableHead>
-                                <TableHead className="text-right h-auto p-1 font-bold border-r">Feet</TableHead>
-                                <TableHead className="text-right h-auto p-1 font-bold border-r">Qty</TableHead>
-                                <TableHead className="text-right h-auto p-1 font-bold">Rate</TableHead>
+                                <TableHead className="h-auto p-1 font-bold w-[40%] border-r">Section</TableHead>
+                                <TableHead className="text-right h-auto p-1 font-bold w-[20%] border-r">Feet</TableHead>
+                                <TableHead className="text-right h-auto p-1 font-bold w-[20%] border-r">Qty</TableHead>
+                                <TableHead className="text-right h-auto p-1 font-bold w-[20%]">Rate</TableHead>
                             </TableRow>
                         </TableHeader>
                         <TableBody>
@@ -37,7 +37,7 @@ const InvoiceCopy = ({ sale, groupedItems }: { sale: Sale, groupedItems: Record<
                                     <TableCell className="p-1 font-semibold border-r">{item.itemName}</TableCell>
                                     <TableCell className="text-right p-1 font-semibold border-r">{item.feet ? item.feet.toFixed(1) : '-'}</TableCell>
                                     <TableCell className="text-right p-1 font-semibold border-r">{item.quantity}</TableCell>
-                                    <TableCell className="text-right p-1 font-semibold">{formatCurrency(item.price)}</TableCell>
+                                    <TableCell className="text-right p-1 font-semibold">{item.price.toLocaleString()}</TableCell>
                                 </TableRow>
                             ))}
                         </TableBody>
