@@ -29,7 +29,7 @@ export default function PrintSimpleInvoicePage() {
         return a.itemName.localeCompare(b.itemName);
     });
     return sortedItems.reduce((acc, item) => {
-      const key = `${item.thickness || 'N/A'}mm ${item.color || 'N/A'}`.toUpperCase();
+      const key = `${item.thickness || 'N/A'} ${item.color || 'N/A'}`.toUpperCase();
       if (!acc[key]) {
         acc[key] = [];
       }
@@ -69,23 +69,23 @@ export default function PrintSimpleInvoicePage() {
             <div className="flex flex-col space-y-4">
                 {Object.entries(groupedItems).map(([groupName, items]) => (
                     <div key={groupName} className="break-inside-avoid">
-                        <h2 className="font-bold text-center mb-1 underline">{groupName}</h2>
+                        <h2 className="font-bold text-center mb-1 underline">{groupName}mm</h2>
                         <Table className="border table-fixed w-auto">
                             <TableHeader>
                                 <TableRow className="border-b-2 border-black">
-                                    <TableHead className="h-auto p-1 font-bold border-r" style={{ width: '88px' }}>Section</TableHead>
-                                    <TableHead className="text-right h-auto p-1 font-bold border-r" style={{ width: '33px' }}>Feet</TableHead>
-                                    <TableHead className="text-right h-auto p-1 font-bold border-r" style={{ width: '33px' }}>Qty</TableHead>
-                                    <TableHead className="text-right h-auto p-1 font-bold" style={{ width: '33px' }}>Rate</TableHead>
+                                    <TableHead className="h-auto px-1 py-0.5 font-bold border-r" style={{ width: '88px' }}>Section</TableHead>
+                                    <TableHead className="text-right h-auto px-1 py-0.5 font-bold border-r" style={{ width: '33px' }}>Feet</TableHead>
+                                    <TableHead className="text-right h-auto px-1 py-0.5 font-bold border-r" style={{ width: '33px' }}>Qty</TableHead>
+                                    <TableHead className="text-right h-auto px-1 py-0.5 font-bold" style={{ width: '33px' }}>Rate</TableHead>
                                 </TableRow>
                             </TableHeader>
                             <TableBody>
                                 {items.map((item, index) => (
                                     <TableRow key={index} className="border-none">
-                                        <TableCell className="p-1 font-semibold border-r">{item.itemName}</TableCell>
-                                        <TableCell className="text-right p-1 font-semibold border-r">{item.feet ? item.feet.toFixed(0) : '-'}</TableCell>
-                                        <TableCell className="text-right p-1 font-semibold border-r">{item.quantity}</TableCell>
-                                        <TableCell className="text-right p-1 font-semibold">{item.price}</TableCell>
+                                        <TableCell className="px-1 py-0.5 font-semibold border-r">{item.itemName}</TableCell>
+                                        <TableCell className="text-right px-1 py-0.5 font-semibold border-r">{item.feet ? item.feet.toFixed(0) : '-'}</TableCell>
+                                        <TableCell className="text-right px-1 py-0.5 font-semibold border-r">{item.quantity}</TableCell>
+                                        <TableCell className="text-right px-1 py-0.5 font-semibold">{item.price}</TableCell>
                                     </TableRow>
                                 ))}
                             </TableBody>
