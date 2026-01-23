@@ -20,11 +20,43 @@ function SalesReportContent() {
     if (isDataLoading || !sales) return [];
     return sales
       .filter(s => selectedIds.includes(s.id))
+      .map(sale => {
+        let t1Value = 0;
+        let t2Value = 0;
+
+        sale.items.forEach(item => {
+            const itemTotal = (item.feet || 1) * item.price * item.quantity;
+            const discountAmount = itemTotal * ((item.discount || 0) / 100);
+            const finalAmount = itemTotal - discountAmount;
+
+            if (item.itemName.trim().toLowerCase() === 'd 29') {
+                t1Value += finalAmount;
+            } else {
+                t2Value += finalAmount;
+            }
+        });
+        
+        const subTotal = t1Value + t2Value;
+        if (subTotal === 0) { // Avoid division by zero
+          return { ...sale, t1Amount: 0, t2Amount: 0 };
+        }
+        
+        // Apply overall discount proportionally
+        const t1Amount = t1Value * (1 - (sale.discount / 100));
+        const t2Amount = t2Value * (1 - (sale.discount / 100));
+
+        return { ...sale, t1Amount, t2Amount };
+      })
       .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
   }, [sales, selectedIds, isDataLoading]);
 
-  const grandTotal = useMemo(() => {
-    return reportSales.reduce((acc, sale) => acc + sale.total, 0);
+  const grandTotals = useMemo(() => {
+    return reportSales.reduce((acc, sale) => {
+        acc.total += sale.total;
+        acc.t1 += sale.t1Amount || 0;
+        acc.t2 += sale.t2Amount || 0;
+        return acc;
+    }, { total: 0, t1: 0, t2: 0 });
   }, [reportSales]);
   
   const isLoading = isDataLoading && reportSales.length === 0;
@@ -62,8 +94,9 @@ function SalesReportContent() {
                     <TableHead className="font-extrabold text-black">Invoice #</TableHead>
                     <TableHead className="font-extrabold text-black">Date</TableHead>
                     <TableHead className="font-extrabold text-black">Customer Name</TableHead>
-                    <TableHead className="font-extrabold text-black">Description</TableHead>
-                    <TableHead className="text-right font-extrabold text-black">Amount</TableHead>
+                    <TableHead className="text-right font-extrabold text-black">T1 (D 29)</TableHead>
+                    <TableHead className="text-right font-extrabold text-black">T2 (Other)</TableHead>
+                    <TableHead className="text-right font-extrabold text-black">Total Amount</TableHead>
                 </TableRow>
             </TableHeader>
             <TableBody>
@@ -72,15 +105,18 @@ function SalesReportContent() {
                         <TableCell className="font-semibold">{sale.id}</TableCell>
                         <TableCell>{formatDate(sale.date)}</TableCell>
                         <TableCell>{sale.customerName}</TableCell>
-                        <TableCell>{sale.description || '-'}</TableCell>
+                        <TableCell className="text-right font-semibold">{formatCurrency(sale.t1Amount || 0)}</TableCell>
+                        <TableCell className="text-right font-semibold">{formatCurrency(sale.t2Amount || 0)}</TableCell>
                         <TableCell className="text-right font-bold">{formatCurrency(sale.total)}</TableCell>
                     </TableRow>
                 ))}
             </TableBody>
             <TableFooter>
                 <TableRow className="bg-gray-100">
-                    <TableCell colSpan={4} className="text-right font-extrabold text-lg">Grand Total</TableCell>
-                    <TableCell className="text-right font-extrabold text-lg">{formatCurrency(grandTotal)}</TableCell>
+                    <TableCell colSpan={3} className="text-right font-extrabold text-lg">Grand Totals</TableCell>
+                    <TableCell className="text-right font-extrabold text-lg">{formatCurrency(grandTotals.t1)}</TableCell>
+                    <TableCell className="text-right font-extrabold text-lg">{formatCurrency(grandTotals.t2)}</TableCell>
+                    <TableCell className="text-right font-extrabold text-lg">{formatCurrency(grandTotals.total)}</TableCell>
                 </TableRow>
             </TableFooter>
         </Table>
