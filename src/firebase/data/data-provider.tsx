@@ -21,6 +21,7 @@ interface DataContextProps {
   addItem: (item: Omit<Item, 'id' | 'createdAt'>) => Promise<any>;
   deleteItem: (id: string) => Promise<void>;
   updateItem: (id: string, item: Partial<Omit<Item, 'id' | 'createdAt'>>) => Promise<void>;
+  batchUpdateRates: (updates: { id: string, salePrice: number }[]) => Promise<void>;
   updateItemStock: (id: string, newQuantity: number) => Promise<void>;
   addCustomer: (customer: Omit<Customer, 'id' | 'createdAt'>) => Promise<any>;
   updateCustomer: (id: string, customer: Partial<Omit<Customer, 'id' | 'createdAt'>>) => Promise<void>;
@@ -322,6 +323,18 @@ export const DataProvider = ({ children }: { children: ReactNode }) => {
         if (!user) throw new Error("User not authenticated");
         const itemRef = doc(firestore, 'items', id);
         return updateDocumentNonBlocking(itemRef, item);
+    };
+
+    const batchUpdateRates = async (updates: { id: string, salePrice: number }[]) => {
+        if (!user || updates.length === 0) return;
+    
+        const batch = writeBatch(firestore);
+        updates.forEach(update => {
+            const itemRef = doc(firestore, 'items', update.id);
+            batch.update(itemRef, { salePrice: update.salePrice });
+        });
+    
+        await batch.commit();
     };
 
     const updateItemStock = async (id: string, newQuantity: number) => {
@@ -844,7 +857,7 @@ export const DataProvider = ({ children }: { children: ReactNode }) => {
     
     const value = {
         items, customers, sales, vendors, labourers, transactions, salaryPayments, loading,
-        addItem, deleteItem, updateItem, updateItemStock,
+        addItem, deleteItem, updateItem, batchUpdateRates, updateItemStock,
         addCustomer, updateCustomer, deleteCustomer,
         addVendor, deleteVendor,
         addLabour, updateLabour, deleteLabour,

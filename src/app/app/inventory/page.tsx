@@ -1,8 +1,9 @@
 
 "use client";
 
-import { useState } from "react";
-import { MoreHorizontal, PlusCircle } from "lucide-react";
+import { useState, useRef } from "react";
+import { MoreHorizontal, PlusCircle, FileUp } from "lucide-react";
+import * as XLSX from "xlsx";
 import {
   Table,
   TableBody,
@@ -237,11 +238,80 @@ function EditItemForm({ item, onItemUpdated, onOpenChange }: { item: Item; onIte
 }
 
 export default function InventoryPage() {
-  const { items, addItem, deleteItem, updateItem } = useData();
+  const { items, addItem, deleteItem, updateItem, batchUpdateRates } = useData();
   const [isItemModalOpen, setItemModalOpen] = useState(false);
   const [isEditModalOpen, setEditModalOpen] = useState(false);
   const [editingItem, setEditingItem] = useState<Item | null>(null);
   const [thicknessFilter, setThicknessFilter] = useState<string>("");
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const { toast } = useToast();
+
+  const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = async (e) => {
+        try {
+            const data = e.target?.result;
+            const workbook = XLSX.read(data, { type: 'binary' });
+            const sheetName = workbook.SheetNames[0];
+            const worksheet = workbook.Sheets[sheetName];
+            const jsonData = XLSX.utils.sheet_to_json(worksheet) as { Name: string, Thickness: string, SalePrice: number }[];
+
+            const updates: { id: string, salePrice: number }[] = [];
+            let notFoundCount = 0;
+            const notFoundItems: string[] = [];
+
+            jsonData.forEach(row => {
+                const name = row.Name?.trim().toLowerCase();
+                const thickness = String(row.Thickness)?.trim().toLowerCase();
+                const salePrice = row.SalePrice;
+
+                if (!name || !thickness || isNaN(salePrice)) {
+                    return; // Skip invalid rows
+                }
+
+                const itemToUpdate = items.find(i => 
+                    i.name.trim().toLowerCase() === name && 
+                    i.thickness.trim().toLowerCase() === thickness
+                );
+
+                if (itemToUpdate) {
+                    updates.push({ id: itemToUpdate.id, salePrice });
+                } else {
+                    notFoundCount++;
+                    notFoundItems.push(`${row.Name} (${row.Thickness})`);
+                }
+            });
+
+            if (updates.length > 0) {
+                await batchUpdateRates(updates);
+            }
+
+            toast({
+                title: "Rate Update Complete",
+                description: `${updates.length} items updated successfully. ${notFoundCount} items from the file were not found.`,
+            });
+             if (notFoundCount > 0) {
+                console.warn("Items not found in inventory:", notFoundItems);
+            }
+            
+        } catch (error) {
+            console.error("Error processing Excel file:", error);
+            toast({
+                variant: "destructive",
+                title: "Error",
+                description: "Failed to process Excel file. Ensure it has 'Name', 'Thickness', and 'SalePrice' columns.",
+            });
+        } finally {
+            if(fileInputRef.current) {
+                fileInputRef.current.value = "";
+            }
+        }
+    };
+    reader.readAsBinaryString(file);
+  };
 
   const handleDelete = (id: string) => {
     deleteItem(id);
@@ -281,15 +351,28 @@ export default function InventoryPage() {
         title="Inventory"
         description="Manage your stock of materials and accessories."
       >
-        <Dialog open={isItemModalOpen} onOpenChange={setItemModalOpen}>
-            <DialogTrigger asChild>
-                <Button>
-                    <PlusCircle className="mr-2 h-4 w-4" />
-                    Add Item
-                </Button>
-            </DialogTrigger>
-            <AddItemForm onItemAdded={handleItemAdded} existingItems={items} />
-        </Dialog>
+        <div className="flex items-center gap-2">
+            <Button variant="outline" onClick={() => fileInputRef.current?.click()}>
+                <FileUp className="mr-2 h-4 w-4" />
+                Update Rates via Excel
+            </Button>
+            <input
+                type="file"
+                ref={fileInputRef}
+                onChange={handleFileChange}
+                className="hidden"
+                accept=".xlsx, .xls, .csv"
+            />
+            <Dialog open={isItemModalOpen} onOpenChange={setItemModalOpen}>
+                <DialogTrigger asChild>
+                    <Button>
+                        <PlusCircle className="mr-2 h-4 w-4" />
+                        Add Item
+                    </Button>
+                </DialogTrigger>
+                <AddItemForm onItemAdded={handleItemAdded} existingItems={items} />
+            </Dialog>
+        </div>
       </PageHeader>
 
        <div className="flex items-center gap-4 mb-4 p-4 bg-muted/50 rounded-lg">
@@ -381,5 +464,3 @@ export default function InventoryPage() {
     </>
   );
 }
-
-    
