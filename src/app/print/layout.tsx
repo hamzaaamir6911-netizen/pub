@@ -1,6 +1,7 @@
 
 import React from 'react';
 import type { Metadata } from 'next'
+import { FirebaseClientProvider } from '@/firebase/client-provider';
 
 export const metadata: Metadata = {
   title: 'Print View',
@@ -8,10 +9,13 @@ export const metadata: Metadata = {
 
 export default function PrintLayout({ children }: { children: React.ReactNode }) {
   // This layout ensures the print pages are clean and have no extra elements.
+  // It includes the FirebaseClientProvider to ensure data is available for printing.
   return (
     <html lang="en">
       <body>
-          {children}
+          <FirebaseClientProvider>
+            {children}
+          </FirebaseClientProvider>
       </body>
     </html>
   );
