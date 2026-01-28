@@ -23,7 +23,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { PageHeader } from "@/components/page-header";
 import { formatCurrency, formatDate } from "@/lib/utils";
-import type { Expense, Transaction } from "@/lib/types";
+import type { Expense } from "@/lib/types";
 import { useData } from "@/firebase/data/data-provider";
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { useToast } from "@/hooks/use-toast";
@@ -113,17 +113,14 @@ export default function ExpensesPage() {
   const shouldFetch = !!user;
 
   const expensesCol = useMemoFirebase(() => shouldFetch ? query(collection(firestore, 'expenses'), orderBy('date', 'desc')) : null, [firestore, shouldFetch]);
-  const transactionsCol = useMemoFirebase(() => shouldFetch ? collection(firestore, 'transactions') : null, [firestore, shouldFetch]);
   
   const { data: expensesData } = useCollection<Expense>(expensesCol);
-  const { data: transactionsData } = useCollection<Transaction>(transactionsCol);
   const expenses = expensesData || [];
-  const transactions = transactionsData || [];
   
   const [isExpenseModalOpen, setExpenseModalOpen] = useState(false);
 
   const handleDelete = (expense: Expense) => {
-    deleteExpense(expense, transactions);
+    deleteExpense(expense);
   };
   
   const handleExpenseAdded = (newExpense: Omit<Expense, 'id' | 'date'>) => {

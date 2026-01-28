@@ -12,12 +12,9 @@ import { deleteDocumentNonBlocking, updateDocumentNonBlocking } from '../non-blo
 interface DataContextProps {
   items: Item[];
   customers: Customer[];
-  sales: Sale[];
   vendors: Vendor[];
   labourers: Labour[];
-  transactions: Transaction[];
-  salaryPayments: SalaryPayment[];
-  loading: boolean; // This will now represent loading of all core data
+  loading: boolean;
   addItem: (item: Omit<Item, 'id' | 'createdAt'>) => Promise<any>;
   deleteItem: (id: string) => Promise<void>;
   updateItem: (id: string, item: Partial<Omit<Item, 'id' | 'createdAt'>>) => Promise<void>;
@@ -41,7 +38,7 @@ interface DataContextProps {
   deleteEstimate: (id: string) => Promise<void>;
   createSaleFromEstimate: (estimate: Estimate) => Promise<void>;
   addExpense: (expense: Omit<Expense, 'id' | 'date'>) => Promise<void>;
-  deleteExpense: (expense: Expense, transactions: Transaction[]) => Promise<void>;
+  deleteExpense: (expense: Expense) => Promise<void>;
   addTransaction: (transaction: Omit<Transaction, 'id'>) => Promise<any>;
   updateTransaction: (id: string, transaction: Partial<Omit<Transaction, 'id'>>) => Promise<void>;
   deleteTransaction: (id: string) => Promise<void>;
@@ -284,29 +281,20 @@ export const DataProvider = ({ children }: { children: ReactNode }) => {
 
     const itemsCol = useMemoFirebase(() => shouldFetch ? collection(firestore, 'items') : null, [firestore, shouldFetch]);
     const customersCol = useMemoFirebase(() => shouldFetch ? collection(firestore, 'customers') : null, [firestore, shouldFetch]);
-    const salesCol = useMemoFirebase(() => shouldFetch ? collection(firestore, 'sales') : null, [firestore, shouldFetch]);
     const vendorsCol = useMemoFirebase(() => shouldFetch ? collection(firestore, 'vendors') : null, [firestore, shouldFetch]);
     const labourCol = useMemoFirebase(() => shouldFetch ? collection(firestore, 'labour') : null, [firestore, shouldFetch]);
-    const transactionsCol = useMemoFirebase(() => shouldFetch ? collection(firestore, 'transactions') : null, [firestore, shouldFetch]);
-    const salaryPaymentsCol = useMemoFirebase(() => shouldFetch ? collection(firestore, 'salaryPayments') : null, [firestore, shouldFetch]);
     
     const { data: itemsData, isLoading: itemsLoading } = useCollection<Item>(itemsCol);
     const { data: customersData, isLoading: customersLoading } = useCollection<Customer>(customersCol);
-    const { data: salesData, isLoading: salesLoading } = useCollection<Sale>(salesCol);
     const { data: vendorsData, isLoading: vendorsLoading } = useCollection<Vendor>(vendorsCol);
     const { data: labourData, isLoading: labourLoading } = useCollection<Labour>(labourCol);
-    const { data: transactionsData, isLoading: transactionsLoading } = useCollection<Transaction>(transactionsCol);
-    const { data: salaryPaymentsData, isLoading: salaryPaymentsLoading } = useCollection<SalaryPayment>(salaryPaymentsCol);
 
     const items = itemsData?.map(item => ({ ...item, quantity: item.quantity ?? 0, createdAt: toDate(item.createdAt) as Date })) || [];
     const customers = customersData?.map(customer => ({ ...customer, createdAt: toDate(customer.createdAt) as Date })) || [];
-    const sales = salesData?.map(sale => ({ ...sale, date: toDate(sale.date) as Date })) || [];
     const vendors = vendorsData?.map(vendor => ({ ...vendor, createdAt: toDate(vendor.createdAt) as Date })) || [];
     const labourers = labourData?.map(labourer => ({ ...labourer, createdAt: toDate(labourer.createdAt) as Date })) || [];
-    const transactions = transactionsData?.map(t => ({ ...t, date: toDate(t.date) as Date })) || [];
-    const salaryPayments = salaryPaymentsData?.map(p => ({ ...p, date: toDate(p.date) as Date })) || [];
 
-    const loading = isUserLoading || itemsLoading || customersLoading || salesLoading || vendorsLoading || labourLoading || transactionsLoading || salaryPaymentsLoading;
+    const loading = isUserLoading || itemsLoading || customersLoading || vendorsLoading || labourLoading;
 
     const addItem = async (item: Omit<Item, 'id' | 'createdAt'>) => {
         if (!itemsCol) throw new Error("Items collection not available");
@@ -744,7 +732,7 @@ export const DataProvider = ({ children }: { children: ReactNode }) => {
         await batch.commit();
     };
 
-    const deleteExpense = async (expense: Expense, transactions: Transaction[]) => {
+    const deleteExpense = async (expense: Expense) => {
         if (!user) throw new Error("User not authenticated");
         if (!expense) return;
 
@@ -752,17 +740,23 @@ export const DataProvider = ({ children }: { children: ReactNode }) => {
         const expenseRef = doc(firestore, 'expenses', expense.id);
         batch.delete(expenseRef);
     
-        const transactionToDelete = transactions.find(t => 
-            t.category === expense.category &&
-            t.description === expense.title &&
-            t.amount === expense.amount &&
-            t.type === 'debit'
+        const q = query(
+            collection(firestore, "transactions"),
+            where("category", "==", expense.category),
+            where("description", "==", expense.title),
+            where("amount", "==", expense.amount),
+            where("type", "==", "debit")
         );
-        if(transactionToDelete) {
-            batch.delete(doc(firestore, 'transactions', transactionToDelete.id));
+        
+        try {
+            const querySnapshot = await getDocs(q);
+            querySnapshot.forEach((doc) => {
+                batch.delete(doc.ref);
+            });
+            await batch.commit();
+        } catch(error) {
+            console.error("Error deleting related transaction for expense:", error);
         }
-
-        await batch.commit();
     };
     
     const addSalaryPayment = async (payment: Omit<SalaryPayment, 'id' | 'date'>) => {
@@ -856,7 +850,7 @@ export const DataProvider = ({ children }: { children: ReactNode }) => {
     };
     
     const value = {
-        items, customers, sales, vendors, labourers, transactions, salaryPayments, loading,
+        items, customers, vendors, labourers, loading,
         addItem, deleteItem, updateItem, batchUpdateRates, updateItemStock,
         addCustomer, updateCustomer, deleteCustomer,
         addVendor, deleteVendor,

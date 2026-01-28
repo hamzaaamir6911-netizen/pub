@@ -39,6 +39,8 @@ import { formatCurrency, formatDate } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { cn } from "@/lib/utils";
+import { useCollection, useFirestore, useMemoFirebase, useUser } from "@/firebase";
+import { collection, query } from "firebase/firestore";
 
 
 function AddPaymentForm({ onTransactionAdded, onOpenChange }: { onTransactionAdded: (newTransaction: Omit<Transaction, 'id'>) => Promise<void>, onOpenChange: (open: boolean) => void }) {
@@ -160,7 +162,15 @@ function AddPaymentForm({ onTransactionAdded, onOpenChange }: { onTransactionAdd
 
 
 export default function LedgerPage() {
-  const { customers, vendors, transactions, addTransaction, unpostSale, deleteTransaction } = useData();
+  const { customers, vendors, addTransaction, deleteTransaction } = useData();
+  const firestore = useFirestore();
+  const { user } = useUser();
+  const shouldFetch = !!user;
+
+  const transactionsCol = useMemoFirebase(() => shouldFetch ? collection(firestore, 'transactions') : null, [firestore, shouldFetch]);
+  const { data: transactionsData } = useCollection<Transaction>(transactionsCol);
+  const transactions = transactionsData || [];
+  
   const [selectedCustomerId, setSelectedCustomerId] = useState<string | null>(null);
   const [selectedVendorId, setSelectedVendorId] = useState<string | null>(null);
   const [isAddModalOpen, setAddModalOpen] = useState(false);
