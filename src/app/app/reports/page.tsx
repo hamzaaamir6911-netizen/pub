@@ -480,8 +480,6 @@ export default function ReportsPage() {
     const handlePrint = (report: string) => {
         if (report === 'top-items') {
             window.open('/print/top-items', '_blank');
-        } else if (report === 'collative-sales') {
-            window.open('/print/collative-sales-report', '_blank');
         } else {
             window.print();
         }
@@ -559,7 +557,7 @@ export default function ReportsPage() {
         </ReportCard>
         
         <div className="md:col-span-2 no-print">
-            <ReportCard title="Collative Sale Report" description="All items from posted sales." onPrint={() => handlePrint('collative-sales')}>
+            <ReportCard title="Collative Sale Report" description="All items from posted sales. This report is for on-screen viewing only.">
                 <CollativeSalesReportContent />
             </ReportCard>
         </div>
