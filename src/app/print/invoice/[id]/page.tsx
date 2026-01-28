@@ -3,7 +3,7 @@
 
 import { useEffect } from "react";
 import { useParams } from "next/navigation";
-import { useDoc, useFirestore, useMemoFirebase } from "@/firebase";
+import { useDoc, useFirestore, useMemoFirebase, useUser } from "@/firebase";
 import { doc } from "firebase/firestore";
 import type { Sale, Customer } from "@/lib/types";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
@@ -12,15 +12,15 @@ import { formatCurrency, formatDate } from "@/lib/utils";
 export default function PrintInvoicePage() {
   const { id } = useParams() as { id: string };
   const firestore = useFirestore();
+  const { user, isUserLoading: isAuthLoading } = useUser();
 
-  const saleRef = useMemoFirebase(() => id ? doc(firestore, 'sales', id) : null, [firestore, id]);
+  const saleRef = useMemoFirebase(() => (id && user) ? doc(firestore, 'sales', id) : null, [firestore, id, user]);
   const { data: sale, isLoading: isSaleLoading } = useDoc<Sale>(saleRef);
 
-  const customerRef = useMemoFirebase(() => sale?.customerId ? doc(firestore, 'customers', sale.customerId) : null, [firestore, sale?.customerId]);
+  const customerRef = useMemoFirebase(() => (sale?.customerId && user) ? doc(firestore, 'customers', sale.customerId) : null, [firestore, sale?.customerId, user]);
   const { data: customer, isLoading: isCustomerLoading } = useDoc<Customer>(customerRef);
   
-  const isLoading = isSaleLoading || (sale?.customerId && isCustomerLoading);
-
+  const isLoading = isAuthLoading || isSaleLoading || (sale?.customerId && isCustomerLoading);
 
   useEffect(() => {
     if (!isLoading && sale) {
@@ -32,11 +32,11 @@ export default function PrintInvoicePage() {
   }, [isLoading, sale]);
 
   if (isLoading) {
-    return <div>Loading invoice...</div>;
+    return <div className="p-8 text-center">Loading invoice...</div>;
   }
 
   if (!sale) {
-    return <div>Invoice not found.</div>;
+    return <div className="p-8 text-center">Invoice not found.</div>;
   }
 
     let t1Total = 0;
@@ -69,16 +69,16 @@ export default function PrintInvoicePage() {
           <div className="flex justify-between items-start">
               <div>
                   <h1 className="text-4xl">ARCO Aluminium Company</h1>
-                  <p className="text-sm text-teal-100">B-5, PLOT 59, Industrial Estate, Hayatabad, Peshawar</p>
-                  <p className="text-sm text-teal-100">+92 333 4646356</p>
+                  <p className="text-sm text-teal-100 font-extrabold">B-5, PLOT 59, Industrial Estate, Hayatabad, Peshawar</p>
+                  <p className="text-sm text-teal-100 font-extrabold">+92 333 4646356</p>
               </div>
               <div className="text-right">
-                  <h2 className="text-2xl uppercase">Invoice</h2>
+                  <h2 className="text-2xl uppercase">INVOICE</h2>
                   <div className="grid grid-cols-2 gap-x-4 mt-2 text-sm">
-                      <span>Date:</span>
-                      <span>{formatDate(sale.date)}</span>
-                      <span>Invoice #:</span>
-                      <span>{sale.id}</span>
+                      <span className="font-extrabold">Date:</span>
+                      <span className="font-extrabold">{formatDate(sale.date)}</span>
+                      <span className="font-extrabold">Invoice #:</span>
+                      <span className="font-extrabold">{sale.id}</span>
                   </div>
               </div>
           </div>

@@ -3,7 +3,7 @@
 
 import { useEffect, useMemo } from "react";
 import { useParams } from "next/navigation";
-import { useDoc, useFirestore, useMemoFirebase } from "@/firebase";
+import { useDoc, useFirestore, useMemoFirebase, useUser } from "@/firebase";
 import { doc } from "firebase/firestore";
 import type { Sale, SaleItem } from "@/lib/types";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
@@ -12,9 +12,12 @@ import { formatDate } from "@/lib/utils";
 export default function PrintSimpleInvoicePage() {
   const { id } = useParams() as { id: string };
   const firestore = useFirestore();
+  const { user, isUserLoading: isAuthLoading } = useUser();
 
-  const saleRef = useMemoFirebase(() => id ? doc(firestore, 'sales', id) : null, [firestore, id]);
-  const { data: sale, isLoading } = useDoc<Sale>(saleRef);
+  const saleRef = useMemoFirebase(() => (id && user) ? doc(firestore, 'sales', id) : null, [firestore, id, user]);
+  const { data: sale, isLoading: isSaleLoading } = useDoc<Sale>(saleRef);
+
+  const isLoading = isAuthLoading || isSaleLoading;
 
   const groupedItems = useMemo(() => {
     if (!sale) return {};

@@ -3,7 +3,7 @@
 
 import { useEffect } from "react";
 import { useParams } from "next/navigation";
-import { useDoc, useFirestore, useMemoFirebase } from "@/firebase";
+import { useDoc, useFirestore, useMemoFirebase, useUser } from "@/firebase";
 import { doc } from "firebase/firestore";
 import type { Sale, Customer } from "@/lib/types";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
@@ -12,14 +12,15 @@ import { formatDate } from "@/lib/utils";
 export default function PrintChallanPage() {
   const { id } = useParams() as { id: string };
   const firestore = useFirestore();
+  const { user, isUserLoading: isAuthLoading } = useUser();
 
-  const saleRef = useMemoFirebase(() => id ? doc(firestore, 'sales', id) : null, [firestore, id]);
+  const saleRef = useMemoFirebase(() => (id && user) ? doc(firestore, 'sales', id) : null, [firestore, id, user]);
   const { data: sale, isLoading: isSaleLoading } = useDoc<Sale>(saleRef);
 
-  const customerRef = useMemoFirebase(() => sale?.customerId ? doc(firestore, 'customers', sale.customerId) : null, [firestore, sale?.customerId]);
+  const customerRef = useMemoFirebase(() => (sale?.customerId && user) ? doc(firestore, 'customers', sale.customerId) : null, [firestore, sale?.customerId, user]);
   const { data: customer, isLoading: isCustomerLoading } = useDoc<Customer>(customerRef);
 
-  const isLoading = isSaleLoading || (sale?.customerId && isCustomerLoading);
+  const isLoading = isAuthLoading || isSaleLoading || (sale?.customerId && isCustomerLoading);
 
   useEffect(() => {
     if (!isLoading && sale) {
@@ -31,11 +32,11 @@ export default function PrintChallanPage() {
   }, [isLoading, sale]);
 
   if (isLoading) {
-    return <div>Loading challan...</div>;
+    return <div className="p-8 text-center">Loading challan...</div>;
   }
 
   if (!sale) {
-    return <div>Challan not found.</div>;
+    return <div className="p-8 text-center">Challan not found.</div>;
   }
 
   return (

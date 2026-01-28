@@ -2,7 +2,7 @@
 "use client";
 
 import React, { useEffect, useMemo } from "react";
-import { useCollection, useFirestore, useMemoFirebase } from "@/firebase";
+import { useCollection, useFirestore, useMemoFirebase, useUser } from "@/firebase";
 import { collection, query, where } from "firebase/firestore";
 import type { Sale, Item } from "@/lib/types";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
@@ -11,14 +11,15 @@ import { Trophy } from "lucide-react";
 
 export default function PrintTopItemsPage() {
   const firestore = useFirestore();
+  const { user, isUserLoading: isAuthLoading } = useUser();
   
-  const salesCol = useMemoFirebase(() => query(collection(firestore, 'sales'), where('status', '==', 'posted')), [firestore]);
+  const salesCol = useMemoFirebase(() => user ? query(collection(firestore, 'sales'), where('status', '==', 'posted')) : null, [firestore, user]);
   const { data: sales, isLoading: salesLoading } = useCollection<Sale>(salesCol);
   
-  const itemsCol = useMemoFirebase(() => collection(firestore, 'items'), [firestore]);
+  const itemsCol = useMemoFirebase(() => user ? collection(firestore, 'items') : null, [firestore, user]);
   const { data: items, isLoading: itemsLoading } = useCollection<Item>(itemsCol);
 
-  const isDataLoading = salesLoading || itemsLoading;
+  const isDataLoading = isAuthLoading || salesLoading || itemsLoading;
   
   const reportData = useMemo(() => {
     if (isDataLoading || !sales || !items) return [];
