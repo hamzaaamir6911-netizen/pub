@@ -48,8 +48,6 @@ import { NewSaleForm } from "./_components/new-sale-form";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
-import { useCollection, useFirestore, useMemoFirebase, useUser } from "@/firebase";
-import { collection, query } from "firebase/firestore";
 
 
 function SaleDetailsView({ sale }: { sale: Sale }) {
@@ -221,15 +219,7 @@ function SaleDetailsView({ sale }: { sale: Sale }) {
 
 
 export default function SalesPage() {
-  const { customers, deleteSale, postSale, unpostSale, loading: providerLoading } = useData();
-  const firestore = useFirestore();
-  const { user } = useUser();
-  const shouldFetch = !!user;
-
-  const salesCol = useMemoFirebase(() => shouldFetch ? collection(firestore, 'sales') : null, [firestore, shouldFetch]);
-  const { data: sales, isLoading: salesLoading } = useCollection<Sale>(salesCol);
-
-  const isDataLoading = providerLoading || salesLoading;
+  const { customers, sales, deleteSale, postSale, unpostSale, loading: isDataLoading } = useData();
   
   const [activeTab, setActiveTab] = useState("history");
   const [isDetailsOpen, setDetailsOpen] = useState(false);

@@ -31,10 +31,8 @@ import { Button } from "@/components/ui/button"
 import { PageHeader } from "@/components/page-header"
 import { formatCurrency, formatDate } from "@/lib/utils"
 import { ChartContainer, ChartTooltip, ChartTooltipContent, ChartConfig, ChartLegend, ChartLegendContent } from "@/components/ui/chart"
-import { useCollection, useFirestore, useMemoFirebase } from "@/firebase"
+import { useData } from "@/firebase/data/data-provider"
 import type { Sale, Expense } from "@/lib/types"
-import { collection, query, orderBy, where } from "firebase/firestore"
-import { useUser } from "@/firebase/provider"
 
 
 const chartConfig = {
@@ -97,17 +95,7 @@ function ChartOfAccounts() {
 
 
 export default function DashboardPage() {
-  const firestore = useFirestore();
-  const { user } = useUser();
-  const shouldFetch = !!user;
-
-  const salesCol = useMemoFirebase(() => shouldFetch ? query(collection(firestore, 'sales'), orderBy('date', 'desc')) : null, [firestore, shouldFetch]);
-  const expensesCol = useMemoFirebase(() => shouldFetch ? query(collection(firestore, 'expenses'), orderBy('date', 'desc')) : null, [firestore, shouldFetch]);
-
-  const { data: salesData } = useCollection<Sale>(salesCol);
-  const { data: expensesData } = useCollection<Expense>(expensesCol);
-  const sales = salesData || [];
-  const expenses = expensesData || [];
+  const { sales, expenses } = useData();
 
   const getDashboardStats = () => {
     const totalSales = sales.filter(s => s.status === 'posted').reduce((sum, sale) => sum + sale.total, 0);

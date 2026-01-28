@@ -35,9 +35,7 @@ import { cn } from "@/lib/utils"
 import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogTrigger } from "@/components/ui/dialog"
-import type { SalaryPayment, Sale, Expense, Transaction } from "@/lib/types"
-import { useCollection, useFirestore, useMemoFirebase, useUser } from "@/firebase"
-import { collection, orderBy, query } from "firebase/firestore"
+import type { SalaryPayment } from "@/lib/types"
 
 const chartConfig = {
   sales: {
@@ -121,15 +119,7 @@ function SalaryPayslip({ payment }: { payment: SalaryPayment }) {
 }
 
 function LedgerReportContent() {
-    const { customers, vendors } = useData();
-    const firestore = useFirestore();
-    const { user } = useUser();
-    const shouldFetch = !!user;
-
-    const transactionsCol = useMemoFirebase(() => shouldFetch ? collection(firestore, 'transactions') : null, [firestore, shouldFetch]);
-    const { data: transactionsData } = useCollection<Transaction>(transactionsCol);
-    const transactions = transactionsData || [];
-
+    const { transactions, customers, vendors } = useData();
     const [date, setDate] = React.useState<DateRange | undefined>({
         from: addDays(new Date(), -30),
         to: new Date(),
@@ -252,14 +242,7 @@ function LedgerReportContent() {
 }
 
 function SalaryReportContent() {
-    const firestore = useFirestore();
-    const { user } = useUser();
-    const shouldFetch = !!user;
-
-    const salaryPaymentsCol = useMemoFirebase(() => shouldFetch ? query(collection(firestore, 'salaryPayments'), orderBy('date', 'desc')) : null, [firestore, shouldFetch]);
-    const { data: salaryPaymentsData } = useCollection<SalaryPayment>(salaryPaymentsCol);
-    const salaryPayments = salaryPaymentsData || [];
-    
+    const { salaryPayments } = useData();
     const [selectedPayment, setSelectedPayment] = useState<SalaryPayment | null>(null);
 
     return (
@@ -378,18 +361,7 @@ function ItemSalesReportContent() {
 }
 
 export default function ReportsPage() {
-    const firestore = useFirestore();
-    const { user } = useUser();
-    const shouldFetch = !!user;
-    
-    const salesCol = useMemoFirebase(() => shouldFetch ? collection(firestore, 'sales') : null, [firestore, shouldFetch]);
-    const expensesCol = useMemoFirebase(() => shouldFetch ? collection(firestore, 'expenses') : null, [firestore, shouldFetch]);
-    
-    const { data: salesData } = useCollection<Sale>(salesCol);
-    const { data: expensesData } = useCollection<Expense>(expensesCol);
-    
-    const sales = salesData || [];
-    const expenses = expensesData || [];
+    const { sales, expenses } = useData();
 
     const stats = useMemo(() => {
         const totalSales = sales.filter(s => s.status === 'posted').reduce((sum, sale) => sum + sale.total, 0);

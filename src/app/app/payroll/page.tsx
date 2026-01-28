@@ -50,8 +50,6 @@ import { useData } from "@/firebase/data/data-provider";
 import { Combobox } from "@/components/ui/combobox";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { useCollection, useFirestore, useMemoFirebase, useUser } from "@/firebase";
-import { collection, orderBy, query } from "firebase/firestore";
 
 
 const months = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
@@ -361,16 +359,7 @@ function NewPayslipForm({
 }
 
 export default function PayrollPage() {
-  const { deleteSalaryPayment } = useData();
-  const firestore = useFirestore();
-  const { user } = useUser();
-  const shouldFetch = !!user;
-
-  const salaryPaymentsCol = useMemoFirebase(() => shouldFetch ? query(collection(firestore, 'salaryPayments'), orderBy('date', 'desc')) : null, [firestore, shouldFetch]);
-  const { data: salaryPaymentsData } = useCollection<SalaryPayment>(salaryPaymentsCol);
-  
-  const salaryPayments = salaryPaymentsData || [];
-
+  const { salaryPayments, deleteSalaryPayment } = useData();
   const { toast } = useToast();
   const [activeTab, setActiveTab] = useState("new");
   const [selectedPayment, setSelectedPayment] = useState<SalaryPayment | null>(null);
@@ -505,5 +494,3 @@ export default function PayrollPage() {
     </>
   );
 }
-
-

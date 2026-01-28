@@ -30,8 +30,6 @@ import { useToast } from "@/hooks/use-toast";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { useCollection, useFirestore, useMemoFirebase, useUser } from "@/firebase";
-import { collection, orderBy, query } from "firebase/firestore";
 
 function AddExpenseForm({ onExpenseAdded }: { onExpenseAdded: (newExpense: Omit<Expense, 'id' | 'date'>) => void }) {
     const { vendors } = useData();
@@ -107,16 +105,7 @@ function AddExpenseForm({ onExpenseAdded }: { onExpenseAdded: (newExpense: Omit<
 }
 
 export default function ExpensesPage() {
-  const { addExpense, deleteExpense } = useData();
-  const firestore = useFirestore();
-  const { user } = useUser();
-  const shouldFetch = !!user;
-
-  const expensesCol = useMemoFirebase(() => shouldFetch ? query(collection(firestore, 'expenses'), orderBy('date', 'desc')) : null, [firestore, shouldFetch]);
-  
-  const { data: expensesData } = useCollection<Expense>(expensesCol);
-  const expenses = expensesData || [];
-  
+  const { expenses, addExpense, deleteExpense } = useData();
   const [isExpenseModalOpen, setExpenseModalOpen] = useState(false);
 
   const handleDelete = (expense: Expense) => {
@@ -196,5 +185,3 @@ export default function ExpensesPage() {
     </>
   );
 }
-
-    

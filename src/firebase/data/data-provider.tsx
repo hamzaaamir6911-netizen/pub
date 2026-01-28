@@ -12,8 +12,13 @@ import { deleteDocumentNonBlocking, updateDocumentNonBlocking } from '../non-blo
 interface DataContextProps {
   items: Item[];
   customers: Customer[];
+  sales: Sale[];
+  expenses: Expense[];
+  transactions: Transaction[];
   vendors: Vendor[];
+  estimates: Estimate[];
   labourers: Labour[];
+  salaryPayments: SalaryPayment[];
   loading: boolean;
   addItem: (item: Omit<Item, 'id' | 'createdAt'>) => Promise<any>;
   deleteItem: (id: string) => Promise<void>;
@@ -283,18 +288,33 @@ export const DataProvider = ({ children }: { children: ReactNode }) => {
     const customersCol = useMemoFirebase(() => shouldFetch ? collection(firestore, 'customers') : null, [firestore, shouldFetch]);
     const vendorsCol = useMemoFirebase(() => shouldFetch ? collection(firestore, 'vendors') : null, [firestore, shouldFetch]);
     const labourCol = useMemoFirebase(() => shouldFetch ? collection(firestore, 'labour') : null, [firestore, shouldFetch]);
-    
+    const salesCol = useMemoFirebase(() => shouldFetch ? query(collection(firestore, 'sales'), orderBy('date', 'desc')) : null, [firestore, shouldFetch]);
+    const expensesCol = useMemoFirebase(() => shouldFetch ? query(collection(firestore, 'expenses'), orderBy('date', 'desc')) : null, [firestore, shouldFetch]);
+    const transactionsCol = useMemoFirebase(() => shouldFetch ? collection(firestore, 'transactions') : null, [firestore, shouldFetch]);
+    const estimatesCol = useMemoFirebase(() => shouldFetch ? query(collection(firestore, 'estimates'), orderBy('date', 'desc')) : null, [firestore, shouldFetch]);
+    const salaryPaymentsCol = useMemoFirebase(() => shouldFetch ? query(collection(firestore, 'salaryPayments'), orderBy('date', 'desc')) : null, [firestore, shouldFetch]);
+
     const { data: itemsData, isLoading: itemsLoading } = useCollection<Item>(itemsCol);
     const { data: customersData, isLoading: customersLoading } = useCollection<Customer>(customersCol);
     const { data: vendorsData, isLoading: vendorsLoading } = useCollection<Vendor>(vendorsCol);
     const { data: labourData, isLoading: labourLoading } = useCollection<Labour>(labourCol);
+    const { data: salesData, isLoading: salesLoading } = useCollection<Sale>(salesCol);
+    const { data: expensesData, isLoading: expensesLoading } = useCollection<Expense>(expensesCol);
+    const { data: transactionsData, isLoading: transactionsLoading } = useCollection<Transaction>(transactionsCol);
+    const { data: estimatesData, isLoading: estimatesLoading } = useCollection<Estimate>(estimatesCol);
+    const { data: salaryPaymentsData, isLoading: salaryPaymentsLoading } = useCollection<SalaryPayment>(salaryPaymentsCol);
 
     const items = itemsData?.map(item => ({ ...item, quantity: item.quantity ?? 0, createdAt: toDate(item.createdAt) as Date })) || [];
     const customers = customersData?.map(customer => ({ ...customer, createdAt: toDate(customer.createdAt) as Date })) || [];
     const vendors = vendorsData?.map(vendor => ({ ...vendor, createdAt: toDate(vendor.createdAt) as Date })) || [];
     const labourers = labourData?.map(labourer => ({ ...labourer, createdAt: toDate(labourer.createdAt) as Date })) || [];
+    const sales = salesData?.map(sale => ({ ...sale, date: toDate(sale.date) as Date })) || [];
+    const expenses = expensesData?.map(expense => ({ ...expense, date: toDate(expense.date) as Date })) || [];
+    const transactions = transactionsData?.map(transaction => ({ ...transaction, date: toDate(transaction.date) as Date })) || [];
+    const estimates = estimatesData?.map(estimate => ({ ...estimate, date: toDate(estimate.date) as Date })) || [];
+    const salaryPayments = salaryPaymentsData?.map(payment => ({ ...payment, date: toDate(payment.date) as Date })) || [];
 
-    const loading = isUserLoading || itemsLoading || customersLoading || vendorsLoading || labourLoading;
+    const loading = isUserLoading || itemsLoading || customersLoading || salesLoading || expensesLoading || transactionsLoading || vendorsLoading || estimatesLoading || labourLoading || salaryPaymentsLoading;
 
     const addItem = async (item: Omit<Item, 'id' | 'createdAt'>) => {
         if (!itemsCol) throw new Error("Items collection not available");
@@ -850,7 +870,7 @@ export const DataProvider = ({ children }: { children: ReactNode }) => {
     };
     
     const value = {
-        items, customers, vendors, labourers, loading,
+        items, customers, sales, expenses, transactions, vendors, estimates, labourers, salaryPayments, loading,
         addItem, deleteItem, updateItem, batchUpdateRates, updateItemStock,
         addCustomer, updateCustomer, deleteCustomer,
         addVendor, deleteVendor,
