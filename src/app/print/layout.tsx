@@ -13,7 +13,7 @@ export default function PrintLayout({ children }: { children: React.ReactNode })
   return (
     <html lang="en">
       <body>
-          <FirebaseClientProvider>
+          <FirebaseClientProvider withDataProvider={false}>
             {children}
           </FirebaseClientProvider>
       </body>

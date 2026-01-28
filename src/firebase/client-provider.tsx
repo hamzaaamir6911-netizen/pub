@@ -8,9 +8,10 @@ import { DataProvider } from './data/data-provider';
 
 interface FirebaseClientProviderProps {
   children: ReactNode;
+  withDataProvider?: boolean;
 }
 
-export function FirebaseClientProvider({ children }: FirebaseClientProviderProps) {
+export function FirebaseClientProvider({ children, withDataProvider = true }: FirebaseClientProviderProps) {
   const firebaseServices = useMemo(() => {
     // Initialize Firebase on the client side, once per component mount.
     return initializeFirebase();
@@ -22,9 +23,7 @@ export function FirebaseClientProvider({ children }: FirebaseClientProviderProps
       auth={firebaseServices.auth}
       firestore={firebaseServices.firestore}
     >
-      <DataProvider>
-        {children}
-      </DataProvider>
+      {withDataProvider ? <DataProvider>{children}</DataProvider> : children}
     </FirebaseProvider>
   );
 }

@@ -3,26 +3,32 @@
 
 import { useEffect } from "react";
 import { useParams } from "next/navigation";
-import { useData } from "@/firebase/data/data-provider";
+import { useDoc, useFirestore, useMemoFirebase } from "@/firebase";
+import { doc } from "firebase/firestore";
+import type { Sale, Customer } from "@/lib/types";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { formatDate } from "@/lib/utils";
 
 export default function PrintChallanPage() {
-  const { id } = useParams();
-  const { customers, sales, loading: isDataLoading } = useData();
+  const { id } = useParams() as { id: string };
+  const firestore = useFirestore();
 
-  const sale = sales.find(s => s.id === id);
-  const customer = customers.find(c => c.id === sale?.customerId);
-  const isLoading = isDataLoading || !sale;
+  const saleRef = useMemoFirebase(() => id ? doc(firestore, 'sales', id) : null, [firestore, id]);
+  const { data: sale, isLoading: isSaleLoading } = useDoc<Sale>(saleRef);
+
+  const customerRef = useMemoFirebase(() => sale?.customerId ? doc(firestore, 'customers', sale.customerId) : null, [firestore, sale?.customerId]);
+  const { data: customer, isLoading: isCustomerLoading } = useDoc<Customer>(customerRef);
+
+  const isLoading = isSaleLoading || (sale?.customerId && isCustomerLoading);
 
   useEffect(() => {
-    if (!isLoading) {
+    if (!isLoading && sale) {
       setTimeout(() => {
         window.print();
         window.close();
       }, 500);
     }
-  }, [isLoading]);
+  }, [isLoading, sale]);
 
   if (isLoading) {
     return <div>Loading challan...</div>;

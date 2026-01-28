@@ -3,26 +3,33 @@
 
 import { useEffect } from "react";
 import { useParams } from "next/navigation";
-import { useData } from "@/firebase/data/data-provider";
+import { useDoc, useFirestore, useMemoFirebase } from "@/firebase";
+import { doc } from "firebase/firestore";
+import type { Sale, Customer } from "@/lib/types";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { formatCurrency, formatDate } from "@/lib/utils";
 
 export default function PrintInvoicePage() {
-  const { id } = useParams();
-  const { customers, sales, loading: isDataLoading } = useData();
+  const { id } = useParams() as { id: string };
+  const firestore = useFirestore();
 
-  const sale = sales.find(s => s.id === id);
-  const customer = customers.find(c => c.id === sale?.customerId);
-  const isLoading = isDataLoading || !sale;
+  const saleRef = useMemoFirebase(() => id ? doc(firestore, 'sales', id) : null, [firestore, id]);
+  const { data: sale, isLoading: isSaleLoading } = useDoc<Sale>(saleRef);
+
+  const customerRef = useMemoFirebase(() => sale?.customerId ? doc(firestore, 'customers', sale.customerId) : null, [firestore, sale?.customerId]);
+  const { data: customer, isLoading: isCustomerLoading } = useDoc<Customer>(customerRef);
+  
+  const isLoading = isSaleLoading || (sale?.customerId && isCustomerLoading);
+
 
   useEffect(() => {
-    if (!isLoading) {
+    if (!isLoading && sale) {
       setTimeout(() => {
         window.print();
         window.close();
       }, 500); // Small delay to ensure rendering is complete
     }
-  }, [isLoading]);
+  }, [isLoading, sale]);
 
   if (isLoading) {
     return <div>Loading invoice...</div>;
@@ -58,20 +65,20 @@ export default function PrintInvoicePage() {
 
   return (
     <div className="bg-white text-black font-semibold">
-       <div className="p-8 bg-teal-600 text-white font-bold">
+       <div className="p-8 bg-teal-600 text-white font-extrabold">
           <div className="flex justify-between items-start">
               <div>
-                  <h1 className="text-4xl font-extrabold">ARCO Aluminium Company</h1>
-                  <p className="text-sm text-teal-100 font-extrabold">B-5, PLOT 59, Industrial Estate, Hayatabad, Peshawar</p>
-                  <p className="text-sm text-teal-100 font-extrabold">+92 333 4646356</p>
+                  <h1 className="text-4xl">ARCO Aluminium Company</h1>
+                  <p className="text-sm text-teal-100">B-5, PLOT 59, Industrial Estate, Hayatabad, Peshawar</p>
+                  <p className="text-sm text-teal-100">+92 333 4646356</p>
               </div>
               <div className="text-right">
-                  <h2 className="text-2xl font-extrabold uppercase">Invoice</h2>
+                  <h2 className="text-2xl uppercase">Invoice</h2>
                   <div className="grid grid-cols-2 gap-x-4 mt-2 text-sm">
-                      <span className="font-extrabold">Date:</span>
-                      <span className="font-extrabold">{formatDate(sale.date)}</span>
-                      <span className="font-extrabold">Invoice #:</span>
-                      <span className="font-extrabold">{sale.id}</span>
+                      <span>Date:</span>
+                      <span>{formatDate(sale.date)}</span>
+                      <span>Invoice #:</span>
+                      <span>{sale.id}</span>
                   </div>
               </div>
           </div>
@@ -82,7 +89,7 @@ export default function PrintInvoicePage() {
               <div className="space-y-4">
                   <div className="font-bold text-sm uppercase text-gray-500">From</div>
                   <div className="text-sm text-gray-700 font-semibold">
-                      <p className="font-bold">ARCO Aluminium Company</p>
+                      <p className="font-extrabold">ARCO Aluminium Company</p>
                       <p>B-5, PLOT 59, Industrial Estate,</p>
                       <p>Hayatabad, Peshawar</p>
                       <p>+92 333 4646356</p>

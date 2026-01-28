@@ -3,13 +3,18 @@
 
 import React, { useEffect, useMemo, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
-import { useData } from "@/firebase/data/data-provider";
+import { useCollection, useFirestore, useMemoFirebase } from "@/firebase";
+import { collection } from "firebase/firestore";
+import type { Sale } from "@/lib/types";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow, TableFooter } from "@/components/ui/table";
 import { formatCurrency, formatDate } from "@/lib/utils";
 
 function SalesReportContent() {
   const searchParams = useSearchParams();
-  const { sales, loading: isDataLoading } = useData();
+  const firestore = useFirestore();
+  
+  const salesCol = useMemoFirebase(() => collection(firestore, 'sales'), [firestore]);
+  const { data: sales, isLoading: isDataLoading } = useCollection<Sale>(salesCol);
 
   const selectedIds = useMemo(() => {
     const idsParam = searchParams.get("ids");
@@ -59,7 +64,7 @@ function SalesReportContent() {
     }, { total: 0, t1: 0, t2: 0 });
   }, [reportSales]);
   
-  const isLoading = isDataLoading && reportSales.length === 0;
+  const isLoading = isDataLoading && reportSales.length === 0 && selectedIds.length > 0;
 
   useEffect(() => {
     if (!isLoading && reportSales.length > 0) {

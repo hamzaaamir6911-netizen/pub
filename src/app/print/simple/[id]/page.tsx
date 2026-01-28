@@ -3,17 +3,18 @@
 
 import { useEffect, useMemo } from "react";
 import { useParams } from "next/navigation";
-import { useData } from "@/firebase/data/data-provider";
+import { useDoc, useFirestore, useMemoFirebase } from "@/firebase";
+import { doc } from "firebase/firestore";
+import type { Sale, SaleItem } from "@/lib/types";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { formatDate } from "@/lib/utils";
-import type { Sale, SaleItem } from "@/lib/types";
 
 export default function PrintSimpleInvoicePage() {
-  const { id } = useParams();
-  const { sales, loading: isDataLoading } = useData();
+  const { id } = useParams() as { id: string };
+  const firestore = useFirestore();
 
-  const sale = sales.find(s => s.id === id);
-  const isLoading = isDataLoading || !sale;
+  const saleRef = useMemoFirebase(() => id ? doc(firestore, 'sales', id) : null, [firestore, id]);
+  const { data: sale, isLoading } = useDoc<Sale>(saleRef);
 
   const groupedItems = useMemo(() => {
     if (!sale) return {};
@@ -36,13 +37,13 @@ export default function PrintSimpleInvoicePage() {
   }, [sale]);
 
   useEffect(() => {
-    if (!isLoading) {
+    if (!isLoading && sale) {
       setTimeout(() => {
         window.print();
         window.close();
       }, 500);
     }
-  }, [isLoading]);
+  }, [isLoading, sale]);
 
 
   if (isLoading) {
@@ -55,23 +56,23 @@ export default function PrintSimpleInvoicePage() {
 
   return (
      <div className="p-4 bg-white text-black font-sans text-xs flex justify-start">
-       <div className="w-auto">
+       <div className="w-auto columns-2 gap-4">
             {/* Header */}
-            <div className="text-left font-bold mb-4">
+            <div className="text-left font-bold mb-4 break-after-column">
                 <p>{sale.customerName.toUpperCase()}</p>
                 <p>DATE: {formatDate(sale.date)} | BILL #: {sale.id}</p>
             </div>
 
             {Object.entries(groupedItems).map(([groupName, items]) => (
-                <div key={groupName} className="mb-2">
+                <div key={groupName} className="mb-2 break-inside-avoid">
                     <p className="font-bold text-center border-y border-black">{groupName}</p>
                     <Table className="border-collapse table-fixed w-auto">
                          <TableHeader>
                             <TableRow className="border-black">
-                                <TableHead className="px-1 py-0.5 font-bold border-x border-black" style={{ width: '88px' }}>Section</TableHead>
-                                <TableHead className="text-right px-1 py-0.5 font-bold border-r border-black" style={{ width: '33px' }}>Feet</TableHead>
-                                <TableHead className="text-right px-1 py-0.5 font-bold border-r border-black" style={{ width: '33px' }}>Qty</TableHead>
-                                <TableHead className="text-right px-1 py-0.5 font-bold border-r border-black" style={{ width: '33px' }}>Rate</TableHead>
+                                <TableHead className="px-1 py-0 font-bold border-x border-black" style={{ width: '88px' }}>Section</TableHead>
+                                <TableHead className="text-right px-1 py-0 font-bold border-r border-black" style={{ width: '33px' }}>Feet</TableHead>
+                                <TableHead className="text-right px-1 py-0 font-bold border-r border-black" style={{ width: '33px' }}>Qty</TableHead>
+                                <TableHead className="text-right px-1 py-0 font-bold border-r border-black" style={{ width: '33px' }}>Rate</TableHead>
                             </TableRow>
                         </TableHeader>
                         <TableBody>

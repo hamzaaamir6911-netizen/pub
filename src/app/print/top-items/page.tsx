@@ -2,20 +2,30 @@
 "use client";
 
 import React, { useEffect, useMemo } from "react";
-import { useData } from "@/firebase/data/data-provider";
+import { useCollection, useFirestore, useMemoFirebase } from "@/firebase";
+import { collection, query, where } from "firebase/firestore";
+import type { Sale, Item } from "@/lib/types";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { formatDate, cn } from "@/lib/utils";
 import { Trophy } from "lucide-react";
 
 export default function PrintTopItemsPage() {
-  const { sales, items, loading: isDataLoading } = useData();
+  const firestore = useFirestore();
+  
+  const salesCol = useMemoFirebase(() => query(collection(firestore, 'sales'), where('status', '==', 'posted')), [firestore]);
+  const { data: sales, isLoading: salesLoading } = useCollection<Sale>(salesCol);
+  
+  const itemsCol = useMemoFirebase(() => collection(firestore, 'items'), [firestore]);
+  const { data: items, isLoading: itemsLoading } = useCollection<Item>(itemsCol);
+
+  const isDataLoading = salesLoading || itemsLoading;
   
   const reportData = useMemo(() => {
-    if (isDataLoading) return [];
+    if (isDataLoading || !sales || !items) return [];
     
     const itemSales: { [key: string]: { itemName: string; thickness: string; totalSold: number; unit: string; } } = {};
 
-    sales.filter(s => s.status === 'posted').forEach(sale => {
+    sales.forEach(sale => {
         sale.items.forEach(saleItem => {
             const itemDetails = items.find(i => i.id === saleItem.itemId);
             const key = `${saleItem.itemName}-${saleItem.thickness}`;
@@ -99,4 +109,3 @@ export default function PrintTopItemsPage() {
     </div>
   );
 }
-
