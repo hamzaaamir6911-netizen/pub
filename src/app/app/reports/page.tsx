@@ -360,76 +360,6 @@ function ItemSalesReportContent() {
     );
 }
 
-function CollativeSalesReportContent() {
-    const { sales } = useData();
-
-    const reportData = useMemo(() => {
-        if (!sales) return [];
-
-        const flatSaleItems = sales
-            .filter(sale => sale.status === 'posted')
-            .flatMap(sale => 
-                sale.items.map(item => ({
-                    invoiceId: sale.id,
-                    date: sale.date,
-                    customerName: sale.customerName,
-                    itemName: item.itemName,
-                    thickness: item.thickness,
-                    color: item.color,
-                    feet: item.feet || 0,
-                    quantity: item.quantity,
-                }))
-            );
-        
-        return flatSaleItems.sort((a, b) => {
-            const dateA = new Date(a.date).getTime();
-            const dateB = new Date(b.date).getTime();
-            return dateB - dateA;
-        });
-
-    }, [sales]);
-
-    return (
-        <CardContent>
-            <div className="rounded-lg border max-h-[600px] overflow-y-auto">
-                <Table>
-                    <TableHeader className="sticky top-0 bg-muted">
-                        <TableRow>
-                            <TableHead>Invoice #</TableHead>
-                            <TableHead>Item Name</TableHead>
-                            <TableHead>Thickness</TableHead>
-                            <TableHead>Color</TableHead>
-                            <TableHead className="text-right">Feet</TableHead>
-                            <TableHead className="text-right">Qty</TableHead>
-                        </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                        {reportData.length === 0 ? (
-                            <TableRow>
-                                <TableCell colSpan={6} className="h-24 text-center">
-                                    No posted sales data available.
-                                </TableCell>
-                            </TableRow>
-                        ) : (
-                            reportData.map((item, index) => (
-                                <TableRow key={index}>
-                                    <TableCell className="font-medium">{item.invoiceId}</TableCell>
-                                    <TableCell>{item.itemName}</TableCell>
-                                    <TableCell>{item.thickness}</TableCell>
-                                    <TableCell>{item.color}</TableCell>
-                                    <TableCell className="text-right">{item.feet > 0 ? item.feet.toFixed(2) : '-'}</TableCell>
-                                    <TableCell className="text-right font-bold">{item.quantity}</TableCell>
-                                </TableRow>
-                            ))
-                        )}
-                    </TableBody>
-                </Table>
-            </div>
-        </CardContent>
-    );
-}
-
-
 export default function ReportsPage() {
     const { sales, expenses } = useData();
 
@@ -556,11 +486,6 @@ export default function ReportsPage() {
             <SalaryReportContent />
         </ReportCard>
         
-        <div className="md:col-span-2 no-print">
-            <ReportCard title="Collative Sale Report" description="All items from posted sales. This report is for on-screen viewing only.">
-                <CollativeSalesReportContent />
-            </ReportCard>
-        </div>
       </div>
     </>
   );
