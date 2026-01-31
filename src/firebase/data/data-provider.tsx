@@ -1,5 +1,4 @@
 
-
 "use client";
 
 import React, { createContext, useContext, ReactNode, useEffect, useState, useMemo } from 'react';
@@ -39,7 +38,7 @@ interface DataContextProps {
   updateSale: (saleId: string, sale: Omit<Sale, 'id' | 'total' | 'status'>) => Promise<void>;
   postSale: (sale: Sale) => Promise<void>;
   unpostSale: (sale: Sale) => Promise<void>;
-  deleteSale: (sale: Sale) => Promise<void>;
+  deleteSale: (sale: Sale) => void;
   addEstimate: (estimate: Omit<Estimate, 'id' | 'date' | 'total'>) => Promise<void>;
   deleteEstimate: (id: string) => Promise<void>;
   createSaleFromEstimate: (estimate: Estimate) => Promise<void>;
@@ -509,37 +508,47 @@ export const DataProvider = ({ children }: { children: ReactNode }) => {
         }
     };
 
-    const deleteSale = async (sale: Sale) => {
+    const deleteSale = (sale: Sale) => {
         if (!user) throw new Error("User not authenticated");
         if (!sale) return;
 
-        const batch = writeBatch(firestore);
-        const saleRef = doc(firestore, "sales", sale.id);
+        (async () => {
+            const batch = writeBatch(firestore);
+            const saleRef = doc(firestore, "sales", sale.id);
 
-        // If the sale is posted, find and delete the associated transaction first
-        if (sale.status === "posted") {
-            const q = query(
-                collection(firestore, "transactions"),
-                where("category", "==", "Sale"),
-                where("description", "==", `Sale to ${sale.customerName} (Invoice: ${sale.id})`),
-                where("customerId", "==", sale.customerId)
-            );
+            // If the sale is posted, find and delete the associated transaction first
+            if (sale.status === "posted") {
+                const q = query(
+                    collection(firestore, "transactions"),
+                    where("category", "==", "Sale"),
+                    where("description", "==", `Sale to ${sale.customerName} (Invoice: ${sale.id})`),
+                    where("customerId", "==", sale.customerId)
+                );
 
-            const querySnapshot = await getDocs(q);
-            querySnapshot.forEach((doc) => {
-                // To be safe, let's also match the date
-                const transactionDate = toDate(doc.data().date);
-                const saleDate = toDate(sale.date);
-                if (transactionDate && saleDate && transactionDate.toDateString() === saleDate.toDateString()) {
-                    batch.delete(doc.ref);
+                try {
+                    const querySnapshot = await getDocs(q);
+                    querySnapshot.forEach((doc) => {
+                        // To be safe, let's also match the date
+                        const transactionDate = toDate(doc.data().date);
+                        const saleDate = toDate(sale.date);
+                        if (transactionDate && saleDate && transactionDate.toDateString() === saleDate.toDateString()) {
+                            batch.delete(doc.ref);
+                        }
+                    });
+                } catch (error) {
+                    console.error("Error querying transactions for deletion:", error);
                 }
-            });
-        }
-        
-        // Finally, delete the sale itself
-        batch.delete(saleRef);
+            }
+            
+            // Finally, delete the sale itself
+            batch.delete(saleRef);
 
-        await batch.commit();
+            try {
+                await batch.commit();
+            } catch (error) {
+                console.error("Error committing delete sale batch:", error);
+            }
+        })();
     };
     
     const addExpense = async (expense: Omit<Expense, 'id' | 'date'>) => {
@@ -711,3 +720,5 @@ export const useData = () => {
   }
   return context;
 };
+
+    
