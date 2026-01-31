@@ -1,9 +1,8 @@
 
 "use client";
 
-import { useState, useRef } from "react";
-import { MoreHorizontal, PlusCircle, FileUp } from "lucide-react";
-import * as XLSX from "xlsx";
+import { useState } from "react";
+import { MoreHorizontal, PlusCircle } from "lucide-react";
 import {
   Table,
   TableBody,
@@ -26,7 +25,7 @@ import { PageHeader } from "@/components/page-header";
 import { formatCurrency } from "@/lib/utils";
 import type { Item } from "@/lib/types";
 import { useData } from "@/firebase/data/data-provider";
-import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogTrigger, DialogDescription } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -237,129 +236,6 @@ function EditItemForm({ item, onItemUpdated, onOpenChange }: { item: Item; onIte
     );
 }
 
-function UploadRateListDialog() {
-  const { items, batchUpdateRates } = useData();
-  const fileInputRef = useRef<HTMLInputElement>(null);
-  const [rateListName, setRateListName] = useState("");
-  const [isOpen, setIsOpen] = useState(false);
-  const { toast } = useToast();
-
-  const handleFileChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
-    if (!rateListName.trim()) {
-      toast({ variant: "destructive", title: "Validation Error", description: "Please enter a name for the rate list." });
-      return;
-    }
-
-    const file = event.target.files?.[0];
-    if (!file) return;
-
-    const reader = new FileReader();
-    reader.onload = async (e) => {
-        try {
-            const data = e.target?.result;
-            const workbook = XLSX.read(data, { type: 'binary' });
-            const sheetName = workbook.SheetNames[0];
-            const worksheet = workbook.Sheets[sheetName];
-            const jsonData = XLSX.utils.sheet_to_json(worksheet) as { Name: string, Thickness: string, SalePrice: number }[];
-
-            const updates: { id: string, salePrice: number, rateListName: string }[] = [];
-            let notFoundCount = 0;
-            const notFoundItems: string[] = [];
-
-            jsonData.forEach(row => {
-                const name = row.Name?.trim().toLowerCase();
-                const thickness = String(row.Thickness)?.trim().toLowerCase();
-                const salePrice = row.SalePrice;
-
-                if (!name || !thickness || isNaN(salePrice)) {
-                    return; // Skip invalid rows
-                }
-
-                const itemToUpdate = items.find(i => 
-                    i.name.trim().toLowerCase() === name && 
-                    i.thickness.trim().toLowerCase() === thickness
-                );
-
-                if (itemToUpdate) {
-                    updates.push({ id: itemToUpdate.id, salePrice, rateListName });
-                } else {
-                    notFoundCount++;
-                    notFoundItems.push(`${row.Name} (${row.Thickness})`);
-                }
-            });
-
-            if (updates.length > 0) {
-                await batchUpdateRates(updates);
-            }
-
-            toast({
-                title: "Rate Update Complete",
-                description: `${updates.length} item rates updated for list "${rateListName}". ${notFoundCount} items not found.`,
-            });
-             if (notFoundCount > 0) {
-                console.warn("Items not found in inventory:", notFoundItems);
-            }
-            
-        } catch (error) {
-            console.error("Error processing Excel file:", error);
-            toast({
-                variant: "destructive",
-                title: "Error",
-                description: "Failed to process Excel file. Ensure it has 'Name', 'Thickness', and 'SalePrice' columns.",
-            });
-        } finally {
-            if(fileInputRef.current) fileInputRef.current.value = "";
-            setRateListName("");
-            setIsOpen(false);
-        }
-    };
-    reader.readAsBinaryString(file);
-  };
-
-  return (
-    <Dialog open={isOpen} onOpenChange={setIsOpen}>
-      <DialogTrigger asChild>
-        <Button variant="outline">
-          <FileUp className="mr-2 h-4 w-4" />
-          Update Rates via Excel
-        </Button>
-      </DialogTrigger>
-      <DialogContent>
-        <DialogHeader>
-          <DialogTitle>Upload New Rate List</DialogTitle>
-          <DialogDescription>
-            Create a new named rate list by uploading an Excel file. The file must contain 'Name', 'Thickness', and 'SalePrice' columns.
-          </DialogDescription>
-        </DialogHeader>
-        <div className="space-y-4 py-4">
-          <div className="space-y-2">
-            <Label htmlFor="rate-list-name">New Rate List Name</Label>
-            <Input 
-              id="rate-list-name" 
-              value={rateListName}
-              onChange={(e) => setRateListName(e.target.value)}
-              placeholder="e.g. New Year Rates, Eid Offer"
-            />
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="excel-file">Excel File</Label>
-            <Input
-              id="excel-file"
-              type="file"
-              ref={fileInputRef}
-              onChange={handleFileChange}
-              accept=".xlsx, .xls, .csv"
-              disabled={!rateListName.trim()}
-            />
-             {!rateListName.trim() && <p className="text-xs text-muted-foreground">Please enter a rate list name to enable file selection.</p>}
-          </div>
-        </div>
-      </DialogContent>
-    </Dialog>
-  );
-}
-
-
 export default function InventoryPage() {
   const { items, addItem, deleteItem, updateItem } = useData();
   const [isItemModalOpen, setItemModalOpen] = useState(false);
@@ -405,18 +281,15 @@ export default function InventoryPage() {
         title="Inventory"
         description="Manage your stock of materials and accessories."
       >
-        <div className="flex items-center gap-2">
-            <UploadRateListDialog />
-            <Dialog open={isItemModalOpen} onOpenChange={setItemModalOpen}>
-                <DialogTrigger asChild>
-                    <Button>
-                        <PlusCircle className="mr-2 h-4 w-4" />
-                        Add Item
-                    </Button>
-                </DialogTrigger>
-                <AddItemForm onItemAdded={handleItemAdded} existingItems={items} />
-            </Dialog>
-        </div>
+        <Dialog open={isItemModalOpen} onOpenChange={setItemModalOpen}>
+            <DialogTrigger asChild>
+                <Button>
+                    <PlusCircle className="mr-2 h-4 w-4" />
+                    Add Item
+                </Button>
+            </DialogTrigger>
+            <AddItemForm onItemAdded={handleItemAdded} existingItems={items} />
+        </Dialog>
       </PageHeader>
 
        <div className="flex items-center gap-4 mb-4 p-4 bg-muted/50 rounded-lg">
