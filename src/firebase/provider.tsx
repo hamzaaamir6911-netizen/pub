@@ -1,3 +1,4 @@
+
 'use client';
 
 import React, { DependencyList, createContext, useContext, ReactNode, useMemo, useState, useEffect } from 'react';
@@ -11,6 +12,7 @@ interface FirebaseProviderProps {
   firebaseApp: FirebaseApp;
   firestore: Firestore;
   auth: Auth;
+  withErrorListener?: boolean;
 }
 
 // Internal state for user authentication
@@ -60,6 +62,7 @@ export const FirebaseProvider: React.FC<FirebaseProviderProps> = ({
   firebaseApp,
   firestore,
   auth,
+  withErrorListener = true,
 }) => {
   const [userAuthState, setUserAuthState] = useState<UserAuthState>({
     user: null,
@@ -105,7 +108,7 @@ export const FirebaseProvider: React.FC<FirebaseProviderProps> = ({
 
   return (
     <FirebaseContext.Provider value={contextValue}>
-      <FirebaseErrorListener />
+      {withErrorListener && <FirebaseErrorListener />}
       {children}
     </FirebaseContext.Provider>
   );
