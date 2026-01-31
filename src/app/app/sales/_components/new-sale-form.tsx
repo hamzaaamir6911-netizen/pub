@@ -102,16 +102,16 @@ export function NewSaleForm({ initialData, onSaleAdded, onSaleUpdated, onCancel 
     onCancel: () => void;
 }) {
     const { toast } = useToast();
-    const { customers, items: allItems, addCustomer, addSale, updateSale } = useData();
+    const { customers, items: allItems, addCustomer, addSale, updateSale, rateListNames } = useData();
     
     const [selectedCustomer, setSelectedCustomer] = useState("");
-    const [saleItems, setSaleItems] = useState<Partial<SaleItem>[]>([{itemId: "", quantity: 1, feet: 1, discount: 0, color: '', thickness: '' }]);
+    const [selectedRateList, setSelectedRateList] = useState("default");
+    const [saleItems, setSaleItems] = useState<Partial<SaleItem>[]>([{itemId: "", quantity: 1, feet: 1, discount: 0, color: '', thickness: '', price: 0 }]);
     const [overallDiscount, setOverallDiscount] = useState(0);
     const [isCustomerModalOpen, setCustomerModalOpen] = useState(false);
     const [saleDate, setSaleDate] = useState<Date | undefined>(new Date());
     const [description, setDescription] = useState("");
     const [showT1T2, setShowT1T2] = useState(false);
-
 
     const isEditMode = !!initialData;
 
@@ -123,14 +123,29 @@ export function NewSaleForm({ initialData, onSaleAdded, onSaleUpdated, onCancel 
             setSaleDate(new Date(initialData.date));
             setDescription(initialData.description || "");
             setShowT1T2(initialData.showT1T2 || false);
+            setSelectedRateList(initialData.rateListName || "default");
         } else {
             clearForm();
         }
     }, [initialData]);
 
+    useEffect(() => {
+        // When rate list changes, update prices for all items in the form
+        setSaleItems(currentItems => currentItems.map(si => {
+            if (!si.itemId) return si;
+            const itemDetails = allItems.find(i => i.id === si.itemId);
+            if (!itemDetails) return si;
+
+            const newPrice = selectedRateList === 'default'
+                ? itemDetails.salePrice
+                : itemDetails.salePrices?.[selectedRateList] || itemDetails.salePrice;
+            
+            return { ...si, price: newPrice };
+        }));
+    }, [selectedRateList, allItems]);
 
     const handleAddItem = () => {
-        setSaleItems([...saleItems, {itemId: "", quantity: 1, feet: 1, discount: 0, color: '', thickness: '' }]);
+        setSaleItems([...saleItems, {itemId: "", quantity: 1, feet: 1, discount: 0, color: '', thickness: '', price: 0 }]);
     }
 
     const handleRemoveItem = (index: number) => {
@@ -147,6 +162,10 @@ export function NewSaleForm({ initialData, onSaleAdded, onSaleUpdated, onCancel 
             if (itemDetails) {
                 currentItem.color = itemDetails.color;
                 currentItem.thickness = itemDetails.thickness;
+                // Set the price based on the currently selected rate list
+                currentItem.price = selectedRateList === 'default'
+                    ? itemDetails.salePrice
+                    : itemDetails.salePrices?.[selectedRateList] || itemDetails.salePrice;
             }
         }
 
@@ -156,12 +175,17 @@ export function NewSaleForm({ initialData, onSaleAdded, onSaleUpdated, onCancel 
 
     const calculateTotal = () => {
         const subtotal = saleItems.reduce((total, currentItem) => {
-            if (!currentItem.itemId) return total;
+            if (!currentItem.itemId || currentItem.price === undefined) return total;
+            
             const itemDetails = allItems.find(i => i.id === currentItem.itemId);
             if (!itemDetails) return total;
 
-            const feet = currentItem.feet || 1;
-            const itemTotal = feet * itemDetails.salePrice * (currentItem.quantity || 1);
+            let feet = currentItem.feet || 1;
+            if (itemDetails.category !== 'Aluminium') {
+                feet = 1;
+            }
+            
+            const itemTotal = feet * currentItem.price * (currentItem.quantity || 1);
             const discountAmount = itemTotal * ((currentItem.discount || 0) / 100);
             
             return total + (itemTotal - discountAmount);
@@ -173,11 +197,12 @@ export function NewSaleForm({ initialData, onSaleAdded, onSaleUpdated, onCancel 
 
     const clearForm = () => {
         setSelectedCustomer("");
-        setSaleItems([{itemId: "", quantity: 1, feet: 1, discount: 0, color: '', thickness: ''}]);
+        setSaleItems([{itemId: "", quantity: 1, feet: 1, discount: 0, color: '', thickness: '', price: 0}]);
         setOverallDiscount(0);
         setSaleDate(new Date());
         setDescription("");
         setShowT1T2(false);
+        setSelectedRateList("default");
     }
     
     const handleSave = async () => {
@@ -209,7 +234,7 @@ export function NewSaleForm({ initialData, onSaleAdded, onSaleUpdated, onCancel 
                 itemId: item.id,
                 itemName: item.name,
                 quantity: si.quantity || 1,
-                price: item.salePrice,
+                price: si.price!, // Use the price from the state, which is based on the rate list
                 color: si.color || item.color,
                 weight: item.weight,
                 thickness: si.thickness || '',
@@ -226,6 +251,7 @@ export function NewSaleForm({ initialData, onSaleAdded, onSaleUpdated, onCancel 
             date: saleDate,
             description: description,
             showT1T2: showT1T2,
+            rateListName: selectedRateList,
         };
 
         if (isEditMode && initialData) {
@@ -265,7 +291,7 @@ export function NewSaleForm({ initialData, onSaleAdded, onSaleUpdated, onCancel 
                 </div>
             </CardHeader>
             <CardContent className="space-y-6">
-                <div className="grid md:grid-cols-3 gap-4 items-end">
+                <div className="grid md:grid-cols-4 gap-4 items-end">
                     <div className="space-y-2">
                         <Label htmlFor="customer">Customer</Label>
                         <div className="flex gap-2">
@@ -284,6 +310,18 @@ export function NewSaleForm({ initialData, onSaleAdded, onSaleUpdated, onCancel 
                             <AddCustomerForm onCustomerAdded={handleCustomerAdded} onOpenChange={setCustomerModalOpen} />
                         </Dialog>
                         </div>
+                    </div>
+                     <div className="space-y-2">
+                        <Label htmlFor="rate-list">Select Rate List</Label>
+                        <Select onValueChange={setSelectedRateList} value={selectedRateList}>
+                            <SelectTrigger id="rate-list">
+                                <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent>
+                                <SelectItem value="default">Default</SelectItem>
+                                {rateListNames.map(name => <SelectItem key={name} value={name}>{name}</SelectItem>)}
+                            </SelectContent>
+                        </Select>
                     </div>
                      <div className="space-y-2">
                         <Label htmlFor="date">Sale Date</Label>

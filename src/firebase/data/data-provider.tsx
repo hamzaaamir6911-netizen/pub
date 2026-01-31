@@ -2,7 +2,7 @@
 
 "use client";
 
-import React, { createContext, useContext, ReactNode, useEffect, useState } from 'react';
+import React, { createContext, useContext, ReactNode, useEffect, useState, useMemo } from 'react';
 import type { Item, Customer, Sale, Expense, Transaction, Vendor, Estimate, Labour, SalaryPayment, SaleItem } from '@/lib/types';
 import { useCollection, useFirestore, useMemoFirebase, useUser } from '@/firebase';
 import { collection, doc, writeBatch, serverTimestamp, Timestamp, query, where, getDocs, runTransaction, addDoc, getDoc, deleteDoc, updateDoc, onSnapshot, orderBy, setDoc } from 'firebase/firestore';
@@ -19,11 +19,12 @@ interface DataContextProps {
   estimates: Estimate[];
   labourers: Labour[];
   salaryPayments: SalaryPayment[];
+  rateListNames: string[];
   loading: boolean;
   addItem: (item: Omit<Item, 'id' | 'createdAt'>) => Promise<any>;
   deleteItem: (id: string) => Promise<void>;
   updateItem: (id: string, item: Partial<Omit<Item, 'id' | 'createdAt'>>) => Promise<void>;
-  batchUpdateRates: (updates: { id: string, salePrice: number }[]) => Promise<void>;
+  batchUpdateRates: (updates: { id: string; salePrice: number; rateListName: string }[]) => Promise<void>;
   updateItemStock: (id: string, newQuantity: number) => Promise<void>;
   addCustomer: (customer: Omit<Customer, 'id' | 'createdAt'>) => Promise<any>;
   updateCustomer: (id: string, customer: Partial<Omit<Customer, 'id' | 'createdAt'>>) => Promise<void>;
@@ -77,210 +78,9 @@ const toDate = (timestamp: any): Date | null => {
 };
 
 
-const sectionsData = [
-  { name: 'D 40 (1.2mm)', ratePerKg: 1010, weightPerFt: 0.49, ratePerFt: 495 },
-  { name: 'D 40 C (1.2mm)', ratePerKg: 1010, weightPerFt: 0.16, ratePerFt: 162 },
-  { name: 'SP 40 (1.2mm)', ratePerKg: 1010, weightPerFt: 0.44, ratePerFt: 444 },
-  { name: 'SP 2.5*1 (1.2mm)', ratePerKg: 1010, weightPerFt: 0.3, ratePerFt: 303 },
-  { name: 'SP 2.5*1 G (1.2mm)', ratePerKg: 1010, weightPerFt: 0.22, ratePerFt: 222 },
-  { name: 'SP 3*1 (1.2mm)', ratePerKg: 1010, weightPerFt: 0.36, ratePerFt: 364 },
-  { name: 'SP 3*1 G (1.2mm)', ratePerKg: 1010, weightPerFt: 0.26, ratePerFt: 263 },
-  { name: 'SP 3*1.5 (1.2mm)', ratePerKg: 1010, weightPerFt: 0.5, ratePerFt: 505 },
-  { name: 'SP 4*1 (1.2mm)', ratePerKg: 1010, weightPerFt: 0.45, ratePerFt: 455 },
-  { name: 'SP 4*1.5 (1.2mm)', ratePerKg: 1010, weightPerFt: 0.65, ratePerFt: 657 },
-  { name: 'SP 4*2 (1.2mm)', ratePerKg: 1010, weightPerFt: 0.85, ratePerFt: 859 },
-  { name: 'D 25 (1.2mm)', ratePerKg: 1010, weightPerFt: 0.35, ratePerFt: 354 },
-  { name: 'D 25 C (1.2mm)', ratePerKg: 1010, weightPerFt: 0.13, ratePerFt: 131 },
-  { name: 'D 25 F (1.2mm)', ratePerKg: 1010, weightPerFt: 0.21, ratePerFt: 212 },
-  { name: 'D 25 F Gola (1.2mm)', ratePerKg: 1010, weightPerFt: 0.08, ratePerFt: 81 },
-  { name: 'D 25 G (1.2mm)', ratePerKg: 1010, weightPerFt: 0.23, ratePerFt: 232 },
-  { name: 'D 25 G Gola (1.2mm)', ratePerKg: 1010, weightPerFt: 0.1, ratePerFt: 101 },
-  { name: 'D 25 K (1.2mm)', ratePerKg: 1010, weightPerFt: 0.28, ratePerFt: 283 },
-  { name: 'D 25 KG (1.2mm)', ratePerKg: 1010, weightPerFt: 0.19, ratePerFt: 192 },
-  { name: 'F 25 (1.2mm)', ratePerKg: 1010, weightPerFt: 0.3, ratePerFt: 303 },
-  { name: 'F 25 C (1.2mm)', ratePerKg: 1010, weightPerFt: 0.11, ratePerFt: 111 },
-  { name: 'F 25 G (1.2mm)', ratePerKg: 1010, weightPerFt: 0.21, ratePerFt: 212 },
-  { name: 'F 25 T (1.2mm)', ratePerKg: 1010, weightPerFt: 0.21, ratePerFt: 212 },
-  { name: 'F 25 P (1.2mm)', ratePerKg: 1010, weightPerFt: 0.15, ratePerFt: 152 },
-  { name: 'IN 25 (1.2mm)', ratePerKg: 1010, weightPerFt: 0.29, ratePerFt: 293 },
-  { name: 'IN 25 C (1.2mm)', ratePerKg: 1010, weightPerFt: 0.11, ratePerFt: 111 },
-  { name: 'IN 25 G (1.2mm)', ratePerKg: 1010, weightPerFt: 0.18, ratePerFt: 182 },
-  { name: 'IN 25 P (1.2mm)', ratePerKg: 1010, weightPerFt: 0.15, ratePerFt: 152 },
-  { name: 'D 38 (1.2mm)', ratePerKg: 1010, weightPerFt: 0.44, ratePerFt: 444 },
-  { name: 'D 38 C (1.2mm)', ratePerKg: 1010, weightPerFt: 0.15, ratePerFt: 152 },
-  { name: 'D 38 F (1.2mm)', ratePerKg: 1010, weightPerFt: 0.26, ratePerFt: 263 },
-  { name: 'D 38 FG (1.2mm)', ratePerKg: 1010, weightPerFt: 0.18, ratePerFt: 182 },
-  { name: 'D 38 G (1.2mm)', ratePerKg: 1010, weightPerFt: 0.26, ratePerFt: 263 },
-  { name: 'D 38 GG (1.2mm)', ratePerKg: 1010, weightPerFt: 0.18, ratePerFt: 182 },
-  { name: 'F 38 (1.2mm)', ratePerKg: 1010, weightPerFt: 0.44, ratePerFt: 444 },
-  { name: 'F 38 C (1.2mm)', ratePerKg: 1010, weightPerFt: 0.14, ratePerFt: 141 },
-  { name: 'F 38 G (1.2mm)', ratePerKg: 1010, weightPerFt: 0.3, ratePerFt: 303 },
-  { name: 'IN 38 (1.2mm)', ratePerKg: 1010, weightPerFt: 0.44, ratePerFt: 444 },
-  { name: 'IN 38 C (1.2mm)', ratePerKg: 1010, weightPerFt: 0.15, ratePerFt: 152 },
-  { name: 'IN 38 G (1.2mm)', ratePerKg: 1010, weightPerFt: 0.29, ratePerFt: 293 },
-  { name: 'IN 38 P (1.2mm)', ratePerKg: 1010, weightPerFt: 0.2, ratePerFt: 202 },
-  { name: 'IN 38 T (1.2mm)', ratePerKg: 1010, weightPerFt: 0.26, ratePerFt: 263 },
-  { name: 'D 100 (1.2mm)', ratePerKg: 1010, weightPerFt: 0.72, ratePerFt: 727 },
-  { name: 'DD 100 (1.2mm)', ratePerKg: 1010, weightPerFt: 0.9, ratePerFt: 909 },
-  { name: 'F 100 (1.2mm)', ratePerKg: 1010, weightPerFt: 0.72, ratePerFt: 727 },
-  { name: 'FF 100 (1.2mm)', ratePerKg: 1010, weightPerFt: 0.9, ratePerFt: 909 },
-  { name: 'I 100 (1.2mm)', ratePerKg: 1010, weightPerFt: 0.3, ratePerFt: 303 },
-  { name: 'I 100 G (1.2mm)', ratePerKg: 1010, weightPerFt: 0.4, ratePerFt: 404 },
-  { name: 'D 75 (1.2mm)', ratePerKg: 1010, weightPerFt: 0.65, ratePerFt: 657 },
-  { name: 'DD 75 (1.2mm)', ratePerKg: 1010, weightPerFt: 0.76, ratePerFt: 768 },
-  { name: 'F 75 (1.2mm)', ratePerKg: 1010, weightPerFt: 0.6, ratePerFt: 606 },
-  { name: 'FF 75 (1.2mm)', ratePerKg: 1010, weightPerFt: 0.72, ratePerFt: 727 },
-  { name: 'I 75 (1.2mm)', ratePerKg: 1010, weightPerFt: 0.28, ratePerFt: 283 },
-  { name: 'I 75 G (1.2mm)', ratePerKg: 1010, weightPerFt: 0.38, ratePerFt: 384 },
-  { name: 'H 75 (1.2mm)', ratePerKg: 1010, weightPerFt: 0.17, ratePerFt: 172 },
-  { name: 'G 75 (1.2mm)', ratePerKg: 1010, weightPerFt: 0.2, ratePerFt: 202 },
-  { name: 'D 65 (1.2mm)', ratePerKg: 1010, weightPerFt: 0.48, ratePerFt: 485 },
-  { name: 'DD 65 (1.2mm)', ratePerKg: 1010, weightPerFt: 0.58, ratePerFt: 586 },
-  { name: 'F 65 (1.2mm)', ratePerKg: 1010, weightPerFt: 0.45, ratePerFt: 455 },
-  { name: 'FF 65 (1.2mm)', ratePerKg: 1010, weightPerFt: 0.56, ratePerFt: 566 },
-  { name: 'I 65 (1.2mm)', ratePerKg: 1010, weightPerFt: 0.25, ratePerFt: 253 },
-  { name: 'I 65 G (1.2mm)', ratePerKg: 1010, weightPerFt: 0.34, ratePerFt: 343 },
-  { name: 'H 65 (1.2mm)', ratePerKg: 1010, weightPerFt: 0.16, ratePerFt: 162 },
-  { name: 'G 65 (1.2mm)', ratePerKg: 1010, weightPerFt: 0.18, ratePerFt: 182 },
-  { name: 'D 27 (1.2mm)', ratePerKg: 1010, weightPerFt: 0.22, ratePerFt: 222 },
-  { name: 'DD 27 (1.2mm)', ratePerKg: 1010, weightPerFt: 0.3, ratePerFt: 303 },
-  { name: 'F 27 (1.2mm)', ratePerKg: 1010, weightPerFt: 0.19, ratePerFt: 192 },
-  { name: 'FF 27 (1.2mm)', ratePerKg: 1010, weightPerFt: 0.28, ratePerFt: 283 },
-  { name: 'I 27 (1.2mm)', ratePerKg: 1010, weightPerFt: 0.15, ratePerFt: 152 },
-  { name: 'H 27 (1.2mm)', ratePerKg: 1010, weightPerFt: 0.1, ratePerFt: 101 },
-  { name: 'G 27 (1.2mm)', ratePerKg: 1010, weightPerFt: 0.12, ratePerFt: 121 },
-  { name: 'D 32 (1.2mm)', ratePerKg: 1010, weightPerFt: 0.3, ratePerFt: 303 },
-  { name: 'DD 32 (1.2mm)', ratePerKg: 1010, weightPerFt: 0.35, ratePerFt: 354 },
-  { name: 'F 32 (1.2mm)', ratePerKg: 1010, weightPerFt: 0.24, ratePerFt: 242 },
-  { name: 'FF 32 (1.2mm)', ratePerKg: 1010, weightPerFt: 0.3, ratePerFt: 303 },
-  { name: 'I 32 (1.2mm)', ratePerKg: 1010, weightPerFt: 0.16, ratePerFt: 162 },
-  { name: 'H 32 (1.2mm)', ratePerKg: 1010, weightPerFt: 0.1, ratePerFt: 101 },
-  { name: 'G 32 (1.2mm)', ratePerKg: 1010, weightPerFt: 0.12, ratePerFt: 121 },
-  { name: '40*40 (1.2mm)', ratePerKg: 1010, weightPerFt: 0.18, ratePerFt: 182 },
-  { name: '32*32 (1.2mm)', ratePerKg: 1010, weightPerFt: 0.15, ratePerFt: 152 },
-  { name: '25*25 (1.2mm)', ratePerKg: 1010, weightPerFt: 0.1, ratePerFt: 101 },
-  { name: '19*19 (1.2mm)', ratePerKg: 1010, weightPerFt: 0.08, ratePerFt: 81 },
-  { name: '15*15 (1.2mm)', ratePerKg: 1010, weightPerFt: 0.05, ratePerFt: 51 },
-  { name: '12*12 (1.2mm)', ratePerKg: 1010, weightPerFt: 0.04, ratePerFt: 40 },
-  { name: '15*19 (1.2mm)', ratePerKg: 1010, weightPerFt: 0.07, ratePerFt: 71 },
-  { name: 'L Patti (1.2mm)', ratePerKg: 1010, weightPerFt: 0.07, ratePerFt: 71 },
-  { name: 'U Patti (1.2mm)', ratePerKg: 1010, weightPerFt: 0.07, ratePerFt: 71 },
-  { name: 'Big U (1.2mm)', ratePerKg: 1010, weightPerFt: 0.1, ratePerFt: 101 },
-  { name: 'T Patti (1.2mm)', ratePerKg: 1010, weightPerFt: 0.07, ratePerFt: 71 },
-  { name: 'T Zali (1.2mm)', ratePerKg: 1010, weightPerFt: 0.1, ratePerFt: 101 },
-  { name: '3/4" Round Pipe (1.2mm)', ratePerKg: 1010, weightPerFt: 0.13, ratePerFt: 131 },
-  { name: '1" Round Pipe (1.2mm)', ratePerKg: 1010, weightPerFt: 0.15, ratePerFt: 152 },
-  { name: '1.25" Round Pipe (1.2mm)', ratePerKg: 1010, weightPerFt: 0.2, ratePerFt: 202 },
-  { name: '1.5" Round Pipe (1.2mm)', ratePerKg: 1010, weightPerFt: 0.25, ratePerFt: 253 },
-  { name: '2" Round Pipe (1.2mm)', ratePerKg: 1010, weightPerFt: 0.35, ratePerFt: 354 },
-  { name: '1*1 Square Pipe (1.2mm)', ratePerKg: 1010, weightPerFt: 0.2, ratePerFt: 202 },
-  { name: '1.25*1.25 Square Pipe (1.2mm)', ratePerKg: 1010, weightPerFt: 0.26, ratePerFt: 263 },
-  { name: '1.5*1.5 Square Pipe (1.2mm)', ratePerKg: 1010, weightPerFt: 0.3, ratePerFt: 303 },
-  { name: '2*1 Square Pipe (1.2mm)', ratePerKg: 1010, weightPerFt: 0.3, ratePerFt: 303 },
-  { name: '3*1.5 Square Pipe (1.2mm)', ratePerKg: 1010, weightPerFt: 0.45, ratePerFt: 455 },
-  { name: '4*1.5 Square Pipe (1.2mm)', ratePerKg: 1010, weightPerFt: 0.6, ratePerFt: 606 },
-  { name: 'Showcase Patti (1.2mm)', ratePerKg: 1010, weightPerFt: 0.1, ratePerFt: 101 },
-  { name: 'Showcase Pata (1.2mm)', ratePerKg: 1010, weightPerFt: 0.15, ratePerFt: 152 },
-  { name: 'Showcase Gola (1.2mm)', ratePerKg: 1010, weightPerFt: 0.05, ratePerFt: 51 },
-  { name: 'Showcase Corner (1.2mm)', ratePerKg: 1010, weightPerFt: 0.08, ratePerFt: 81 },
-  { name: 'Showcase Door (1.2mm)', ratePerKg: 1010, weightPerFt: 0.1, ratePerFt: 101 },
-  { name: 'Showcase Handle (1.2mm)', ratePerKg: 1010, weightPerFt: 0.07, ratePerFt: 71 },
-  { name: 'ADC Louver (1.2mm)', ratePerKg: 1010, weightPerFt: 0.18, ratePerFt: 182 },
-  { name: 'ADC Louver Frame (1.2mm)', ratePerKg: 1010, weightPerFt: 0.18, ratePerFt: 182 },
-];
-
-
 export const DataProvider = ({ children }: { children: ReactNode }) => {
     const firestore = useFirestore();
     const { user, isUserLoading } = useUser();
-    const [isSeeding, setIsSeeding] = useState(false);
-    
-    useEffect(() => {
-        const seedData = async () => {
-            if (!firestore || isSeeding) return;
-
-            const seedingFlagRef = doc(firestore, 'meta', 'isDataSeeded');
-            const seedingFlagDoc = await getDoc(seedingFlagRef);
-
-            if (seedingFlagDoc.exists()) {
-                return;
-            }
-
-            setIsSeeding(true);
-            const batch = writeBatch(firestore);
-            const itemsCollectionRef = collection(firestore, 'items');
-
-            sectionsData.forEach(itemData => {
-                const docRef = doc(itemsCollectionRef); 
-                const thicknessMatch = itemData.name.match(/\((.*?)\)/);
-                const thickness = thicknessMatch ? thicknessMatch[1] : '';
-
-                const newItem: Omit<Item, 'id' | 'createdAt'> = {
-                    name: itemData.name.replace(/\s*\(.*\)\s*/, '').replace(/\s*\[.*\]\s*/, '').trim(),
-                    category: 'Aluminium',
-                    unit: 'Feet',
-                    purchasePrice: 0,
-                    salePrice: itemData.ratePerFt || (itemData.ratePerKg * (itemData.weightPerFt || 0)),
-                    color: 'Silver',
-                    weight: itemData.weightPerFt,
-                    thickness: thickness,
-                    quantity: 0,
-                };
-                batch.set(docRef, { ...newItem, createdAt: serverTimestamp() });
-            });
-            
-            batch.set(seedingFlagRef, { seeded: true, timestamp: serverTimestamp() });
-            
-            try {
-                await batch.commit();
-            } catch (error) {
-                console.error("Error seeding data:", error);
-            } finally {
-                setIsSeeding(false);
-            }
-        };
-
-        seedData();
-    }, [firestore, isSeeding]);
-
-    useEffect(() => {
-        const recoverInvoice = async () => {
-            if (!firestore) return;
-            const invoiceRef = doc(firestore, 'sales', 'INV-079');
-            const invoiceDoc = await getDoc(invoiceRef);
-
-            if (!invoiceDoc.exists()) {
-                const recoveredInvoice: Sale = {
-                    id: "INV-079",
-                    customerId: "CUST-001", // Placeholder, adjust if needed
-                    customerName: "John Doe", // Placeholder
-                    items: [
-                      {
-                        itemId: "ITEM-001", // Placeholder
-                        itemName: "D 40",
-                        quantity: 10,
-                        price: 495,
-                        color: "Silver",
-                        thickness: "1.2mm",
-                        feet: 12,
-                        discount: 0
-                      }
-                    ],
-                    total: 59400,
-                    date: new Date("2024-05-23T10:00:00.000Z"),
-                    discount: 0,
-                    status: "posted"
-                };
-                try {
-                    await setDoc(invoiceRef, recoveredInvoice);
-                    console.log("Successfully recovered INV-079.");
-                } catch (error) {
-                    console.error("Error recovering INV-079:", error);
-                }
-            }
-        };
-        recoverInvoice();
-    }, [firestore]);
 
     const shouldFetch = !!user;
 
@@ -314,6 +114,18 @@ export const DataProvider = ({ children }: { children: ReactNode }) => {
     const estimates = estimatesData?.map(estimate => ({ ...estimate, date: toDate(estimate.date) as Date })) || [];
     const salaryPayments = salaryPaymentsData?.map(payment => ({ ...payment, date: toDate(payment.date) as Date })) || [];
 
+    const rateListNames = useMemo(() => {
+        if (!items) return [];
+        const names = new Set<string>();
+        items.forEach(item => {
+            if (item.salePrices) {
+                Object.keys(item.salePrices).forEach(name => names.add(name));
+            }
+        });
+        return Array.from(names).sort();
+    }, [items]);
+
+
     const loading = isUserLoading || itemsLoading || customersLoading || salesLoading || expensesLoading || transactionsLoading || vendorsLoading || estimatesLoading || labourLoading || salaryPaymentsLoading;
 
     const addItem = async (item: Omit<Item, 'id' | 'createdAt'>) => {
@@ -333,13 +145,15 @@ export const DataProvider = ({ children }: { children: ReactNode }) => {
         return updateDocumentNonBlocking(itemRef, item);
     };
 
-    const batchUpdateRates = async (updates: { id: string, salePrice: number }[]) => {
+    const batchUpdateRates = async (updates: { id: string, salePrice: number, rateListName: string }[]) => {
         if (!user || updates.length === 0) return;
     
         const batch = writeBatch(firestore);
         updates.forEach(update => {
+            if (!update.rateListName) return;
             const itemRef = doc(firestore, 'items', update.id);
-            batch.update(itemRef, { salePrice: update.salePrice });
+            // Use dot notation to update a field in a map
+            batch.update(itemRef, { [`salePrices.${update.rateListName}`]: update.salePrice });
         });
     
         await batch.commit();
@@ -601,7 +415,7 @@ export const DataProvider = ({ children }: { children: ReactNode }) => {
             const discountAmount = itemTotal * ((currentItem.discount || 0) / 100);
             return total + (itemTotal - discountAmount);
         }, 0);
-        const overallDiscountAmount = (subtotal * estimate.discount) / 100;
+        const overallDiscountAmount = (subtotal * (estimate.discount || 0)) / 100;
         const total = subtotal - overallDiscountAmount;
     
         const newEstimateData = {
@@ -628,6 +442,7 @@ export const DataProvider = ({ children }: { children: ReactNode }) => {
             discount: estimate.discount,
             date: new Date(),
             estimateId: estimate.id,
+            rateListName: estimate.rateListName,
         };
         
         await addSale(saleData);
@@ -870,7 +685,7 @@ export const DataProvider = ({ children }: { children: ReactNode }) => {
     };
     
     const value = {
-        items, customers, sales, expenses, transactions, vendors, estimates, labourers, salaryPayments, loading,
+        items, customers, sales, expenses, transactions, vendors, estimates, labourers, salaryPayments, rateListNames, loading,
         addItem, deleteItem, updateItem, batchUpdateRates, updateItemStock,
         addCustomer, updateCustomer, deleteCustomer,
         addVendor, deleteVendor,

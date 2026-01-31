@@ -2,7 +2,7 @@
 
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { MoreHorizontal, PlusCircle, Trash2, RotateCcw, FileText, Printer, ShoppingCart } from "lucide-react";
 import {
   Table,
@@ -241,14 +241,29 @@ function AddCustomerForm({ onCustomerAdded }: { onCustomerAdded: (newCustomer: O
 
 function NewEstimateForm({ onEstimateAdded }: { onEstimateAdded: (newEstimate: Omit<Estimate, 'id' | 'date' | 'total'>) => void }) {
     const { toast } = useToast();
-    const { customers, items: allItems, addCustomer } = useData();
+    const { customers, items: allItems, addCustomer, rateListNames } = useData();
     const [selectedCustomer, setSelectedCustomer] = useState("");
-    const [saleItems, setSaleItems] = useState<Partial<SaleItem>[]>([{itemId: "", quantity: 1, feet: 1, discount: 0, color: '', thickness: '' }]);
+    const [selectedRateList, setSelectedRateList] = useState("default");
+    const [saleItems, setSaleItems] = useState<Partial<SaleItem>[]>([{itemId: "", quantity: 1, feet: 1, discount: 0, color: '', thickness: '', price: 0 }]);
     const [overallDiscount, setOverallDiscount] = useState(0);
     const [isCustomerModalOpen, setCustomerModalOpen] = useState(false);
 
+    useEffect(() => {
+        setSaleItems(currentItems => currentItems.map(si => {
+            if (!si.itemId) return si;
+            const itemDetails = allItems.find(i => i.id === si.itemId);
+            if (!itemDetails) return si;
+
+            const newPrice = selectedRateList === 'default'
+                ? itemDetails.salePrice
+                : itemDetails.salePrices?.[selectedRateList] || itemDetails.salePrice;
+            
+            return { ...si, price: newPrice };
+        }));
+    }, [selectedRateList, allItems]);
+
     const handleAddItem = () => {
-        setSaleItems([...saleItems, {itemId: "", quantity: 1, feet: 1, discount: 0, color: '', thickness: '' }]);
+        setSaleItems([...saleItems, {itemId: "", quantity: 1, feet: 1, discount: 0, color: '', thickness: '', price: 0 }]);
     }
 
     const handleRemoveItem = (index: number) => {
@@ -265,6 +280,9 @@ function NewEstimateForm({ onEstimateAdded }: { onEstimateAdded: (newEstimate: O
             if (itemDetails) {
                 currentItem.color = itemDetails.color;
                 currentItem.thickness = itemDetails.thickness;
+                currentItem.price = selectedRateList === 'default'
+                    ? itemDetails.salePrice
+                    : itemDetails.salePrices?.[selectedRateList] || itemDetails.salePrice;
             }
         }
 
@@ -274,12 +292,17 @@ function NewEstimateForm({ onEstimateAdded }: { onEstimateAdded: (newEstimate: O
 
     const calculateTotal = () => {
         const subtotal = saleItems.reduce((total, currentItem) => {
-            if (!currentItem.itemId) return total;
+            if (!currentItem.itemId || currentItem.price === undefined) return total;
+            
             const itemDetails = allItems.find(i => i.id === currentItem.itemId);
             if (!itemDetails) return total;
 
-            const feet = currentItem.feet || 1;
-            const itemTotal = feet * itemDetails.salePrice * (currentItem.quantity || 1);
+            let feet = currentItem.feet || 1;
+            if (itemDetails.category !== 'Aluminium') {
+                feet = 1;
+            }
+            
+            const itemTotal = feet * currentItem.price * (currentItem.quantity || 1);
             const discountAmount = itemTotal * ((currentItem.discount || 0) / 100);
             
             return total + (itemTotal - discountAmount);
@@ -291,8 +314,9 @@ function NewEstimateForm({ onEstimateAdded }: { onEstimateAdded: (newEstimate: O
 
     const clearForm = () => {
         setSelectedCustomer("");
-        setSaleItems([{itemId: "", quantity: 1, feet: 1, discount: 0, color: '', thickness: ''}]);
+        setSaleItems([{itemId: "", quantity: 1, feet: 1, discount: 0, color: '', thickness: '', price: 0}]);
         setOverallDiscount(0);
+        setSelectedRateList("default");
     }
     
     const handleSaveEstimate = async () => {
@@ -320,7 +344,7 @@ function NewEstimateForm({ onEstimateAdded }: { onEstimateAdded: (newEstimate: O
                 itemId: item.id,
                 itemName: item.name,
                 quantity: si.quantity || 1,
-                price: item.salePrice,
+                price: si.price!,
                 color: si.color || item.color,
                 weight: item.weight,
                 thickness: si.thickness || '',
@@ -334,6 +358,7 @@ function NewEstimateForm({ onEstimateAdded }: { onEstimateAdded: (newEstimate: O
             customerName: customer.customerName,
             items: finalSaleItems,
             discount: overallDiscount,
+            rateListName: selectedRateList
         };
 
         await onEstimateAdded(newEstimate);
@@ -360,7 +385,7 @@ function NewEstimateForm({ onEstimateAdded }: { onEstimateAdded: (newEstimate: O
                 </Button>
             </CardHeader>
             <CardContent className="space-y-6">
-                <div className="grid md:grid-cols-2 gap-4">
+                <div className="grid md:grid-cols-3 gap-4">
                     <div className="space-y-2">
                         <Label htmlFor="customer">Customer</Label>
                         <div className="flex gap-2">
@@ -379,6 +404,18 @@ function NewEstimateForm({ onEstimateAdded }: { onEstimateAdded: (newEstimate: O
                             <AddCustomerForm onCustomerAdded={handleCustomerAdded} />
                         </Dialog>
                         </div>
+                    </div>
+                    <div className="space-y-2">
+                        <Label htmlFor="rate-list">Select Rate List</Label>
+                        <Select onValueChange={setSelectedRateList} value={selectedRateList}>
+                            <SelectTrigger id="rate-list">
+                                <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent>
+                                <SelectItem value="default">Default</SelectItem>
+                                {rateListNames.map(name => <SelectItem key={name} value={name}>{name}</SelectItem>)}
+                            </SelectContent>
+                        </Select>
                     </div>
                     <div className="space-y-2">
                         <Label htmlFor="discount">Overall Discount (%)</Label>
@@ -529,6 +566,7 @@ export default function EstimatesPage() {
                   <TableHead>Estimate ID</TableHead>
                   <TableHead>Customer</TableHead>
                   <TableHead>Date</TableHead>
+                  <TableHead>Rate List</TableHead>
                   <TableHead className="text-right">Total Amount</TableHead>
                   <TableHead className="no-print">
                     <span className="sr-only">Actions</span>
@@ -538,13 +576,14 @@ export default function EstimatesPage() {
               <TableBody>
                 {estimates.length === 0 ? (
                   <TableRow>
-                    <TableCell colSpan={5} className="text-center h-24">No estimates recorded yet.</TableCell>
+                    <TableCell colSpan={6} className="text-center h-24">No estimates recorded yet.</TableCell>
                   </TableRow>
                 ) : (
                   estimates.map((estimate) => (
                     <TableRow key={estimate.id}>
                       <TableCell className="font-medium">{estimate.id}</TableCell>                      <TableCell>{estimate.customerName}</TableCell>
                       <TableCell>{formatDate(estimate.date)}</TableCell>
+                      <TableCell>{estimate.rateListName === 'default' ? 'Default' : estimate.rateListName}</TableCell>
                       <TableCell className="text-right">
                         {formatCurrency(estimate.total)}
                       </TableCell>

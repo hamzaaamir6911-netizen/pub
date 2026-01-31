@@ -87,8 +87,8 @@ export default function PrintInvoicePage() {
       <div className="p-8">
           <div className="grid grid-cols-2 gap-8 mb-12">
               <div className="space-y-4">
-                  <div className="font-bold text-sm uppercase text-gray-500">From</div>
-                  <div className="text-sm text-gray-700 font-semibold">
+                  <div className="font-bold text-sm uppercase text-BLACK-500">From</div>
+                  <div className="text-sm text-BLACK-700 font-semibold">
                       <p className="font-extrabold">ARCO Aluminium Company</p>
                       <p>B-5, PLOT 59, Industrial Estate,</p>
                       <p>Hayatabad, Peshawar</p>
@@ -96,7 +96,7 @@ export default function PrintInvoicePage() {
                   </div>
               </div>
               <div className="space-y-4">
-                   <div className="font-bold text-sm uppercase text-gray-500">To</div>
+                   <div className="font-bold text-sm uppercase text-BLACK-500">To</div>
                   <div className="text-sm text-gray-700 font-semibold">
                       <p className="font-extrabold">{sale.customerName}</p>
                       {customer?.address && <p>{customer.address}</p>}

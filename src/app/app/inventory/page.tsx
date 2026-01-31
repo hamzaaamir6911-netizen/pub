@@ -26,7 +26,7 @@ import { PageHeader } from "@/components/page-header";
 import { formatCurrency } from "@/lib/utils";
 import type { Item } from "@/lib/types";
 import { useData } from "@/firebase/data/data-provider";
-import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogTrigger, DialogDescription } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -109,7 +109,7 @@ function AddItemForm({ onItemAdded, existingItems }: { onItemAdded: (newItem: Om
                     <Input type="number" value={purchasePrice} onChange={(e) => setPurchasePrice(parseFloat(e.target.value) || 0)} />
                 </div>
                 <div className="space-y-2">
-                    <Label>Sale Rate</Label>
+                    <Label>Default Sale Rate</Label>
                     <Input type="number" value={salePrice} onChange={(e) => setSalePrice(parseFloat(e.target.value) || 0)} />
                 </div>
                  <div className="space-y-2">
@@ -206,7 +206,7 @@ function EditItemForm({ item, onItemUpdated, onOpenChange }: { item: Item; onIte
                     <Input type="number" value={purchasePrice} onChange={(e) => setPurchasePrice(parseFloat(e.target.value) || 0)} />
                 </div>
                 <div className="space-y-2">
-                    <Label>Sale Rate</Label>
+                    <Label>Default Sale Rate</Label>
                     <Input type="number" value={salePrice} onChange={(e) => setSalePrice(parseFloat(e.target.value) || 0)} />
                 </div>
                  <div className="space-y-2">
@@ -237,16 +237,19 @@ function EditItemForm({ item, onItemUpdated, onOpenChange }: { item: Item; onIte
     );
 }
 
-export default function InventoryPage() {
-  const { items, addItem, deleteItem, updateItem, batchUpdateRates } = useData();
-  const [isItemModalOpen, setItemModalOpen] = useState(false);
-  const [isEditModalOpen, setEditModalOpen] = useState(false);
-  const [editingItem, setEditingItem] = useState<Item | null>(null);
-  const [thicknessFilter, setThicknessFilter] = useState<string>("");
+function UploadRateListDialog() {
+  const { items, batchUpdateRates } = useData();
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const [rateListName, setRateListName] = useState("");
+  const [isOpen, setIsOpen] = useState(false);
   const { toast } = useToast();
 
-  const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    if (!rateListName.trim()) {
+      toast({ variant: "destructive", title: "Validation Error", description: "Please enter a name for the rate list." });
+      return;
+    }
+
     const file = event.target.files?.[0];
     if (!file) return;
 
@@ -259,7 +262,7 @@ export default function InventoryPage() {
             const worksheet = workbook.Sheets[sheetName];
             const jsonData = XLSX.utils.sheet_to_json(worksheet) as { Name: string, Thickness: string, SalePrice: number }[];
 
-            const updates: { id: string, salePrice: number }[] = [];
+            const updates: { id: string, salePrice: number, rateListName: string }[] = [];
             let notFoundCount = 0;
             const notFoundItems: string[] = [];
 
@@ -278,7 +281,7 @@ export default function InventoryPage() {
                 );
 
                 if (itemToUpdate) {
-                    updates.push({ id: itemToUpdate.id, salePrice });
+                    updates.push({ id: itemToUpdate.id, salePrice, rateListName });
                 } else {
                     notFoundCount++;
                     notFoundItems.push(`${row.Name} (${row.Thickness})`);
@@ -291,7 +294,7 @@ export default function InventoryPage() {
 
             toast({
                 title: "Rate Update Complete",
-                description: `${updates.length} items updated successfully. ${notFoundCount} items from the file were not found.`,
+                description: `${updates.length} item rates updated for list "${rateListName}". ${notFoundCount} items not found.`,
             });
              if (notFoundCount > 0) {
                 console.warn("Items not found in inventory:", notFoundItems);
@@ -305,13 +308,64 @@ export default function InventoryPage() {
                 description: "Failed to process Excel file. Ensure it has 'Name', 'Thickness', and 'SalePrice' columns.",
             });
         } finally {
-            if(fileInputRef.current) {
-                fileInputRef.current.value = "";
-            }
+            if(fileInputRef.current) fileInputRef.current.value = "";
+            setRateListName("");
+            setIsOpen(false);
         }
     };
     reader.readAsBinaryString(file);
   };
+
+  return (
+    <Dialog open={isOpen} onOpenChange={setIsOpen}>
+      <DialogTrigger asChild>
+        <Button variant="outline">
+          <FileUp className="mr-2 h-4 w-4" />
+          Update Rates via Excel
+        </Button>
+      </DialogTrigger>
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>Upload New Rate List</DialogTitle>
+          <DialogDescription>
+            Create a new named rate list by uploading an Excel file. The file must contain 'Name', 'Thickness', and 'SalePrice' columns.
+          </DialogDescription>
+        </DialogHeader>
+        <div className="space-y-4 py-4">
+          <div className="space-y-2">
+            <Label htmlFor="rate-list-name">New Rate List Name</Label>
+            <Input 
+              id="rate-list-name" 
+              value={rateListName}
+              onChange={(e) => setRateListName(e.target.value)}
+              placeholder="e.g. New Year Rates, Eid Offer"
+            />
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="excel-file">Excel File</Label>
+            <Input
+              id="excel-file"
+              type="file"
+              ref={fileInputRef}
+              onChange={handleFileChange}
+              accept=".xlsx, .xls, .csv"
+              disabled={!rateListName.trim()}
+            />
+             {!rateListName.trim() && <p className="text-xs text-muted-foreground">Please enter a rate list name to enable file selection.</p>}
+          </div>
+        </div>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+
+export default function InventoryPage() {
+  const { items, addItem, deleteItem, updateItem } = useData();
+  const [isItemModalOpen, setItemModalOpen] = useState(false);
+  const [isEditModalOpen, setEditModalOpen] = useState(false);
+  const [editingItem, setEditingItem] = useState<Item | null>(null);
+  const [thicknessFilter, setThicknessFilter] = useState<string>("");
 
   const handleDelete = (id: string) => {
     deleteItem(id);
@@ -352,17 +406,7 @@ export default function InventoryPage() {
         description="Manage your stock of materials and accessories."
       >
         <div className="flex items-center gap-2">
-            <Button variant="outline" onClick={() => fileInputRef.current?.click()}>
-                <FileUp className="mr-2 h-4 w-4" />
-                Update Rates via Excel
-            </Button>
-            <input
-                type="file"
-                ref={fileInputRef}
-                onChange={handleFileChange}
-                className="hidden"
-                accept=".xlsx, .xls, .csv"
-            />
+            <UploadRateListDialog />
             <Dialog open={isItemModalOpen} onOpenChange={setItemModalOpen}>
                 <DialogTrigger asChild>
                     <Button>
@@ -397,8 +441,8 @@ export default function InventoryPage() {
               <TableHead>Category</TableHead>
               <TableHead>Color</TableHead>
               <TableHead>Thickness</TableHead>
-              <TableHead className="text-right">Purchase Rate</TableHead>
-              <TableHead className="text-right">Sale Rate</TableHead>
+              <TableHead className="text-right">Default Sale Rate</TableHead>
+              <TableHead className="text-right">Stock</TableHead>
               <TableHead>
                 <span className="sr-only">Actions</span>
               </TableHead>
@@ -420,10 +464,10 @@ export default function InventoryPage() {
                   {item.thickness}
                 </TableCell>
                 <TableCell className="text-right">
-                  {formatCurrency(item.purchasePrice)}
+                  {formatCurrency(item.salePrice)}
                 </TableCell>
                 <TableCell className="text-right">
-                  {formatCurrency(item.salePrice)}
+                  {item.quantity} {item.unit}
                 </TableCell>
                 <TableCell>
                     <DropdownMenu>

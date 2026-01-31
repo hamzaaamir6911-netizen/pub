@@ -6,7 +6,8 @@ export type Item = {
   category: 'Aluminium' | 'Glass' | 'Accessories';
   unit: 'Kg' | 'Feet' | 'Piece';
   purchasePrice: number;
-  salePrice: number;
+  salePrice: number; // Default/base rate
+  salePrices?: { [key: string]: number }; // For named rate lists
   color: string;
   weight?: number;
   thickness: string;
@@ -58,6 +59,7 @@ export type Sale = {
   estimateId?: string; // Link to the original estimate
   description?: string;
   showT1T2?: boolean;
+  rateListName?: string;
 };
 
 export type Estimate = {
@@ -68,6 +70,7 @@ export type Estimate = {
   total: number;
   date: Date;
   discount: number; // Overall discount percentage
+  rateListName?: string;
 };
 
 export type Expense = {

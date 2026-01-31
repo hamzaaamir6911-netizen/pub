@@ -33,11 +33,18 @@
         },
         "salePrice": {
           "type": "number",
-          "description": "The sale price of the item."
+          "description": "The default sale price of the item."
         },
         "thickness": {
           "type": "string",
           "description": "The thickness of the item."
+        },
+        "salePrices": {
+          "type": "object",
+          "description": "A map of rate list names to sale prices.",
+          "additionalProperties": {
+            "type": "number"
+          }
         }
       },
       "required": [
@@ -162,6 +169,10 @@
           "type": "string",
           "description": "The date of the sale.",
           "format": "date-time"
+        },
+        "rateListName": {
+          "type": "string",
+          "description": "The name of the rate list used for this sale."
         }
       },
       "required": [
@@ -246,6 +257,10 @@
         "discount": {
           "type": "number",
           "description": "Overall discount percentage applied to the estimate."
+        },
+        "rateListName": {
+          "type": "string",
+          "description": "The name of the rate list used for this estimate."
         }
       },
       "required": [
