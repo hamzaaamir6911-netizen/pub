@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { usePathname } from 'next/navigation';
 import { errorEmitter } from '@/firebase/error-emitter';
 import { FirestorePermissionError } from '@/firebase/errors';
 
@@ -9,8 +10,14 @@ import { FirestorePermissionError } from '@/firebase/errors';
  * It throws any received error to be caught by Next.js's global-error.tsx.
  */
 export function FirebaseErrorListener() {
-  // Use the specific error type for the state for type safety.
+  const pathname = usePathname();
   const [error, setError] = useState<FirestorePermissionError | null>(null);
+  
+  // Disable the error listener on any print-specific routes to avoid showing the
+  // Next.js error overlay on the printed page.
+  if (pathname.startsWith('/print')) {
+      return null;
+  }
 
   useEffect(() => {
     // The callback now expects a strongly-typed error, matching the event payload.
