@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useMemo } from "react";
-import { MoreHorizontal, Trash2, Edit, Printer, PlusCircle, FileText, Upload, Undo, X, FileSpreadsheet } from "lucide-react";
+import { MoreHorizontal, Trash2, Edit, Printer, PlusCircle, FileText, Upload, Undo, X } from "lucide-react";
 import {
   Table,
   TableBody,
@@ -43,7 +43,6 @@ import type { Sale } from "@/lib/types";
 import { useData } from "@/firebase/data/data-provider";
 import { Badge } from "@/components/ui/badge";
 import { NewSaleForm } from "./_components/new-sale-form";
-import { Checkbox } from "@/components/ui/checkbox";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
 
@@ -223,7 +222,6 @@ export default function SalesPage() {
   const [isDetailsOpen, setDetailsOpen] = useState(false);
   const [selectedSale, setSelectedSale] = useState<Sale | null>(null);
   const [editingSale, setEditingSale] = useState<Sale | null>(null);
-  const [selectedRows, setSelectedRows] = useState<string[]>([]);
   const [customerFilter, setCustomerFilter] = useState<string>("");
   const [statusFilter, setStatusFilter] = useState<"all" | "draft" | "posted">("all");
 
@@ -275,26 +273,6 @@ export default function SalesPage() {
     window.open(`/print/${view}/${saleId}`, '_blank');
   };
 
-  const handleSelectRow = (id: string) => {
-    setSelectedRows(prev => 
-      prev.includes(id) ? prev.filter(rowId => rowId !== id) : [...prev, id]
-    );
-  };
-
-  const handleSelectAll = () => {
-    if (selectedRows.length === filteredSales.length) {
-      setSelectedRows([]);
-    } else {
-      setSelectedRows(filteredSales.map(s => s.id));
-    }
-  };
-
-  const handlePrintSelected = () => {
-    selectedRows.forEach(id => {
-      window.open(`/print/invoice/${id}`, '_blank');
-    });
-  };
-
   return (
     <>
       <PageHeader
@@ -342,26 +320,10 @@ export default function SalesPage() {
                 )}
             </div>
 
-          <div className="flex items-center gap-2">
-              {selectedRows.length > 0 && (
-                <>
-                  <Button onClick={handlePrintSelected}>
-                      <Printer className="mr-2 h-4 w-4" />
-                      Print Invoices ({selectedRows.length})
-                  </Button>
-                </>
-              )}
-          </div>
           <div className="rounded-lg border shadow-sm mt-4 overflow-x-auto">
             <Table>
             <TableHeader>
                 <TableRow>
-                <TableHead className="w-[50px]">
-                    <Checkbox
-                        checked={selectedRows.length === filteredSales.length && filteredSales.length > 0}
-                        onCheckedChange={handleSelectAll}
-                    />
-                </TableHead>
                 <TableHead>Sale ID</TableHead>
                 <TableHead>Customer</TableHead>
                 <TableHead>Date</TableHead>
@@ -375,21 +337,15 @@ export default function SalesPage() {
             <TableBody>
                 {isDataLoading ? (
                     <TableRow>
-                        <TableCell colSpan={7} className="text-center h-24">Loading sales...</TableCell>
+                        <TableCell colSpan={6} className="text-center h-24">Loading sales...</TableCell>
                     </TableRow>
                 ) : filteredSales.length === 0 ? (
                 <TableRow>
-                    <TableCell colSpan={7} className="text-center h-24">No sales found for the selected filters.</TableCell>
+                    <TableCell colSpan={6} className="text-center h-24">No sales found for the selected filters.</TableCell>
                 </TableRow>
                 ) : (
                 filteredSales.map((sale) => (
-                    <TableRow key={sale.id} data-state={selectedRows.includes(sale.id) && "selected"}>
-                    <TableCell>
-                        <Checkbox
-                            checked={selectedRows.includes(sale.id)}
-                            onCheckedChange={() => handleSelectRow(sale.id)}
-                        />
-                    </TableCell>
+                    <TableRow key={sale.id}>
                     <TableCell className="font-medium">{sale.id}</TableCell>
                     <TableCell>{sale.customerName}</TableCell>
                     <TableCell>{formatDate(sale.date)}</TableCell>
