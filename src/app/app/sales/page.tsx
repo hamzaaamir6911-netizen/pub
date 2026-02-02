@@ -3,7 +3,7 @@
 "use client";
 
 import { useState, useMemo } from "react";
-import { MoreHorizontal, Trash2, Edit, Printer, PlusCircle, FileText, Upload, Undo, X, FileSpreadsheet } from "lucide-react";
+import { MoreHorizontal, Trash2, Edit, Printer, PlusCircle, FileText, Upload, Undo, X } from "lucide-react";
 import {
   Table,
   TableBody,
@@ -48,7 +48,6 @@ import { NewSaleForm } from "./_components/new-sale-form";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
-import { useToast } from "@/hooks/use-toast";
 
 
 function SaleDetailsView({ sale }: { sale: Sale }) {
@@ -221,7 +220,6 @@ function SaleDetailsView({ sale }: { sale: Sale }) {
 
 export default function SalesPage() {
   const { customers, sales, deleteSale, postSale, unpostSale, loading: isDataLoading } = useData();
-  const { toast } = useToast();
   
   const [activeTab, setActiveTab] = useState("history");
   const [isDetailsOpen, setDetailsOpen] = useState(false);
@@ -299,58 +297,6 @@ export default function SalesPage() {
     });
   };
 
-  const handleExportCSV = () => {
-    if (selectedRows.length === 0) {
-      toast({
-        variant: "destructive",
-        title: "No sales selected",
-        description: "Please select one or more sales to export.",
-      });
-      return;
-    }
-
-    const salesToExport = filteredSales.filter(sale => selectedRows.includes(sale.id));
-
-    const headers = [
-      "Invoice #",
-      "Date",
-      "Customer Name",
-      "Status",
-      "T1 Amount (D 29)",
-      "T2 Amount (Other)",
-      "Total Amount",
-    ];
-
-    const csvRows = [headers.join(",")];
-
-    salesToExport.forEach(sale => {
-      const row = [
-        sale.id,
-        formatDate(sale.date),
-        `"${sale.customerName.replace(/"/g, '""')}"`, // Handle names with commas
-        sale.status,
-        sale.t1Amount || 0,
-        sale.t2Amount || 0,
-        sale.total,
-      ];
-      csvRows.push(row.join(","));
-    });
-
-    const csvString = csvRows.join("\n");
-    const blob = new Blob([csvString], { type: "text/csv;charset=utf-8;" });
-    const link = document.createElement("a");
-    if (link.download !== undefined) {
-      const url = URL.createObjectURL(blob);
-      link.setAttribute("href", url);
-      link.setAttribute("download", `sales_report_${new Date().toISOString().split('T')[0]}.csv`);
-      link.style.visibility = "hidden";
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-    }
-  };
-
-
   return (
     <>
       <PageHeader
@@ -404,10 +350,6 @@ export default function SalesPage() {
                   <Button onClick={handlePrintSelected}>
                       <Printer className="mr-2 h-4 w-4" />
                       Print Invoices ({selectedRows.length})
-                  </Button>
-                   <Button variant="outline" onClick={handleExportCSV}>
-                      <FileSpreadsheet className="mr-2 h-4 w-4" />
-                      Export CSV
                   </Button>
                 </>
               )}
@@ -592,3 +534,6 @@ export default function SalesPage() {
   );
 }
 
+
+
+    
