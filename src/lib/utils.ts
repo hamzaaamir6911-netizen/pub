@@ -15,7 +15,7 @@ export function formatCurrency(amount: number) {
   }).format(amount);
 }
 
-const toDate = (date: any): Date => {
+export const toDate = (date: any): Date => {
     if (date instanceof Timestamp) {
       return date.toDate();
     }

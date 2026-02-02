@@ -1,60 +1,83 @@
 
 "use client";
 
-import React, { useEffect, useMemo, Suspense } from "react";
+import React, { useEffect, useMemo, Suspense, useState } from "react";
 import { useSearchParams } from "next/navigation";
-import { useCollection, useFirestore, useMemoFirebase, useUser } from "@/firebase";
-import { collection } from "firebase/firestore";
+import { useFirestore, useUser } from "@/firebase";
+import { doc, getDoc } from "firebase/firestore";
 import type { Sale } from "@/lib/types";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow, TableFooter } from "@/components/ui/table";
-import { formatCurrency, formatDate } from "@/lib/utils";
+import { formatCurrency, formatDate, toDate } from "@/lib/utils";
 
 function SalesReportContent() {
   const searchParams = useSearchParams();
   const firestore = useFirestore();
   const { user, isUserLoading: isAuthLoading } = useUser();
   
-  const salesCol = useMemoFirebase(() => user ? collection(firestore, 'sales') : null, [firestore, user]);
-  const { data: sales, isLoading: isDataLoading } = useCollection<Sale>(salesCol);
+  const [reportSales, setReportSales] = useState<(Sale & { t1Amount?: number; t2Amount?: number; })[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
 
   const selectedIds = useMemo(() => {
     const idsParam = searchParams.get("ids");
     return idsParam ? idsParam.split(',') : [];
   }, [searchParams]);
 
-  const reportSales = useMemo(() => {
-    if (isAuthLoading || isDataLoading || !sales) return [];
-    return sales
-      .filter(s => selectedIds.includes(s.id))
-      .map(sale => {
-        let t1Value = 0;
-        let t2Value = 0;
+  useEffect(() => {
+    if (isAuthLoading || !user || !firestore || selectedIds.length === 0) {
+      if (!isAuthLoading) setIsLoading(false);
+      return;
+    }
 
-        sale.items.forEach(item => {
-            const itemTotal = (item.feet || 1) * item.price * item.quantity;
-            const discountAmount = itemTotal * ((item.discount || 0) / 100);
-            const finalAmount = itemTotal - discountAmount;
+    const fetchSales = async () => {
+        setIsLoading(true);
+        try {
+            const saleDocsPromises = selectedIds.map(id => getDoc(doc(firestore, 'sales', id)));
+            const saleDocsSnapshots = await Promise.all(saleDocsPromises);
+            
+            const fetchedSales = saleDocsSnapshots
+                .filter(snapshot => snapshot.exists())
+                .map(snapshot => ({ id: snapshot.id, ...snapshot.data() } as Sale));
 
-            if (item.itemName.trim().toLowerCase() === 'd 29') {
-                t1Value += finalAmount;
-            } else {
-                t2Value += finalAmount;
-            }
-        });
-        
-        const subTotal = t1Value + t2Value;
-        if (subTotal === 0) { // Avoid division by zero
-          return { ...sale, t1Amount: 0, t2Amount: 0 };
+            const processedSales = fetchedSales.map(sale => {
+                let t1Value = 0;
+                let t2Value = 0;
+
+                sale.items.forEach(item => {
+                    const itemTotal = (item.feet || 1) * item.price * item.quantity;
+                    const discountAmount = itemTotal * ((item.discount || 0) / 100);
+                    const finalAmount = itemTotal - discountAmount;
+
+                    if (item.itemName.trim().toLowerCase() === 'd 29') {
+                        t1Value += finalAmount;
+                    } else {
+                        t2Value += finalAmount;
+                    }
+                });
+                
+                const subTotal = t1Value + t2Value;
+                if (subTotal === 0) {
+                  return { ...sale, date: toDate(sale.date), t1Amount: 0, t2Amount: 0 };
+                }
+                
+                const t1Amount = t1Value * (1 - (sale.discount / 100));
+                const t2Amount = t2Value * (1 - (sale.discount / 100));
+
+                return { ...sale, date: toDate(sale.date), t1Amount, t2Amount };
+            }).sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
+            
+            setReportSales(processedSales);
+
+        } catch (error) {
+            console.error("Error fetching sales for report:", error);
+            setReportSales([]);
+        } finally {
+            setIsLoading(false);
         }
-        
-        // Apply overall discount proportionally
-        const t1Amount = t1Value * (1 - (sale.discount / 100));
-        const t2Amount = t2Value * (1 - (sale.discount / 100));
+    };
 
-        return { ...sale, t1Amount, t2Amount };
-      })
-      .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
-  }, [sales, selectedIds, isAuthLoading, isDataLoading]);
+    fetchSales();
+
+  }, [firestore, user, isAuthLoading, selectedIds]);
 
   const grandTotals = useMemo(() => {
     return reportSales.reduce((acc, sale) => {
@@ -65,8 +88,6 @@ function SalesReportContent() {
     }, { total: 0, t1: 0, t2: 0 });
   }, [reportSales]);
   
-  const isLoading = isAuthLoading || (isDataLoading && reportSales.length === 0 && selectedIds.length > 0);
-
   useEffect(() => {
     if (!isLoading && reportSales.length > 0) {
       setTimeout(() => {
