@@ -3,7 +3,7 @@
 "use client";
 
 import { useState, useMemo } from "react";
-import { MoreHorizontal, Trash2, Edit, Printer, PlusCircle, FileText, Upload, Undo, X } from "lucide-react";
+import { MoreHorizontal, Trash2, Edit, Printer, PlusCircle, FileText, Upload, Undo, X, FileSpreadsheet } from "lucide-react";
 import {
   Table,
   TableBody,
@@ -297,6 +297,57 @@ export default function SalesPage() {
     });
   };
 
+  const handleExportReport = () => {
+    if (selectedRows.length === 0) return;
+
+    const selectedSales = sales.filter(s => selectedRows.includes(s.id));
+
+    const headers = [
+      "Invoice ID", "Date", "Customer", "Status", "Item Name", "Thickness", "Color", "Feet", "Quantity", "Rate", "Item Total"
+    ];
+
+    const rows = selectedSales.flatMap(sale => 
+      sale.items.map(item => {
+        const itemTotal = (item.feet || 1) * item.price * item.quantity;
+        const escapeCsv = (val: any) => {
+          const str = String(val ?? '');
+          if (str.includes(',')) {
+            return `"${str}"`;
+          }
+          return str;
+        };
+
+        return [
+          escapeCsv(sale.id),
+          escapeCsv(formatDate(sale.date)),
+          escapeCsv(sale.customerName),
+          escapeCsv(sale.status),
+          escapeCsv(item.itemName),
+          escapeCsv(item.thickness),
+          escapeCsv(item.color),
+          item.feet?.toFixed(2) || '0',
+          item.quantity,
+          item.price,
+          itemTotal.toFixed(2)
+        ].join(',');
+      })
+    );
+
+    const csvContent = [headers.join(','), ...rows].join('\n');
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const link = document.createElement("a");
+    if (link.download !== undefined) {
+      const url = URL.createObjectURL(blob);
+      link.setAttribute("href", url);
+      link.setAttribute("download", `sales_report_${new Date().toISOString().split('T')[0]}.csv`);
+      link.style.visibility = 'hidden';
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+    }
+  };
+
+
   return (
     <>
       <PageHeader
@@ -350,6 +401,10 @@ export default function SalesPage() {
                   <Button onClick={handlePrintSelected}>
                       <Printer className="mr-2 h-4 w-4" />
                       Print Invoices ({selectedRows.length})
+                  </Button>
+                   <Button variant="outline" onClick={handleExportReport}>
+                      <FileSpreadsheet className="mr-2 h-4 w-4" />
+                      Export CSV
                   </Button>
                 </>
               )}
@@ -533,3 +588,5 @@ export default function SalesPage() {
     </>
   );
 }
+
+    
