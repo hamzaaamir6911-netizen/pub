@@ -1,10 +1,9 @@
-
 "use client";
 
 import React, { useEffect, useMemo, Suspense, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { useFirestore, useUser } from "@/firebase";
-import { doc, getDoc } from "firebase/firestore";
+import { collection, query, where, getDocs } from "firebase/firestore";
 import type { Sale } from "@/lib/types";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow, TableFooter } from "@/components/ui/table";
 import { formatCurrency, formatDate, toDate } from "@/lib/utils";
@@ -28,17 +27,27 @@ function SalesReportContent() {
       return;
     }
 
-    const fetchSales = async () => {
+    const fetchSalesInBatches = async () => {
         setIsLoading(true);
         try {
-            const saleDocsPromises = selectedIds.map(id => getDoc(doc(firestore, 'sales', id)));
-            const saleDocsSnapshots = await Promise.all(saleDocsPromises);
-            
-            const fetchedSales = saleDocsSnapshots
-                .filter(snapshot => snapshot.exists())
-                .map(snapshot => ({ id: snapshot.id, ...snapshot.data() } as Sale));
+            const allFetchedSales: Sale[] = [];
+            const CHUNK_SIZE = 30; // Firestore 'in' query limit is 30
 
-            const processedSales = fetchedSales.map(sale => {
+            for (let i = 0; i < selectedIds.length; i += CHUNK_SIZE) {
+                const chunk = selectedIds.slice(i, i + CHUNK_SIZE);
+                if (chunk.length > 0) {
+                    const salesQuery = query(
+                        collection(firestore, 'sales'),
+                        where('__name__', 'in', chunk) // '__name__' is how you query by document ID
+                    );
+                    const querySnapshot = await getDocs(salesQuery);
+                    querySnapshot.forEach((doc) => {
+                        allFetchedSales.push({ id: doc.id, ...doc.data() } as Sale);
+                    });
+                }
+            }
+            
+            const processedSales = allFetchedSales.map(sale => {
                 let t1Value = 0;
                 let t2Value = 0;
 
@@ -75,7 +84,7 @@ function SalesReportContent() {
         }
     };
 
-    fetchSales();
+    fetchSalesInBatches();
 
   }, [firestore, user, isAuthLoading, selectedIds]);
 
@@ -101,7 +110,7 @@ function SalesReportContent() {
     return <div className="p-8 text-center">Loading report...</div>;
   }
   
-  if (reportSales.length === 0) {
+  if (reportSales.length === 0 && !isLoading) {
       return <div className="p-8 text-center">No sales selected or data found.</div>;
   }
 
@@ -110,9 +119,9 @@ function SalesReportContent() {
         <div className="text-center mb-6">
             <h1 className="text-2xl font-extrabold font-headline">ARCO Aluminium Company</h1>
             <p className="mt-1 text-lg font-bold">Sales Report</p>
-            <p className="text-sm text-gray-500">
+            {reportSales.length > 0 && <p className="text-sm text-gray-500">
                 From {formatDate(reportSales[0].date)} to {formatDate(reportSales[reportSales.length - 1].date)}
-            </p>
+            </p>}
         </div>
         
         <Table className="text-sm">
