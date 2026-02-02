@@ -298,18 +298,29 @@ export const DataProvider = ({ children }: { children: ReactNode }) => {
     
                 const newSaleId = `INV-${String(newSaleNumber).padStart(3, '0')}`;
     
-                const subtotal = sale.items.reduce((total, currentItem) => {
-                    const itemTotal = (currentItem.feet || 1) * currentItem.price * currentItem.quantity;
-                    const discountAmount = itemTotal * ((currentItem.discount || 0) / 100);
-                    return total + (itemTotal - discountAmount);
-                }, 0);
-                const overallDiscountAmount = (subtotal * sale.discount) / 100;
-                const total = subtotal - overallDiscountAmount;
+                let t1Value = 0;
+                let t2Value = 0;
+                sale.items.forEach(item => {
+                    const itemGross = (item.feet || 1) * item.price * item.quantity;
+                    const itemDiscountAmount = itemGross * ((item.discount || 0) / 100);
+                    const finalAmount = itemGross - itemDiscountAmount;
+                    if (item.itemName.trim().toLowerCase() === 'd 29') {
+                        t1Value += finalAmount;
+                    } else {
+                        t2Value += finalAmount;
+                    }
+                });
+                const subtotal = t1Value + t2Value;
+                const total = subtotal * (1 - (sale.discount / 100));
+                const t1Amount = t1Value * (1 - (sale.discount / 100));
+                const t2Amount = t2Value * (1 - (sale.discount / 100));
     
                 const newSaleData: Sale = {
                     id: newSaleId,
                     ...sale,
                     total,
+                    t1Amount,
+                    t2Amount,
                     status: 'draft' as const,
                     date: sale.date
                 };
@@ -360,6 +371,8 @@ export const DataProvider = ({ children }: { children: ReactNode }) => {
                         thickness: ''
                     }] as SaleItem[],
                     discount: 0,
+                    t1Amount: 0,
+                    t2Amount: manualSale.amount,
                 };
     
                 const newSaleRef = doc(saleCollectionRef, newSaleId);
@@ -389,17 +402,28 @@ export const DataProvider = ({ children }: { children: ReactNode }) => {
         if (!user) throw new Error("User not authenticated");
         const saleRef = doc(firestore, 'sales', saleId);
 
-        const subtotal = sale.items.reduce((total, currentItem) => {
-            const itemTotal = (currentItem.feet || 1) * currentItem.price * currentItem.quantity;
-            const discountAmount = itemTotal * ((currentItem.discount || 0) / 100);
-            return total + (itemTotal - discountAmount);
-        }, 0);
-        const overallDiscountAmount = (subtotal * sale.discount) / 100;
-        const total = subtotal - overallDiscountAmount;
+        let t1Value = 0;
+        let t2Value = 0;
+        sale.items.forEach(item => {
+            const itemGross = (item.feet || 1) * item.price * item.quantity;
+            const itemDiscountAmount = itemGross * ((item.discount || 0) / 100);
+            const finalAmount = itemGross - itemDiscountAmount;
+            if (item.itemName.trim().toLowerCase() === 'd 29') {
+                t1Value += finalAmount;
+            } else {
+                t2Value += finalAmount;
+            }
+        });
+        const subtotal = t1Value + t2Value;
+        const total = subtotal * (1 - (sale.discount / 100));
+        const t1Amount = t1Value * (1 - (sale.discount / 100));
+        const t2Amount = t2Value * (1 - (sale.discount / 100));
         
         const updatedSaleData = {
             ...sale,
             total,
+            t1Amount,
+            t2Amount,
             date: sale.date,
         };
 
@@ -720,5 +744,3 @@ export const useData = () => {
   }
   return context;
 };
-
-    

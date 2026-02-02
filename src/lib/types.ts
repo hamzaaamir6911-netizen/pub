@@ -60,6 +60,8 @@ export type Sale = {
   description?: string;
   showT1T2?: boolean;
   rateListName?: string;
+  t1Amount?: number;
+  t2Amount?: number;
 };
 
 export type Estimate = {

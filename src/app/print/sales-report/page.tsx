@@ -1,3 +1,4 @@
+
 "use client";
 
 import React, { useEffect, useMemo, Suspense, useState } from "react";
@@ -47,34 +48,11 @@ function SalesReportContent() {
                 }
             }
             
-            const processedSales = allFetchedSales.map(sale => {
-                let t1Value = 0;
-                let t2Value = 0;
-
-                sale.items.forEach(item => {
-                    const itemTotal = (item.feet || 1) * item.price * item.quantity;
-                    const discountAmount = itemTotal * ((item.discount || 0) / 100);
-                    const finalAmount = itemTotal - discountAmount;
-
-                    if (item.itemName.trim().toLowerCase() === 'd 29') {
-                        t1Value += finalAmount;
-                    } else {
-                        t2Value += finalAmount;
-                    }
-                });
-                
-                const subTotal = t1Value + t2Value;
-                if (subTotal === 0) {
-                  return { ...sale, date: toDate(sale.date), t1Amount: 0, t2Amount: 0 };
-                }
-                
-                const t1Amount = t1Value * (1 - (sale.discount / 100));
-                const t2Amount = t2Value * (1 - (sale.discount / 100));
-
-                return { ...sale, date: toDate(sale.date), t1Amount, t2Amount };
-            }).sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
+            const sortedSales = allFetchedSales
+              .map(sale => ({ ...sale, date: toDate(sale.date) as Date }))
+              .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
             
-            setReportSales(processedSales);
+            setReportSales(sortedSales);
 
         } catch (error) {
             console.error("Error fetching sales for report:", error);
