@@ -299,18 +299,55 @@ export default function SalesPage() {
     });
   };
 
-  const handlePrintReport = () => {
-    if (selectedRows.length === 0) return;
-    if (selectedRows.length > 100) {
-        toast({
-            variant: "destructive",
-            title: "Limit Exceeded",
-            description: "Printing a report for more than 100 sales at once can cause performance issues. Please select fewer items.",
-        });
-        return;
+  const handleExportCSV = () => {
+    if (selectedRows.length === 0) {
+      toast({
+        variant: "destructive",
+        title: "No sales selected",
+        description: "Please select one or more sales to export.",
+      });
+      return;
     }
-    const ids = selectedRows.join(',');
-    window.open(`/print/sales-report?ids=${ids}`, '_blank');
+
+    const salesToExport = filteredSales.filter(sale => selectedRows.includes(sale.id));
+
+    const headers = [
+      "Invoice #",
+      "Date",
+      "Customer Name",
+      "Status",
+      "T1 Amount (D 29)",
+      "T2 Amount (Other)",
+      "Total Amount",
+    ];
+
+    const csvRows = [headers.join(",")];
+
+    salesToExport.forEach(sale => {
+      const row = [
+        sale.id,
+        formatDate(sale.date),
+        `"${sale.customerName.replace(/"/g, '""')}"`, // Handle names with commas
+        sale.status,
+        sale.t1Amount || 0,
+        sale.t2Amount || 0,
+        sale.total,
+      ];
+      csvRows.push(row.join(","));
+    });
+
+    const csvString = csvRows.join("\n");
+    const blob = new Blob([csvString], { type: "text/csv;charset=utf-8;" });
+    const link = document.createElement("a");
+    if (link.download !== undefined) {
+      const url = URL.createObjectURL(blob);
+      link.setAttribute("href", url);
+      link.setAttribute("download", `sales_report_${new Date().toISOString().split('T')[0]}.csv`);
+      link.style.visibility = "hidden";
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+    }
   };
 
 
@@ -368,9 +405,9 @@ export default function SalesPage() {
                       <Printer className="mr-2 h-4 w-4" />
                       Print Invoices ({selectedRows.length})
                   </Button>
-                   <Button variant="outline" onClick={handlePrintReport}>
+                   <Button variant="outline" onClick={handleExportCSV}>
                       <FileSpreadsheet className="mr-2 h-4 w-4" />
-                      Print Report
+                      Export CSV
                   </Button>
                 </>
               )}
@@ -554,3 +591,4 @@ export default function SalesPage() {
     </>
   );
 }
+
