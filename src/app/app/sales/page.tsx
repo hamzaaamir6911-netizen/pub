@@ -301,11 +301,11 @@ export default function SalesPage() {
 
   const handlePrintReport = () => {
     if (selectedRows.length === 0) return;
-    if (selectedRows.length > 50) {
+    if (selectedRows.length > 100) {
         toast({
             variant: "destructive",
             title: "Limit Exceeded",
-            description: "Printing a report for more than 50 sales at once can cause performance issues. Please select fewer items.",
+            description: "Printing a report for more than 100 sales at once can cause performance issues. Please select fewer items.",
         });
         return;
     }
