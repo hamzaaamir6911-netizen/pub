@@ -14,7 +14,7 @@ function SalesReportContent() {
   const firestore = useFirestore();
   const { user, isUserLoading: isAuthLoading } = useUser();
   
-  const [reportSales, setReportSales] = useState<(Sale & { t1Amount?: number; t2Amount?: number; })[]>([]);
+  const [reportSales, setReportSales] = useState<Sale[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
   const selectedIds = useMemo(() => {
@@ -32,14 +32,14 @@ function SalesReportContent() {
         setIsLoading(true);
         try {
             const allFetchedSales: Sale[] = [];
-            const CHUNK_SIZE = 30; // Firestore 'in' query limit is 30
+            const CHUNK_SIZE = 30;
 
             for (let i = 0; i < selectedIds.length; i += CHUNK_SIZE) {
                 const chunk = selectedIds.slice(i, i + CHUNK_SIZE);
                 if (chunk.length > 0) {
                     const salesQuery = query(
                         collection(firestore, 'sales'),
-                        where('__name__', 'in', chunk) // '__name__' is how you query by document ID
+                        where('__name__', 'in', chunk)
                     );
                     const querySnapshot = await getDocs(salesQuery);
                     querySnapshot.forEach((doc) => {

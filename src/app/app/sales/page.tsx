@@ -48,6 +48,7 @@ import { NewSaleForm } from "./_components/new-sale-form";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
+import { useToast } from "@/hooks/use-toast";
 
 
 function SaleDetailsView({ sale }: { sale: Sale }) {
@@ -220,6 +221,7 @@ function SaleDetailsView({ sale }: { sale: Sale }) {
 
 export default function SalesPage() {
   const { customers, sales, deleteSale, postSale, unpostSale, loading: isDataLoading } = useData();
+  const { toast } = useToast();
   
   const [activeTab, setActiveTab] = useState("history");
   const [isDetailsOpen, setDetailsOpen] = useState(false);
@@ -297,54 +299,18 @@ export default function SalesPage() {
     });
   };
 
-  const handleExportReport = () => {
+  const handlePrintReport = () => {
     if (selectedRows.length === 0) return;
-
-    const selectedSales = sales.filter(s => selectedRows.includes(s.id));
-
-    const headers = [
-      "Invoice ID", "Date", "Customer", "Status", "Item Name", "Thickness", "Color", "Feet", "Quantity", "Rate", "Item Total"
-    ];
-
-    const rows = selectedSales.flatMap(sale => 
-      sale.items.map(item => {
-        const itemTotal = (item.feet || 1) * item.price * item.quantity;
-        const escapeCsv = (val: any) => {
-          const str = String(val ?? '');
-          if (str.includes(',')) {
-            return `"${str}"`;
-          }
-          return str;
-        };
-
-        return [
-          escapeCsv(sale.id),
-          escapeCsv(formatDate(sale.date)),
-          escapeCsv(sale.customerName),
-          escapeCsv(sale.status),
-          escapeCsv(item.itemName),
-          escapeCsv(item.thickness),
-          escapeCsv(item.color),
-          item.feet?.toFixed(2) || '0',
-          item.quantity,
-          item.price,
-          itemTotal.toFixed(2)
-        ].join(',');
-      })
-    );
-
-    const csvContent = [headers.join(','), ...rows].join('\n');
-    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-    const link = document.createElement("a");
-    if (link.download !== undefined) {
-      const url = URL.createObjectURL(blob);
-      link.setAttribute("href", url);
-      link.setAttribute("download", `sales_report_${new Date().toISOString().split('T')[0]}.csv`);
-      link.style.visibility = 'hidden';
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
+    if (selectedRows.length > 50) {
+        toast({
+            variant: "destructive",
+            title: "Limit Exceeded",
+            description: "Printing a report for more than 50 sales at once can cause performance issues. Please select fewer items.",
+        });
+        return;
     }
+    const ids = selectedRows.join(',');
+    window.open(`/print/sales-report?ids=${ids}`, '_blank');
   };
 
 
@@ -402,9 +368,9 @@ export default function SalesPage() {
                       <Printer className="mr-2 h-4 w-4" />
                       Print Invoices ({selectedRows.length})
                   </Button>
-                   <Button variant="outline" onClick={handleExportReport}>
+                   <Button variant="outline" onClick={handlePrintReport}>
                       <FileSpreadsheet className="mr-2 h-4 w-4" />
-                      Export CSV
+                      Print Report
                   </Button>
                 </>
               )}
@@ -588,5 +554,3 @@ export default function SalesPage() {
     </>
   );
 }
-
-    
