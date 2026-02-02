@@ -1,5 +1,3 @@
-
-
 "use client";
 
 import { useState, useMemo } from "react";
@@ -297,12 +295,6 @@ export default function SalesPage() {
     });
   };
 
-  const handlePrintReport = () => {
-    if (selectedRows.length === 0) return;
-    const ids = selectedRows.join(',');
-    window.open(`/print/sales-report?ids=${ids}`, '_blank');
-  };
-
   return (
     <>
       <PageHeader
@@ -356,10 +348,6 @@ export default function SalesPage() {
                   <Button onClick={handlePrintSelected}>
                       <Printer className="mr-2 h-4 w-4" />
                       Print Invoices ({selectedRows.length})
-                  </Button>
-                  <Button variant="outline" onClick={handlePrintReport}>
-                      <FileSpreadsheet className="mr-2 h-4 w-4" />
-                      Print Report
                   </Button>
                 </>
               )}
@@ -543,7 +531,3 @@ export default function SalesPage() {
     </>
   );
 }
-
-
-
-    
