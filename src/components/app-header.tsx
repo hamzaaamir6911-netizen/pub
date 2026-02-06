@@ -1,4 +1,3 @@
-
 "use client"
 
 import * as React from "react"
@@ -8,7 +7,7 @@ import { Calculator, LayoutDashboard, Warehouse, ShoppingCart, Users, CreditCard
 
 import { cn } from "@/lib/utils"
 import { Button } from "./ui/button"
-import { Sheet, SheetContent, SheetTrigger } from "./ui/sheet"
+import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "./ui/sheet"
 import { useToast } from "@/hooks/use-toast"
 import { useAuth } from "@/firebase"
 import { signOut } from "firebase/auth"
@@ -99,6 +98,9 @@ export function AppHeader() {
                         <Calculator className="h-6 w-6 text-primary" />
                         <span className="font-bold font-headline">ARCO</span>
                     </Link>
+                    <SheetHeader className="sr-only">
+                        <SheetTitle>Menu</SheetTitle>
+                    </SheetHeader>
                     <div className="my-4 h-[calc(100vh-8rem)] pb-10 pl-6">
                         <div className="flex flex-col space-y-3">
                             {navItems.map((item) => (
