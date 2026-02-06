@@ -3,7 +3,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { Factory } from "lucide-react";
+import { Calculator } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -49,7 +49,7 @@ export default function LoginPage() {
       <div className="mx-auto grid w-[350px] gap-6">
         <div className="grid gap-2 text-center">
           <div className="mb-4 flex justify-center">
-            <Factory className="h-10 w-10 text-primary" />
+            <Calculator className="h-10 w-10 text-primary" />
           </div>
           <h1 className="text-3xl font-bold font-headline">ARCO Factory Manager</h1>
           <p className="text-balance text-muted-foreground">

@@ -4,7 +4,7 @@
 import * as React from "react"
 import Link from "next/link"
 import { usePathname, useRouter } from "next/navigation"
-import { Factory, LayoutDashboard, Warehouse, ShoppingCart, Users, CreditCard, BarChart3, LogOut, BookUser, Settings, Truck, Menu, FileQuestion, HardHat, DollarSign, Calculator, ClipboardList } from "lucide-react"
+import { Calculator, LayoutDashboard, Warehouse, ShoppingCart, Users, CreditCard, BarChart3, LogOut, BookUser, Settings, Truck, Menu, FileQuestion, HardHat, DollarSign, ClipboardList } from "lucide-react"
 
 import { cn } from "@/lib/utils"
 import { Button } from "./ui/button"
@@ -53,7 +53,7 @@ export function AppHeader() {
       <div className="container flex h-14 items-center">
         <div className="mr-4 flex items-center">
           <Link href="/app/dashboard" className="flex items-center gap-2">
-            <Factory className="h-6 w-6 text-primary" />
+            <Calculator className="h-6 w-6 text-primary" />
             <span className="font-bold font-headline">ARCO</span>
           </Link>
         </div>
@@ -96,7 +96,7 @@ export function AppHeader() {
                         className="flex items-center gap-2 mb-4"
                          onClick={() => setMobileMenuOpen(false)}
                     >
-                        <Factory className="h-6 w-6 text-primary" />
+                        <Calculator className="h-6 w-6 text-primary" />
                         <span className="font-bold font-headline">ARCO</span>
                     </Link>
                     <div className="my-4 h-[calc(100vh-8rem)] pb-10 pl-6">
