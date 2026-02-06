@@ -12,34 +12,32 @@ service cloud.firestore {
       return request.auth.uid == userId;
     }
 
-    function getUserData() {
-      // Read the user's role from their profile document in the /users collection
-      return get(/databases/$(database)/documents/users/$(request.auth.uid)).data;
-    }
-
+    // Admin is identified by their email address. This is simpler and avoids read-before-write issues.
     function isAdmin() {
-      // Check if the user is signed in and their role is 'admin'
-      return isSignedIn() && getUserData().role == 'admin';
+      return isSignedIn() && request.auth.token.email == 'admin@arco.com';
     }
 
-    // Admins can write to any document. All signed-in users can read.
-    // This provides a secure default. Specific collections below can have looser rules.
+    // Default secure rule: Admins can write anywhere, signed-in users can read.
     match /{document=**} {
       allow read: if isSignedIn();
       allow write: if isAdmin();
     }
 
-    // Users can read their own profile. Admins can update any profile.
-    // Only admins can create new user profiles.
+    // Rules for user profiles.
     match /users/{userId} {
       allow read: if isSignedIn();
-      allow create: if isAdmin(); // Admin creates user docs
-      allow update: if isOwner(userId) || isAdmin();
-      allow delete: if false; // Disallow deleting user profiles for now
+
+      // CREATE: An admin can create any user. A user can create their own profile but cannot assign themselves as admin.
+      allow create: if isAdmin() || (isOwner(userId) && request.resource.data.role == 'user');
+      
+      // UPDATE: An admin can update any profile. A user can update their own profile but cannot change their role.
+      allow update: if isAdmin() || (isOwner(userId) && request.resource.data.role == resource.data.role);
+      
+      // DELETE: Only an admin can delete users.
+      allow delete: if isAdmin();
     }
 
-    // Specific overrides where non-admins also need write access.
-    // Any signed-in user (admin or regular user) can create/update sales, estimates, and counters.
+    // Overrides for collections where regular users also need write access.
     match /sales/{saleId} {
       allow read, write: if isSignedIn();
     }
