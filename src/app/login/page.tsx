@@ -10,7 +10,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/firebase";
-import { signInWithEmailAndPassword } from "firebase/auth";
+import { signInWithEmailAndPassword, signOut } from "firebase/auth";
 
 
 export default function LoginPage() {
@@ -26,6 +26,11 @@ export default function LoginPage() {
     setIsLoading(true);
 
     try {
+      // Signing out any previous user (like anonymous) to ensure a clean login.
+      if (auth.currentUser) {
+        await signOut(auth);
+      }
+      
       await signInWithEmailAndPassword(auth, email, password);
       toast({
         title: "Login Successful",
@@ -34,10 +39,16 @@ export default function LoginPage() {
       // Use window location to force a full reload and ensure all contexts are reset
       window.location.href = "/app/dashboard";
     } catch (error: any) {
+        let errorMessage = "Invalid email or password.";
+        if (error.code === 'auth/user-not-found' || error.code === 'auth/wrong-password' || error.code === 'auth/invalid-credential') {
+          errorMessage = "Invalid email or password. Please try again.";
+        } else {
+          errorMessage = error.message || "An unexpected error occurred.";
+        }
         toast({
             variant: "destructive",
             title: "Login Failed",
-            description: error.message || "Invalid credentials or another error occurred.",
+            description: errorMessage,
         });
     } finally {
       setIsLoading(false);

@@ -127,3 +127,9 @@ export type SalaryPayment = {
     totalAmountPaid: number;
     expenseId?: string; // Link to the corresponding expense entry
 };
+
+export type UserProfile = {
+  id: string;
+  email: string;
+  role: 'admin' | 'user';
+}

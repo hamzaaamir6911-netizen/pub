@@ -2,10 +2,12 @@
 "use client";
 
 import React, { createContext, useContext, ReactNode, useEffect, useState, useMemo } from 'react';
-import type { Item, Customer, Sale, Expense, Transaction, Vendor, Estimate, Labour, SalaryPayment, SaleItem } from '@/lib/types';
-import { useCollection, useFirestore, useMemoFirebase, useUser } from '@/firebase';
+import type { Item, Customer, Sale, Expense, Transaction, Vendor, Estimate, Labour, SalaryPayment, SaleItem, UserProfile } from '@/lib/types';
+import { useCollection, useDoc, useFirestore, useMemoFirebase, useUser } from '@/firebase';
 import { collection, doc, writeBatch, serverTimestamp, Timestamp, query, where, getDocs, runTransaction, addDoc, getDoc, deleteDoc, updateDoc, onSnapshot, orderBy, setDoc } from 'firebase/firestore';
 import { deleteDocumentNonBlocking, updateDocumentNonBlocking } from '../non-blocking-updates';
+import { createUserWithEmailAndPassword } from 'firebase/auth';
+import { useAuth } from '../provider';
 
 
 interface DataContextProps {
@@ -18,6 +20,9 @@ interface DataContextProps {
   estimates: Estimate[];
   labourers: Labour[];
   salaryPayments: SalaryPayment[];
+  allUsers: UserProfile[];
+  userProfile: UserProfile | null;
+  isAdmin: boolean;
   rateListNames: string[];
   itemsMap: Map<string, Item>;
   customersMap: Map<string, Customer>;
@@ -54,6 +59,7 @@ interface DataContextProps {
   addSalaryPayment: (payment: Omit<SalaryPayment, 'id' | 'date'>) => Promise<void>;
   updateSalaryPayment: (paymentId: string, paymentData: Omit<SalaryPayment, 'id' | 'date'>, existingPayment: SalaryPayment) => Promise<void>;
   deleteSalaryPayment: (payment: SalaryPayment) => Promise<void>;
+  createUser: (email: string, password: string) => Promise<void>;
 }
 
 const DataContext = createContext<DataContextProps | undefined>(undefined);
@@ -83,6 +89,7 @@ const toDate = (timestamp: any): Date | null => {
 
 export const DataProvider = ({ children }: { children: ReactNode }) => {
     const firestore = useFirestore();
+    const auth = useAuth();
     const { user, isUserLoading } = useUser();
 
     const shouldFetch = !!user;
@@ -96,6 +103,7 @@ export const DataProvider = ({ children }: { children: ReactNode }) => {
     const transactionsCol = useMemoFirebase(() => shouldFetch ? collection(firestore, 'transactions') : null, [firestore, shouldFetch]);
     const estimatesCol = useMemoFirebase(() => shouldFetch ? query(collection(firestore, 'estimates'), orderBy('date', 'desc')) : null, [firestore, shouldFetch]);
     const salaryPaymentsCol = useMemoFirebase(() => shouldFetch ? query(collection(firestore, 'salaryPayments'), orderBy('date', 'desc')) : null, [firestore, shouldFetch]);
+    const usersCol = useMemoFirebase(() => shouldFetch ? collection(firestore, 'users') : null, [firestore, shouldFetch]);
 
     const { data: itemsData, isLoading: itemsLoading } = useCollection<Item>(itemsCol);
     const { data: customersData, isLoading: customersLoading } = useCollection<Customer>(customersCol);
@@ -106,6 +114,23 @@ export const DataProvider = ({ children }: { children: ReactNode }) => {
     const { data: transactionsData, isLoading: transactionsLoading } = useCollection<Transaction>(transactionsCol);
     const { data: estimatesData, isLoading: estimatesLoading } = useCollection<Estimate>(estimatesCol);
     const { data: salaryPaymentsData, isLoading: salaryPaymentsLoading } = useCollection<SalaryPayment>(salaryPaymentsCol);
+    const { data: allUsersData, isLoading: allUsersLoading } = useCollection<UserProfile>(usersCol);
+
+    const userProfileRef = useMemoFirebase(() => user ? doc(firestore, "users", user.uid) : null, [firestore, user]);
+    const { data: userProfile, isLoading: userProfileLoading } = useDoc<UserProfile>(userProfileRef);
+
+    // Effect to auto-create user profile on first login
+    useEffect(() => {
+        if (user && !isUserLoading && !userProfile && !userProfileLoading) {
+            const profileDocRef = doc(firestore, 'users', user.uid);
+            getDoc(profileDocRef).then(docSnap => {
+                if (!docSnap.exists()) {
+                    const role = user.email === 'admin@arco.com' ? 'admin' : 'user';
+                    setDoc(profileDocRef, { email: user.email, role: role });
+                }
+            });
+        }
+    }, [user, isUserLoading, userProfile, userProfileLoading, firestore]);
 
     const items = useMemo(() => itemsData?.map(item => ({ ...item, quantity: item.quantity ?? 0, createdAt: toDate(item.createdAt) as Date })) || [], [itemsData]);
     const customers = useMemo(() => customersData?.map(customer => ({ ...customer, createdAt: toDate(customer.createdAt) as Date })) || [], [customersData]);
@@ -116,6 +141,9 @@ export const DataProvider = ({ children }: { children: ReactNode }) => {
     const transactions = useMemo(() => transactionsData?.map(transaction => ({ ...transaction, date: toDate(transaction.date) as Date })) || [], [transactionsData]);
     const estimates = useMemo(() => estimatesData?.map(estimate => ({ ...estimate, date: toDate(estimate.date) as Date })) || [], [estimatesData]);
     const salaryPayments = useMemo(() => salaryPaymentsData?.map(payment => ({ ...payment, date: toDate(payment.date) as Date })) || [], [salaryPaymentsData]);
+    const allUsers = useMemo(() => allUsersData || [], [allUsersData]);
+
+    const isAdmin = useMemo(() => userProfile?.role === 'admin', [userProfile]);
 
     const itemsMap = useMemo(() => new Map(items.map(i => [i.id, i])), [items]);
     const customersMap = useMemo(() => new Map(customers.map(c => [c.id, c])), [customers]);
@@ -134,7 +162,20 @@ export const DataProvider = ({ children }: { children: ReactNode }) => {
     }, [items]);
 
 
-    const loading = isUserLoading || itemsLoading || customersLoading || salesLoading || expensesLoading || transactionsLoading || vendorsLoading || estimatesLoading || labourLoading || salaryPaymentsLoading;
+    const loading = isUserLoading || itemsLoading || customersLoading || salesLoading || expensesLoading || transactionsLoading || vendorsLoading || estimatesLoading || labourLoading || salaryPaymentsLoading || userProfileLoading || allUsersLoading;
+
+    const createUser = async (email: string, password: string) => {
+        if (!isAdmin) {
+            throw new Error("Only admins can create users.");
+        }
+        // This creates the user in Firebase Auth.
+        const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+        const newAuthUser = userCredential.user;
+
+        // This creates the user profile document in Firestore.
+        const userDocRef = doc(firestore, 'users', newAuthUser.uid);
+        await setDoc(userDocRef, { email: newAuthUser.email, role: 'user' });
+    }
 
     const addItem = async (item: Omit<Item, 'id' | 'createdAt'>) => {
         if (!itemsCol) throw new Error("Items collection not available");
@@ -727,7 +768,7 @@ export const DataProvider = ({ children }: { children: ReactNode }) => {
     };
     
     const value = {
-        items, customers, sales, expenses, transactions, vendors, estimates, labourers, salaryPayments, rateListNames, loading,
+        items, customers, sales, expenses, transactions, vendors, estimates, labourers, salaryPayments, allUsers, userProfile, isAdmin, rateListNames, loading,
         itemsMap, customersMap, vendorsMap, labourersMap,
         addItem, deleteItem, updateItem, batchUpdateRates, updateItemStock,
         addCustomer, updateCustomer, deleteCustomer,
@@ -738,6 +779,7 @@ export const DataProvider = ({ children }: { children: ReactNode }) => {
         addExpense, deleteExpense,
         addTransaction, updateTransaction, deleteTransaction,
         addSalaryPayment, updateSalaryPayment, deleteSalaryPayment,
+        createUser,
     };
 
     return (

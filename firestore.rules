@@ -4,15 +4,50 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
-    // Helper function to check if a user is signed in.
     function isSignedIn() {
       return request.auth != null;
     }
-    
-    // For this simplified app, we'll allow any authenticated user to read/write.
-    // In a real app, you would have more granular rules.
+
+    function isOwner(userId) {
+      return request.auth.uid == userId;
+    }
+
+    function getUserData() {
+      // Read the user's role from their profile document in the /users collection
+      return get(/databases/$(database)/documents/users/$(request.auth.uid)).data;
+    }
+
+    function isAdmin() {
+      // Check if the user is signed in and their role is 'admin'
+      return isSignedIn() && getUserData().role == 'admin';
+    }
+
+    // Admins can write to any document. All signed-in users can read.
+    // This provides a secure default. Specific collections below can have looser rules.
     match /{document=**} {
+      allow read: if isSignedIn();
+      allow write: if isAdmin();
+    }
+
+    // Users can read their own profile. Admins can update any profile.
+    // Only admins can create new user profiles.
+    match /users/{userId} {
+      allow read: if isSignedIn();
+      allow create: if isAdmin(); // Admin creates user docs
+      allow update: if isOwner(userId) || isAdmin();
+      allow delete: if false; // Disallow deleting user profiles for now
+    }
+
+    // Specific overrides where non-admins also need write access.
+    // Any signed-in user (admin or regular user) can create/update sales, estimates, and counters.
+    match /sales/{saleId} {
       allow read, write: if isSignedIn();
+    }
+    match /estimates/{estimateId} {
+        allow read, write: if isSignedIn();
+    }
+    match /counters/{counterId} {
+        allow read, write: if isSignedIn();
     }
   }
 }
