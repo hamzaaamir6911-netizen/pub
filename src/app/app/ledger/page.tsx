@@ -46,12 +46,12 @@ function AddPaymentForm({ onTransactionAdded, onOpenChange }: { onTransactionAdd
   const [type, setType] = useState<'credit' | 'debit'>('credit');
   const [date, setDate] = useState(new Date().toISOString().split('T')[0]);
   const [selectedCustomerId, setSelectedCustomerId] = useState<string | undefined>(undefined);
-  const { customers } = useData();
+  const { customers, customersMap } = useData();
   const { toast } = useToast();
   
   useEffect(() => {
     if (selectedCustomerId) {
-        const customer = customers.find(c => c.id === selectedCustomerId);
+        const customer = customersMap.get(selectedCustomerId);
         if (customer) {
             if (type === 'credit') {
                 setDescription(`Cash received from ${customer.customerName}`);
@@ -63,7 +63,7 @@ function AddPaymentForm({ onTransactionAdded, onOpenChange }: { onTransactionAdd
     } else {
         setDescription('');
     }
-  }, [type, selectedCustomerId, customers]);
+  }, [type, selectedCustomerId, customersMap]);
 
 
   const handleSubmit = async (event: FormEvent) => {
@@ -73,7 +73,7 @@ function AddPaymentForm({ onTransactionAdded, onOpenChange }: { onTransactionAdd
       return;
     }
     
-    const customer = customers.find(c => c.id === selectedCustomerId);
+    const customer = customersMap.get(selectedCustomerId || '');
 
     const newTransaction: Omit<Transaction, 'id'> = {
       description,
@@ -159,7 +159,7 @@ function AddPaymentForm({ onTransactionAdded, onOpenChange }: { onTransactionAdd
 
 
 export default function LedgerPage() {
-  const { transactions, customers, vendors, addTransaction, deleteTransaction } = useData();
+  const { transactions, customers, vendors, customersMap, vendorsMap, addTransaction, deleteTransaction } = useData();
   const [selectedCustomerId, setSelectedCustomerId] = useState<string | null>(null);
   const [selectedVendorId, setSelectedVendorId] = useState<string | null>(null);
   const [isAddModalOpen, setAddModalOpen] = useState(false);
@@ -274,7 +274,7 @@ export default function LedgerPage() {
       <div className="hidden print:block text-center my-6">
           <h1 className="text-2xl font-bold font-headline">ARCO Aluminium Company</h1>
           <p className="text-lg font-semibold mt-1">
-            {hasFilter ? `Ledger Report for ${selectedCustomerId ? customers.find(c=>c.id === selectedCustomerId)?.customerName : vendors.find(v=>v.id===selectedVendorId)?.name}` : 'General Ledger'}
+            {hasFilter ? `Ledger Report for ${selectedCustomerId ? customersMap.get(selectedCustomerId)?.customerName : vendorsMap.get(selectedVendorId || '')?.name}` : 'General Ledger'}
           </p>
           <p className="text-sm text-muted-foreground">As of {formatDate(new Date())}</p>
       </div>

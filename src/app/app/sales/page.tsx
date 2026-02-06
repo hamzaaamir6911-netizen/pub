@@ -48,8 +48,8 @@ import { Label } from "@/components/ui/label";
 
 
 function SaleDetailsView({ sale }: { sale: Sale }) {
-    const { customers } = useData();
-    const customer = customers.find(c => c.id === sale.customerId);
+    const { customersMap } = useData();
+    const customer = customersMap.get(sale.customerId);
 
     const handlePrint = (view: 'invoice' | 'challan' | 'simple') => {
         window.open(`/print/${view}/${sale.id}`, '_blank');

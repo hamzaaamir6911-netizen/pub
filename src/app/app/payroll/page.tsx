@@ -130,7 +130,7 @@ function NewPayslipForm({
   onCancelEdit: () => void,
 }) {
   const { toast } = useToast();
-  const { labourers, addSalaryPayment, updateSalaryPayment } = useData();
+  const { labourers, labourersMap, addSalaryPayment, updateSalaryPayment } = useData();
   
   const isEditMode = !!existingPayslip;
 
@@ -167,7 +167,7 @@ function NewPayslipForm({
         return;
     }
     
-    const labourerDetails = labourers.find(l => l.id === selectedLabourer);
+    const labourerDetails = labourersMap.get(selectedLabourer);
     if (labourerDetails) {
         const hourlyRate = labourerDetails.monthlySalary / 30 / 12;
 

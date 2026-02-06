@@ -102,7 +102,7 @@ export function NewSaleForm({ initialData, onSaleAdded, onSaleUpdated, onCancel 
     onCancel: () => void;
 }) {
     const { toast } = useToast();
-    const { customers, items: allItems, addCustomer, addSale, updateSale, rateListNames } = useData();
+    const { customers, items: allItems, itemsMap, customersMap, addCustomer, addSale, updateSale, rateListNames } = useData();
     
     const [selectedCustomer, setSelectedCustomer] = useState("");
     const [selectedRateList, setSelectedRateList] = useState("default");
@@ -133,7 +133,7 @@ export function NewSaleForm({ initialData, onSaleAdded, onSaleUpdated, onCancel 
         // When rate list changes, update prices for all items in the form
         setSaleItems(currentItems => currentItems.map(si => {
             if (!si.itemId) return si;
-            const itemDetails = allItems.find(i => i.id === si.itemId);
+            const itemDetails = itemsMap.get(si.itemId);
             if (!itemDetails) return si;
 
             const newPrice = selectedRateList === 'default'
@@ -142,7 +142,7 @@ export function NewSaleForm({ initialData, onSaleAdded, onSaleUpdated, onCancel 
             
             return { ...si, price: newPrice };
         }));
-    }, [selectedRateList, allItems]);
+    }, [selectedRateList, itemsMap]);
 
     const handleAddItem = () => {
         setSaleItems([...saleItems, {itemId: "", quantity: 1, feet: 1, discount: 0, color: '', thickness: '', price: 0 }]);
@@ -158,7 +158,7 @@ export function NewSaleForm({ initialData, onSaleAdded, onSaleUpdated, onCancel 
         (currentItem as any)[key] = value;
         
         if (key === 'itemId') {
-            const itemDetails = allItems.find(i => i.id === value);
+            const itemDetails = itemsMap.get(value);
             if (itemDetails) {
                 currentItem.color = itemDetails.color;
                 currentItem.thickness = itemDetails.thickness;
@@ -177,7 +177,7 @@ export function NewSaleForm({ initialData, onSaleAdded, onSaleUpdated, onCancel 
         const subtotal = saleItems.reduce((total, currentItem) => {
             if (!currentItem.itemId || currentItem.price === undefined) return total;
             
-            const itemDetails = allItems.find(i => i.id === currentItem.itemId);
+            const itemDetails = itemsMap.get(currentItem.itemId);
             if (!itemDetails) return total;
 
             let feet = currentItem.feet || 1;
@@ -219,11 +219,11 @@ export function NewSaleForm({ initialData, onSaleAdded, onSaleUpdated, onCancel 
             return;
         }
 
-        const customer = customers.find(c => c.id === selectedCustomer);
+        const customer = customersMap.get(selectedCustomer);
         if (!customer) return;
 
         const finalSaleItems = saleItems.map(si => {
-            const item = allItems.find(i => i.id === si.itemId)!;
+            const item = itemsMap.get(si.itemId!)!;
             
             let feet = si.feet || 1;
             if (item.category !== 'Aluminium') {
@@ -385,7 +385,7 @@ export function NewSaleForm({ initialData, onSaleAdded, onSaleUpdated, onCancel 
                 <div className="space-y-4">
                     <Label>Items</Label>
                     {saleItems.map((saleItem, index) => {
-                         const itemDetails = allItems.find(i => i.id === saleItem.itemId);
+                         const itemDetails = itemsMap.get(saleItem.itemId || "");
                          return (
                          <div key={index} className="grid grid-cols-1 md:grid-cols-7 gap-2 items-end p-3 border rounded-md">
                             <div className="md:col-span-2 space-y-2">

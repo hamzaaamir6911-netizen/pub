@@ -47,8 +47,8 @@ import { useData } from "@/firebase/data/data-provider";
 import { cn } from "@/lib/utils";
 
 function EstimatePrint({ estimate }: { estimate: Estimate }) {
-    const { customers } = useData();
-    const customer = customers.find(c => c.id === estimate.customerId);
+    const { customersMap } = useData();
+    const customer = customersMap.get(estimate.customerId);
     
     let subtotal = 0;
     
@@ -241,7 +241,7 @@ function AddCustomerForm({ onCustomerAdded }: { onCustomerAdded: (newCustomer: O
 
 function NewEstimateForm({ onEstimateAdded }: { onEstimateAdded: (newEstimate: Omit<Estimate, 'id' | 'date' | 'total'>) => void }) {
     const { toast } = useToast();
-    const { customers, items: allItems, addCustomer, rateListNames } = useData();
+    const { customers, items: allItems, itemsMap, customersMap, addCustomer, rateListNames } = useData();
     const [selectedCustomer, setSelectedCustomer] = useState("");
     const [selectedRateList, setSelectedRateList] = useState("default");
     const [saleItems, setSaleItems] = useState<Partial<SaleItem>[]>([{itemId: "", quantity: 1, feet: 1, discount: 0, color: '', thickness: '', price: 0 }]);
@@ -251,7 +251,7 @@ function NewEstimateForm({ onEstimateAdded }: { onEstimateAdded: (newEstimate: O
     useEffect(() => {
         setSaleItems(currentItems => currentItems.map(si => {
             if (!si.itemId) return si;
-            const itemDetails = allItems.find(i => i.id === si.itemId);
+            const itemDetails = itemsMap.get(si.itemId);
             if (!itemDetails) return si;
 
             const newPrice = selectedRateList === 'default'
@@ -260,7 +260,7 @@ function NewEstimateForm({ onEstimateAdded }: { onEstimateAdded: (newEstimate: O
             
             return { ...si, price: newPrice };
         }));
-    }, [selectedRateList, allItems]);
+    }, [selectedRateList, itemsMap]);
 
     const handleAddItem = () => {
         setSaleItems([...saleItems, {itemId: "", quantity: 1, feet: 1, discount: 0, color: '', thickness: '', price: 0 }]);
@@ -276,7 +276,7 @@ function NewEstimateForm({ onEstimateAdded }: { onEstimateAdded: (newEstimate: O
         (currentItem as any)[key] = value;
         
         if (key === 'itemId') {
-            const itemDetails = allItems.find(i => i.id === value);
+            const itemDetails = itemsMap.get(value);
             if (itemDetails) {
                 currentItem.color = itemDetails.color;
                 currentItem.thickness = itemDetails.thickness;
@@ -294,7 +294,7 @@ function NewEstimateForm({ onEstimateAdded }: { onEstimateAdded: (newEstimate: O
         const subtotal = saleItems.reduce((total, currentItem) => {
             if (!currentItem.itemId || currentItem.price === undefined) return total;
             
-            const itemDetails = allItems.find(i => i.id === currentItem.itemId);
+            const itemDetails = itemsMap.get(currentItem.itemId);
             if (!itemDetails) return total;
 
             let feet = currentItem.feet || 1;
@@ -329,11 +329,11 @@ function NewEstimateForm({ onEstimateAdded }: { onEstimateAdded: (newEstimate: O
             return;
         }
 
-        const customer = customers.find(c => c.id === selectedCustomer);
+        const customer = customersMap.get(selectedCustomer);
         if (!customer) return;
 
         const finalSaleItems = saleItems.map(si => {
-            const item = allItems.find(i => i.id === si.itemId)!;
+            const item = itemsMap.get(si.itemId!)!;
             
             let feet = si.feet || 1;
             if (item.category !== 'Aluminium') {
@@ -432,7 +432,7 @@ function NewEstimateForm({ onEstimateAdded }: { onEstimateAdded: (newEstimate: O
                 <div className="space-y-4">
                     <Label>Items</Label>
                     {saleItems.map((saleItem, index) => {
-                         const itemDetails = allItems.find(i => i.id === saleItem.itemId);
+                         const itemDetails = itemsMap.get(saleItem.itemId || "");
                          return (
                          <div key={index} className="grid grid-cols-1 md:grid-cols-7 gap-2 items-end p-3 border rounded-md">
                             <div className="md:col-span-2 space-y-2">

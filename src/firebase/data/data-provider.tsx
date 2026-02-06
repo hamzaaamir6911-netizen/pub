@@ -19,6 +19,10 @@ interface DataContextProps {
   labourers: Labour[];
   salaryPayments: SalaryPayment[];
   rateListNames: string[];
+  itemsMap: Map<string, Item>;
+  customersMap: Map<string, Customer>;
+  vendorsMap: Map<string, Vendor>;
+  labourersMap: Map<string, Labour>;
   loading: boolean;
   addItem: (item: Omit<Item, 'id' | 'createdAt'>) => Promise<any>;
   deleteItem: (id: string) => Promise<void>;
@@ -103,15 +107,20 @@ export const DataProvider = ({ children }: { children: ReactNode }) => {
     const { data: estimatesData, isLoading: estimatesLoading } = useCollection<Estimate>(estimatesCol);
     const { data: salaryPaymentsData, isLoading: salaryPaymentsLoading } = useCollection<SalaryPayment>(salaryPaymentsCol);
 
-    const items = itemsData?.map(item => ({ ...item, quantity: item.quantity ?? 0, createdAt: toDate(item.createdAt) as Date })) || [];
-    const customers = customersData?.map(customer => ({ ...customer, createdAt: toDate(customer.createdAt) as Date })) || [];
-    const vendors = vendorsData?.map(vendor => ({ ...vendor, createdAt: toDate(vendor.createdAt) as Date })) || [];
-    const labourers = labourData?.map(labourer => ({ ...labourer, createdAt: toDate(labourer.createdAt) as Date })) || [];
-    const sales = salesData?.map(sale => ({ ...sale, date: toDate(sale.date) as Date })) || [];
-    const expenses = expensesData?.map(expense => ({ ...expense, date: toDate(expense.date) as Date })) || [];
-    const transactions = transactionsData?.map(transaction => ({ ...transaction, date: toDate(transaction.date) as Date })) || [];
-    const estimates = estimatesData?.map(estimate => ({ ...estimate, date: toDate(estimate.date) as Date })) || [];
-    const salaryPayments = salaryPaymentsData?.map(payment => ({ ...payment, date: toDate(payment.date) as Date })) || [];
+    const items = useMemo(() => itemsData?.map(item => ({ ...item, quantity: item.quantity ?? 0, createdAt: toDate(item.createdAt) as Date })) || [], [itemsData]);
+    const customers = useMemo(() => customersData?.map(customer => ({ ...customer, createdAt: toDate(customer.createdAt) as Date })) || [], [customersData]);
+    const vendors = useMemo(() => vendorsData?.map(vendor => ({ ...vendor, createdAt: toDate(vendor.createdAt) as Date })) || [], [vendorsData]);
+    const labourers = useMemo(() => labourData?.map(labourer => ({ ...labourer, createdAt: toDate(labourer.createdAt) as Date })) || [], [labourData]);
+    const sales = useMemo(() => salesData?.map(sale => ({ ...sale, date: toDate(sale.date) as Date })) || [], [salesData]);
+    const expenses = useMemo(() => expensesData?.map(expense => ({ ...expense, date: toDate(expense.date) as Date })) || [], [expensesData]);
+    const transactions = useMemo(() => transactionsData?.map(transaction => ({ ...transaction, date: toDate(transaction.date) as Date })) || [], [transactionsData]);
+    const estimates = useMemo(() => estimatesData?.map(estimate => ({ ...estimate, date: toDate(estimate.date) as Date })) || [], [estimatesData]);
+    const salaryPayments = useMemo(() => salaryPaymentsData?.map(payment => ({ ...payment, date: toDate(payment.date) as Date })) || [], [salaryPaymentsData]);
+
+    const itemsMap = useMemo(() => new Map(items.map(i => [i.id, i])), [items]);
+    const customersMap = useMemo(() => new Map(customers.map(c => [c.id, c])), [customers]);
+    const vendorsMap = useMemo(() => new Map(vendors.map(v => [v.id, v])), [vendors]);
+    const labourersMap = useMemo(() => new Map(labourers.map(l => [l.id, l])), [labourers]);
 
     const rateListNames = useMemo(() => {
         if (!items) return [];
@@ -719,6 +728,7 @@ export const DataProvider = ({ children }: { children: ReactNode }) => {
     
     const value = {
         items, customers, sales, expenses, transactions, vendors, estimates, labourers, salaryPayments, rateListNames, loading,
+        itemsMap, customersMap, vendorsMap, labourersMap,
         addItem, deleteItem, updateItem, batchUpdateRates, updateItemStock,
         addCustomer, updateCustomer, deleteCustomer,
         addVendor, deleteVendor,
