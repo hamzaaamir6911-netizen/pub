@@ -10,6 +10,17 @@ import { Toaster } from '@/components/ui/toaster';
 export const metadata: Metadata = {
   title: 'ARCO Factory Manager',
   description: 'Factory Management System for ARCO Aluminium',
+  manifest: '/manifest.json',
+  themeColor: '#111827',
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: 'default',
+    title: 'ARCO',
+  },
+  icons: {
+    icon: '/icon.svg',
+    apple: '/icon.svg',
+  },
 };
 
 const fontBody = PT_Sans({
