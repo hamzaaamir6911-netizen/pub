@@ -2,16 +2,15 @@
   "name": "ARCO Factory Manager",
   "short_name": "ARCO",
   "description": "Factory Management System for ARCO Aluminium",
+  "start_url": "/app/dashboard",
+  "display": "standalone",
+  "background_color": "#111827",
+  "theme_color": "#111827",
   "icons": [
     {
       "src": "/icon.svg",
       "sizes": "any",
       "type": "image/svg+xml"
     }
-  ],
-  "theme_color": "#111827",
-  "background_color": "#ffffff",
-  "start_url": "/app/dashboard",
-  "display": "standalone",
-  "orientation": "portrait"
+  ]
 }
